@@ -10,7 +10,7 @@ import { Command } from 'commander';
 import { isWindows } from './protocol-translation';
 import { createLspConnection } from './lsp-connection';
 
-const program = new Command('typescript-language-server')
+const program = new Command('typescript-lsp')
     .version(require('../package.json').version)
     .option('--stdio', 'use stdio')
     .option('--node-ipc', 'use node-ipc')
@@ -27,6 +27,6 @@ if (!(program.stdio || program.socket || program['node-ipc'])) {
 }
 
 createLspConnection({
-    tsserverPath: program.path || 'tsserver',
+    tsserverPath: program.path || (isWindows() ? 'tsserver.cmd' : 'tsserver'),
     tsserverLogFile: program.tsServerLogFile
 }).listen();
