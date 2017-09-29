@@ -1,0 +1,21 @@
+{
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "type": "node",
+                "request": "launch",
+                "name": "Mocha Tests",
+                "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+                "args": [
+                    "--reporter",
+                    "spec",
+                    "--require",
+                    "source-map-support/register",
+                    "--timeout",
+                    "999999",
+                    "${workspaceRoot}/lib/**/*.spec.js"
+                ],
+                "internalConsoleOptions": "openOnSessionStart"
+            }
+        ]
+    }
