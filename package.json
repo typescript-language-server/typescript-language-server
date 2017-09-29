@@ -1,0 +1,34 @@
+{
+  "name": "typescript-lsp",
+  "version": "0.0.2",
+  "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
+  "scripts": {
+    "build": "tsc && tslint --project .",
+    "watch": "tsc --watch",
+    "test": "mocha --reporter spec \"./lib/**/*.spec.js\""
+  },
+  "bin": {
+    "typescript-lsp": "./lib/typescript-lsp.js"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "author": "TypeFox and others",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/chai": "^4.0.4",
+    "@types/commander": "^2.9.2",
+    "@types/mocha": "^2.2.43",
+    "@types/node": "^8.0.31",
+    "chai": "^4.1.2",
+    "mocha": "^3.5.3",
+    "source-map-support": "^0.4.18",
+    "typescript": "^2.5.3"
+  },
+  "dependencies": {
+    "commander": "^2.11.0",
+    "vscode-languageserver": "^3.4.3",
+    "vscode-uri": "^1.0.1"
+  }
+}

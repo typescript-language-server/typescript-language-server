@@ -1,0 +1,5 @@
+src/
+test-data/
+npm-debug.log
+.gitattributes
+.npmignore
