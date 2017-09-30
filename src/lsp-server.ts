@@ -7,6 +7,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
+import * as fs from 'fs';
 import { CommandTypes, EventTypes } from './tsp-command-types';
 
 import { Logger, PrefixingLogger } from './logger';
@@ -14,7 +15,7 @@ import { TspClient } from './tsp-client';
 
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
-import { uriToPath, toSymbolKind, toLocation, toPosition, completionKindsMapping, pathToUri } from './protocol-translation';
+import { uriToPath, toSymbolKind, toLocation, toPosition, completionKindsMapping, pathToUri, toTextEdit } from './protocol-translation';
 
 export interface IServerOptions {
     logger: Logger
@@ -22,6 +23,7 @@ export interface IServerOptions {
     tsserverLogFile?: string;
     lspClient: LspClient;
 }
+
 
 export class LspServer {
 
@@ -67,7 +69,8 @@ export class LspServer {
                 hoverProvider: true,
                 renameProvider: true,
                 referencesProvider: true,
-                workspaceSymbolProvider: true
+                workspaceSymbolProvider: true,
+                documentFormattingProvider: true
             }
         };
 
@@ -317,11 +320,46 @@ export class LspServer {
             .map(fileSpan => toLocation(fileSpan));
     }
 
+    public async documentFormatting(params: lsp.DocumentFormattingParams): Promise<lsp.TextEdit[]> {
+        const path = uriToPath(params.textDocument.uri);
+        this.logger.log('documentFormatting', params, path);
+
+        let opts = <tsp.FormatCodeSettings>{
+            ...params.options
+        }
+        // translate
+        if (!opts.convertTabsToSpaces) {
+            opts.convertTabsToSpaces = params.options.insertSpaces
+        }
+        try {
+            opts = JSON.parse(fs.readFileSync(this.rootPath() + "/tsfmt.json", 'utf-8'));
+        } catch (err) {
+            this.logger.log("No formatting options found " + err)
+        }
+
+        const response = await this.tspClient.request(CommandTypes.Format, <tsp.FormatRequestArgs>{
+            file: path,
+            line: 1,
+            offset: 1,
+            endLine: Number.MAX_SAFE_INTEGER,
+            endOffset: Number.MAX_SAFE_INTEGER,
+            options: opts
+        });
+        if (response.body) {
+            return response.body.map(e => toTextEdit(e));
+        }
+        return [];
+    }
+
+    private rootPath(): string {
+        return this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath!
+    }
+
     private lastFileOrDummy(): string {
         for (const uri of this.openedDocumentUris.keys()) {
             return uriToPath(uri);
         }
-        return this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath!;
+        return this.rootPath();
     }
 
     public async workspaceSymbol(params: lsp.WorkspaceSymbolParams): Promise<lsp.SymbolInformation[]> {

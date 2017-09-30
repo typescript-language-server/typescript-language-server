@@ -41,6 +41,7 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     connection.onReferences(server.references.bind(server));
     connection.onRenameRequest(server.rename.bind(server));
     connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
+    connection.onDocumentFormatting(server.documentFormatting.bind(server));
 
     return connection;
 }

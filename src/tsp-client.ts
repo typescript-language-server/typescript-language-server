@@ -71,6 +71,7 @@ export class TspClient {
     }
 
     request(command: CommandTypes.Definition, args: protocol.FileLocationRequestArgs): Promise<protocol.DefinitionResponse>
+    request(command: CommandTypes.Format, args: protocol.FormatRequestArgs): Promise<protocol.FormatResponse>
     request(command: CommandTypes.Geterr, args: protocol.GeterrRequestArgs): Promise<protocol.RequestCompletedEvent>
     request(command: CommandTypes.GeterrForProject, args: protocol.GeterrForProjectRequestArgs): Promise<protocol.RequestCompletedEvent>
     request(command: CommandTypes.Navto, args: protocol.NavtoRequestArgs): Promise<protocol.NavtoResponse>

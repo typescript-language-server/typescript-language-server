@@ -110,3 +110,13 @@ export function toDiagnostic(tspDiag: tsp.Diagnostic): lsp.Diagnostic {
         source: 'typescript'
     }
 }
+
+export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
+    return {
+        range: {
+            start: toPosition(edit.start),
+            end: toPosition(edit.end)
+        },
+        newText: edit.newText
+    }
+}

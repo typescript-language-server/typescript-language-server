@@ -165,3 +165,44 @@ describe('editing', () => {
     assert.equal("Cannot find name 'unknown'.", diags[0].message);
   });
 });
+
+function applyEdits(before: string, edits: lsp.TextEdit[]): string {
+  const sorted = edits.sort((a, b) => {
+    if (a.range.start.line === b.range.start.line) {
+      return a.range.start.character - b.range.start.character
+    }
+    return a.range.start.line - b.range.start.line
+  })
+  const doc = lsp.TextDocument.create('', '', 0, before)
+  let currentDoc = '';
+  let offset = 0;
+  for (const edit of sorted) {
+    const startOffset = doc.offsetAt(edit.range.start)
+    currentDoc += before.substr(offset, startOffset - offset) + edit.newText;
+    offset = doc.offsetAt(edit.range.end)
+  }
+  return currentDoc + before.substr(offset);
+}
+
+describe('formatting', () => {
+  it('full document formatting', async () => {
+    const doc = {
+      uri: uri('bar.ts'),
+      languageId: 'typescript',
+      version: 1,
+      text: 'export  function foo (     )   :  void   {   }'
+    }
+    server.didOpenTextDocument({
+      textDocument: doc
+    })
+    const edits = await server.documentFormatting({
+      textDocument: doc,
+      options: {
+        tabSize: 4,
+        insertSpaces: true
+      }
+    })
+    const result = applyEdits(doc.text, edits);
+    assert.equal('export function foo(): void { }', result)
+  });
+});
