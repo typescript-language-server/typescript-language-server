@@ -5,6 +5,23 @@
 
 Based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server.
 
+# Supported Protocol features
+
+* textDocument/didChange (incremental)
+* textDocument/didClose
+* textDocument/didOpen
+* textDocument/didSave
+
+* textDocument/completion (incl. completion/resolve)
+* textDocument/definition
+* textDocument/documentSymbol
+* textDocument/format
+* textDocument/hover
+* textDocument/rename
+* textDocument/references
+* textDocument/signatureHelp
+* workspace/symbol
+
 # Installing
 
 ```sh
@@ -41,13 +58,14 @@ $ typescript-lsp --help
 ### Build
 
 ```sh
-npm install
-npm run build
+yarn install
+yarn build
+yarn test
 ```
 
 ### Watch
 
 ```sh
-npm install
-npm run watch
+yarn
+yarn watch
 ```
