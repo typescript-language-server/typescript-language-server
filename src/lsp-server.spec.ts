@@ -206,3 +206,34 @@ describe('formatting', () => {
     assert.equal('export function foo(): void { }', result)
   });
 });
+
+
+describe('signatureHelp', () => {
+  it('simple test', async () => {
+    const doc = {
+      uri: uri('bar.ts'),
+      languageId: 'typescript',
+      version: 1,
+      text: `
+        export function foo(bar: string, baz?:boolean): void {}
+        foo(param1, param2)
+      `
+    }
+    server.didOpenTextDocument({
+      textDocument: doc
+    })
+    let result = await server.signatureHelp({
+      textDocument: doc,
+      position: position(doc, 'param1')
+    })
+
+    assert.equal('bar: string', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label)
+
+    result = await server.signatureHelp({
+      textDocument: doc,
+      position: position(doc, 'param2')
+    })
+
+    assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label)
+  });
+});

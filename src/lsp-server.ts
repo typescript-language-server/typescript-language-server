@@ -15,7 +15,7 @@ import { TspClient } from './tsp-client';
 
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
-import { uriToPath, toSymbolKind, toLocation, toPosition, completionKindsMapping, pathToUri, toTextEdit } from './protocol-translation';
+import { uriToPath, toSymbolKind, toLocation, toPosition, completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown } from './protocol-translation';
 
 export interface IServerOptions {
     logger: Logger
@@ -70,7 +70,10 @@ export class LspServer {
                 renameProvider: true,
                 referencesProvider: true,
                 workspaceSymbolProvider: true,
-                documentFormattingProvider: true
+                documentFormattingProvider: true,
+                signatureHelpProvider: {
+                    triggerCharacters: ['(', ',']
+                }
             }
         };
 
@@ -167,7 +170,7 @@ export class LspServer {
             return [];
         }
         const result: lsp.SymbolInformation[] = [];
-        const collectSymbol: (element: tsp.NavigationTree, parent: string|undefined, acceptor: (sym: lsp.SymbolInformation) => void ) => void =
+        const collectSymbol: (element: tsp.NavigationTree, parent: string | undefined, acceptor: (sym: lsp.SymbolInformation) => void) => void =
             (element, parent, acceptor) => {
                 const start = element.spans[0];
                 const end = element.spans[element.spans.length - 1];
@@ -231,7 +234,7 @@ export class LspServer {
         if (!result.body) {
             return item
         }
-        item.documentation = result.body[0].documentation.map( i => i.text).join('\n');
+        item.documentation = result.body[0].documentation.map(i => i.text).join('\n');
         return item;
     }
 
@@ -349,6 +352,62 @@ export class LspServer {
             return response.body.map(e => toTextEdit(e));
         }
         return [];
+    }
+
+    public async signatureHelp(params: lsp.TextDocumentPositionParams): Promise<lsp.SignatureHelp> {
+        const path = uriToPath(params.textDocument.uri);
+        this.logger.log('signatureHelp', params, path);
+
+        const response = await this.tspClient.request(CommandTypes.SignatureHelp, <tsp.SignatureHelpRequestArgs>{
+            file: path,
+            line: params.position.line + 1,
+            offset: params.position.character + 1
+        });
+        if (!response.body) {
+            return {
+                signatures: [],
+                activeSignature: null,
+                activeParameter: null
+            };
+        }
+        const info = response.body;
+
+        const signatures: lsp.SignatureInformation[] = [];
+        let activeSignature = response.body.selectedItemIndex;
+        let activeParameter = response.body.argumentIndex;
+
+        response.body.items.forEach((item, i) => {
+            // keep active parameter in bounds
+            if (i === info.selectedItemIndex && item.isVariadic) {
+                activeParameter = Math.min(info.argumentIndex, item.parameters.length - 1);
+            }
+
+            let label = toPlainText(item.prefixDisplayParts);
+            const parameters: lsp.ParameterInformation[] = [];
+            item.parameters.forEach((p, i, a) => {
+                const parameter = lsp.ParameterInformation.create(
+                    toPlainText(p.displayParts),
+                    toPlainText(p.documentation));
+                label += parameter.label;
+                parameters.push(parameter);
+                if (i < a.length - 1) {
+                    label += toPlainText(item.separatorDisplayParts);
+                }
+            });
+            label += toPlainText(item.suffixDisplayParts);
+            const documentation = toMarkDown(item.documentation, item.tags);
+            signatures.push({
+                label,
+                documentation,
+                parameters
+            });
+        });
+
+        return {
+            signatures,
+            activeSignature,
+            activeParameter
+        }
     }
 
     private rootPath(): string {

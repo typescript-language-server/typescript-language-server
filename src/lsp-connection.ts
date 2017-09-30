@@ -29,19 +29,22 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     });
 
     connection.onInitialize(server.initialize.bind(server));
+
     connection.onDidOpenTextDocument(server.didOpenTextDocument.bind(server));
     connection.onDidSaveTextDocument(server.didSaveTextDocument.bind(server));
     connection.onDidCloseTextDocument(server.didCloseTextDocument.bind(server));
     connection.onDidChangeTextDocument(server.didChangeTextDocument.bind(server));
-    connection.onDefinition(server.definition.bind(server));
-    connection.onDocumentSymbol(server.documentSymbol.bind(server));
+
     connection.onCompletion(server.completion.bind(server));
     connection.onCompletionResolve(server.completionResolve.bind(server));
+    connection.onDefinition(server.definition.bind(server));
+    connection.onDocumentSymbol(server.documentSymbol.bind(server));
     connection.onHover(server.hover.bind(server));
     connection.onReferences(server.references.bind(server));
     connection.onRenameRequest(server.rename.bind(server));
     connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
     connection.onDocumentFormatting(server.documentFormatting.bind(server));
+    connection.onSignatureHelp(server.signatureHelp.bind(server));
 
     return connection;
 }

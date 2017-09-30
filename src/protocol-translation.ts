@@ -120,3 +120,29 @@ export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
         newText: edit.newText
     }
 }
+
+export function toPlainText(parts: tsp.SymbolDisplayPart[]): string {
+    return parts.map(part => part.text).join('');
+}
+
+function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
+    return (tags || [])
+        .map(tag => {
+            const label = `*@${tag.name}*`;
+            if (!tag.text) {
+                return label;
+            }
+            return label + (tag.text.match(/\r\n|\n/g) ? '  \n' + tag.text : ` — ${tag.text}`);
+        })
+        .join('  \n\n');
+}
+
+export function toMarkDown(documentation: tsp.SymbolDisplayPart[], tags: tsp.JSDocTagInfo[]): string {
+    let result = "";
+    result += toPlainText(documentation);
+    const tagsPreview = tagsMarkdownPreview(tags);
+    if (tagsPreview) {
+        result += '\n\n' + tagsPreview;
+    }
+    return result;
+}

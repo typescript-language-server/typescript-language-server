@@ -81,6 +81,7 @@ export class TspClient {
     request(command: CommandTypes.Quickinfo, args: protocol.FileLocationRequestArgs): Promise<protocol.QuickInfoResponse>
     request(command: CommandTypes.Rename, args: protocol.RenameRequestArgs): Promise<protocol.RenameResponse>
     request(command: CommandTypes.References, args: protocol.FileLocationRequestArgs): Promise<protocol.ReferencesResponse>
+    request(command: CommandTypes.SignatureHelp, args: protocol.SignatureHelpRequestArgs): Promise<protocol.SignatureHelpResponse>
     request(command: string, args: object): Promise<object> {
         this.logger.log("request", command, args);
         return this.sendMessage(command, false, args)!;
