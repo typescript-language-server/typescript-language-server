@@ -7,22 +7,23 @@ Based on concepts and ideas from https://github.com/prabirshrestha/typescript-la
 
 # Supported Protocol features
 
-* textDocument/didChange (incremental)
-* textDocument/didClose
-* textDocument/didOpen
-* textDocument/didSave
+- [x] textDocument/didChange (incremental)
+- [x] textDocument/didClose
+- [x] textDocument/didOpen
+- [x] textDocument/didSave
 
-* textDocument/completion (incl. completion/resolve)
-* textDocument/definition
-* textDocument/documentSymbol
-* textDocument/format
-* textDocument/hover
-* textDocument/rename
-* textDocument/references
-* textDocument/signatureHelp
-* textDocument/codeAction
-* textDocument/executeCommand
-* workspace/symbol
+- [x] textDocument/codeAction
+- [x] textDocument/completion (incl. completion/resolve)
+- [x] textDocument/definition
+- [x] textDocument/documentHighlight
+- [x] textDocument/documentSymbol
+- [x] textDocument/executeCommand
+- [x] textDocument/format
+- [x] textDocument/hover
+- [x] textDocument/rename
+- [x] textDocument/references
+- [x] textDocument/signatureHelp
+- [x] workspace/symbol
 
 # Installing
 

@@ -156,3 +156,32 @@ export function toTextDocumentEdit(change: tsp.FileCodeEdits): lsp.TextDocumentE
         edits: change.textChanges.map(c => toTextEdit(c))
     }
 }
+
+export function toDocumentHighlight(item: tsp.DocumentHighlightsItem): lsp.DocumentHighlight[] {
+    return item.highlightSpans.map( i => {
+        return <lsp.DocumentHighlight>{
+            kind: toDocumentHighlightKind(i.kind),
+            range: {
+                start: toPosition(i.start),
+                end: toPosition(i.end)
+            }
+        }
+    });
+}
+
+// copied because the protocol module is not available at runtime (js version).
+enum HighlightSpanKind {
+    none = "none",
+    definition = "definition",
+    reference = "reference",
+    writtenReference = "writtenReference",
+}
+
+function toDocumentHighlightKind(kind: tsp.HighlightSpanKind): lsp.DocumentHighlightKind {
+    switch (kind) {
+        case HighlightSpanKind.definition : return lsp.DocumentHighlightKind.Write
+        case HighlightSpanKind.reference :
+        case HighlightSpanKind.writtenReference : return lsp.DocumentHighlightKind.Read
+        default: return lsp.DocumentHighlightKind.Text
+    }
+}

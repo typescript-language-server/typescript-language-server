@@ -16,6 +16,7 @@ import { TspClient } from './tsp-client';
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
 import { findPathToModule } from './modules-resolver';
+import { toDocumentHighlight } from './protocol-translation';
 import { uriToPath, toSymbolKind, toLocation, toPosition,
     completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown, toTextDocumentEdit } from './protocol-translation';
 
@@ -76,20 +77,21 @@ export class LspServer {
                     triggerCharacters: ['.'],
                     resolveProvider: true
                 },
+                codeActionProvider: true,
                 definitionProvider: true,
+                documentFormattingProvider: true,
+                documentHighlightProvider: true,
                 documentSymbolProvider: true,
+                executeCommandProvider: {
+                    commands: [WORKSPACE_EDIT_COMMAND]
+                },
                 hoverProvider: true,
                 renameProvider: true,
                 referencesProvider: true,
-                workspaceSymbolProvider: true,
-                documentFormattingProvider: true,
                 signatureHelpProvider: {
                     triggerCharacters: ['(', ',']
                 },
-                codeActionProvider: true,
-                executeCommandProvider: {
-                    commands: [WORKSPACE_EDIT_COMMAND]
-                }
+                workspaceSymbolProvider: true,
             }
         };
 
@@ -259,11 +261,18 @@ export class LspServer {
 
         this.logger.log('hover', params, path);
 
-        const result = await this.tspClient.request(CommandTypes.Quickinfo, {
-            file: path,
-            line: params.position.line + 1,
-            offset: params.position.character + 1
-        });
+        let result
+        try {
+            result = await this.tspClient.request(CommandTypes.Quickinfo, {
+                file: path,
+                line: params.position.line + 1,
+                offset: params.position.character + 1
+            });
+        } catch (err) {
+            return <lsp.Hover>{
+                contents: []
+            }
+        }
         if (!result.body) {
             return <lsp.Hover>{
                 contents: []
@@ -467,6 +476,30 @@ export class LspServer {
         } else {
             this.logger.error(`Unknown command ${arg.command}.`)
         }
+    }
+
+    public async documentHighlight(arg: lsp.TextDocumentPositionParams): Promise<lsp.DocumentHighlight[]> {
+        this.logger.log('documentHighlight', arg);
+        let response: tsp.DocumentHighlightsResponse
+        try {
+            response = await this.tspClient.request(CommandTypes.DocumentHighlights, <tsp.DocumentHighlightsRequestArgs>{
+                file: uriToPath(arg.textDocument.uri),
+                line: arg.position.line + 1,
+                offset: arg.position.character + 1,
+                filesToSearch: [uriToPath(arg.textDocument.uri)]
+            })
+        } catch (err) {
+            return [];
+        }
+        if (!response.body) {
+            return []
+        }
+        const result: lsp.DocumentHighlight[] = [];
+        for (const item of response.body) {
+            const highlights = toDocumentHighlight(item);
+            result.push(...highlights)
+        }
+        return result;
     }
 
     private rootPath(): string {

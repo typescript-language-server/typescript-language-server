@@ -35,18 +35,19 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     connection.onDidCloseTextDocument(server.didCloseTextDocument.bind(server));
     connection.onDidChangeTextDocument(server.didChangeTextDocument.bind(server));
 
+    connection.onCodeAction(server.codeAction.bind(server));
     connection.onCompletion(server.completion.bind(server));
     connection.onCompletionResolve(server.completionResolve.bind(server));
     connection.onDefinition(server.definition.bind(server));
+    connection.onDocumentFormatting(server.documentFormatting.bind(server));
+    connection.onDocumentHighlight(server.documentHighlight.bind(server));
     connection.onDocumentSymbol(server.documentSymbol.bind(server));
+    connection.onExecuteCommand(server.executeCommand.bind(server));
     connection.onHover(server.hover.bind(server));
     connection.onReferences(server.references.bind(server));
     connection.onRenameRequest(server.rename.bind(server));
-    connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
-    connection.onDocumentFormatting(server.documentFormatting.bind(server));
     connection.onSignatureHelp(server.signatureHelp.bind(server));
-    connection.onCodeAction(server.codeAction.bind(server));
-    connection.onExecuteCommand(server.executeCommand.bind(server));
+    connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
 
     return connection;
 }
