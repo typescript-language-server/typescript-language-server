@@ -45,6 +45,8 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
     connection.onDocumentFormatting(server.documentFormatting.bind(server));
     connection.onSignatureHelp(server.signatureHelp.bind(server));
+    connection.onCodeAction(server.codeAction.bind(server));
+    connection.onExecuteCommand(server.executeCommand.bind(server));
 
     return connection;
 }

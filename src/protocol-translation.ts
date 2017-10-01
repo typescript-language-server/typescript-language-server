@@ -146,3 +146,13 @@ export function toMarkDown(documentation: tsp.SymbolDisplayPart[], tags: tsp.JSD
     }
     return result;
 }
+
+export function toTextDocumentEdit(change: tsp.FileCodeEdits): lsp.TextDocumentEdit {
+    return {
+        textDocument: {
+            uri: pathToUri(change.fileName),
+            version: 0 // TODO
+        },
+        edits: change.textChanges.map(c => toTextEdit(c))
+    }
+}
