@@ -15,7 +15,8 @@ import { TspClient } from './tsp-client';
 
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
-import { uriToPath, toSymbolKind, toLocation, toPosition, completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown } from './protocol-translation';
+import { uriToPath, toSymbolKind, toLocation, toPosition,
+    completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown, toTextDocumentEdit } from './protocol-translation';
 
 export interface IServerOptions {
     logger: Logger
@@ -24,6 +25,7 @@ export interface IServerOptions {
     lspClient: LspClient;
 }
 
+export const WORKSPACE_EDIT_COMMAND = "workspace-edit";
 
 export class LspServer {
 
@@ -73,6 +75,10 @@ export class LspServer {
                 documentFormattingProvider: true,
                 signatureHelpProvider: {
                     triggerCharacters: ['(', ',']
+                },
+                codeActionProvider: true,
+                executeCommandProvider: {
+                    commands: [WORKSPACE_EDIT_COMMAND]
                 }
             }
         };
@@ -407,6 +413,44 @@ export class LspServer {
             signatures,
             activeSignature,
             activeParameter
+        }
+    }
+
+    public async codeAction(arg: lsp.CodeActionParams): Promise<lsp.Command[]> {
+        this.logger.log('codeAction', arg);
+        const response = await this.tspClient.request(CommandTypes.GetCodeFixes, <tsp.CodeFixRequestArgs>{
+            file: uriToPath(arg.textDocument.uri),
+            startLine: arg.range.start.line + 1,
+            startOffset: arg.range.start.character + 1,
+            endLine: arg.range.end.line + 1,
+            endOffset: arg.range.end.character + 1,
+            errorCodes: arg.context.diagnostics.map(d => d.code)
+        })
+        if (!response.body) {
+            return []
+        }
+        const result: lsp.Command[] = [];
+        for (const fix of response.body) {
+            result.push({
+                title: fix.description,
+                command: WORKSPACE_EDIT_COMMAND,
+                arguments: [<lsp.WorkspaceEdit>{
+                    documentChanges: fix.changes.map(c => toTextDocumentEdit(c))
+                }]
+            })
+        }
+        return result;
+    }
+
+    public executeCommand(arg: lsp.ExecuteCommandParams): void {
+        this.logger.log('executeCommand', arg);
+        if (arg.command === WORKSPACE_EDIT_COMMAND && arg.arguments) {
+            const edit = arg.arguments[0] as lsp.WorkspaceEdit;
+            this.options.lspClient.applyWorkspaceEdit({
+                edit
+            });
+        } else {
+            this.logger.error(`Unknown command ${arg.command}.`)
         }
     }
 

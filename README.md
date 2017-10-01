@@ -20,6 +20,8 @@ Based on concepts and ideas from https://github.com/prabirshrestha/typescript-la
 * textDocument/rename
 * textDocument/references
 * textDocument/signatureHelp
+* textDocument/codeAction
+* textDocument/executeCommand
 * workspace/symbol
 
 # Installing
