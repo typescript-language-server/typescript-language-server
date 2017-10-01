@@ -15,12 +15,13 @@ import { TspClient } from './tsp-client';
 
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
+import { findPathToModule } from './modules-resolver';
 import { uriToPath, toSymbolKind, toLocation, toPosition,
     completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown, toTextDocumentEdit } from './protocol-translation';
 
 export interface IServerOptions {
     logger: Logger
-    tsserverPath: string;
+    tsserverPath?: string;
     tsserverLogFile?: string;
     lspClient: LspClient;
 }
@@ -43,6 +44,15 @@ export class LspServer {
             this.logger);
     }
 
+    protected findTsserverPath(): string {
+        if (this.options.tsserverPath) {
+            return this.options.tsserverPath;
+        }
+        this.logger.info("Looking up 'tsserver' in " + this.rootPath())
+        const path = findPathToModule(this.rootPath(), 'typescript/bin/tsserver')
+        return path || 'tsserver'
+    }
+
     public initialize(params: lsp.InitializeParams): Promise<lsp.InitializeResult> {
         this.logger.log('initialize', params);
 
@@ -51,7 +61,7 @@ export class LspServer {
         this.initializeParams = params;
 
         this.tspClient = new TspClient({
-            tsserverPath: this.options.tsserverPath,
+            tsserverPath: this.findTsserverPath(),
             logFile: this.options.tsserverLogFile,
             logger: this.options.logger,
             onEvent: this.onTsEvent.bind(this)
@@ -418,14 +428,19 @@ export class LspServer {
 
     public async codeAction(arg: lsp.CodeActionParams): Promise<lsp.Command[]> {
         this.logger.log('codeAction', arg);
-        const response = await this.tspClient.request(CommandTypes.GetCodeFixes, <tsp.CodeFixRequestArgs>{
-            file: uriToPath(arg.textDocument.uri),
-            startLine: arg.range.start.line + 1,
-            startOffset: arg.range.start.character + 1,
-            endLine: arg.range.end.line + 1,
-            endOffset: arg.range.end.character + 1,
-            errorCodes: arg.context.diagnostics.map(d => d.code)
-        })
+        let response
+        try {
+            response = await this.tspClient.request(CommandTypes.GetCodeFixes, <tsp.CodeFixRequestArgs>{
+                file: uriToPath(arg.textDocument.uri),
+                startLine: arg.range.start.line + 1,
+                startOffset: arg.range.start.character + 1,
+                endLine: arg.range.end.line + 1,
+                endOffset: arg.range.end.character + 1,
+                errorCodes: arg.context.diagnostics.map(d => d.code)
+            })
+        } catch (err) {
+            return [];
+        }
         if (!response.body) {
             return []
         }

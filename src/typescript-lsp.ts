@@ -9,6 +9,7 @@
 import { Command } from 'commander';
 import { isWindows } from './protocol-translation';
 import { createLspConnection } from './lsp-connection';
+import * as lsp from 'vscode-languageserver';
 
 const program = new Command('typescript-lsp')
     .version(require('../package.json').version)
@@ -17,7 +18,7 @@ const program = new Command('typescript-lsp')
     .option('--socket <port>', 'use socket. example: --socket=5000')
     .option('--tsserver-logFile <tsServerLogFile>', 'Specify a tsserver log file. example: --tsServerLogFile=ts-logs.txt')
     .option('--tsserver-path <path>',
-        `absolute path to tsserver. example: --tsserver-path=${isWindows() ? 'c:\\tsc\\tsserver.cmd' : '/bin/tsserver'}`,
+        `Specifiy absolute path to tsserver. example: --tsserver-path=${isWindows() ? 'c:\\tsc\\tsserver.cmd' : '/bin/tsserver'}`,
         isWindows() ? 'tsserver.cmd' : 'tsserver')
     .parse(process.argv);
 
@@ -27,6 +28,7 @@ if (!(program.stdio || program.socket || program['node-ipc'])) {
 }
 
 createLspConnection({
-    tsserverPath: program.path || (isWindows() ? 'tsserver.cmd' : 'tsserver'),
-    tsserverLogFile: program.tsServerLogFile
+    tsserverPath: program.path,
+    tsserverLogFile: program.tsServerLogFile,
+    showMessageLevel: lsp.MessageType.Info
 }).listen();
