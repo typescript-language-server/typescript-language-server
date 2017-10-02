@@ -16,7 +16,7 @@ import { TspClient } from './tsp-client';
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
 import { findPathToModule } from './modules-resolver';
-import { toDocumentHighlight } from './protocol-translation';
+import { toDocumentHighlight, isWindows } from './protocol-translation';
 import { uriToPath, toSymbolKind, toLocation, toPosition,
     completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown, toTextDocumentEdit } from './protocol-translation';
 
@@ -50,8 +50,8 @@ export class LspServer {
             return this.options.tsserverPath;
         }
         this.logger.info("Looking up 'tsserver' in " + this.rootPath())
-        const path = findPathToModule(this.rootPath(), 'typescript/bin/tsserver')
-        return path || 'tsserver'
+        let path = findPathToModule(this.rootPath(), '.bin/tsserver') || 'tsserver'
+        return isWindows() ? path + ".cmd" : path
     }
 
     public initialize(params: lsp.InitializeParams): Promise<lsp.InitializeResult> {
