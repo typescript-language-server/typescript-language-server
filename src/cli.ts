@@ -7,7 +7,7 @@
  */
 
 import { Command } from 'commander';
-import { isWindows } from './protocol-translation';
+import { getTsserverExecutable } from './utils';
 import { createLspConnection } from './lsp-connection';
 import * as lsp from 'vscode-languageserver';
 
@@ -17,9 +17,7 @@ const program = new Command('typescript-language-server')
     .option('--node-ipc', 'use node-ipc')
     .option('--socket <port>', 'use socket. example: --socket=5000')
     .option('--tsserver-logFile <tsServerLogFile>', 'Specify a tsserver log file. example: --tsServerLogFile=ts-logs.txt')
-    .option('--tsserver-path <path>',
-        `Specifiy absolute path to tsserver. example: --tsserver-path=${isWindows() ? 'c:\\tsc\\tsserver.cmd' : '/bin/tsserver'}`,
-        isWindows() ? 'tsserver.cmd' : 'tsserver')
+    .option('--tsserver-path <path>', `Specifiy path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
     .parse(process.argv);
 
 if (!(program.stdio || program.socket || program['node-ipc'])) {

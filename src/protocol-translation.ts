@@ -9,10 +9,7 @@ import * as path from 'path';
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
 import URI from "vscode-uri";
-
-export function isWindows(): boolean {
-    return /^win/.test(process.platform);
-}
+import { isWindows } from './utils';
 
 export function uriToPath(stringUri: string): string {
     const uri = URI.parse(stringUri);
