@@ -1,9 +1,11 @@
 # TypeScript LSP
 [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) implementation for TypeScript wrapping `tsserver`.
 
-[![https://nodei.co/npm/typescript-lsp.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/typescript-lsp.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/typescript-lsp)
+[![https://nodei.co/npm/typescript-language-server.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/typescript-language-server.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/typescript-language-server)
 
 Based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server.
+
+Maintained by [TypeFox](typefox.io) and others.
 
 # Supported Protocol features
 
@@ -28,32 +30,32 @@ Based on concepts and ideas from https://github.com/prabirshrestha/typescript-la
 # Installing
 
 ```sh
-npm install -g typescript-lsp
+npm install -g typescript-language-server
 ```
 
 # Running the language server
 
 ```
-typescript-lsp --stdio
+typescript-language-server --stdio
 ```
 
 ## Options
 
 ```
-$ typescript-lsp --help
+$ typescript-language-server --help
 
-  Usage: typescript-lsp [options]
+  Usage: typescript-language-server [options]
 
 
   Options:
 
-    -V, --version           output the version number
-    --stdio                 use stdio
-    --node-ipc              use node-ipc
-    --socket <port>         use socket. example: --socket=5000
-    --tsserver-path <path>  absolute path to tsserver. example: --tsserver-path=/bin/tsserver
-    --tsserver-logFile <logFile>     Specify a log file. example: --tsserver-logFile=logs.txt
-    -h, --help              output usage information
+    -V, --version                         output the version number
+    --stdio                               use stdio
+    --node-ipc                            use node-ipc
+    --socket <port>                       use socket. example: --socket=5000
+    --tsserver-logFile <tsServerLogFile>  Specify a tsserver log file. example: --tsServerLogFile=ts-logs.txt
+    --tsserver-path <path>                Specifiy absolute path to tsserver. example: --tsserver-path=/bin/tsserver
+    -h, --help                            output usage information
 ```
 
 # Development

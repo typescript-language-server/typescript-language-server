@@ -11,7 +11,7 @@ import { isWindows } from './protocol-translation';
 import { createLspConnection } from './lsp-connection';
 import * as lsp from 'vscode-languageserver';
 
-const program = new Command('typescript-lsp')
+const program = new Command('typescript-language-server')
     .version(require('../package.json').version)
     .option('--stdio', 'use stdio')
     .option('--node-ipc', 'use node-ipc')
