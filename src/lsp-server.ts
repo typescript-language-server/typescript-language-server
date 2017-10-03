@@ -8,6 +8,9 @@
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
 import * as fs from 'fs';
+import * as cp from 'child_process';
+import * as commandExists from 'command-exists';
+
 import { CommandTypes, EventTypes } from './tsp-command-types';
 
 import { Logger, PrefixingLogger } from './logger';
@@ -17,8 +20,11 @@ import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
 import { findPathToModule } from './modules-resolver';
 import { toDocumentHighlight } from './protocol-translation';
-import { uriToPath, toSymbolKind, toLocation, toPosition,
-    completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown, toTextDocumentEdit } from './protocol-translation';
+import {
+    uriToPath, toSymbolKind, toLocation, toPosition,
+    completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown, toTextDocumentEdit
+} from './protocol-translation';
+import { getTsserverExecutable } from './utils';
 
 export interface IServerOptions {
     logger: Logger
@@ -49,20 +55,32 @@ export class LspServer {
         if (this.options.tsserverPath) {
             return this.options.tsserverPath;
         }
-        this.logger.info("Looking up 'tsserver' in " + this.rootPath())
-        const path = findPathToModule(this.rootPath(), 'typescript/bin/tsserver')
-        return path || 'tsserver'
+        // 1) look into node_modules of workspace root
+        let executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`)
+        if (executable) {
+            return executable;
+        }
+        // 2) use globally installed tsserver
+        if (commandExists.sync(getTsserverExecutable())) {
+            return getTsserverExecutable();
+        }
+        // 3) look into node_modules of typescript-language-server
+        const bundled = findPathToModule(__dirname, `.bin/${getTsserverExecutable()}`);
+        if (!bundled) {
+            throw Error(`Couldn't find '${getTsserverExecutable()}' executable`)
+        }
+        return bundled;
     }
 
-    public initialize(params: lsp.InitializeParams): Promise<lsp.InitializeResult> {
+    public async initialize(params: lsp.InitializeParams): Promise<lsp.InitializeResult> {
         this.logger.log('initialize', params);
-
-        // TODO: validate rootPath and rootUri
-
         this.initializeParams = params;
 
+        const tsserverPath = this.findTsserverPath();
+        this.logger.info("Using " + tsserverPath);
+
         this.tspClient = new TspClient({
-            tsserverPath: this.findTsserverPath(),
+            tsserverPath,
             logFile: this.options.tsserverLogFile,
             logger: this.options.logger,
             onEvent: this.onTsEvent.bind(this)
@@ -96,7 +114,7 @@ export class LspServer {
         };
 
         this.logger.log('onInitialize result', this.initializeResult);
-        return Promise.resolve(this.initializeResult);
+        return this.initializeResult;
     }
 
     public requestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
