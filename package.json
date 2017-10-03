@@ -11,8 +11,7 @@
     "typescript-language-server": "./lib/cli.js"
   },
   "files": [
-    "lib",
-    "src"
+    "lib"
   ],
   "author": "TypeFox and others",
   "license": "Apache-2.0",
