@@ -5,7 +5,7 @@
 
 Based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server.
 
-Maintained by [TypeFox](typefox.io) and others.
+Maintained by [TypeFox](http://typefox.io) and others.
 
 # Supported Protocol features
 
