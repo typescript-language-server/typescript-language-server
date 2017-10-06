@@ -77,8 +77,6 @@ export class LspServer {
         this.initializeParams = params;
 
         const tsserverPath = this.findTsserverPath();
-        this.logger.info("Using " + tsserverPath);
-
         this.tspClient = new TspClient({
             tsserverPath,
             logFile: this.options.tsserverLogFile,
@@ -270,7 +268,9 @@ export class LspServer {
         if (!result.body) {
             return item
         }
-        item.documentation = result.body[0].documentation.map(i => i.text).join('\n');
+        if (result.body[0] && result.body[0].documentation) {
+            item.documentation = result.body[0].documentation.map(i => i.text).join('\n');
+        }
         return item;
     }
 

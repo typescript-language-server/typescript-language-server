@@ -23,7 +23,7 @@ export class LspClientLogger implements Logger {
     constructor(protected client: LspClient, protected level: lsp.MessageType) { }
 
     protected sendMessage(severity: lsp.MessageType, messageObjects: any[]): void {
-        if (this.level <= severity) {
+        if (this.level >= severity) {
             let message = messageObjects.map( p => {
                 if (typeof p === 'object') {
                     return JSON.stringify(p)
