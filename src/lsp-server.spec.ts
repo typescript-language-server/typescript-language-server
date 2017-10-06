@@ -79,6 +79,9 @@ describe('completion', () => {
       position: pos
     });
     assert.isTrue(proposals.items.length > 800);
+    const item = proposals.items[0];
+    const resolvedItem = await server.completionResolve(item)
+    assert.isTrue(resolvedItem.documentation !== undefined);
   });
 });
 
