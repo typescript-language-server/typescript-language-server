@@ -15,9 +15,9 @@ const program = new Command('typescript-language-server')
     .version(require('../package.json').version)
     .option('--stdio', 'use stdio')
     .option('--node-ipc', 'use node-ipc')
-    .option('--log-level', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.')
+    .option('--log-level <log-level>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.')
     .option('--socket <port>', 'use socket. example: --socket=5000')
-    .option('--tsserver-logFile <tsServerLogFile>', 'Specify a tsserver log file. example: --tsServerLogFile=ts-logs.txt')
+    .option('--tsserver-log-file <tsServerLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt')
     .option('--tsserver-path <path>', `Specifiy path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
     .parse(process.argv);
 
@@ -26,14 +26,14 @@ if (!(program.stdio || program.socket || program['node-ipc'])) {
     process.exit(1);
 }
 
-let logLevel = program['leg-level']
+let logLevel: number = parseInt(program['log-level'], 10);
 if (logLevel && (logLevel < 1 || logLevel > 4)) {
     console.error('Invalid `--log-level ' + logLevel + '`. Falling back to `info` level.');
-    logLevel = undefined;
+    logLevel = lsp.MessageType.Info;
 }
 
 createLspConnection({
-    tsserverPath: program.path,
-    tsserverLogFile: program.tsServerLogFile,
-    showMessageLevel: logLevel || lsp.MessageType.Info
+    tsserverPath: program.tsserverPath as string,
+    tsserverLogFile: program.tsserverLogFile as string,
+    showMessageLevel: logLevel as lsp.MessageType
 }).listen();
