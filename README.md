@@ -42,21 +42,19 @@ typescript-language-server --stdio
 ## Options
 
 ```
-$ typescript-language-server --help
-
   Usage: typescript-language-server [options]
 
 
   Options:
 
-    -V, --version                         output the version number
-    --stdio                               use stdio
-    --node-ipc                            use node-ipc
-    --log-level                           A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
-    --socket <port>                       use socket. example: --socket=5000
-    --tsserver-logFile <tsServerLogFile>  Specify a tsserver log file. example: --tsServerLogFile=ts-logs.txt
-    --tsserver-path <path>                Specifiy path to tsserver. example: --tsserver-path=tsserver
-    -h, --help                            output usage information
+    -V, --version                          output the version number
+    --stdio                                use stdio
+    --node-ipc                             use node-ipc
+    --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
+    --socket <port>                        use socket. example: --socket=5000
+    --tsserver-log-file <tsServerLogFile>  Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt
+    --tsserver-path <path>                 Specifiy path to tsserver. example: --tsserver-path=tsserver
+    -h, --help                             output usage information
 ```
 
 # Development
