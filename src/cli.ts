@@ -17,7 +17,8 @@ const program = new Command('typescript-language-server')
     .option('--node-ipc', 'use node-ipc')
     .option('--log-level <log-level>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.')
     .option('--socket <port>', 'use socket. example: --socket=5000')
-    .option('--tsserver-log-file <tsServerLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt')
+    .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')
+    .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). example: --tsserver-log-verbosity verbose')
     .option('--tsserver-path <path>', `Specifiy path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
     .parse(process.argv);
 
@@ -35,5 +36,6 @@ if (logLevel && (logLevel < 1 || logLevel > 4)) {
 createLspConnection({
     tsserverPath: program.tsserverPath as string,
     tsserverLogFile: program.tsserverLogFile as string,
+    tsserverLogVerbosity: program.tsserverLogVerbosity as string,
     showMessageLevel: logLevel as lsp.MessageType
 }).listen();

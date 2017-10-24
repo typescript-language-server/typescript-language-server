@@ -30,6 +30,7 @@ export interface IServerOptions {
     logger: Logger
     tsserverPath?: string;
     tsserverLogFile?: string;
+    tsserverLogVerbosity?: string;
     lspClient: LspClient;
 }
 
@@ -80,6 +81,7 @@ export class LspServer {
         this.tspClient = new TspClient({
             tsserverPath,
             logFile: this.options.tsserverLogFile,
+            logVerbosity: this.options.tsserverLogVerbosity,
             logger: this.options.logger,
             onEvent: this.onTsEvent.bind(this)
         });

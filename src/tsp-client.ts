@@ -18,6 +18,7 @@ export interface TspClientOptions {
     logger: Logger;
     tsserverPath: string;
     logFile?: string;
+    logVerbosity?: string;
     onEvent?: (event: protocol.Event) => void;
 }
 
@@ -43,9 +44,17 @@ export class TspClient {
         if (this.readlineInterface) {
             return;
         }
-        const logOptions = this.options.logFile ? ['-logToFile', 'true', '-file', this.options.logFile] : []
-        this.logger.info('Starting tsserver : ' + this.options.tsserverPath);
-        this.tsserverProc = cp.spawn(this.options.tsserverPath, logOptions);
+        const args: string[] = []
+        if (this.options.logFile) {
+            args.push('--logFile');
+            args.push(this.options.logFile);
+        }
+        if (this.options.logVerbosity) {
+            args.push('--logVerbosity');
+            args.push(this.options.logVerbosity);
+        }
+        this.logger.info(`Starting tsserver : '${this.options.tsserverPath} ${args.join(' ')}'`);
+        this.tsserverProc = cp.spawn(this.options.tsserverPath, args);
         this.readlineInterface = readline.createInterface(this.tsserverProc.stdout, this.tsserverProc.stdin, undefined);
         process.on('exit', () => {
             this.readlineInterface.close();
