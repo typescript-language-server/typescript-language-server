@@ -15,13 +15,13 @@ export interface IServerOptions {
     tsserverPath: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
-    showMessageLevel?: lsp.MessageType
+    showMessageLevel: lsp.MessageType
 }
 
 export function createLspConnection(options: IServerOptions): lsp.IConnection {
     const connection = lsp.createConnection();
     const lspClient = new LspClientImpl(connection);
-    const logger = new LspClientLogger(lspClient, options.showMessageLevel || lsp.MessageType.Warning);
+    const logger = new LspClientLogger(lspClient, options.showMessageLevel);
     const server: LspServer = new LspServer({
         logger,
         lspClient,

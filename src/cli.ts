@@ -15,7 +15,7 @@ const program = new Command('typescript-language-server')
     .version(require('../package.json').version)
     .option('--stdio', 'use stdio')
     .option('--node-ipc', 'use node-ipc')
-    .option('--log-level <log-level>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.')
+    .option('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.')
     .option('--socket <port>', 'use socket. example: --socket=5000')
     .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')
     .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). example: --tsserver-log-verbosity verbose')
@@ -27,10 +27,13 @@ if (!(program.stdio || program.socket || program['node-ipc'])) {
     process.exit(1);
 }
 
-let logLevel: number = parseInt(program['log-level'], 10);
-if (logLevel && (logLevel < 1 || logLevel > 4)) {
-    console.error('Invalid `--log-level ' + logLevel + '`. Falling back to `info` level.');
-    logLevel = lsp.MessageType.Info;
+let logLevel = lsp.MessageType.Warning
+if (program.logLevel) {
+    logLevel = parseInt(program.logLevel, 10);
+    if (logLevel && (logLevel < 1 || logLevel > 4)) {
+        console.error('Invalid `--log-level ' + logLevel + '`. Falling back to `info` level.');
+        logLevel = lsp.MessageType.Warning;
+    }
 }
 
 createLspConnection({
