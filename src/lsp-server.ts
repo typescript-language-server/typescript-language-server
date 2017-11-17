@@ -25,6 +25,7 @@ import {
     completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown, toTextDocumentEdit
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
+import { LspDocument } from './document';
 
 export interface IServerOptions {
     logger: Logger
@@ -41,7 +42,7 @@ export class LspServer {
     private initializeParams: lsp.InitializeParams;
     private initializeResult: lsp.InitializeResult;
     private tspClient: TspClient;
-    private openedDocumentUris: Map<string, number> = new Map<string, number>();
+    private openedDocumentUris: Map<string, LspDocument> = new Map<string, LspDocument>();
     private diagnosticQueue: DiagnosticEventQueue;
     private logger: Logger;
 
@@ -50,6 +51,19 @@ export class LspServer {
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.logger);
+    }
+
+    public closeAll(): void {
+        for (const [uri, doc] of this.openedDocumentUris) {
+            this.didCloseTextDocument({
+                textDocument: {
+                    uri,
+                    languageId: 'typescript',
+                    version: doc.version,
+                    text: doc.text
+                }
+            });
+        }
     }
 
     protected findTsserverPath(): string {
@@ -120,7 +134,7 @@ export class LspServer {
     public requestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
         const files: string[] = []
         // sort by least recently usage
-        const orderedUris = [...this.openedDocumentUris.entries()].sort((a, b) => a[1] - b[1]).map(e => e[0]);
+        const orderedUris = [...this.openedDocumentUris.entries()].sort((a, b) => a[1].lastAccessed - b[1].lastAccessed).map(e => e[0]);
         for (const uri of orderedUris) {
             files.push(uriToPath(uri));
         }
@@ -134,12 +148,24 @@ export class LspServer {
     public didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
         const path = uriToPath(params.textDocument.uri);
         this.logger.log('onDidOpenTextDocument', params, path);
-        this.tspClient.notify(CommandTypes.Open, {
-            file: path,
-            fileContent: params.textDocument.text
-        });
-        this.openedDocumentUris.set(params.textDocument.uri, new Date().getTime());
-        this.requestDiagnostics();
+        if (this.openedDocumentUris.get(params.textDocument.uri) !== undefined) {
+            this.logger.log(`Cannot open already opened doc '${params.textDocument.uri}'.`);
+            this.didChangeTextDocument({
+                textDocument: params.textDocument,
+                contentChanges: [
+                    {
+                        text: params.textDocument.text
+                    }
+                ]
+            })
+        } else {
+            this.tspClient.notify(CommandTypes.Open, {
+                file: path,
+                fileContent: params.textDocument.text
+            });
+            this.openedDocumentUris.set(params.textDocument.uri, new LspDocument(params.textDocument));
+            this.requestDiagnostics();
+        }
     }
 
     public didCloseTextDocument(params: lsp.DidOpenTextDocumentParams): void {
@@ -153,25 +179,35 @@ export class LspServer {
         const path = uriToPath(params.textDocument.uri)
 
         this.logger.log('onDidCloseTextDocument', params, path);
-        this.openedDocumentUris.set(params.textDocument.uri, new Date().getTime());
+        const document = this.openedDocumentUris.get(params.textDocument.uri);
+        if (!document) {
+            this.logger.error("Received change on non-opened document " + params.textDocument.uri);
+            throw new Error("Received change on non-opened document " + params.textDocument.uri);
+        }
+        document.markAccessed();
 
         for (const change of params.contentChanges) {
+            let line, offset, endLine, endOffset = 0;
             if (!change.range) {
-                this.logger.error("Received non-incremental change for " + params.textDocument.uri);
-                this.tspClient.notify(CommandTypes.Open, {
-                    file: path,
-                    fileContent: change.text
-                });
+                line = 1;
+                offset = 1;
+                const endPos = document.getPosition(document.text.length);
+                endLine = endPos.line + 1;
+                endOffset = endPos.character + 1;
             } else {
-                this.tspClient.notify(CommandTypes.Change, {
-                    file: path,
-                    line: change.range.start.line + 1,
-                    offset: change.range.start.character + 1,
-                    endLine: change.range.end.line + 1,
-                    endOffset: change.range.end.character + 1,
-                    insertString: change.text
-                });
+                line = change.range.start.line + 1;
+                offset = change.range.start.character + 1;
+                endLine = change.range.end.line + 1;
+                endOffset = change.range.end.character + 1;
             }
+            this.tspClient.notify(CommandTypes.Change, {
+                file: path,
+                line,
+                offset,
+                endLine,
+                endOffset,
+                insertString: change.text
+            });
         }
         this.requestDiagnostics();
     }

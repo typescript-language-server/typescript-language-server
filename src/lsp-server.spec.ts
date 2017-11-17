@@ -15,6 +15,7 @@ import { uri } from './test-utils';
 import { LspClient } from './lsp-client';
 import { ConsoleLogger } from './logger';
 import { Deferred } from './utils';
+import { applyEdits } from './document';
 
 export function position(document: lsp.TextDocumentItem, match: string): lsp.Position {
   const doc = lsp.TextDocument.create(document.uri, document.languageId, document.version, document.text);
@@ -37,6 +38,7 @@ before(async () => {
   server = new LspServer({
     logger: new ConsoleLogger(),
     tsserverPath: 'tsserver',
+    tsserverLogFile: '/Users/efftinge/Documents/theia-dev/typescript-language-server/tsserver.log',
     lspClient: {
       publishDiagnostics(args: lsp.PublishDiagnosticsParams): void {
         diagnostics = args;
@@ -57,6 +59,9 @@ before(async () => {
     capabilities: {}
   });
 });
+beforeEach(() => {
+  server.closeAll();
+})
 
 describe('completion', () => {
   it('simple test', async () => {
@@ -79,11 +84,14 @@ describe('completion', () => {
       position: pos
     });
     assert.isTrue(proposals.items.length > 800);
-    const item = proposals.items[0];
+    const item = proposals.items.filter(i => i.label === 'addEventListener')[0];
     const resolvedItem = await server.completionResolve(item)
     assert.isTrue(resolvedItem.documentation !== undefined);
-  });
-});
+    server.didCloseTextDocument({
+      textDocument: doc
+    });
+  }).timeout(5000);
+})
 
 describe('diagnostics', () => {
   it('simple test', async () => {
@@ -105,7 +113,7 @@ describe('diagnostics', () => {
     const diags = diagnostics!.diagnostics;
     assert.equal(1, diags.length);
     assert.equal("Cannot find name 'unknown'.", diags[0].message);
-  });
+  }).timeout(5000);
 });
 
 
@@ -135,7 +143,7 @@ describe('symbol', () => {
     assert.equal('Foo', symbols[1].name)
     assert.equal('foo', symbols[2].name)
     assert.equal('myFunction', symbols[3].name)
-  });
+  }).timeout(5000);
 });
 
 describe('editing', () => {
@@ -167,28 +175,10 @@ describe('editing', () => {
     await server.requestDiagnostics()
     await server.requestDiagnostics()
     const diags = diagnostics!.diagnostics;
-    assert.equal(1, diags.length);
+    assert.isTrue(diags.length >= 1, diags.map(d => d.message).join(','));
     assert.equal("Cannot find name 'unknown'.", diags[0].message);
-  });
+  }).timeout(5000);
 });
-
-function applyEdits(before: string, edits: lsp.TextEdit[]): string {
-  const sorted = edits.sort((a, b) => {
-    if (a.range.start.line === b.range.start.line) {
-      return a.range.start.character - b.range.start.character
-    }
-    return a.range.start.line - b.range.start.line
-  })
-  const doc = lsp.TextDocument.create('', '', 0, before)
-  let currentDoc = '';
-  let offset = 0;
-  for (const edit of sorted) {
-    const startOffset = doc.offsetAt(edit.range.start)
-    currentDoc += before.substr(offset, startOffset - offset) + edit.newText;
-    offset = doc.offsetAt(edit.range.end)
-  }
-  return currentDoc + before.substr(offset);
-}
 
 describe('formatting', () => {
   it('full document formatting', async () => {
@@ -209,8 +199,8 @@ describe('formatting', () => {
       }
     })
     const result = applyEdits(doc.text, edits);
-    assert.equal('export function foo(): void { }', result)
-  });
+    assert.equal('export function foo(): void { }', result);
+  }).timeout(5000);
 });
 
 
@@ -240,6 +230,6 @@ describe('signatureHelp', () => {
       position: position(doc, 'param2')
     })
 
-    assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label)
-  });
+    assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
+  }).timeout(5000);
 });

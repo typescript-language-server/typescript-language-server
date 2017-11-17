@@ -38,7 +38,7 @@ describe('ts server client', () => {
     }).then(completions => {
       assert.equal(completions.body![1].name, "ImageData");
     });
-  });
+  }).timeout(5000);
 
   it('references', () => {
     const f = filePath('module2.ts')
@@ -53,5 +53,5 @@ describe('ts server client', () => {
     }).then(references => {
       assert.equal(references.body!.symbolName, "doStuff");
     });
-  });
+  }).timeout(5000);
 });
