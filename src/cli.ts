@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Copyright (C) 2017 TypeFox and others.
+ * Copyright (C) 2017, 2018 TypeFox and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -22,7 +22,7 @@ const program = new Command('typescript-language-server')
     .option('--tsserver-path <path>', `Specifiy path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
     .parse(process.argv);
 
-if (!(program.stdio || program.socket || program['node-ipc'])) {
+if (!(program.stdio || program.socket || program.nodeIpc)) {
     console.error('Connection type required (stdio, node-ipc, socket). Refer to --help for more details.');
     process.exit(1);
 }
