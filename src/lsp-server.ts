@@ -275,7 +275,9 @@ export class LspServer {
             file: path,
             line: params.position.line + 1,
             offset: params.position.character + 1,
-            prefix: ''
+            prefix: '',
+            includeExternalModuleExports: true,
+            includeInsertTextCompletions: true
         });
         return {
             isIncomplete: false,
