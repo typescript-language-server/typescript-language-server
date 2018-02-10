@@ -34,7 +34,9 @@ describe('ts server client', () => {
       file: f,
       line: 1,
       offset: 0,
-      prefix: 'im'
+      prefix: 'im',
+      includeExternalModuleExports: true,
+      includeInsertTextCompletions: true
     }).then(completions => {
       assert.equal(completions.body![1].name, "ImageData");
     });
