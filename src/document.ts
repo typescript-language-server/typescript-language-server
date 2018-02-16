@@ -1,7 +1,4 @@
 import * as lsp from 'vscode-languageserver';
-import { position } from './lsp-server.spec';
-
-
 
 export function applyEdits(before: string, edits: lsp.TextEdit[]): string {
     const sorted = edits.sort((a, b) => {

@@ -11,21 +11,11 @@ import * as fs from 'fs';
 import * as tsp from 'typescript/lib/protocol';
 import * as lsp from 'vscode-languageserver';
 import { LspServer } from './lsp-server';
-import { uri } from './test-utils';
+import { uri, createServer, position, lastPosition } from './test-utils';
 import { LspClient } from './lsp-client';
 import { ConsoleLogger } from './logger';
 import { Deferred } from './utils';
 import { applyEdits } from './document';
-
-export function position(document: lsp.TextDocumentItem, match: string): lsp.Position {
-  const doc = lsp.TextDocument.create(document.uri, document.languageId, document.version, document.text);
-  const idx = doc.getText().indexOf(match)
-  const pos = doc.positionAt(idx);
-  return {
-    line: pos.line,
-    character: pos.character
-  };
-}
 
 const assert = chai.assert;
 const expect = chai.expect;
@@ -35,29 +25,10 @@ let diagnostics: lsp.PublishDiagnosticsParams | undefined;
 let server: LspServer;
 
 before(async () => {
-  server = new LspServer({
-    logger: new ConsoleLogger(),
-    tsserverPath: 'tsserver',
-    tsserverLogFile: '/Users/efftinge/Documents/theia-dev/typescript-language-server/tsserver.log',
-    lspClient: {
-      publishDiagnostics(args: lsp.PublishDiagnosticsParams): void {
-        diagnostics = args;
-      },
-      showMessage(args: lsp.ShowMessageParams): void {
-        throw args // should not be called.
-      },
-      async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse> {
-        throw new Error('unsupported')
-      }
-    },
-  });
-
-  await server.initialize({
-    rootPath: undefined,
+  server = await createServer({
     rootUri: '',
-    processId: 42,
-    capabilities: {}
-  });
+    publishDiagnostics: args => diagnostics = args
+  })
 });
 beforeEach(() => {
   server.closeAll();
@@ -231,5 +202,42 @@ describe('signatureHelp', () => {
     })
 
     assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
+  }).timeout(5000);
+});
+
+describe('documentHighlight', () => {
+  it('simple test', async () => {
+    const barDoc = {
+      uri: uri('bar.d.ts'),
+      languageId: 'typescript',
+      version: 1,
+      text: `
+        export declare const Bar: unique symbol;
+        export interface Bar {
+        }
+      `
+    };
+    server.didOpenTextDocument({
+      textDocument: barDoc
+    });
+    const fooDoc = {
+      uri: uri('bar.ts'),
+      languageId: 'typescript',
+      version: 1,
+      text: `
+        import { Bar } from './bar';
+        export class Foo implements Bar {
+        }
+      `
+    };
+    server.didOpenTextDocument({
+      textDocument: fooDoc
+    });
+
+    const result = await server.documentHighlight({
+      textDocument: fooDoc,
+      position: lastPosition(fooDoc, 'Bar')
+    });
+    assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
   }).timeout(5000);
 });

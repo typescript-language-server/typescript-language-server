@@ -56,4 +56,21 @@ describe('ts server client', () => {
       assert.equal(references.body!.symbolName, "doStuff");
     });
   }).timeout(5000);
+
+  it('documentHighlight', () => {
+    const f = filePath('module2.ts')
+    server.notify(CommandTypes.Open, {
+      file: f,
+      fileContent: readContents(f)
+    });
+    return server.request(CommandTypes.DocumentHighlights, {
+      file: f,
+      line: 8,
+      offset: 16,
+      filesToSearch: [f]
+    }).then(response => {
+      assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')));
+      assert.isTrue(response.body!.some(({ file }) => file.endsWith('module1.ts')));
+    });
+  }).timeout(5000);
 });
