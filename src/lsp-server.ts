@@ -539,12 +539,13 @@ export class LspServer {
     public async documentHighlight(arg: lsp.TextDocumentPositionParams): Promise<lsp.DocumentHighlight[]> {
         this.logger.log('documentHighlight', arg);
         let response: tsp.DocumentHighlightsResponse
+        const file = uriToPath(arg.textDocument.uri);
         try {
             response = await this.tspClient.request(CommandTypes.DocumentHighlights, <tsp.DocumentHighlightsRequestArgs>{
-                file: uriToPath(arg.textDocument.uri),
+                file: file,
                 line: arg.position.line + 1,
                 offset: arg.position.character + 1,
-                filesToSearch: [uriToPath(arg.textDocument.uri)]
+                filesToSearch: [file]
             })
         } catch (err) {
             return [];
@@ -554,8 +555,10 @@ export class LspServer {
         }
         const result: lsp.DocumentHighlight[] = [];
         for (const item of response.body) {
-            const highlights = toDocumentHighlight(item);
-            result.push(...highlights)
+            if (item.file === file) {
+                const highlights = toDocumentHighlight(item);
+                result.push(...highlights)
+            }
         }
         return result;
     }
