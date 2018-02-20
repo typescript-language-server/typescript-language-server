@@ -1,15 +1,18 @@
 /*
- * Copyright (C) 2017 TypeFox and others.
+ * Copyright (C) 2017, 2018 TypeFox and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { clearTimeout } from "timers";
 
 export class Deferred<T> {
 
+    private timer: any
+
     constructor(private operation: string, timeout?: number) {
-        setTimeout(() => {
+        this.timer = setTimeout(() => {
             this.reject(new Error(this.operation + " timeout"));
         }, timeout || 20000)
     }
@@ -18,8 +21,14 @@ export class Deferred<T> {
     reject: (err?: any) => void;
 
     promise = new Promise<T>((resolve, reject) => {
-        this.resolve = resolve;
-        this.reject = reject;
+        this.resolve = obj => {
+            clearTimeout(this.timer);
+            resolve(obj);
+        }
+        this.reject = obj => {
+            clearTimeout(this.timer);
+            reject(obj);
+        }
     });
 }
 

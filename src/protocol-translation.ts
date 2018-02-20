@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 TypeFox and others.
+ * Copyright (C) 2017, 2018 TypeFox and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -13,10 +13,16 @@ import { isWindows } from './utils';
 
 export function uriToPath(stringUri: string): string {
     const uri = URI.parse(stringUri);
+    if (uri.scheme !== 'file') {
+        return stringUri;
+    }
     return uri.fsPath;
 }
 
 export function pathToUri(p: string): string {
+    if (p.indexOf(':') !== -1) {
+        return p;
+    }
     return 'file://' + (isWindows() ? '/' + p.replace(/\//g, '/') : p);
 }
 
