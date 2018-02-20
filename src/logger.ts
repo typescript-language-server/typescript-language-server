@@ -26,13 +26,13 @@ export class LspClientLogger implements Logger {
         if (this.level >= severity) {
             let message = messageObjects.map( p => {
                 if (typeof p === 'object') {
-                    return JSON.stringify(p)
+                    return JSON.stringify(p, null, 2)
                 } else {
                     return p
                 }
             }).join(' ');
 
-            this.client.showMessage({
+            this.client.logMessage({
                 type: severity,
                 message: message
             })
@@ -61,18 +61,22 @@ export class ConsoleLogger implements Logger {
 
     constructor(private isLogEnabled?: boolean) {}
 
+    private toStrings(...arg): string[] {
+        return (arg.map(a => JSON.stringify(a, null, 2)));
+    }
+
     error(...arg) {
-        console.error(...arg);
+        console.error(...this.toStrings(arg));
     }
     warn(...arg) {
-        console.warn(...arg);
+        console.warn(...this.toStrings(arg));
     }
     info(...arg) {
-        console.info(...arg);
+        console.info(...this.toStrings(arg));
     }
     log(...arg) {
         if (this.isLogEnabled) {
-            console.log(...arg);
+            console.log(...this.toStrings(arg));
         }
     }
 }

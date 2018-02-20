@@ -14,15 +14,12 @@ import { isWindows } from './utils';
 export function uriToPath(stringUri: string): string {
     const uri = URI.parse(stringUri);
     if (uri.scheme !== 'file') {
-        return stringUri;
+        throw new Error(`The Typescript Language Server only supports file-scheme URIs. Received "${stringUri}"`)
     }
     return uri.fsPath;
 }
 
 export function pathToUri(p: string): string {
-    if (p.indexOf(':') !== -1) {
-        return p;
-    }
     return 'file://' + (isWindows() ? '/' + p.replace(/\//g, '/') : p);
 }
 

@@ -10,7 +10,9 @@ import * as lsp from 'vscode-languageserver';
 export interface LspClient {
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
     showMessage(args: lsp.ShowMessageParams): void;
+    logMessage(args: lsp.LogMessageParams): void;
     applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse>;
+    telemetry(args: any): void;
 }
 
 export class LspClientImpl implements LspClient {
@@ -23,6 +25,14 @@ export class LspClientImpl implements LspClient {
 
     showMessage(args: lsp.ShowMessageParams): void {
         this.connection.sendNotification(lsp.ShowMessageNotification.type, args);
+    }
+
+    logMessage(args: lsp.LogMessageParams): void {
+        this.connection.sendNotification(lsp.LogMessageNotification.type, args);
+    }
+
+    telemetry(args: any): void {
+        this.connection.sendNotification(lsp.TelemetryEventNotification.type, args);
     }
 
     async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse> {

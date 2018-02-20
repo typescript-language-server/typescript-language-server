@@ -46,14 +46,21 @@ export async function createServer(options: {
     rootUri: string
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void
 }): Promise<LspServer> {
+    const logger = new ConsoleLogger(false);
     const server = new LspServer({
-        logger: new ConsoleLogger(),
+        logger,
         tsserverPath: 'tsserver',
         tsserverLogFile: path.resolve(__dirname, '../tsserver.log'),
         lspClient: {
             publishDiagnostics: options.publishDiagnostics,
             showMessage(args: lsp.ShowMessageParams): void {
                 throw args // should not be called.
+            },
+            logMessage(args: lsp.LogMessageParams): void {
+                logger.log('logMessage', JSON.stringify(args));
+            },
+            telemetry(args): void {
+                logger.log('telemetry', JSON.stringify(args));
             },
             async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse> {
                 throw new Error('unsupported')

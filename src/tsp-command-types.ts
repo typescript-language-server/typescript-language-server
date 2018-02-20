@@ -71,4 +71,5 @@ export const enum EventTypes {
     RequestCompleted = 'requestCompleted',
     SyntaxDiag = 'syntaxDiag',
     SementicDiag = 'semanticDiag',
+    Telemetry = 'telemetry'
 }

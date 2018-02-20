@@ -29,8 +29,9 @@
     "mocha": "^3.5.3",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.4.18",
+    "ts-node": "^5.0.0",
     "tslint": "^5.8.0",
-    "typescript": "2.7.1"
+    "typescript": "^2.7.2"
   },
   "dependencies": {
     "command-exists": "^1.2.2",
