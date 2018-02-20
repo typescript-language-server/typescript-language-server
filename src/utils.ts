@@ -1,3 +1,5 @@
+import { clearTimeout } from "timers";
+
 /*
  * Copyright (C) 2017 TypeFox and others.
  *
@@ -8,8 +10,10 @@
 
 export class Deferred<T> {
 
+    private timer: any
+
     constructor(private operation: string, timeout?: number) {
-        setTimeout(() => {
+        this.timer = setTimeout(() => {
             this.reject(new Error(this.operation + " timeout"));
         }, timeout || 20000)
     }
@@ -18,8 +22,14 @@ export class Deferred<T> {
     reject: (err?: any) => void;
 
     promise = new Promise<T>((resolve, reject) => {
-        this.resolve = resolve;
-        this.reject = reject;
+        this.resolve = obj => {
+            clearTimeout(this.timer);
+            resolve(obj);
+        }
+        this.reject = obj => {
+            clearTimeout(this.timer);
+            reject(obj);
+        }
     });
 }
 
