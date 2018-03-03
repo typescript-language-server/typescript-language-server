@@ -61,7 +61,7 @@ describe('completion', () => {
     server.didCloseTextDocument({
       textDocument: doc
     });
-  }).timeout(5000);
+  }).timeout(10000);
 })
 
 describe('diagnostics', () => {
@@ -84,7 +84,7 @@ describe('diagnostics', () => {
     const diags = diagnostics!.diagnostics;
     assert.equal(1, diags.length);
     assert.equal("Cannot find name 'unknown'.", diags[0].message);
-  }).timeout(5000);
+  }).timeout(10000);
 });
 
 
@@ -114,7 +114,7 @@ describe('symbol', () => {
     assert.equal('Foo', symbols[1].name)
     assert.equal('foo', symbols[2].name)
     assert.equal('myFunction', symbols[3].name)
-  }).timeout(5000);
+  }).timeout(10000);
 });
 
 describe('editing', () => {
@@ -148,7 +148,7 @@ describe('editing', () => {
     const diags = diagnostics!.diagnostics;
     assert.isTrue(diags.length >= 1, diags.map(d => d.message).join(','));
     assert.equal("Cannot find name 'unknown'.", diags[0].message);
-  }).timeout(5000);
+  }).timeout(10000);
 });
 
 describe('formatting', () => {
@@ -171,7 +171,7 @@ describe('formatting', () => {
     })
     const result = applyEdits(doc.text, edits);
     assert.equal('export function foo(): void { }', result);
-  }).timeout(5000);
+  }).timeout(10000);
 });
 
 
@@ -202,7 +202,7 @@ describe('signatureHelp', () => {
     })
 
     assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
-  }).timeout(5000);
+  }).timeout(10000);
 });
 
 describe('documentHighlight', () => {
@@ -239,5 +239,5 @@ describe('documentHighlight', () => {
       position: lastPosition(fooDoc, 'Bar')
     });
     assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
-  }).timeout(5000);
+  }).timeout(10000);
 });

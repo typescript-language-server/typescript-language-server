@@ -43,5 +43,5 @@ describe('documentHighlight', () => {
       position: lastPosition(doc, 'doStuff')
     });
     assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
-  }).timeout(5000);
+  }).timeout(10000);
 });
