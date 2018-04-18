@@ -173,6 +173,13 @@ export class LspServer {
         this.logger.log('onDidCloseTextDocument', params, path);
         this.tspClient.notify(CommandTypes.Close, { file: path });
         this.openedDocumentUris.delete(params.textDocument.uri)
+
+        // We won't be updating diagnostics anymore for that file, so clear them
+        // so we don't leave stale ones.
+        this.options.lspClient.publishDiagnostics({
+            uri: params.textDocument.uri,
+            diagnostics: [],
+        });
     }
 
     public didChangeTextDocument(params: lsp.DidChangeTextDocumentParams): void {
