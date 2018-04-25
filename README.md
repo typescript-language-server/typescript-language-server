@@ -75,3 +75,10 @@ yarn test
 yarn
 yarn watch
 ```
+
+### Publishing
+
+```sh
+npm install --global np
+npx np
+```
