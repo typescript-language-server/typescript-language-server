@@ -7,7 +7,7 @@
     "url": "https://github.com/theia-ide/typescript-language-server.git"
   },
   "scripts": {
-    "postinstall": "yarn run build",
+    "prepare": "yarn run build",
     "build": "tsc && tslint --project .",
     "clean": "rimraf lib",
     "watch": "tsc --watch",
