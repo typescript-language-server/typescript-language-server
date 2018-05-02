@@ -19,7 +19,7 @@ const program = new Command('typescript-language-server')
     .option('--socket <port>', 'use socket. example: --socket=5000')
     .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')
     .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). example: --tsserver-log-verbosity verbose')
-    .option('--tsserver-path <path>', `Specifiy path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
+    .option('--tsserver-path <path>', `Specify path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
     .parse(process.argv);
 
 if (!(program.stdio || program.socket || program.nodeIpc)) {
