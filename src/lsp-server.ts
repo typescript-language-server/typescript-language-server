@@ -430,6 +430,11 @@ export class LspServer {
             this.logger.log("No formatting options found " + err)
         }
 
+        // options are not yet supported in tsserver, but we can send a configure request first
+        this.tspClient.request(CommandTypes.Configure, <tsp.ConfigureRequestArguments>{
+            formatOptions: opts
+        });
+
         const response = await this.tspClient.request(CommandTypes.Format, <tsp.FormatRequestArgs>{
             file: path,
             line: 1,
