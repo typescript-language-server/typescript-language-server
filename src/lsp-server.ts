@@ -420,10 +420,15 @@ export class LspServer {
         let opts = <tsp.FormatCodeSettings>{
             ...params.options
         }
+
         // translate
-        if (!opts.convertTabsToSpaces) {
+        if (opts.convertTabsToSpaces === undefined) {
             opts.convertTabsToSpaces = params.options.insertSpaces
         }
+        if (opts.indentSize === undefined) {
+            opts.indentSize = params.options.tabSize
+        }
+
         try {
             opts = JSON.parse(fs.readFileSync(this.rootPath() + "/tsfmt.json", 'utf-8'));
         } catch (err) {
