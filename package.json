@@ -1,6 +1,6 @@
 {
   "name": "typescript-language-server",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
   "repository": {
     "type": "git",
@@ -37,6 +37,7 @@
   "dependencies": {
     "command-exists": "^1.2.2",
     "commander": "^2.11.0",
+    "np": "^2.20.1",
     "vscode-languageserver": "^3.4.3",
     "vscode-uri": "^1.0.1"
   }
