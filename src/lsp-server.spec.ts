@@ -172,6 +172,48 @@ describe('formatting', () => {
     const result = applyEdits(doc.text, edits);
     assert.equal('export function foo(): void { }', result);
   }).timeout(10000);
+
+  it('indent settings (3 spaces)', async () => {
+    const doc = {
+      uri: uri('bar.ts'),
+      languageId: 'typescript',
+      version: 1,
+      text: 'function foo() {\n// some code\n}'
+    }
+    server.didOpenTextDocument({
+      textDocument: doc
+    })
+    const edits = await server.documentFormatting({
+      textDocument: doc,
+      options: {
+        tabSize: 3,
+        insertSpaces: true
+      }
+    })
+    const result = applyEdits(doc.text, edits);
+    assert.equal('function foo() {\n   // some code\n}', result);
+  }).timeout(10000);
+
+  it('indent settings (tabs)', async () => {
+    const doc = {
+      uri: uri('bar.ts'),
+      languageId: 'typescript',
+      version: 1,
+      text: 'function foo() {\n// some code\n}'
+    }
+    server.didOpenTextDocument({
+      textDocument: doc
+    })
+    const edits = await server.documentFormatting({
+      textDocument: doc,
+      options: {
+        tabSize: 4,
+        insertSpaces: false
+      }
+    })
+    const result = applyEdits(doc.text, edits);
+    assert.equal('function foo() {\n\t// some code\n}', result);
+  }).timeout(10000);
 });
 
 
