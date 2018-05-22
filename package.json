@@ -27,7 +27,7 @@
     "@types/mocha": "^2.2.43",
     "@types/node": "^8.0.31",
     "chai": "^4.1.2",
-    "mocha": "^3.5.3",
+    "mocha": "5.2.0",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.4.18",
     "ts-node": "^5.0.0",
@@ -35,7 +35,7 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "command-exists": "^1.2.2",
+    "command-exists": "1.2.6",
     "commander": "^2.11.0",
     "np": "^2.20.1",
     "vscode-languageserver": "^3.4.3",
