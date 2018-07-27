@@ -80,6 +80,8 @@ export class TspClient {
 
     request(command: CommandTypes.Configure, args: protocol.ConfigureRequestArguments): Promise<protocol.ConfigureResponse>
     request(command: CommandTypes.Definition, args: protocol.FileLocationRequestArgs): Promise<protocol.DefinitionResponse>
+    request(command: CommandTypes.Implementation, args: protocol.FileLocationRequestArgs): Promise<protocol.ImplementationResponse>
+    request(command: CommandTypes.TypeDefinition, args: protocol.FileLocationRequestArgs): Promise<protocol.TypeDefinitionResponse>
     request(command: CommandTypes.Format, args: protocol.FormatRequestArgs): Promise<protocol.FormatResponse>
     request(command: CommandTypes.GetApplicableRefactors, args: protocol.CodeFixRequestArgs): Promise<protocol.GetCodeFixesResponse>
     request(command: CommandTypes.GetCodeFixes, args: protocol.CodeFixRequestArgs): Promise<protocol.GetCodeFixesResponse>
