@@ -75,7 +75,6 @@ export class TspClient {
     notify(command: CommandTypes.Saveto, args: protocol.SavetoRequestArgs)
     notify(command: CommandTypes.Change, args: protocol.ChangeRequestArgs)
     notify(command: string, args: object) {
-        this.logger.log("notify", command, args);
         this.sendMessage(command, true, args);
     }
 
@@ -96,7 +95,6 @@ export class TspClient {
     request(command: CommandTypes.References, args: protocol.FileLocationRequestArgs): Promise<protocol.ReferencesResponse>
     request(command: CommandTypes.SignatureHelp, args: protocol.SignatureHelpRequestArgs): Promise<protocol.SignatureHelpResponse>
     request(command: string, args: object): Promise<object> {
-        this.logger.log("request", command, args);
         return this.sendMessage(command, false, args)!;
     }
 
@@ -113,8 +111,10 @@ export class TspClient {
         const serializedRequest = JSON.stringify(request) + "\n";
         this.tsserverProc.stdin.write(serializedRequest);
         if (notification) {
+            this.logger.log("notify", request);
             return;
         } else {
+            this.logger.log("request", request);
             return (this.deferreds[this.seq] = new Deferred<any>(command)).promise;
         }
     }
@@ -125,6 +125,7 @@ export class TspClient {
             return;
         }
         const message: protocol.Message = JSON.parse(messageString);
+        this.logger.log('processMessage', message);
         if (this.isResponse(message)) {
             this.resolveResponse(message, message.request_seq, message.success);
         } else if (this.isEvent(message)) {
@@ -140,7 +141,7 @@ export class TspClient {
 
     private resolveResponse(message: protocol.Message, request_seq: number, success: boolean) {
         const deferred = this.deferreds[request_seq];
-        this.logger.log('has deferred', !!deferred, message, Object.keys(this.deferreds));
+        this.logger.log('request completed', { request_seq, success });
         if (deferred) {
             if (success) {
                 this.deferreds[request_seq].resolve(message);

@@ -16,7 +16,6 @@ const expect = chai.expect;
 let server: LspServer;
 
 before(async () => {
-  uri()
   server = await createServer({
     rootUri: uri(),
     publishDiagnostics: () => { }
