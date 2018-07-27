@@ -25,7 +25,7 @@ export class LspDocument implements lsp.TextDocument {
         return this.document.uri;
     }
 
-    get languageId(): string  {
+    get languageId(): string {
         return this.document.languageId;
     }
 
@@ -45,8 +45,32 @@ export class LspDocument implements lsp.TextDocument {
         return this.document.offsetAt(position);
     }
 
-    get lineCount(): number {
+    get lineCount(): number {
         return this.document.lineCount;
     }
 
+    getLine(line: number): string {
+        const lineRange = this.getLineRange(line);
+        return this.getText(lineRange);
+    }
+
+    getLineRange(line: number): lsp.Range {
+        const lineStart = this.getLineStart(line);
+        const lineEnd = this.getLineEnd(line);
+        return lsp.Range.create(lineStart, lineEnd);
+    }
+
+    getLineEnd(line: number): lsp.Position {
+        const nextLineOffset = this.getLineOffset(line + 1);
+        return this.positionAt(nextLineOffset - 1);
+    }
+
+    getLineOffset(line: number): number {
+        const lineStart = this.getLineStart(line);
+        return this.offsetAt(lineStart);
+    }
+
+    getLineStart(line: number): lsp.Position {
+        return lsp.Position.create(line, 0);
+    }
 }

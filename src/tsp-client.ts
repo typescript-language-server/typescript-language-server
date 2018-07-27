@@ -96,6 +96,7 @@ export class TspClient {
     request(command: CommandTypes.Rename, args: protocol.RenameRequestArgs): Promise<protocol.RenameResponse>
     request(command: CommandTypes.References, args: protocol.FileLocationRequestArgs): Promise<protocol.ReferencesResponse>
     request(command: CommandTypes.SignatureHelp, args: protocol.SignatureHelpRequestArgs): Promise<protocol.SignatureHelpResponse>
+    request(command: CommandTypes.GetOutliningSpans, args: protocol.FileRequestArgs): Promise<protocol.OutliningSpansResponse>
     request(command: string, args: object): Promise<object> {
         return this.sendMessage(command, false, args)!;
     }
