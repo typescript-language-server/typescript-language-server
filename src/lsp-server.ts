@@ -125,6 +125,7 @@ export class LspServer {
                 workspaceSymbolProvider: true,
                 implementationProvider: true,
                 typeDefinitionProvider: true,
+                foldingRangeProvider: true
             }
         };
 
@@ -649,6 +650,71 @@ export class LspServer {
                 name: item.name
             };
         });
+    }
+
+    /**
+     * implemented based on https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/folding.ts
+     */
+    async foldingRanges(params: lsp.FoldingRangeRequestParam): Promise<lsp.FoldingRange[] | undefined> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('foldingRanges', params, file);
+        const document = this.openedDocumentUris.get(params.textDocument.uri);
+        if (!document) {
+            throw new Error("The document should be opened for foldingRanges', file: " + file);
+        }
+        const { body } = await this.tspClient.request(CommandTypes.GetOutliningSpans, { file });
+        if (!body) {
+            return undefined;
+        }
+        const foldingRanges: lsp.FoldingRange[] = [];
+        for (const span of body) {
+            const foldingRange = this.asFoldingRange(span, document);
+            if (foldingRange) {
+                foldingRanges.push(foldingRange);
+            }
+        }
+        return foldingRanges;
+    }
+    protected asFoldingRange(span: tsp.OutliningSpan, document: LspDocument): lsp.FoldingRange | undefined {
+        const range = this.asRange(span.textSpan);
+        const kind = this.asFoldingRangeKind(span);
+
+        // workaround for https://github.com/Microsoft/vscode/issues/49904
+        if (span.kind === 'comment') {
+            const line = document.getLine(range.start.line);
+            if (line.match(/\/\/\s*#endregion/gi)) {
+                return undefined;
+            }
+        }
+
+        const startLine = range.start.line;
+
+        // workaround for https://github.com/Microsoft/vscode/issues/47240
+        const endLine = (range.end.character > 0 && document.getText(lsp.Range.create(
+            lsp.Position.create(range.end.line, range.end.character - 1),
+            range.end
+        )) === '}') ? Math.max(range.end.line - 1, range.start.line) : range.end.line;
+
+        return {
+            startLine,
+            endLine,
+            kind
+        }
+    }
+    protected asRange(span: tsp.TextSpan): lsp.Range {
+        return lsp.Range.create(
+            Math.max(0, span.start.line - 1), Math.max(span.start.offset - 1, 0),
+            Math.max(0, span.end.line - 1), Math.max(0, span.end.offset - 1)
+        );
+    }
+    protected asFoldingRangeKind(span: tsp.OutliningSpan): lsp.FoldingRangeKind | undefined {
+        switch (span.kind) {
+            case 'comment': return lsp.FoldingRangeKind.Comment;
+            case 'region': return lsp.FoldingRangeKind.Region;
+            case 'imports': return lsp.FoldingRangeKind.Imports;
+            case 'code':
+            default: return undefined;
+        }
     }
 
     protected onTsEvent(event: protocol.Event): void {

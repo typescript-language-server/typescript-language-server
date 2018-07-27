@@ -52,6 +52,7 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     connection.onRenameRequest(server.rename.bind(server));
     connection.onSignatureHelp(server.signatureHelp.bind(server));
     connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
+    connection.onFoldingRanges(server.foldingRanges.bind(server));
 
     return connection;
 }
