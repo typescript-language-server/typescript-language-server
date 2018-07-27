@@ -20,6 +20,7 @@ and limitations under the License.
 export const enum CommandTypes {
     Brace = "brace",
     BraceCompletion = "braceCompletion",
+    GetSpanOfEnclosingComment = "getSpanOfEnclosingComment",
     Change = "change",
     Close = "close",
     Completions = "completions",
@@ -28,6 +29,7 @@ export const enum CommandTypes {
     CompileOnSaveEmitFile = "compileOnSaveEmitFile",
     Configure = "configure",
     Definition = "definition",
+    DefinitionAndBoundSpan = "definitionAndBoundSpan",
     Implementation = "implementation",
     Exit = "exit",
     Format = "format",
@@ -36,10 +38,12 @@ export const enum CommandTypes {
     GeterrForProject = "geterrForProject",
     SemanticDiagnosticsSync = "semanticDiagnosticsSync",
     SyntacticDiagnosticsSync = "syntacticDiagnosticsSync",
+    SuggestionDiagnosticsSync = "suggestionDiagnosticsSync",
     NavBar = "navbar",
     Navto = "navto",
     NavTree = "navtree",
     NavTreeFull = "navtree-full",
+    /** @deprecated */
     Occurrences = "occurrences",
     DocumentHighlights = "documentHighlights",
     Open = "open",
@@ -49,6 +53,7 @@ export const enum CommandTypes {
     Rename = "rename",
     Saveto = "saveto",
     SignatureHelp = "signatureHelp",
+    Status = "status",
     TypeDefinition = "typeDefinition",
     ProjectInfo = "projectInfo",
     ReloadProjects = "reloadProjects",
@@ -56,14 +61,19 @@ export const enum CommandTypes {
     OpenExternalProject = "openExternalProject",
     OpenExternalProjects = "openExternalProjects",
     CloseExternalProject = "closeExternalProject",
+    GetOutliningSpans = "getOutliningSpans",
     TodoComments = "todoComments",
     Indentation = "indentation",
     DocCommentTemplate = "docCommentTemplate",
     CompilerOptionsForInferredProjects = "compilerOptionsForInferredProjects",
     GetCodeFixes = "getCodeFixes",
+    GetCombinedCodeFix = "getCombinedCodeFix",
+    ApplyCodeActionCommand = "applyCodeActionCommand",
     GetSupportedCodeFixes = "getSupportedCodeFixes",
     GetApplicableRefactors = "getApplicableRefactors",
     GetEditsForRefactor = "getEditsForRefactor",
+    OrganizeImports = "organizeImports",
+    GetEditsForFileRename = "getEditsForFileRename"
 }
 
 export const enum EventTypes {

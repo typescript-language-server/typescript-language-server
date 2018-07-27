@@ -123,6 +123,8 @@ export class LspServer {
                     triggerCharacters: ['(', ',']
                 },
                 workspaceSymbolProvider: true,
+                implementationProvider: true,
+                typeDefinitionProvider: true,
             }
         };
 
@@ -234,18 +236,42 @@ export class LspServer {
         // do nothing
     }
 
-    public async definition(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition> {
+    async definition(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition> {
+        // TODO: implement version checking and if semver.gte(version, 270) use `definitionAndBoundSpan` instead
+        return this.getDefinition({
+            type: 'definition',
+            params
+        });
+    }
+
+    async implementation(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition> {
+        return this.getDefinition({
+            type: 'implementation',
+            params
+        });
+    }
+
+    async typeDefinition(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition> {
+        return this.getDefinition({
+            type: 'typeDefinition',
+            params
+        });
+    }
+
+    protected async getDefinition({ type, params }: {
+        type: 'definition' | 'implementation' | 'typeDefinition',
+        params: lsp.TextDocumentPositionParams
+    }): Promise<lsp.Definition> {
         const path = uriToPath(params.textDocument.uri);
 
-        this.logger.log('definition', params, path);
+        this.logger.log(type, params, path);
 
-        const result = await this.tspClient.request(CommandTypes.Definition, {
+        const result = await this.tspClient.request(type as CommandTypes.Definition, {
             file: path,
             line: params.position.line + 1,
             offset: params.position.character + 1
         });
-        return result.body ? result.body
-            .map(fileSpan => toLocation(fileSpan)) : [];
+        return result.body ? result.body.map(fileSpan => toLocation(fileSpan)) : [];
     }
 
     public async documentSymbol(params: lsp.TextDocumentPositionParams): Promise<lsp.SymbolInformation[]> {
