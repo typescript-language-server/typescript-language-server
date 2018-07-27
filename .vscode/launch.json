@@ -13,8 +13,7 @@
                     "source-map-support/register",
                     "--compilers",
                     "ts:ts-node/register",
-                    "--timeout",
-                    "999999",
+                    "--no-timeouts",
                     "${file}"
                 ],
                 "internalConsoleOptions": "openOnSessionStart"

@@ -6,19 +6,12 @@
  */
 
 import * as chai from 'chai';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as tsp from 'typescript/lib/protocol';
 import * as lsp from 'vscode-languageserver';
 import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition } from './test-utils';
-import { LspClient } from './lsp-client';
-import { ConsoleLogger } from './logger';
-import { Deferred } from './utils';
-import { applyEdits } from './document';
+import { TextDocument } from 'vscode-languageserver';
 
 const assert = chai.assert;
-const expect = chai.expect;
 
 let diagnostics: lsp.PublishDiagnosticsParams | undefined;
 
@@ -26,7 +19,7 @@ let server: LspServer;
 
 before(async () => {
   server = await createServer({
-    rootUri: '',
+    rootUri: null,
     publishDiagnostics: args => diagnostics = args
   })
 });
@@ -152,66 +145,58 @@ describe('editing', () => {
 });
 
 describe('formatting', () => {
+  const uriString = uri('bar.ts');
+  const languageId = 'typescript';
+  const version = 1;
+
   it('full document formatting', async () => {
-    const doc = {
-      uri: uri('bar.ts'),
-      languageId: 'typescript',
-      version: 1,
-      text: 'export  function foo (     )   :  void   {   }'
+    const text = 'export  function foo (     )   :  void   {   }';
+    const textDocument = {
+      uri: uriString, languageId, version, text
     }
-    server.didOpenTextDocument({
-      textDocument: doc
-    })
+    server.didOpenTextDocument({ textDocument })
     const edits = await server.documentFormatting({
-      textDocument: doc,
+      textDocument,
       options: {
         tabSize: 4,
         insertSpaces: true
       }
     })
-    const result = applyEdits(doc.text, edits);
+    const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
     assert.equal('export function foo(): void { }', result);
   }).timeout(10000);
 
   it('indent settings (3 spaces)', async () => {
-    const doc = {
-      uri: uri('bar.ts'),
-      languageId: 'typescript',
-      version: 1,
-      text: 'function foo() {\n// some code\n}'
+    const text = 'function foo() {\n// some code\n}';
+    const textDocument = {
+      uri: uriString, languageId, version, text
     }
-    server.didOpenTextDocument({
-      textDocument: doc
-    })
+    server.didOpenTextDocument({ textDocument })
     const edits = await server.documentFormatting({
-      textDocument: doc,
+      textDocument,
       options: {
         tabSize: 3,
         insertSpaces: true
       }
     })
-    const result = applyEdits(doc.text, edits);
+    const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
     assert.equal('function foo() {\n   // some code\n}', result);
   }).timeout(10000);
 
   it('indent settings (tabs)', async () => {
-    const doc = {
-      uri: uri('bar.ts'),
-      languageId: 'typescript',
-      version: 1,
-      text: 'function foo() {\n// some code\n}'
+    const text = 'function foo() {\n// some code\n}';
+    const textDocument = {
+      uri: uriString, languageId, version, text
     }
-    server.didOpenTextDocument({
-      textDocument: doc
-    })
+    server.didOpenTextDocument({ textDocument })
     const edits = await server.documentFormatting({
-      textDocument: doc,
+      textDocument,
       options: {
         tabSize: 4,
         insertSpaces: false
       }
     })
-    const result = applyEdits(doc.text, edits);
+    const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
     assert.equal('function foo() {\n\t// some code\n}', result);
   }).timeout(10000);
 });

@@ -43,13 +43,15 @@ export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp
 }
 
 export async function createServer(options: {
-    rootUri: string
+    rootUri: string | null
+    tsserverLogVerbosity?: string
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void
 }): Promise<LspServer> {
     const logger = new ConsoleLogger(false);
     const server = new LspServer({
         logger,
         tsserverPath: 'tsserver',
+        tsserverLogVerbosity: options.tsserverLogVerbosity,
         tsserverLogFile: path.resolve(__dirname, '../tsserver.log'),
         lspClient: {
             publishDiagnostics: options.publishDiagnostics,
@@ -72,7 +74,8 @@ export async function createServer(options: {
         rootPath: undefined,
         rootUri: options.rootUri,
         processId: 42,
-        capabilities: {}
+        capabilities: {},
+        workspaceFolders: null
     });
     return server;
 }

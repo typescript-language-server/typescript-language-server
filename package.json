@@ -32,13 +32,12 @@
     "source-map-support": "^0.4.18",
     "ts-node": "^5.0.0",
     "tslint": "^5.8.0",
-    "typescript": "^2.7.2"
+    "typescript": "2.9.1"
   },
   "dependencies": {
     "command-exists": "1.2.6",
     "commander": "^2.11.0",
-    "np": "^2.20.1",
-    "vscode-languageserver": "^3.4.3",
-    "vscode-uri": "^1.0.1"
+    "vscode-languageserver": "^4.4.0",
+    "vscode-uri": "^1.0.5"
   }
 }

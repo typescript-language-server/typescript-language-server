@@ -8,7 +8,6 @@
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
 import * as fs from 'fs';
-import * as cp from 'child_process';
 import * as commandExists from 'command-exists';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
@@ -58,9 +57,9 @@ export class LspServer {
             this.didCloseTextDocument({
                 textDocument: {
                     uri,
-                    languageId: 'typescript',
+                    languageId: doc.languageId,
                     version: doc.version,
-                    text: doc.text
+                    text: doc.getText()
                 }
             });
         }
@@ -161,11 +160,23 @@ export class LspServer {
         } else {
             this.tspClient.notify(CommandTypes.Open, {
                 file: path,
-                fileContent: params.textDocument.text
+                fileContent: params.textDocument.text,
+                scriptKindName: this.getScriptKindName(params.textDocument.languageId),
+                projectRootPath: this.rootPath()
             });
             this.openedDocumentUris.set(params.textDocument.uri, new LspDocument(params.textDocument));
             this.requestDiagnostics();
         }
+    }
+
+    protected getScriptKindName(languageId: string): tsp.ScriptKindName | undefined {
+        switch (languageId) {
+            case 'typescript': return 'TS';
+            case 'typescriptreact': return 'TSX';
+            case 'javascript': return 'JS';
+            case 'javascriptreact': return 'JSX';
+        }
+        return undefined;
     }
 
     public didCloseTextDocument(params: lsp.DidOpenTextDocumentParams): void {
@@ -185,7 +196,7 @@ export class LspServer {
     public didChangeTextDocument(params: lsp.DidChangeTextDocumentParams): void {
         const path = uriToPath(params.textDocument.uri)
 
-        this.logger.log('onDidCloseTextDocument', params, path);
+        this.logger.log('onDidChangeTextDocument', params, path);
         const document = this.openedDocumentUris.get(params.textDocument.uri);
         if (!document) {
             this.logger.error("Received change on non-opened document " + params.textDocument.uri);
@@ -198,7 +209,7 @@ export class LspServer {
             if (!change.range) {
                 line = 1;
                 offset = 1;
-                const endPos = document.getPosition(document.text.length);
+                const endPos = document.positionAt(document.getText().length);
                 endLine = endPos.line + 1;
                 endOffset = endPos.character + 1;
             } else {
@@ -436,7 +447,7 @@ export class LspServer {
         }
 
         // options are not yet supported in tsserver, but we can send a configure request first
-        this.tspClient.request(CommandTypes.Configure, <tsp.ConfigureRequestArguments>{
+        await this.tspClient.request(CommandTypes.Configure, <tsp.ConfigureRequestArguments>{
             formatOptions: opts
         });
 
@@ -581,7 +592,7 @@ export class LspServer {
     }
 
     private rootPath(): string {
-        return this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath!
+        return this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath!;
     }
 
     private lastFileOrDummy(): string {
@@ -620,7 +631,9 @@ export class LspServer {
         } else if (event.event === EventTypes.SyntaxDiag) {
             this.diagnosticQueue.addSyntacticDiagnostic(event);
         } else {
-            this.logger.log("Ignored event : " + event.type, event);
+            this.logger.log("Ignored event", {
+                "event": event.event
+            });
         }
     }
 }

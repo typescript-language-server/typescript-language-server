@@ -7,14 +7,12 @@
 
 import * as chai from 'chai';
 import * as path from 'path';
-import * as fs from 'fs';
 import { TspClient } from './tsp-client';
 import { ConsoleLogger } from './logger';
 import { filePath, readContents } from './test-utils';
 import { CommandTypes } from './tsp-command-types';
 
 const assert = chai.assert;
-const expect = chai.expect;
 
 const server = new TspClient({
   logger: new ConsoleLogger(),
@@ -69,8 +67,8 @@ describe('ts server client', () => {
       offset: 16,
       filesToSearch: [f]
     }).then(response => {
-      assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')));
-      assert.isTrue(response.body!.some(({ file }) => file.endsWith('module1.ts')));
+      assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')), JSON.stringify(response.body, undefined, 2));
+      assert.isFalse(response.body!.some(({ file }) => file.endsWith('module1.ts')), JSON.stringify(response.body, undefined, 2));
     });
   }).timeout(5000);
 });
