@@ -1,0 +1,29 @@
+{
+    "private": true,
+    "name": "example",
+    "version": "0.2.0",
+    "dependencies": {
+        "typescript-language-server": "0.2.0",
+        "monaco-languageclient": "latest",
+        "express": "^4.15.2",
+        "normalize-url": "^2.0.1",
+        "reconnecting-websocket": "^3.2.2",
+        "vscode-ws-jsonrpc": "^0.0.2-1",
+        "ws": "^5.0.0"
+    },
+    "devDependencies": {
+        "@types/express": "^4.0.35",
+        "@types/node": "^7.0.12",
+        "@types/normalize-url": "^1.9.1",
+        "@types/ws": "0.0.39",
+        "css-loader": "^0.28.11",
+        "style-loader": "^0.20.3",
+        "webpack": "^4.16.4",
+        "webpack-cli": "^3.1.0"
+    },
+    "scripts": {
+        "clean": "rimraf lib",
+        "bundle": "webpack --mode development",
+        "start": "node lib/server.js"
+    }
+}

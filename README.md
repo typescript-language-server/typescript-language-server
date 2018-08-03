@@ -1,3 +1,4 @@
+[![Gitpod - Code Now](https://img.shields.io/badge/Gitpod-code%20now-blue.svg?longCache=true)](https://gitpod.io#https://github.com/theia-ide/typescript-language-server)
 [![Build Status](https://travis-ci.org/theia-ide/typescript-language-server.svg?branch=master)](https://travis-ci.org/theia-ide/typescript-language-server)
 
 # TypeScript Language Server
@@ -64,20 +65,35 @@ typescript-language-server --stdio
 ### Build
 
 ```sh
-yarn install
-yarn build
+yarn
+```
+
+## Test
+
+```sh
 yarn test
 ```
 
 ### Watch
 
 ```sh
-yarn
 yarn watch
+```
+
+### Bundle the example
+
+```sh
+yarn bundle
+```
+
+### Start the example
+
+```sh
+yarn start
 ```
 
 ### Publishing
 
 ```sh
-npx np
+yarn publish
 ```

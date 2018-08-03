@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "target": "es6",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "lib": [
+            "es6"
+        ],
+        "alwaysStrict": true,
+        "strictNullChecks": true,
+        "skipLibCheck": true,
+        "plugins": [
+            {
+                "name": "tslint-language-service",
+                "configFile": "../tslint.json"
+            }
+        ]
+    }
+}
