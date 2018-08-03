@@ -1,17 +1,7 @@
 {
-    "compilerOptions": {
-        "target": "ES6",
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "sourceMap": true,
-        "lib" : [ "es6" ],
-        "outDir": "lib",
-        "alwaysStrict": true,
-        "declaration": true,
-        "strictNullChecks": true,
-        "skipLibCheck": true
-    },
-    "include": [
-        "src"
+    "files": [],
+    "references": [
+        { "path": "server" },
+        { "path": "example" }
     ]
 }

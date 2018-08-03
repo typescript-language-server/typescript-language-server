@@ -1,43 +1,38 @@
 {
-  "name": "typescript-language-server",
-  "version": "0.2.0",
-  "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/theia-ide/typescript-language-server.git"
-  },
-  "scripts": {
-    "prepare": "yarn run build",
-    "build": "tsc && tslint --project .",
-    "clean": "rimraf lib",
-    "watch": "tsc --watch",
-    "test": "mocha --exit --reporter spec \"./lib/**/*.spec.js\""
-  },
-  "bin": {
-    "typescript-language-server": "./lib/cli.js"
-  },
-  "files": [
-    "lib"
-  ],
-  "author": "TypeFox and others",
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "@types/chai": "^4.0.4",
-    "@types/commander": "^2.9.2",
-    "@types/mocha": "^2.2.43",
-    "@types/node": "^8.0.31",
-    "chai": "^4.1.2",
-    "mocha": "5.2.0",
-    "rimraf": "^2.6.2",
-    "source-map-support": "^0.4.18",
-    "ts-node": "^5.0.0",
-    "tslint": "^5.8.0",
-    "typescript": "2.9.1"
-  },
-  "dependencies": {
-    "command-exists": "1.2.6",
-    "commander": "^2.11.0",
-    "vscode-languageserver": "^4.4.0",
-    "vscode-uri": "^1.0.5"
-  }
+    "private": true,
+    "devDependencies": {
+        "@types/chai": "^4.0.4",
+        "@types/commander": "^2.9.2",
+        "@types/mocha": "^2.2.43",
+        "@types/node": "^8.0.31",
+        "chai": "^4.1.2",
+        "concurrently": "^3.6.1",
+        "lerna": "^3.0.0-rc.0",
+        "mocha": "5.2.0",
+        "rimraf": "^2.6.2",
+        "source-map-support": "^0.4.18",
+        "ts-node": "<7.0.0",
+        "tslint": "^5.11.0",
+        "tslint-language-service": "^0.9.9",
+        "typescript": "^3.0.1"
+    },
+    "scripts": {
+        "prepare": "lerna run clean && yarn build && yarn bundle",
+        "clean": "lerna run clean",
+        "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
+        "compile": "tsc -b",
+        "watch": "tsc -b --watch --verbose",
+        "lint": "lerna run lint",
+        "test": "lerna run test",
+        "bundle": "lerna run --scope example bundle",
+        "watch:bundle": "yarn bundle -- -- --watch",
+        "start": "lerna run --scope example start",
+        "publish": "yarn && yarn test && yarn publish:latest",
+        "publish:latest": "lerna publish --registry=https://registry.npmjs.org/ --exact --skip-git",
+        "publish:next": "lerna publish --registry=https://registry.npmjs.org/ --exact --canary=next --npm-tag=next --force-publish --skip-git --yes"
+    },
+    "workspaces": [
+        "server",
+        "example"
+    ]
 }

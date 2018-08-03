@@ -1,0 +1,19 @@
+{
+    "extends": "../tsconfig.settings.json",
+    "compilerOptions": {
+        "target": "es5",
+        "lib": [
+            "es6", "dom"
+        ],
+        "outDir": "lib",
+        "rootDir": "src"
+    },
+    "include": [
+        "src"
+    ],
+    "references": [
+        {
+            "path": "../server"
+        }
+    ]
+}

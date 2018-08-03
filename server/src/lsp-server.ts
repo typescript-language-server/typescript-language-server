@@ -353,8 +353,9 @@ export class LspServer {
         if (!result.body) {
             return item
         }
-        if (result.body[0] && result.body[0].documentation) {
-            item.documentation = result.body[0].documentation.map(i => i.text).join('\n');
+        const documentation = result.body[0] && result.body[0].documentation;
+        if (documentation) {
+            item.documentation = documentation.map(i => i.text).join('\n');
         }
         return item;
     }

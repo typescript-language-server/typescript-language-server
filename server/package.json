@@ -1,0 +1,28 @@
+{
+  "name": "typescript-language-server",
+  "version": "0.2.0",
+  "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
+  "author": "TypeFox and others",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/theia-ide/typescript-language-server.git"
+  },
+  "files": [
+    "lib"
+  ],
+  "bin": {
+    "typescript-language-server": "./lib/cli.js"
+  },
+  "dependencies": {
+    "command-exists": "1.2.6",
+    "commander": "^2.11.0",
+    "vscode-languageserver": "^4.4.0",
+    "vscode-uri": "^1.0.5"
+  },
+  "scripts": {
+    "clean": "rimraf lib",
+    "test": "mocha --exit --reporter spec \"./lib/**/*.spec.js\"",
+    "lint": "tslint -c ../tslint.json --project ."
+  }
+}
