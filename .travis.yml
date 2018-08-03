@@ -6,6 +6,8 @@ cache:
   yarn: true
   directories:
   - node_modules
+  - example/node_modules
+  - server/node_modules
 branches:
   only:
   - master
