@@ -5,14 +5,18 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import * as cp from 'child_process';
 import * as readline from 'readline';
 import * as decoder from 'string_decoder';
 import * as protocol from 'typescript/lib/protocol';
+import * as tempy from 'tempy';
 
 import { CommandTypes } from './tsp-command-types';
 import { Logger, PrefixingLogger } from './logger';
 import { Deferred } from './utils';
+import { CancellationToken } from 'vscode-jsonrpc';
 
 export interface TspClientOptions {
     logger: Logger;
@@ -35,6 +39,8 @@ export class TspClient {
     private logger: Logger
     private tsserverLogger: Logger
 
+    private cancellationPipeName: string | undefined;
+
     constructor(private options: TspClientOptions) {
         this.logger = new PrefixingLogger(options.logger, '[tsclient]')
         this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]')
@@ -53,6 +59,8 @@ export class TspClient {
             args.push('--logVerbosity');
             args.push(this.options.logVerbosity);
         }
+        this.cancellationPipeName = tempy.file({ name: 'tscancellation' } as any);
+        args.push('--cancellationPipeName', this.cancellationPipeName + '*');
         this.logger.info(`Starting tsserver : '${this.options.tsserverPath} ${args.join(' ')}'`);
         this.tsserverProc = cp.spawn(this.options.tsserverPath, args);
         this.readlineInterface = readline.createInterface(this.tsserverProc.stdout, this.tsserverProc.stdin, undefined);
@@ -74,7 +82,7 @@ export class TspClient {
     notify(command: CommandTypes.Close, args: protocol.FileRequestArgs)
     notify(command: CommandTypes.Saveto, args: protocol.SavetoRequestArgs)
     notify(command: CommandTypes.Change, args: protocol.ChangeRequestArgs)
-    notify(command: string, args: object) {
+    notify(command: string, args: object): void {
         this.sendMessage(command, true, args);
     }
 
@@ -86,7 +94,7 @@ export class TspClient {
     request(command: CommandTypes.Format, args: protocol.FormatRequestArgs): Promise<protocol.FormatResponse>
     request(command: CommandTypes.GetApplicableRefactors, args: protocol.CodeFixRequestArgs): Promise<protocol.GetCodeFixesResponse>
     request(command: CommandTypes.GetCodeFixes, args: protocol.CodeFixRequestArgs): Promise<protocol.GetCodeFixesResponse>
-    request(command: CommandTypes.Geterr, args: protocol.GeterrRequestArgs): Promise<protocol.RequestCompletedEvent>
+    request(command: CommandTypes.Geterr, args: protocol.GeterrRequestArgs, token?: CancellationToken): Promise<protocol.RequestCompletedEvent>
     request(command: CommandTypes.GeterrForProject, args: protocol.GeterrForProjectRequestArgs): Promise<protocol.RequestCompletedEvent>
     request(command: CommandTypes.Navto, args: protocol.NavtoRequestArgs): Promise<protocol.NavtoResponse>
     request(command: CommandTypes.NavTree, args: protocol.FileRequestArgs): Promise<protocol.NavTreeResponse>
@@ -98,11 +106,29 @@ export class TspClient {
     request(command: CommandTypes.References, args: protocol.FileLocationRequestArgs): Promise<protocol.ReferencesResponse>
     request(command: CommandTypes.SignatureHelp, args: protocol.SignatureHelpRequestArgs): Promise<protocol.SignatureHelpResponse>
     request(command: CommandTypes.GetOutliningSpans, args: protocol.FileRequestArgs): Promise<protocol.OutliningSpansResponse>
-    request(command: string, args: object): Promise<object> {
-        return this.sendMessage(command, false, args)!;
+    request(command: string, args: object, token?: CancellationToken): Promise<object> {
+        this.sendMessage(command, false, args);
+        const seq = this.seq;
+        const request = (this.deferreds[seq] = new Deferred<any>(command)).promise;
+        if (token) {
+            const onCancelled = token.onCancellationRequested(() => {
+                onCancelled.dispose();
+                if (this.cancellationPipeName) {
+                    const requestCancellationPipeName = this.cancellationPipeName + seq;
+                    fs.writeFile(requestCancellationPipeName, '', err => {
+                        if (!err) {
+                            request.then(() =>
+                                fs.unlink(requestCancellationPipeName, () => { /* no-op */ })
+                            );
+                        }
+                    });
+                }
+            });
+        }
+        return request;
     }
 
-    protected sendMessage(command: string, notification: boolean, args?: any): Promise<any> | undefined {
+    protected sendMessage(command: string, notification: boolean, args?: any): void {
         this.seq = this.seq + 1;
         let request: protocol.Request = {
             command,
@@ -114,13 +140,7 @@ export class TspClient {
         }
         const serializedRequest = JSON.stringify(request) + "\n";
         this.tsserverProc.stdin.write(serializedRequest);
-        if (notification) {
-            this.logger.log("notify", request);
-            return;
-        } else {
-            this.logger.log("request", request);
-            return (this.deferreds[this.seq] = new Deferred<any>(command)).promise;
-        }
+        this.logger.log(notification ? "notify" : "request", request);
     }
 
     protected processMessage(untrimmedMessageString: string): void {

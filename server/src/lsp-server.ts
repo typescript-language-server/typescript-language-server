@@ -18,7 +18,8 @@ import { TspClient } from './tsp-client';
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
 import { findPathToModule } from './modules-resolver';
-import { toDocumentHighlight, asRange, asTagsDocumentation,
+import {
+    toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
     pathToUri, toTextEdit, toMarkDown, toTextDocumentEdit
 } from './protocol-translation';
@@ -133,7 +134,21 @@ export class LspServer {
         return this.initializeResult;
     }
 
-    public requestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
+    protected diagnosticsTokenSource: lsp.CancellationTokenSource | undefined;
+    protected interuptDiagnostics<R>(f: () => R): R {
+        if (!this.diagnosticsTokenSource) {
+            return f();
+        }
+        this.cancelDiagnostics();
+        const result = f();
+        this.requestDiagnostics();
+        return result;
+    }
+    async requestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
+        this.cancelDiagnostics();
+        const geterrTokenSource = new lsp.CancellationTokenSource();
+        this.diagnosticsTokenSource = geterrTokenSource;
+
         const files: string[] = []
         // sort by least recently usage
         const orderedUris = [...this.openedDocumentUris.entries()].sort((a, b) => a[1].lastAccessed - b[1].lastAccessed).map(e => e[0]);
@@ -144,7 +159,19 @@ export class LspServer {
             delay: 0,
             files: files
         };
-        return this.tspClient.request(CommandTypes.Geterr, args);
+        try {
+            return await this.tspClient.request(CommandTypes.Geterr, args, this.diagnosticsTokenSource.token);
+        } finally {
+            if (this.diagnosticsTokenSource === geterrTokenSource) {
+                this.diagnosticsTokenSource = undefined;
+            }
+        }
+    }
+    protected cancelDiagnostics(): void {
+        if (this.diagnosticsTokenSource) {
+            this.diagnosticsTokenSource.cancel();
+            this.diagnosticsTokenSource = undefined;
+        }
     }
 
     public didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
@@ -324,20 +351,20 @@ export class LspServer {
             throw new Error("The document should be opened for completion, file: " + file);
         }
 
-        const result = await this.tspClient.request(CommandTypes.Completions, {
+        const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.Completions, {
             file,
             line: params.position.line + 1,
             offset: params.position.character + 1,
             includeExternalModuleExports: true,
             includeInsertTextCompletions: true
-        });
+        }));
         const body = result.body || [];
         return body.map(entry => asCompletionItem(entry, file, params.position, document));
     }
 
     async completionResolve(item: TSCompletionItem): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
-        const { body } = await this.tspClient.request(CommandTypes.CompletionDetails, item.data);
+        const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
         const details = body && body.length && body[0];
         if (!details) {
             return item;
@@ -349,7 +376,7 @@ export class LspServer {
         const file = uriToPath(params.textDocument.uri);
 
         this.logger.log('hover', params, file);
-        const result = await this.getQuickInfo(file, params.position);
+        const result = await this.interuptDiagnostics(() => this.getQuickInfo(file, params.position));
         if (!result || !result.body) {
             return { contents: [] };
         }
@@ -475,8 +502,8 @@ export class LspServer {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('signatureHelp', params, file);
 
-        const response = await this.getSignatureHelp(file, params.position);
-        if (!response || !response.body) {
+        const response = await await this.interuptDiagnostics(() => this.getSignatureHelp(file, params.position));
+        if (!response || !response.body) {
             return {
                 signatures: [],
                 activeSignature: null,
@@ -486,14 +513,14 @@ export class LspServer {
         const info = response.body;
         return asSignatureHelp(response.body);
     }
-    protected async getSignatureHelp(file: string, position: lsp.Position): Promise<tsp.SignatureHelpResponse |  undefined> {
+    protected async getSignatureHelp(file: string, position: lsp.Position): Promise<tsp.SignatureHelpResponse | undefined> {
         try {
             return await this.tspClient.request(CommandTypes.SignatureHelp, {
                 file,
                 line: position.line + 1,
                 offset: position.character + 1
             });
-        } catch (err)  {
+        } catch (err) {
             return undefined;
         }
     }
