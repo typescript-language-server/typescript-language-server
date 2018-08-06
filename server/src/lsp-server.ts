@@ -26,6 +26,7 @@ import { getTsserverExecutable } from './utils';
 import { LspDocument } from './document';
 import { asCompletionItem, TSCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
+import { Commands } from './commands';
 
 export interface IServerOptions {
     logger: Logger
@@ -34,9 +35,6 @@ export interface IServerOptions {
     tsserverLogVerbosity?: string;
     lspClient: LspClient;
 }
-
-export const WORKSPACE_EDIT_COMMAND = "workspace-edit";
-export const APPLY_CODE_ACTION = "apply-code-action";
 
 export class LspServer {
 
@@ -116,7 +114,7 @@ export class LspServer {
                 documentHighlightProvider: true,
                 documentSymbolProvider: true,
                 executeCommandProvider: {
-                    commands: [WORKSPACE_EDIT_COMMAND, APPLY_CODE_ACTION]
+                    commands: [Commands.APPLY_WORKSPACE_EDIT, Commands.APPLY_CODE_ACTION]
                 },
                 hoverProvider: true,
                 renameProvider: true,
@@ -522,7 +520,7 @@ export class LspServer {
         for (const fix of response.body) {
             result.push({
                 title: fix.description,
-                command: WORKSPACE_EDIT_COMMAND,
+                command: Commands.APPLY_WORKSPACE_EDIT,
                 arguments: [<lsp.WorkspaceEdit>{
                     documentChanges: fix.changes.map(c => toTextDocumentEdit(c))
                 }]
@@ -533,12 +531,12 @@ export class LspServer {
 
     async executeCommand(arg: lsp.ExecuteCommandParams): Promise<void> {
         this.logger.log('executeCommand', arg);
-        if (arg.command === WORKSPACE_EDIT_COMMAND && arg.arguments) {
+        if (arg.command === Commands.APPLY_WORKSPACE_EDIT && arg.arguments) {
             const edit = arg.arguments[0] as lsp.WorkspaceEdit;
             this.options.lspClient.applyWorkspaceEdit({
                 edit
             });
-        } else if (arg.command === APPLY_CODE_ACTION && arg.arguments) {
+        } else if (arg.command === Commands.APPLY_CODE_ACTION && arg.arguments) {
             const codeAction = arg.arguments[1] as tsp.CodeAction;
             if (codeAction.changes.length) {
                 const changes: { [uri: string]: lsp.TextEdit[] } = {};

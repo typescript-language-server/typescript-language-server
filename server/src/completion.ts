@@ -10,6 +10,7 @@ import * as tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
 import { ScriptElementKind } from './tsp-command-types';
 import { asRange, toTextEdit, asPlainText, asTagsDocumentation, asDocumentation } from './protocol-translation';
+import { Commands } from './commands';
 
 export interface TSCompletionItem extends lsp.CompletionItem {
     data: tsp.CompletionDetailsRequestArgs
@@ -187,8 +188,7 @@ export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: str
         // Create command that applies all edits not in the current file.
         command = {
             title: '',
-            // the command should be implemented by the client via `apply-code-action` command
-            command: '_typescript.applyCompletionCodeAction',
+            command: Commands.APPLY_COMPLETION_CODE_ACTION,
             arguments: [filepath, details.codeActions.map(codeAction => ({
                 commands: codeAction.commands,
                 description: codeAction.description,
