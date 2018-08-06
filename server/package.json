@@ -21,6 +21,7 @@
     "vscode-uri": "^1.0.5"
   },
   "scripts": {
+    "prepare": "echo 'skip'",
     "clean": "rimraf lib",
     "test": "mocha --exit --reporter spec \"./lib/**/*.spec.js\"",
     "lint": "tslint -c ../tslint.json --project ."
