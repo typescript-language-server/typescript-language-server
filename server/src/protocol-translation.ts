@@ -40,26 +40,6 @@ export function toLocation(fileSpan: tsp.FileSpan): lsp.Location {
     };
 }
 
-export const completionKindsMapping: { [name: string]: lsp.CompletionItemKind } = {
-    class: lsp.CompletionItemKind.Class,
-    constructor: lsp.CompletionItemKind.Constructor,
-    enum: lsp.CompletionItemKind.Enum,
-    field: lsp.CompletionItemKind.Field,
-    file: lsp.CompletionItemKind.File,
-    function: lsp.CompletionItemKind.Function,
-    interface: lsp.CompletionItemKind.Interface,
-    keyword: lsp.CompletionItemKind.Keyword,
-    method: lsp.CompletionItemKind.Method,
-    module: lsp.CompletionItemKind.Module,
-    property: lsp.CompletionItemKind.Property,
-    reference: lsp.CompletionItemKind.Reference,
-    snippet: lsp.CompletionItemKind.Snippet,
-    text: lsp.CompletionItemKind.Text,
-    unit: lsp.CompletionItemKind.Unit,
-    value: lsp.CompletionItemKind.Value,
-    variable: lsp.CompletionItemKind.Variable
-};
-
 const symbolKindsMapping: { [name: string]: lsp.SymbolKind } = {
     'enum member': lsp.SymbolKind.Constant,
     'JSX attribute': lsp.SymbolKind.Property,
@@ -121,10 +101,6 @@ export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
     }
 }
 
-export function toPlainText(parts: tsp.SymbolDisplayPart[]): string {
-    return parts.map(part => part.text).join('');
-}
-
 function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
     return (tags || [])
         .map(tag => {
@@ -139,7 +115,7 @@ function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
 
 export function toMarkDown(documentation: tsp.SymbolDisplayPart[], tags: tsp.JSDocTagInfo[]): string {
     let result = "";
-    result += toPlainText(documentation);
+    result += asPlainText(documentation);
     const tagsPreview = tagsMarkdownPreview(tags);
     if (tagsPreview) {
         result += '\n\n' + tagsPreview;
@@ -158,7 +134,7 @@ export function toTextDocumentEdit(change: tsp.FileCodeEdits): lsp.TextDocumentE
 }
 
 export function toDocumentHighlight(item: tsp.DocumentHighlightsItem): lsp.DocumentHighlight[] {
-    return item.highlightSpans.map( i => {
+    return item.highlightSpans.map(i => {
         return <lsp.DocumentHighlight>{
             kind: toDocumentHighlightKind(i.kind),
             range: {
@@ -179,9 +155,93 @@ enum HighlightSpanKind {
 
 function toDocumentHighlightKind(kind: tsp.HighlightSpanKind): lsp.DocumentHighlightKind {
     switch (kind) {
-        case HighlightSpanKind.definition : return lsp.DocumentHighlightKind.Write
-        case HighlightSpanKind.reference :
-        case HighlightSpanKind.writtenReference : return lsp.DocumentHighlightKind.Read
+        case HighlightSpanKind.definition: return lsp.DocumentHighlightKind.Write
+        case HighlightSpanKind.reference:
+        case HighlightSpanKind.writtenReference: return lsp.DocumentHighlightKind.Read
         default: return lsp.DocumentHighlightKind.Text
     }
+}
+
+export function asRange(span: tsp.TextSpan): lsp.Range {
+    return lsp.Range.create(
+        Math.max(0, span.start.line - 1), Math.max(span.start.offset - 1, 0),
+        Math.max(0, span.end.line - 1), Math.max(0, span.end.offset - 1)
+    );
+}
+
+export function asDocumentation(data: {
+    documentation?: tsp.SymbolDisplayPart[]
+    tags?: tsp.JSDocTagInfo[]
+}): lsp.MarkupContent | undefined {
+    let value = '';
+    const documentation = asPlainText(data.documentation);
+    if (documentation) {
+        value += documentation;
+    }
+    if (data.tags) {
+        const tagsDocumentation = asTagsDocumentation(data.tags);
+        if (tagsDocumentation) {
+            value += '\n\n' + tagsDocumentation;
+        }
+    }
+    return value.length ? {
+        kind: lsp.MarkupKind.Markdown,
+        value
+    } : undefined;
+}
+
+export function asTagsDocumentation(tags: tsp.JSDocTagInfo[]): string {
+    return tags.map(asTagDocumentation).join('  \n\n');
+}
+
+export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
+    switch (tag.name) {
+        case 'param':
+            const body = (tag.text || '').split(/^([\w\.]+)\s*-?\s*/);
+            if (body && body.length === 3) {
+                const param = body[1];
+                const doc = body[2];
+                const label = `*@${tag.name}* \`${param}\``;
+                if (!doc) {
+                    return label;
+                }
+                return label + (doc.match(/\r\n|\n/g) ? '  \n' + doc : ` — ${doc}`);
+            }
+    }
+
+    // Generic tag
+    const label = `*@${tag.name}*`;
+    const text = asTagBodyText(tag);
+    if (!text) {
+        return label;
+    }
+    return label + (text.match(/\r\n|\n/g) ? '  \n' + text : ` — ${text}`);
+}
+
+export function asTagBodyText(tag: tsp.JSDocTagInfo): string | undefined {
+    if (!tag.text) {
+        return undefined;
+    }
+
+    switch (tag.name) {
+        case 'example':
+        case 'default':
+            // Convert to markdown code block if it not already one
+            if (tag.text.match(/^\s*[~`]{3}/g)) {
+                return tag.text;
+            }
+            return '```\n' + tag.text + '\n```';
+    }
+
+    return tag.text;
+}
+
+export function asPlainText(parts: undefined): undefined;
+export function asPlainText(parts: tsp.SymbolDisplayPart[]): string;
+export function asPlainText(parts: tsp.SymbolDisplayPart[] | undefined): string | undefined;
+export function asPlainText(parts: tsp.SymbolDisplayPart[] | undefined): string | undefined {
+    if (!parts) {
+        return undefined;
+    }
+    return parts.map(part => part.text).join('');
 }

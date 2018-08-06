@@ -47,10 +47,10 @@ describe('completion', () => {
       textDocument: doc,
       position: pos
     });
-    assert.isTrue(proposals.items.length > 800);
-    const item = proposals.items.filter(i => i.label === 'addEventListener')[0];
+    assert.isTrue(proposals.length > 800, String(proposals.length));
+    const item = proposals.filter(i => i.label === 'addEventListener')[0];
     const resolvedItem = await server.completionResolve(item)
-    assert.isTrue(resolvedItem.documentation !== undefined);
+    assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
     server.didCloseTextDocument({
       textDocument: doc
     });

@@ -78,6 +78,7 @@ export class TspClient {
         this.sendMessage(command, true, args);
     }
 
+    request(command: CommandTypes.ApplyCodeActionCommand, args: protocol.ApplyCodeActionCommandRequestArgs): Promise<protocol.ApplyCodeActionCommandResponse>
     request(command: CommandTypes.Configure, args: protocol.ConfigureRequestArguments): Promise<protocol.ConfigureResponse>
     request(command: CommandTypes.Definition, args: protocol.FileLocationRequestArgs): Promise<protocol.DefinitionResponse>
     request(command: CommandTypes.Implementation, args: protocol.FileLocationRequestArgs): Promise<protocol.ImplementationResponse>

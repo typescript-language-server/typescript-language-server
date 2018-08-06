@@ -18,13 +18,14 @@ import { TspClient } from './tsp-client';
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
 import { findPathToModule } from './modules-resolver';
-import { toDocumentHighlight } from './protocol-translation';
-import {
+import { toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    completionKindsMapping, pathToUri, toTextEdit, toPlainText, toMarkDown, toTextDocumentEdit
+    pathToUri, toTextEdit, toMarkDown, toTextDocumentEdit
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocument } from './document';
+import { asCompletionItem, TSCompletionItem, asResolvedCompletionItem } from './completion';
+import { asSignatureHelp } from './hover';
 
 export interface IServerOptions {
     logger: Logger
@@ -35,6 +36,7 @@ export interface IServerOptions {
 }
 
 export const WORKSPACE_EDIT_COMMAND = "workspace-edit";
+export const APPLY_CODE_ACTION = "apply-code-action";
 
 export class LspServer {
 
@@ -105,7 +107,7 @@ export class LspServer {
             capabilities: {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
                 completionProvider: {
-                    triggerCharacters: ['.'],
+                    triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
                     resolveProvider: true
                 },
                 codeActionProvider: true,
@@ -114,13 +116,13 @@ export class LspServer {
                 documentHighlightProvider: true,
                 documentSymbolProvider: true,
                 executeCommandProvider: {
-                    commands: [WORKSPACE_EDIT_COMMAND]
+                    commands: [WORKSPACE_EDIT_COMMAND, APPLY_CODE_ACTION]
                 },
                 hoverProvider: true,
                 renameProvider: true,
                 referencesProvider: true,
                 signatureHelpProvider: {
-                    triggerCharacters: ['(', ',']
+                    triggerCharacters: ['(', ',', '<']
                 },
                 workspaceSymbolProvider: true,
                 implementationProvider: true,
@@ -311,90 +313,68 @@ export class LspServer {
         return result;
     }
 
-    public async completion(params: lsp.TextDocumentPositionParams): Promise<lsp.CompletionList> {
-        const path = uriToPath(params.textDocument.uri);
+    /*
+     * implemented based on
+     * https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/completions.ts
+     */
+    async completion(params: lsp.CompletionParams): Promise<TSCompletionItem[]> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('completion', params, file);
 
-        this.logger.log('completion', params, path);
+        const document = this.openedDocumentUris.get(params.textDocument.uri);
+        if (!document) {
+            throw new Error("The document should be opened for completion, file: " + file);
+        }
 
         const result = await this.tspClient.request(CommandTypes.Completions, {
-            file: path,
+            file,
             line: params.position.line + 1,
             offset: params.position.character + 1,
-            prefix: '',
             includeExternalModuleExports: true,
             includeInsertTextCompletions: true
         });
-        return {
-            isIncomplete: false,
-            items: result.body ? result.body
-                .map(item => {
-                    return <lsp.CompletionItem>{
-                        label: item.name,
-                        kind: completionKindsMapping[item.kind],
-                        // store information for resolve
-                        data: {
-                            file: path,
-                            line: params.position.line + 1,
-                            offset: params.position.character + 1
-                        }
-                    };
-                }) : []
-        };
+        const body = result.body || [];
+        return body.map(entry => asCompletionItem(entry, file, params.position, document));
     }
 
-    public async completionResolve(item: lsp.CompletionItem): Promise<lsp.CompletionItem> {
+    async completionResolve(item: TSCompletionItem): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
-        const result = await this.tspClient.request(CommandTypes.CompletionDetails, <tsp.CompletionDetailsRequestArgs>{
-            entryNames: [item.label],
-            file: item.data.file as string,
-            line: item.data.line as number,
-            offset: item.data.offset as number,
-        })
-        if (!result.body) {
-            return item
+        const { body } = await this.tspClient.request(CommandTypes.CompletionDetails, item.data);
+        const details = body && body.length && body[0];
+        if (!details) {
+            return item;
         }
-        const documentation = result.body[0] && result.body[0].documentation;
-        if (documentation) {
-            item.documentation = documentation.map(i => i.text).join('\n');
-        }
-        return item;
+        return asResolvedCompletionItem(item, details);
     }
 
-    public async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {
-        const path = uriToPath(params.textDocument.uri);
+    async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {
+        const file = uriToPath(params.textDocument.uri);
 
-        this.logger.log('hover', params, path);
-
-        let result
-        try {
-            result = await this.tspClient.request(CommandTypes.Quickinfo, {
-                file: path,
-                line: params.position.line + 1,
-                offset: params.position.character + 1
-            });
-        } catch (err) {
-            return <lsp.Hover>{
-                contents: []
-            }
+        this.logger.log('hover', params, file);
+        const result = await this.getQuickInfo(file, params.position);
+        if (!result || !result.body) {
+            return { contents: [] };
         }
-        if (!result.body) {
-            return <lsp.Hover>{
-                contents: []
-            }
-        }
-        const range = {
-            start: toPosition(result.body.start),
-            end: toPosition(result.body.end)
-        };
+        const range = asRange(result.body);
         const contents: lsp.MarkedString[] = [
             { language: 'typescript', value: result.body.displayString }
         ];
-        if (result.body.documentation) {
-            contents.push(result.body.documentation)
-        }
+        const tags = asTagsDocumentation(result.body.tags);
+        contents.push(result.body.documentation + (tags ? '\n\n' + tags : ''));
         return {
             contents,
             range
+        }
+    }
+    protected async getQuickInfo(file: string, position: lsp.Position): Promise<tsp.QuickInfoResponse | undefined> {
+        try {
+            return await this.tspClient.request(CommandTypes.Quickinfo, {
+                file,
+                line: position.line + 1,
+                offset: position.character + 1
+            });
+        } catch (err) {
+            return undefined;
         }
     }
 
@@ -493,16 +473,12 @@ export class LspServer {
         return [];
     }
 
-    public async signatureHelp(params: lsp.TextDocumentPositionParams): Promise<lsp.SignatureHelp> {
-        const path = uriToPath(params.textDocument.uri);
-        this.logger.log('signatureHelp', params, path);
+    async signatureHelp(params: lsp.TextDocumentPositionParams): Promise<lsp.SignatureHelp> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('signatureHelp', params, file);
 
-        const response = await this.tspClient.request(CommandTypes.SignatureHelp, <tsp.SignatureHelpRequestArgs>{
-            file: path,
-            line: params.position.line + 1,
-            offset: params.position.character + 1
-        });
-        if (!response.body) {
+        const response = await this.getSignatureHelp(file, params.position);
+        if (!response || !response.body) {
             return {
                 signatures: [],
                 activeSignature: null,
@@ -510,42 +486,17 @@ export class LspServer {
             };
         }
         const info = response.body;
-
-        const signatures: lsp.SignatureInformation[] = [];
-        let activeSignature = response.body.selectedItemIndex;
-        let activeParameter = response.body.argumentIndex;
-
-        response.body.items.forEach((item, i) => {
-            // keep active parameter in bounds
-            if (i === info.selectedItemIndex && item.isVariadic) {
-                activeParameter = Math.min(info.argumentIndex, item.parameters.length - 1);
-            }
-
-            let label = toPlainText(item.prefixDisplayParts);
-            const parameters: lsp.ParameterInformation[] = [];
-            item.parameters.forEach((p, i, a) => {
-                const parameter = lsp.ParameterInformation.create(
-                    toPlainText(p.displayParts),
-                    toPlainText(p.documentation));
-                label += parameter.label;
-                parameters.push(parameter);
-                if (i < a.length - 1) {
-                    label += toPlainText(item.separatorDisplayParts);
-                }
+        return asSignatureHelp(response.body);
+    }
+    protected async getSignatureHelp(file: string, position: lsp.Position): Promise<tsp.SignatureHelpResponse |  undefined> {
+        try {
+            return await this.tspClient.request(CommandTypes.SignatureHelp, {
+                file,
+                line: position.line + 1,
+                offset: position.character + 1
             });
-            label += toPlainText(item.suffixDisplayParts);
-            const documentation = toMarkDown(item.documentation, item.tags);
-            signatures.push({
-                label,
-                documentation,
-                parameters
-            });
-        });
-
-        return {
-            signatures,
-            activeSignature,
-            activeParameter
+        } catch (err)  {
+            return undefined;
         }
     }
 
@@ -580,13 +531,30 @@ export class LspServer {
         return result;
     }
 
-    public executeCommand(arg: lsp.ExecuteCommandParams): void {
+    async executeCommand(arg: lsp.ExecuteCommandParams): Promise<void> {
         this.logger.log('executeCommand', arg);
         if (arg.command === WORKSPACE_EDIT_COMMAND && arg.arguments) {
             const edit = arg.arguments[0] as lsp.WorkspaceEdit;
             this.options.lspClient.applyWorkspaceEdit({
                 edit
             });
+        } else if (arg.command === APPLY_CODE_ACTION && arg.arguments) {
+            const codeAction = arg.arguments[1] as tsp.CodeAction;
+            if (codeAction.changes.length) {
+                const changes: { [uri: string]: lsp.TextEdit[] } = {};
+                for (const change of codeAction.changes) {
+                    changes[pathToUri(change.fileName)] = change.textChanges.map(toTextEdit);
+                }
+                await this.options.lspClient.applyWorkspaceEdit({
+                    label: codeAction.description,
+                    edit: { changes }
+                });
+            }
+            if (codeAction.commands && codeAction.commands.length) {
+                for (const command of codeAction.commands) {
+                    await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command })
+                }
+            }
         } else {
             this.logger.error(`Unknown command ${arg.command}.`)
         }
@@ -677,7 +645,7 @@ export class LspServer {
         return foldingRanges;
     }
     protected asFoldingRange(span: tsp.OutliningSpan, document: LspDocument): lsp.FoldingRange | undefined {
-        const range = this.asRange(span.textSpan);
+        const range = asRange(span.textSpan);
         const kind = this.asFoldingRangeKind(span);
 
         // workaround for https://github.com/Microsoft/vscode/issues/49904
@@ -701,12 +669,6 @@ export class LspServer {
             endLine,
             kind
         }
-    }
-    protected asRange(span: tsp.TextSpan): lsp.Range {
-        return lsp.Range.create(
-            Math.max(0, span.start.line - 1), Math.max(span.start.offset - 1, 0),
-            Math.max(0, span.end.line - 1), Math.max(0, span.end.offset - 1)
-        );
     }
     protected asFoldingRangeKind(span: tsp.OutliningSpan): lsp.FoldingRangeKind | undefined {
         switch (span.kind) {
