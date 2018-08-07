@@ -72,8 +72,9 @@ describe('diagnostics', () => {
     server.didOpenTextDocument({
       textDocument: doc
     })
-    await server.requestDiagnostics()
-    await server.requestDiagnostics()
+    await server.requestDiagnostics();
+    await server.requestDiagnostics();
+    await new Promise(resolve => setTimeout(resolve, 200));
     const diags = diagnostics!.diagnostics;
     assert.equal(1, diags.length);
     assert.equal("Cannot find name 'unknown'.", diags[0].message);
@@ -138,6 +139,7 @@ describe('editing', () => {
     })
     await server.requestDiagnostics()
     await server.requestDiagnostics()
+    await new Promise(resolve => setTimeout(resolve, 200));
     const diags = diagnostics!.diagnostics;
     assert.isTrue(diags.length >= 1, diags.map(d => d.message).join(','));
     assert.equal("Cannot find name 'unknown'.", diags[0].message);
