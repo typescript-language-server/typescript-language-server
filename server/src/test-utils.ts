@@ -64,9 +64,8 @@ export async function createServer(options: {
             telemetry(args): void {
                 logger.log('telemetry', JSON.stringify(args));
             },
-            async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse> {
-                throw new Error('unsupported')
-            }
+            applyWorkspaceEdit: () => Promise.reject(new Error('unsupported')),
+            rename: () => Promise.reject(new Error('unsupported'))
         },
     });
 

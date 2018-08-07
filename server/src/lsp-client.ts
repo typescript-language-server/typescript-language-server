@@ -6,6 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
+import { TypeScriptRenameRequest } from './commands';
 
 export interface LspClient {
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
@@ -13,6 +14,7 @@ export interface LspClient {
     logMessage(args: lsp.LogMessageParams): void;
     applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse>;
     telemetry(args: any): void;
+    rename(args: lsp.TextDocumentPositionParams): Promise<any>;
 }
 
 export class LspClientImpl implements LspClient {
@@ -37,5 +39,9 @@ export class LspClientImpl implements LspClient {
 
     async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse> {
         return this.connection.sendRequest(lsp.ApplyWorkspaceEditRequest.type, args);
+    }
+
+    async rename(args: lsp.TextDocumentPositionParams): Promise<any> {
+        return this.connection.sendRequest(TypeScriptRenameRequest.type, args);
     }
 }
