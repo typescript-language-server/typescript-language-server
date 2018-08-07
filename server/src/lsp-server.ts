@@ -21,13 +21,16 @@ import { findPathToModule } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toMarkDown, toTextDocumentEdit
+    pathToUri, toTextEdit, toMarkDown, toTextDocumentEdit,
+    toFileRangeRequestArgs
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocument } from './document';
 import { asCompletionItem, TSCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
 import { Commands } from './commands';
+import { provideQuickFix } from './quickfix';
+import { provideRefactors } from './refactor';
 
 export interface IServerOptions {
     logger: Logger
@@ -115,7 +118,11 @@ export class LspServer {
                 documentHighlightProvider: true,
                 documentSymbolProvider: true,
                 executeCommandProvider: {
-                    commands: [Commands.APPLY_WORKSPACE_EDIT, Commands.APPLY_CODE_ACTION]
+                    commands: [
+                        Commands.APPLY_WORKSPACE_EDIT,
+                        Commands.APPLY_CODE_ACTION,
+                        Commands.APPLY_REFACTORING
+                    ]
                 },
                 hoverProvider: true,
                 renameProvider: true,
@@ -525,35 +532,36 @@ export class LspServer {
         }
     }
 
-    public async codeAction(arg: lsp.CodeActionParams): Promise<lsp.Command[]> {
-        this.logger.log('codeAction', arg);
-        let response
+    async codeAction(params: lsp.CodeActionParams): Promise<(lsp.Command | lsp.CodeAction)[]> {
+        this.logger.log('codeAction', params);
+        const file = uriToPath(params.textDocument.uri);
+        const args = toFileRangeRequestArgs(file, params.range);
+        const codeActions: (lsp.Command | lsp.CodeAction)[] = [];
+        provideQuickFix(await this.getCodeFixes({
+            ...args,
+            errorCodes: params.context.diagnostics.reduce((codes, diagnostic) => {
+                if (typeof diagnostic.code === 'number') {
+                    codes.push(diagnostic.code);
+                }
+                return codes;
+            }, [] as number[])
+        }), codeActions);
+        provideRefactors(await this.getRefactors(args), codeActions, args);
+        return codeActions;
+    }
+    protected async getCodeFixes(args: tsp.CodeFixRequestArgs): Promise<tsp.GetCodeFixesResponse | undefined> {
         try {
-            response = await this.tspClient.request(CommandTypes.GetCodeFixes, <tsp.CodeFixRequestArgs>{
-                file: uriToPath(arg.textDocument.uri),
-                startLine: arg.range.start.line + 1,
-                startOffset: arg.range.start.character + 1,
-                endLine: arg.range.end.line + 1,
-                endOffset: arg.range.end.character + 1,
-                errorCodes: arg.context.diagnostics.map(d => d.code)
-            })
+            return await this.tspClient.request(CommandTypes.GetCodeFixes, args);
         } catch (err) {
-            return [];
+            return undefined;
         }
-        if (!response.body) {
-            return []
+    }
+    protected async getRefactors(args: tsp.GetApplicableRefactorsRequestArgs): Promise<tsp.GetApplicableRefactorsResponse | undefined> {
+        try {
+            return await this.tspClient.request(CommandTypes.GetApplicableRefactors, args);
+        } catch (err) {
+            return undefined;
         }
-        const result: lsp.Command[] = [];
-        for (const fix of response.body) {
-            result.push({
-                title: fix.description,
-                command: Commands.APPLY_WORKSPACE_EDIT,
-                arguments: [<lsp.WorkspaceEdit>{
-                    documentChanges: fix.changes.map(c => toTextDocumentEdit(c))
-                }]
-            })
-        }
-        return result;
     }
 
     async executeCommand(arg: lsp.ExecuteCommandParams): Promise<void> {
@@ -564,25 +572,46 @@ export class LspServer {
                 edit
             });
         } else if (arg.command === Commands.APPLY_CODE_ACTION && arg.arguments) {
-            const codeAction = arg.arguments[1] as tsp.CodeAction;
-            if (codeAction.changes.length) {
-                const changes: { [uri: string]: lsp.TextEdit[] } = {};
-                for (const change of codeAction.changes) {
-                    changes[pathToUri(change.fileName)] = change.textChanges.map(toTextEdit);
-                }
-                await this.options.lspClient.applyWorkspaceEdit({
-                    label: codeAction.description,
-                    edit: { changes }
-                });
+            const codeAction = arg.arguments[0] as tsp.CodeAction;
+            if (!await this.applyFileCodeEdits(codeAction.changes)) {
+                return;
             }
             if (codeAction.commands && codeAction.commands.length) {
                 for (const command of codeAction.commands) {
                     await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command })
                 }
             }
+        } else if (arg.command === Commands.APPLY_REFACTORING && arg.arguments) {
+            const args = arg.arguments[0] as tsp.GetEditsForRefactorRequestArgs;
+            const { body } = await this.tspClient.request(CommandTypes.GetEditsForRefactor, args);
+            if (!body || !await this.applyFileCodeEdits(body.edits)) {
+                return;
+            }
+            const renameLocation = body.renameLocation;
+            if (renameLocation) {
+                await this.options.lspClient.rename({
+                    textDocument: {
+                        uri: pathToUri(args.file)
+                    },
+                    position: toPosition(renameLocation)
+                });
+            }
         } else {
             this.logger.error(`Unknown command ${arg.command}.`)
         }
+    }
+    protected async applyFileCodeEdits(edits: tsp.FileCodeEdits[]): Promise<boolean> {
+        if (!edits.length) {
+            return false;
+        }
+        const changes: { [uri: string]: lsp.TextEdit[] } = {};
+        for (const edit of edits) {
+            changes[pathToUri(edit.fileName)] = edit.textChanges.map(toTextEdit);
+        }
+        const { applied } = await this.options.lspClient.applyWorkspaceEdit({
+            edit: { changes }
+        });
+        return applied;
     }
 
     public async documentHighlight(arg: lsp.TextDocumentPositionParams): Promise<lsp.DocumentHighlight[]> {

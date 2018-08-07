@@ -86,13 +86,14 @@ export class TspClient {
         this.sendMessage(command, true, args);
     }
 
+    request(command: CommandTypes.GetEditsForRefactor, args: protocol.GetEditsForRefactorRequestArgs): Promise<protocol.GetEditsForRefactorResponse>
     request(command: CommandTypes.ApplyCodeActionCommand, args: protocol.ApplyCodeActionCommandRequestArgs): Promise<protocol.ApplyCodeActionCommandResponse>
     request(command: CommandTypes.Configure, args: protocol.ConfigureRequestArguments): Promise<protocol.ConfigureResponse>
     request(command: CommandTypes.Definition, args: protocol.FileLocationRequestArgs): Promise<protocol.DefinitionResponse>
     request(command: CommandTypes.Implementation, args: protocol.FileLocationRequestArgs): Promise<protocol.ImplementationResponse>
     request(command: CommandTypes.TypeDefinition, args: protocol.FileLocationRequestArgs): Promise<protocol.TypeDefinitionResponse>
     request(command: CommandTypes.Format, args: protocol.FormatRequestArgs): Promise<protocol.FormatResponse>
-    request(command: CommandTypes.GetApplicableRefactors, args: protocol.CodeFixRequestArgs): Promise<protocol.GetCodeFixesResponse>
+    request(command: CommandTypes.GetApplicableRefactors, args: protocol.GetApplicableRefactorsRequestArgs): Promise<protocol.GetApplicableRefactorsResponse>
     request(command: CommandTypes.GetCodeFixes, args: protocol.CodeFixRequestArgs): Promise<protocol.GetCodeFixesResponse>
     request(command: CommandTypes.Geterr, args: protocol.GeterrRequestArgs, token?: CancellationToken): Promise<protocol.RequestCompletedEvent>
     request(command: CommandTypes.GeterrForProject, args: protocol.GeterrForProjectRequestArgs): Promise<protocol.RequestCompletedEvent>

@@ -40,6 +40,16 @@ export function toLocation(fileSpan: tsp.FileSpan): lsp.Location {
     };
 }
 
+export function toFileRangeRequestArgs(file: string, range: lsp.Range): tsp.FileRangeRequestArgs {
+    return {
+        file,
+        startLine: range.start.line + 1,
+        startOffset: range.start.character + 1,
+        endLine: range.end.line + 1,
+        endOffset: range.end.character + 1
+    }
+};
+
 const symbolKindsMapping: { [name: string]: lsp.SymbolKind } = {
     'enum member': lsp.SymbolKind.Constant,
     'JSX attribute': lsp.SymbolKind.Property,

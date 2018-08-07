@@ -7,8 +7,10 @@
 import { listen, MessageConnection } from 'vscode-ws-jsonrpc';
 import {
     MonacoLanguageClient, CloseAction, ErrorAction,
-    MonacoServices, createConnection
+    MonacoServices, createConnection, TextDocumentPositionParams,
+    ProtocolToMonacoConverter
 } from 'monaco-languageclient';
+import { TypeScriptRenameRequest } from 'typescript-language-server/lib/commands';
 import normalizeUrl = require('normalize-url');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
@@ -43,6 +45,7 @@ const editor = monaco.editor.create(document.getElementById("container")!, {
 
 // install Monaco language client services
 MonacoServices.install(editor, { rootUri });
+const p2m = new ProtocolToMonacoConverter();
 
 // create the web socket
 const url = createUrl('/sampleServer')
@@ -53,6 +56,12 @@ listen({
     onConnection: connection => {
         // create and start the language client
         const languageClient = createLanguageClient(connection);
+        languageClient.onReady().then(() => {
+            languageClient.onRequest(TypeScriptRenameRequest.type, params => {
+                editor.setPosition(p2m.asPosition(params.position));
+                editor.trigger('', 'editor.action.rename', {});
+            });
+        });
         const disposable = languageClient.start();
         connection.onClose(() => disposable.dispose());
     }
