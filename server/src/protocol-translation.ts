@@ -84,21 +84,40 @@ export function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     switch (category) {
         case 'error': return lsp.DiagnosticSeverity.Error
         case 'warning': return lsp.DiagnosticSeverity.Warning
-        default: return lsp.DiagnosticSeverity.Information
+        case 'suggestion': return lsp.DiagnosticSeverity.Hint
+        default: return lsp.DiagnosticSeverity.Error
     }
 }
 
-export function toDiagnostic(tspDiag: tsp.Diagnostic): lsp.Diagnostic {
+export function toDiagnostic(diagnostic: tsp.Diagnostic): lsp.Diagnostic {
     return {
         range: {
-            start: toPosition(tspDiag.start),
-            end: toPosition(tspDiag.end)
+            start: toPosition(diagnostic.start),
+            end: toPosition(diagnostic.end)
         },
-        message: tspDiag.text,
-        severity: toDiagnosticSeverity(tspDiag.category),
-        code: tspDiag.code,
-        source: 'typescript'
+        message: diagnostic.text,
+        severity: toDiagnosticSeverity(diagnostic.category),
+        code: diagnostic.code,
+        source: diagnostic.source || 'typescript',
+        relatedInformation: asRelatedInformation(diagnostic.relatedInformation)
     }
+}
+
+export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[]  | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
+    if (!info) {
+        return undefined;
+    }
+    const result: lsp.DiagnosticRelatedInformation[] = [];
+    for (const item of info) {
+        const span = item.span;
+        if (span) {
+            result.push(lsp.DiagnosticRelatedInformation.create(
+                toLocation(span),
+                item.message
+            ));
+        }
+    }
+    return result;
 }
 
 export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {

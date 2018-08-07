@@ -17,6 +17,7 @@
   "dependencies": {
     "command-exists": "1.2.6",
     "commander": "^2.11.0",
+    "lodash.debounce": "^4.0.8",
     "tempy": "^0.2.1",
     "vscode-languageserver": "^4.4.0",
     "vscode-uri": "^1.0.5"
@@ -28,6 +29,7 @@
     "lint": "tslint -c ../tslint.json --project ."
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.4",
     "@types/tempy": "^0.1.0"
   }
 }

@@ -537,15 +537,8 @@ export class LspServer {
         const file = uriToPath(params.textDocument.uri);
         const args = toFileRangeRequestArgs(file, params.range);
         const codeActions: (lsp.Command | lsp.CodeAction)[] = [];
-        provideQuickFix(await this.getCodeFixes({
-            ...args,
-            errorCodes: params.context.diagnostics.reduce((codes, diagnostic) => {
-                if (typeof diagnostic.code === 'number') {
-                    codes.push(diagnostic.code);
-                }
-                return codes;
-            }, [] as number[])
-        }), codeActions);
+        const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
+        provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), codeActions);
         provideRefactors(await this.getRefactors(args), codeActions, args);
         return codeActions;
     }
@@ -735,10 +728,10 @@ export class LspServer {
     }
 
     protected onTsEvent(event: protocol.Event): void {
-        if (event.event === EventTypes.SementicDiag) {
-            this.diagnosticQueue.addSemanticDiagnostic(event);
-        } else if (event.event === EventTypes.SyntaxDiag) {
-            this.diagnosticQueue.addSyntacticDiagnostic(event);
+        if (event.event === EventTypes.SementicDiag ||
+            event.event === EventTypes.SyntaxDiag ||
+            event.event === EventTypes.SuggestionDiag) {
+            this.diagnosticQueue.updateDiagnostics(event.event, event);
         } else {
             this.logger.log("Ignored event", {
                 "event": event.event
