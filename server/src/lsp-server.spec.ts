@@ -218,17 +218,17 @@ describe('signatureHelp', () => {
     server.didOpenTextDocument({
       textDocument: doc
     })
-    let result = await server.signatureHelp({
+    let result = (await server.signatureHelp({
       textDocument: doc,
       position: position(doc, 'param1')
-    })
+    }))!;
 
     assert.equal('bar: string', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label)
 
-    result = await server.signatureHelp({
+    result = (await server.signatureHelp({
       textDocument: doc,
       position: position(doc, 'param2')
-    })
+    }))!;
 
     assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
   }).timeout(10000);
