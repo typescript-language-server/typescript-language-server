@@ -26,6 +26,40 @@ export interface TspClientOptions {
     onEvent?: (event: protocol.Event) => void;
 }
 
+interface TypeScriptRequestTypes {
+    'geterr': [protocol.GeterrRequestArgs, any],
+    'documentHighlights': [protocol.DocumentHighlightsRequestArgs, protocol.DocumentHighlightsResponse],
+    'applyCodeActionCommand': [protocol.ApplyCodeActionCommandRequestArgs, protocol.ApplyCodeActionCommandResponse];
+    'completionEntryDetails': [protocol.CompletionDetailsRequestArgs, protocol.CompletionDetailsResponse];
+    'completionInfo': [protocol.CompletionsRequestArgs, protocol.CompletionInfoResponse];
+    'completions': [protocol.CompletionsRequestArgs, protocol.CompletionsResponse];
+    'configure': [protocol.ConfigureRequestArguments, protocol.ConfigureResponse];
+    'definition': [protocol.FileLocationRequestArgs, protocol.DefinitionResponse];
+    'definitionAndBoundSpan': [protocol.FileLocationRequestArgs, protocol.DefinitionInfoAndBoundSpanReponse];
+    'docCommentTemplate': [protocol.FileLocationRequestArgs, protocol.DocCommandTemplateResponse];
+    'format': [protocol.FormatRequestArgs, protocol.FormatResponse];
+    'formatonkey': [protocol.FormatOnKeyRequestArgs, protocol.FormatResponse];
+    'getApplicableRefactors': [protocol.GetApplicableRefactorsRequestArgs, protocol.GetApplicableRefactorsResponse];
+    'getCodeFixes': [protocol.CodeFixRequestArgs, protocol.GetCodeFixesResponse];
+    'getCombinedCodeFix': [protocol.GetCombinedCodeFixRequestArgs, protocol.GetCombinedCodeFixResponse];
+    'getEditsForFileRename': [protocol.GetEditsForFileRenameRequestArgs, protocol.GetEditsForFileRenameResponse];
+    'getEditsForRefactor': [protocol.GetEditsForRefactorRequestArgs, protocol.GetEditsForRefactorResponse];
+    'getOutliningSpans': [protocol.FileRequestArgs, protocol.OutliningSpansResponse];
+    'getSupportedCodeFixes': [null, protocol.GetSupportedCodeFixesResponse];
+    'implementation': [protocol.FileLocationRequestArgs, protocol.ImplementationResponse];
+    'jsxClosingTag': [protocol.JsxClosingTagRequestArgs, protocol.JsxClosingTagResponse];
+    'navto': [protocol.NavtoRequestArgs, protocol.NavtoResponse];
+    'navtree': [protocol.FileRequestArgs, protocol.NavTreeResponse];
+    'occurrences': [protocol.FileLocationRequestArgs, protocol.OccurrencesResponse];
+    'organizeImports': [protocol.OrganizeImportsRequestArgs, protocol.OrganizeImportsResponse];
+    'projectInfo': [protocol.ProjectInfoRequestArgs, protocol.ProjectInfoResponse];
+    'quickinfo': [protocol.FileLocationRequestArgs, protocol.QuickInfoResponse];
+    'references': [protocol.FileLocationRequestArgs, protocol.ReferencesResponse];
+    'rename': [protocol.RenameRequestArgs, protocol.RenameResponse];
+    'signatureHelp': [protocol.SignatureHelpRequestArgs, protocol.SignatureHelpResponse];
+    'typeDefinition': [protocol.FileLocationRequestArgs, protocol.TypeDefinitionResponse];
+}
+
 export class TspClient {
     private readlineInterface: readline.ReadLine;
     private tsserverProc: cp.ChildProcess;
@@ -86,28 +120,11 @@ export class TspClient {
         this.sendMessage(command, true, args);
     }
 
-    request(command: CommandTypes.GetEditsForRefactor, args: protocol.GetEditsForRefactorRequestArgs): Promise<protocol.GetEditsForRefactorResponse>
-    request(command: CommandTypes.ApplyCodeActionCommand, args: protocol.ApplyCodeActionCommandRequestArgs): Promise<protocol.ApplyCodeActionCommandResponse>
-    request(command: CommandTypes.Configure, args: protocol.ConfigureRequestArguments): Promise<protocol.ConfigureResponse>
-    request(command: CommandTypes.Definition, args: protocol.FileLocationRequestArgs): Promise<protocol.DefinitionResponse>
-    request(command: CommandTypes.Implementation, args: protocol.FileLocationRequestArgs): Promise<protocol.ImplementationResponse>
-    request(command: CommandTypes.TypeDefinition, args: protocol.FileLocationRequestArgs): Promise<protocol.TypeDefinitionResponse>
-    request(command: CommandTypes.Format, args: protocol.FormatRequestArgs): Promise<protocol.FormatResponse>
-    request(command: CommandTypes.GetApplicableRefactors, args: protocol.GetApplicableRefactorsRequestArgs): Promise<protocol.GetApplicableRefactorsResponse>
-    request(command: CommandTypes.GetCodeFixes, args: protocol.CodeFixRequestArgs): Promise<protocol.GetCodeFixesResponse>
-    request(command: CommandTypes.Geterr, args: protocol.GeterrRequestArgs, token?: CancellationToken): Promise<protocol.RequestCompletedEvent>
-    request(command: CommandTypes.GeterrForProject, args: protocol.GeterrForProjectRequestArgs): Promise<protocol.RequestCompletedEvent>
-    request(command: CommandTypes.Navto, args: protocol.NavtoRequestArgs): Promise<protocol.NavtoResponse>
-    request(command: CommandTypes.NavTree, args: protocol.FileRequestArgs): Promise<protocol.NavTreeResponse>
-    request(command: CommandTypes.Completions, args: protocol.CompletionsRequestArgs): Promise<protocol.CompletionsResponse>
-    request(command: CommandTypes.CompletionDetails, args: protocol.CompletionDetailsRequestArgs): Promise<protocol.CompletionDetailsResponse>
-    request(command: CommandTypes.DocumentHighlights, args: protocol.DocumentHighlightsRequestArgs): Promise<protocol.DocumentHighlightsResponse>
-    request(command: CommandTypes.Quickinfo, args: protocol.FileLocationRequestArgs): Promise<protocol.QuickInfoResponse>
-    request(command: CommandTypes.Rename, args: protocol.RenameRequestArgs): Promise<protocol.RenameResponse>
-    request(command: CommandTypes.References, args: protocol.FileLocationRequestArgs): Promise<protocol.ReferencesResponse>
-    request(command: CommandTypes.SignatureHelp, args: protocol.SignatureHelpRequestArgs): Promise<protocol.SignatureHelpResponse>
-    request(command: CommandTypes.GetOutliningSpans, args: protocol.FileRequestArgs): Promise<protocol.OutliningSpansResponse>
-    request(command: string, args: object, token?: CancellationToken): Promise<object> {
+    request<K extends keyof TypeScriptRequestTypes>(
+        command: K,
+        args: TypeScriptRequestTypes[K][0],
+        token?: CancellationToken
+    ): Promise<TypeScriptRequestTypes[K][1]> {
         this.sendMessage(command, false, args);
         const seq = this.seq;
         const request = (this.deferreds[seq] = new Deferred<any>(command)).promise;
