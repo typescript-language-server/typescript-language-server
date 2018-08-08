@@ -7,7 +7,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
@@ -104,6 +104,11 @@ export class LspServer {
         });
 
         this.tspClient.start();
+        this.tspClient.request(CommandTypes.Configure, {
+            preferences: {
+                allowTextChangesInNewFiles: true
+            }
+        });
 
         this.initializeResult = {
             capabilities: {
@@ -601,7 +606,13 @@ export class LspServer {
         } else if (arg.command === Commands.APPLY_REFACTORING && arg.arguments) {
             const args = arg.arguments[0] as tsp.GetEditsForRefactorRequestArgs;
             const { body } = await this.tspClient.request(CommandTypes.GetEditsForRefactor, args);
-            if (!body || !await this.applyFileCodeEdits(body.edits)) {
+            if (!body ||  !body.edits.length) {
+                return;
+            }
+            for (const edit of body.edits) {
+                await fs.ensureFile(edit.fileName);
+            }
+            if (!await this.applyFileCodeEdits(body.edits)) {
                 return;
             }
             const renameLocation = body.renameLocation;
