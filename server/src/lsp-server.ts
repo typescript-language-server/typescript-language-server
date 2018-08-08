@@ -31,6 +31,7 @@ import { asSignatureHelp } from './hover';
 import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
+import { provideOrganizeImports } from './organize-imports';
 
 export interface IServerOptions {
     logger: Logger
@@ -126,7 +127,8 @@ export class LspServer {
                     commands: [
                         Commands.APPLY_WORKSPACE_EDIT,
                         Commands.APPLY_CODE_ACTION,
-                        Commands.APPLY_REFACTORING
+                        Commands.APPLY_REFACTORING,
+                        Commands.ORGANIZE_IMPORTS
                     ]
                 },
                 hoverProvider: true,
@@ -492,8 +494,11 @@ export class LspServer {
     }
 
     async documentFormatting(params: lsp.DocumentFormattingParams): Promise<lsp.TextEdit[]> {
-        const path = uriToPath(params.textDocument.uri);
-        this.logger.log('documentFormatting', params, path);
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('documentFormatting', params, file);
+        if (!file) {
+            return [];
+        }
 
         let opts = <tsp.FormatCodeSettings>{
             ...params.options
@@ -514,12 +519,12 @@ export class LspServer {
         }
 
         // options are not yet supported in tsserver, but we can send a configure request first
-        await this.tspClient.request(CommandTypes.Configure, <tsp.ConfigureRequestArguments>{
+        await this.tspClient.request(CommandTypes.Configure, {
             formatOptions: opts
         });
 
-        const response = await this.tspClient.request(CommandTypes.Format, <tsp.FormatRequestArgs>{
-            file: path,
+        const response = await this.tspClient.request(CommandTypes.Format, {
+            file,
             line: 1,
             offset: 1,
             endLine: Number.MAX_SAFE_INTEGER,
@@ -569,6 +574,7 @@ export class LspServer {
         const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
         provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), codeActions);
         provideRefactors(await this.getRefactors(args), codeActions, args);
+        provideOrganizeImports(file, params.context, codeActions);
         return codeActions;
     }
     protected async getCodeFixes(args: tsp.CodeFixRequestArgs): Promise<tsp.GetCodeFixesResponse | undefined> {
@@ -590,7 +596,7 @@ export class LspServer {
         this.logger.log('executeCommand', arg);
         if (arg.command === Commands.APPLY_WORKSPACE_EDIT && arg.arguments) {
             const edit = arg.arguments[0] as lsp.WorkspaceEdit;
-            this.options.lspClient.applyWorkspaceEdit({
+            await this.options.lspClient.applyWorkspaceEdit({
                 edit
             });
         } else if (arg.command === Commands.APPLY_CODE_ACTION && arg.arguments) {
@@ -606,7 +612,7 @@ export class LspServer {
         } else if (arg.command === Commands.APPLY_REFACTORING && arg.arguments) {
             const args = arg.arguments[0] as tsp.GetEditsForRefactorRequestArgs;
             const { body } = await this.tspClient.request(CommandTypes.GetEditsForRefactor, args);
-            if (!body ||  !body.edits.length) {
+            if (!body || !body.edits.length) {
                 return;
             }
             for (const edit of body.edits) {
@@ -624,11 +630,20 @@ export class LspServer {
                     position: toPosition(renameLocation)
                 });
             }
+        } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
+            const file = arg.arguments[0] as string;
+            const { body } = await this.tspClient.request(CommandTypes.OrganizeImports, {
+                scope: {
+                    type: 'file',
+                    args: { file }
+                }
+            });
+            await this.applyFileCodeEdits(body);
         } else {
             this.logger.error(`Unknown command ${arg.command}.`)
         }
     }
-    protected async applyFileCodeEdits(edits: tsp.FileCodeEdits[]): Promise<boolean> {
+    protected async applyFileCodeEdits(edits: ReadonlyArray<tsp.FileCodeEdits>): Promise<boolean> {
         if (!edits.length) {
             return false;
         }
@@ -643,12 +658,15 @@ export class LspServer {
     }
 
     async documentHighlight(arg: lsp.TextDocumentPositionParams): Promise<lsp.DocumentHighlight[]> {
-        this.logger.log('documentHighlight', arg);
-        let response: tsp.DocumentHighlightsResponse
         const file = uriToPath(arg.textDocument.uri);
+        this.logger.log('documentHighlight', arg, file);
+        if (!file) {
+            return [];
+        }
+        let response: tsp.DocumentHighlightsResponse;
         try {
-            response = await this.tspClient.request(CommandTypes.DocumentHighlights, <tsp.DocumentHighlightsRequestArgs>{
-                file: file,
+            response = await this.tspClient.request(CommandTypes.DocumentHighlights, {
+                file,
                 line: arg.position.line + 1,
                 offset: arg.position.character + 1,
                 filesToSearch: [file]
