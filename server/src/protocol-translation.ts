@@ -11,10 +11,10 @@ import * as tsp from 'typescript/lib/protocol';
 import URI from "vscode-uri";
 import { isWindows } from './utils';
 
-export function uriToPath(stringUri: string): string {
+export function uriToPath(stringUri: string): string | undefined {
     const uri = URI.parse(stringUri);
     if (uri.scheme !== 'file') {
-        throw new Error(`The Typescript Language Server only supports file-scheme URIs. Received "${stringUri}"`)
+        return undefined;
     }
     return uri.fsPath;
 }

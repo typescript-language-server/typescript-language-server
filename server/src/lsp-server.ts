@@ -56,7 +56,7 @@ export class LspServer {
             this.logger);
     }
 
-    public closeAll(): void {
+    closeAll(): void {
         for (const [uri, doc] of this.openedDocumentUris) {
             this.didCloseTextDocument({
                 textDocument: {
@@ -90,7 +90,7 @@ export class LspServer {
         return bundled;
     }
 
-    public async initialize(params: lsp.InitializeParams): Promise<lsp.InitializeResult> {
+    async initialize(params: lsp.InitializeParams): Promise<lsp.InitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
 
@@ -160,7 +160,7 @@ export class LspServer {
         // sort by least recently usage
         const orderedUris = [...this.openedDocumentUris.entries()].sort((a, b) => a[1].lastAccessed - b[1].lastAccessed).map(e => e[0]);
         for (const uri of orderedUris) {
-            files.push(uriToPath(uri));
+            files.push(uriToPath(uri)!);
         }
         const args: tsp.GeterrRequestArgs = {
             delay: 0,
@@ -181,9 +181,12 @@ export class LspServer {
         }
     }
 
-    public didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
-        const path = uriToPath(params.textDocument.uri);
-        this.logger.log('onDidOpenTextDocument', params, path);
+    didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('onDidOpenTextDocument', params, file);
+        if (!file) {
+            return;
+        }
         if (this.openedDocumentUris.get(params.textDocument.uri) !== undefined) {
             this.logger.log(`Cannot open already opened doc '${params.textDocument.uri}'.`);
             this.didChangeTextDocument({
@@ -196,7 +199,7 @@ export class LspServer {
             })
         } else {
             this.tspClient.notify(CommandTypes.Open, {
-                file: path,
+                file,
                 fileContent: params.textDocument.text,
                 scriptKindName: this.getScriptKindName(params.textDocument.languageId),
                 projectRootPath: this.rootPath()
@@ -216,10 +219,13 @@ export class LspServer {
         return undefined;
     }
 
-    public didCloseTextDocument(params: lsp.DidOpenTextDocumentParams): void {
-        const path = uriToPath(params.textDocument.uri);
-        this.logger.log('onDidCloseTextDocument', params, path);
-        this.tspClient.notify(CommandTypes.Close, { file: path });
+    didCloseTextDocument(params: lsp.DidOpenTextDocumentParams): void {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('onDidCloseTextDocument', params, file);
+        if (!file) {
+            return;
+        }
+        this.tspClient.notify(CommandTypes.Close, { file });
         this.openedDocumentUris.delete(params.textDocument.uri)
 
         // We won't be updating diagnostics anymore for that file, so clear them
@@ -230,10 +236,13 @@ export class LspServer {
         });
     }
 
-    public didChangeTextDocument(params: lsp.DidChangeTextDocumentParams): void {
-        const path = uriToPath(params.textDocument.uri)
+    didChangeTextDocument(params: lsp.DidChangeTextDocumentParams): void {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('onDidChangeTextDocument', params, file);
+        if (!file) {
+            return;
+        }
 
-        this.logger.log('onDidChangeTextDocument', params, path);
         const document = this.openedDocumentUris.get(params.textDocument.uri);
         if (!document) {
             this.logger.error("Received change on non-opened document " + params.textDocument.uri);
@@ -256,7 +265,7 @@ export class LspServer {
                 endOffset = change.range.end.character + 1;
             }
             this.tspClient.notify(CommandTypes.Change, {
-                file: path,
+                file,
                 line,
                 offset,
                 endLine,
@@ -267,7 +276,7 @@ export class LspServer {
         this.requestDiagnostics();
     }
 
-    public didSaveTextDocument(params: lsp.DidChangeTextDocumentParams): void {
+    didSaveTextDocument(params: lsp.DidChangeTextDocumentParams): void {
         // do nothing
     }
 
@@ -297,25 +306,29 @@ export class LspServer {
         type: 'definition' | 'implementation' | 'typeDefinition',
         params: lsp.TextDocumentPositionParams
     }): Promise<lsp.Definition> {
-        const path = uriToPath(params.textDocument.uri);
-
-        this.logger.log(type, params, path);
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log(type, params, file);
+        if (!file) {
+            return [];
+        }
 
         const result = await this.tspClient.request(type as CommandTypes.Definition, {
-            file: path,
+            file,
             line: params.position.line + 1,
             offset: params.position.character + 1
         });
         return result.body ? result.body.map(fileSpan => toLocation(fileSpan)) : [];
     }
 
-    public async documentSymbol(params: lsp.TextDocumentPositionParams): Promise<lsp.SymbolInformation[]> {
-        const path = uriToPath(params.textDocument.uri);
-
-        this.logger.log('symbol', params, path);
+    async documentSymbol(params: lsp.TextDocumentPositionParams): Promise<lsp.SymbolInformation[]> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('symbol', params, file);
+        if (!file) {
+            return [];
+        }
 
         const response = await this.tspClient.request(CommandTypes.NavTree, {
-            file: path
+            file
         });
         if (!response.body) {
             return [];
@@ -352,6 +365,9 @@ export class LspServer {
     async completion(params: lsp.CompletionParams): Promise<TSCompletionItem[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('completion', params, file);
+        if (!file) {
+            return [];
+        }
 
         const document = this.openedDocumentUris.get(params.textDocument.uri);
         if (!document) {
@@ -381,8 +397,11 @@ export class LspServer {
 
     async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {
         const file = uriToPath(params.textDocument.uri);
-
         this.logger.log('hover', params, file);
+        if (!file) {
+            return { contents: [] };
+        }
+
         const result = await this.interuptDiagnostics(() => this.getQuickInfo(file, params.position));
         if (!result || !result.body) {
             return { contents: [] };
@@ -410,24 +429,25 @@ export class LspServer {
         }
     }
 
-    public async rename(params: lsp.RenameParams): Promise<lsp.WorkspaceEdit> {
-        const path = uriToPath(params.textDocument.uri);
-
-        this.logger.log('onRename', params, path);
+    async rename(params: lsp.RenameParams): Promise<lsp.WorkspaceEdit | undefined> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('onRename', params, file);
+        if (!file) {
+            return undefined;
+        }
 
         const result = await this.tspClient.request(CommandTypes.Rename, {
-            file: path,
+            file,
             line: params.position.line + 1,
             offset: params.position.character + 1
         });
 
+        if (!result.body || !result.body.info.canRename || result.body.locs.length === 0) {
+            return undefined;
+        }
         const workspaceEdit = {
             changes: {}
         };
-
-        if (!result.body || !result.body.info.canRename || result.body.locs.length === 0) {
-            return workspaceEdit;
-        }
         result.body.locs
             .forEach((spanGroup) => {
                 const uri = pathToUri(spanGroup.file),
@@ -447,13 +467,15 @@ export class LspServer {
         return workspaceEdit;
     }
 
-    public async references(params: lsp.TextDocumentPositionParams): Promise<lsp.Location[]> {
-        const path = uriToPath(params.textDocument.uri);
-
-        this.logger.log('onReferences', params, path);
+    async references(params: lsp.TextDocumentPositionParams): Promise<lsp.Location[]> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('onReferences', params, file);
+        if (!file) {
+            return [];
+        }
 
         const result = await this.tspClient.request(CommandTypes.References, {
-            file: path,
+            file,
             line: params.position.line + 1,
             offset: params.position.character + 1
         });
@@ -464,7 +486,7 @@ export class LspServer {
             .map(fileSpan => toLocation(fileSpan));
     }
 
-    public async documentFormatting(params: lsp.DocumentFormattingParams): Promise<lsp.TextEdit[]> {
+    async documentFormatting(params: lsp.DocumentFormattingParams): Promise<lsp.TextEdit[]> {
         const path = uriToPath(params.textDocument.uri);
         this.logger.log('documentFormatting', params, path);
 
@@ -505,17 +527,16 @@ export class LspServer {
         return [];
     }
 
-    async signatureHelp(params: lsp.TextDocumentPositionParams): Promise<lsp.SignatureHelp> {
+    async signatureHelp(params: lsp.TextDocumentPositionParams): Promise<lsp.SignatureHelp | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('signatureHelp', params, file);
+        if (!file) {
+            return undefined;
+        }
 
         const response = await await this.interuptDiagnostics(() => this.getSignatureHelp(file, params.position));
         if (!response || !response.body) {
-            return {
-                signatures: [],
-                activeSignature: null,
-                activeParameter: null
-            };
+            return undefined;
         }
         const info = response.body;
         return asSignatureHelp(response.body);
@@ -533,8 +554,11 @@ export class LspServer {
     }
 
     async codeAction(params: lsp.CodeActionParams): Promise<(lsp.Command | lsp.CodeAction)[]> {
-        this.logger.log('codeAction', params);
         const file = uriToPath(params.textDocument.uri);
+        this.logger.log('codeAction', params, file);
+        if (!file) {
+            return [];
+        }
         const args = toFileRangeRequestArgs(file, params.range);
         const codeActions: (lsp.Command | lsp.CodeAction)[] = [];
         const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
@@ -607,7 +631,7 @@ export class LspServer {
         return applied;
     }
 
-    public async documentHighlight(arg: lsp.TextDocumentPositionParams): Promise<lsp.DocumentHighlight[]> {
+    async documentHighlight(arg: lsp.TextDocumentPositionParams): Promise<lsp.DocumentHighlight[]> {
         this.logger.log('documentHighlight', arg);
         let response: tsp.DocumentHighlightsResponse
         const file = uriToPath(arg.textDocument.uri);
@@ -635,17 +659,17 @@ export class LspServer {
     }
 
     private rootPath(): string {
-        return this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath!;
+        return this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri)! : this.initializeParams.rootPath!;
     }
 
     private lastFileOrDummy(): string {
         for (const uri of this.openedDocumentUris.keys()) {
-            return uriToPath(uri);
+            return uriToPath(uri)!;
         }
         return this.rootPath();
     }
 
-    public async workspaceSymbol(params: lsp.WorkspaceSymbolParams): Promise<lsp.SymbolInformation[]> {
+    async workspaceSymbol(params: lsp.WorkspaceSymbolParams): Promise<lsp.SymbolInformation[]> {
         const result = await this.tspClient.request(CommandTypes.Navto, {
             file: this.lastFileOrDummy(),
             searchValue: params.query
@@ -674,6 +698,10 @@ export class LspServer {
     async foldingRanges(params: lsp.FoldingRangeRequestParam): Promise<lsp.FoldingRange[] | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('foldingRanges', params, file);
+        if (!file) {
+            return undefined;
+        }
+
         const document = this.openedDocumentUris.get(params.textDocument.uri);
         if (!document) {
             throw new Error("The document should be opened for foldingRanges', file: " + file);
