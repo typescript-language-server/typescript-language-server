@@ -56,7 +56,7 @@ typescript-language-server --stdio
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
     --socket <port>                        use socket. example: --socket=5000
     --tsserver-log-file <tsServerLogFile>  Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt
-    --tsserver-path <path>                 Specifiy path to tsserver. example: --tsserver-path=tsserver
+    --tsserver-path <path>                 Specify path to tsserver. example: --tsserver-path=tsserver
     -h, --help                             output usage information
 ```
 
