@@ -128,7 +128,8 @@ export class LspServer {
                         Commands.APPLY_WORKSPACE_EDIT,
                         Commands.APPLY_CODE_ACTION,
                         Commands.APPLY_REFACTORING,
-                        Commands.ORGANIZE_IMPORTS
+                        Commands.ORGANIZE_IMPORTS,
+                        Commands.APPLY_RENAME_FILE
                     ]
                 },
                 hoverProvider: true,
@@ -639,6 +640,12 @@ export class LspServer {
                 }
             });
             await this.applyFileCodeEdits(body);
+        } if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {
+            const { sourceUri, targetUri } = arg.arguments[0] as {
+                sourceUri: string
+                targetUri: string
+            };
+            this.applyRenameFile(sourceUri, targetUri);
         } else {
             this.logger.error(`Unknown command ${arg.command}.`)
         }
@@ -655,6 +662,27 @@ export class LspServer {
             edit: { changes }
         });
         return applied;
+    }
+
+    protected async applyRenameFile(sourceUri: string, targetUri: string): Promise<void> {
+        const edits = await this.getEditsForFileRename(sourceUri, targetUri);
+        this.applyFileCodeEdits(edits);
+    }
+    protected async getEditsForFileRename(sourceUri: string, targetUri: string): Promise<ReadonlyArray<tsp.FileCodeEdits>> {
+        const newFilePath = uriToPath(targetUri);
+        const oldFilePath = uriToPath(sourceUri);
+        if (!newFilePath || !oldFilePath) {
+            return [];
+        }
+        try {
+            const { body } = await this.tspClient.request(CommandTypes.GetEditsForFileRename, {
+                oldFilePath,
+                newFilePath
+            });
+            return body;
+        } catch (err) {
+            return [];
+        }
     }
 
     async documentHighlight(arg: lsp.TextDocumentPositionParams): Promise<lsp.DocumentHighlight[]> {
