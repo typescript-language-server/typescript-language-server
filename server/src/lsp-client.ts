@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { TypeScriptRenameRequest } from './commands';
+import { TypeScriptRenameRequest } from './ts-protocol';
 
 export interface LspClient {
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
