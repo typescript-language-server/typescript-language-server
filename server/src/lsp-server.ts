@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import * as tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
@@ -32,6 +33,7 @@ import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
+import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 
 export interface IServerOptions {
     logger: Logger
@@ -43,8 +45,8 @@ export interface IServerOptions {
 
 export class LspServer {
 
-    private initializeParams: lsp.InitializeParams;
-    private initializeResult: lsp.InitializeResult;
+    private initializeParams: TypeScriptInitializeParams;
+    private initializeResult: TypeScriptInitializeResult;
     private tspClient: TspClient;
     private openedDocumentUris: Map<string, LspDocument> = new Map<string, LspDocument>();
     private diagnosticQueue: DiagnosticEventQueue;
@@ -91,15 +93,21 @@ export class LspServer {
         return bundled;
     }
 
-    async initialize(params: lsp.InitializeParams): Promise<lsp.InitializeResult> {
+    async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
+
+        const { logVerbosity }: TypeScriptInitializationOptions = {
+            logVerbosity: this.options.tsserverLogVerbosity,
+            ...this.initializeParams.initializationOptions
+        };
+        const logFile = logVerbosity !== undefined ? this.options.tsserverLogFile || tempy.file(<any>{ name: 'tsserver.log' }) : undefined;
 
         const tsserverPath = this.findTsserverPath();
         this.tspClient = new TspClient({
             tsserverPath,
-            logFile: this.options.tsserverLogFile,
-            logVerbosity: this.options.tsserverLogVerbosity,
+            logFile,
+            logVerbosity,
             logger: this.options.logger,
             onEvent: this.onTsEvent.bind(this)
         });
@@ -111,6 +119,7 @@ export class LspServer {
             }
         });
 
+        const logFileUri = logFile && pathToUri(logFile);
         this.initializeResult = {
             capabilities: {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
@@ -142,7 +151,8 @@ export class LspServer {
                 implementationProvider: true,
                 typeDefinitionProvider: true,
                 foldingRangeProvider: true
-            }
+            },
+            logFileUri
         };
 
         this.logger.log('onInitialize result', this.initializeResult);

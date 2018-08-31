@@ -10,7 +10,7 @@ import {
     MonacoServices, createConnection, TextDocumentPositionParams,
     ProtocolToMonacoConverter
 } from 'monaco-languageclient';
-import { TypeScriptRenameRequest } from 'typescript-language-server/lib/commands';
+import { TypeScriptRenameRequest } from 'typescript-language-server/lib/ts-protocol';
 import normalizeUrl = require('normalize-url');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
