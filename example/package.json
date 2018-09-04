@@ -1,13 +1,13 @@
 {
     "private": true,
     "name": "example",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "dependencies": {
-        "typescript-language-server": "0.2.0",
-        "monaco-languageclient": "next",
         "express": "^4.15.2",
+        "monaco-languageclient": "next",
         "normalize-url": "^2.0.1",
         "reconnecting-websocket": "^3.2.2",
+        "typescript-language-server": "0.2.1",
         "vscode-ws-jsonrpc": "^0.0.2-1",
         "ws": "^5.0.0"
     },
