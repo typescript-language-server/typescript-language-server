@@ -103,7 +103,7 @@ export function toDiagnostic(diagnostic: tsp.Diagnostic): lsp.Diagnostic {
     }
 }
 
-export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[]  | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
+export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
     if (!info) {
         return undefined;
     }
@@ -273,4 +273,70 @@ export function asPlainText(parts: tsp.SymbolDisplayPart[] | undefined): string 
         return undefined;
     }
     return parts.map(part => part.text).join('');
+}
+
+export namespace Position {
+    export function Min(): undefined;
+    export function Min(...positions: lsp.Position[]): lsp.Position;
+    export function Min(...positions: lsp.Position[]): lsp.Position | undefined {
+        if (!positions.length) {
+            return undefined;
+        }
+        let result = positions.pop()!;
+        for (let p of positions) {
+            if (isBefore(p, result)) {
+                result = p;
+            }
+        }
+        return result;
+    }
+    export function isBefore(one: lsp.Position, other: lsp.Position): boolean {
+        if (one.line < other.line) {
+            return true;
+        }
+        if (other.line < one.line) {
+            return false;
+        }
+        return one.character < other.character;
+    }
+    export function Max(): undefined;
+    export function Max(...positions: lsp.Position[]): lsp.Position;
+    export function Max(...positions: lsp.Position[]): lsp.Position | undefined {
+        if (!positions.length) {
+            return undefined;
+        }
+        let result = positions.pop()!;
+        for (let p of positions) {
+            if (isAfter(p, result)) {
+                result = p;
+            }
+        }
+        return result;
+    }
+    export function isAfter(one: lsp.Position, other: lsp.Position): boolean {
+        return !isBeforeOrEqual(one, other);
+    }
+    export function isBeforeOrEqual(one: lsp.Position, other: lsp.Position): boolean {
+        if (one.line < other.line) {
+            return true;
+        }
+        if (other.line < one.line) {
+            return false;
+        }
+        return one.character <= other.character;
+    }
+}
+
+export namespace Range {
+    export function intersection(one: lsp.Range, other: lsp.Range): lsp.Range | undefined {
+        const start = Position.Max(other.start, one.start);
+        const end = Position.Min(other.end, one.end);
+        if (Position.isAfter(start, end)) {
+            // this happens when there is no overlap:
+            // |-----|
+            //          |----|
+            return undefined;
+        }
+        return lsp.Range.create(start, end);
+    }
 }
