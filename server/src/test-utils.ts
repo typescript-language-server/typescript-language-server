@@ -73,7 +73,13 @@ export async function createServer(options: {
         rootPath: undefined,
         rootUri: options.rootUri,
         processId: 42,
-        capabilities: {},
+        capabilities: <any>{
+            textDocument: {
+                documentSymbol: {
+                    hierarchicalDocumentSymbolSupport: true
+                }
+            }
+        },
         workspaceFolders: null
     });
     return server;

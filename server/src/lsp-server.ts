@@ -22,8 +22,7 @@ import { findPathToModule } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toMarkDown, toTextDocumentEdit,
-    toFileRangeRequestArgs
+    pathToUri, toTextEdit, toFileRangeRequestArgs,
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocument } from './document';
@@ -34,6 +33,7 @@ import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
+import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
 
 export interface IServerOptions {
     logger: Logger
@@ -338,7 +338,7 @@ export class LspServer {
         return result.body ? result.body.map(fileSpan => toLocation(fileSpan)) : [];
     }
 
-    async documentSymbol(params: lsp.TextDocumentPositionParams): Promise<lsp.SymbolInformation[]> {
+    async documentSymbol(params: lsp.TextDocumentPositionParams): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('symbol', params, file);
         if (!file) {
@@ -348,32 +348,27 @@ export class LspServer {
         const response = await this.tspClient.request(CommandTypes.NavTree, {
             file
         });
-        if (!response.body) {
+        const tree = response.body;
+        if (!tree || !tree.childItems) {
             return [];
         }
-        const result: lsp.SymbolInformation[] = [];
-        const collectSymbol: (element: tsp.NavigationTree, parent: string | undefined, acceptor: (sym: lsp.SymbolInformation) => void) => void =
-            (element, parent, acceptor) => {
-                const start = element.spans[0];
-                const end = element.spans[element.spans.length - 1];
-                if (start && end) {
-                    const symbol = lsp.SymbolInformation.create(
-                        element.text,
-                        toSymbolKind(element.kind),
-                        { start: toPosition(start.start), end: toPosition(end.end) },
-                        params.textDocument.uri,
-                        parent
-                    );
-                    acceptor(symbol);
-                }
-                if (element.childItems) {
-                    for (const child of element.childItems) {
-                        collectSymbol(child, element.text, acceptor);
-                    }
-                }
-            };
-        collectSymbol(response.body, undefined, sym => result.push(sym));
-        return result;
+        if (this.supportHierarchicalDocumentSymbol) {
+            const symbols: lsp.DocumentSymbol[] = [];
+            for (const item of tree.childItems) {
+                collectDocumentSymbols(item, symbols);
+            }
+            return symbols;
+        }
+        const symbols: lsp.SymbolInformation[] = [];
+        for (const item of tree.childItems) {
+            collectSymbolInformations(params.textDocument.uri, item, symbols);
+        }
+        return symbols;
+    }
+    protected get supportHierarchicalDocumentSymbol(): boolean {
+        const textDocument = this.initializeParams.capabilities.textDocument;
+        const documentSymbol = textDocument && textDocument.documentSymbol;
+        return !!documentSymbol && !!documentSymbol.hierarchicalDocumentSymbolSupport
     }
 
     /*
