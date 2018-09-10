@@ -10,7 +10,7 @@ import * as lsp from 'vscode-languageserver';
 import { Logger } from './logger';
 import { pathToUri, toDiagnostic } from './protocol-translation';
 import { EventTypes } from './tsp-command-types';
-import debounce = require('lodash.debounce');
+import debounce = require('p-debounce');
 
 export class DiagnosticEventQueue {
 

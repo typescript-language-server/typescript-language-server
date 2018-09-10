@@ -10,6 +10,7 @@ import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
+import debounce = require('p-debounce');
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
 
@@ -163,7 +164,8 @@ export class LspServer {
         this.requestDiagnostics();
         return result;
     }
-    async requestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
+    readonly requestDiagnostics = debounce(() => this.doRequestDiagnostics(), 200);
+    protected async doRequestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
         this.cancelDiagnostics();
         const geterrTokenSource = new lsp.CancellationTokenSource();
         this.diagnosticsTokenSource = geterrTokenSource;
