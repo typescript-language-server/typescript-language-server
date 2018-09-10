@@ -25,7 +25,7 @@ import {
     pathToUri, toTextEdit, toFileRangeRequestArgs,
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
-import { LspDocument } from './document';
+import { LspDocuments, LspDocument } from './document';
 import { asCompletionItem, TSCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
 import { Commands } from './commands';
@@ -48,9 +48,10 @@ export class LspServer {
     private initializeParams: TypeScriptInitializeParams;
     private initializeResult: TypeScriptInitializeResult;
     private tspClient: TspClient;
-    private openedDocumentUris: Map<string, LspDocument> = new Map<string, LspDocument>();
     private diagnosticQueue: DiagnosticEventQueue;
     private logger: Logger;
+
+    private readonly documents = new LspDocuments();
 
     constructor(private options: IServerOptions) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]')
@@ -60,15 +61,8 @@ export class LspServer {
     }
 
     closeAll(): void {
-        for (const [uri, doc] of this.openedDocumentUris) {
-            this.didCloseTextDocument({
-                textDocument: {
-                    uri,
-                    languageId: doc.languageId,
-                    version: doc.version,
-                    text: doc.getText()
-                }
-            });
+        for (const file of [...this.documents.files]) {
+            this.closeDocument(file);
         }
     }
 
@@ -174,18 +168,9 @@ export class LspServer {
         const geterrTokenSource = new lsp.CancellationTokenSource();
         this.diagnosticsTokenSource = geterrTokenSource;
 
-        const files: string[] = []
-        // sort by least recently usage
-        const orderedUris = [...this.openedDocumentUris.entries()].sort((a, b) => a[1].lastAccessed - b[1].lastAccessed).map(e => e[0]);
-        for (const uri of orderedUris) {
-            files.push(uriToPath(uri)!);
-        }
-        const args: tsp.GeterrRequestArgs = {
-            delay: 0,
-            files: files
-        };
+        const { files } = this.documents;
         try {
-            return await this.tspClient.request(CommandTypes.Geterr, args, this.diagnosticsTokenSource.token);
+            return await this.tspClient.request(CommandTypes.Geterr, { delay: 0, files }, this.diagnosticsTokenSource.token);
         } finally {
             if (this.diagnosticsTokenSource === geterrTokenSource) {
                 this.diagnosticsTokenSource = undefined;
@@ -205,7 +190,15 @@ export class LspServer {
         if (!file) {
             return;
         }
-        if (this.openedDocumentUris.get(params.textDocument.uri) !== undefined) {
+        if (this.documents.open(file, params.textDocument)) {
+            this.tspClient.notify(CommandTypes.Open, {
+                file,
+                fileContent: params.textDocument.text,
+                scriptKindName: this.getScriptKindName(params.textDocument.languageId),
+                projectRootPath: this.rootPath()
+            });
+            this.requestDiagnostics();
+        } else {
             this.logger.log(`Cannot open already opened doc '${params.textDocument.uri}'.`);
             this.didChangeTextDocument({
                 textDocument: params.textDocument,
@@ -214,16 +207,7 @@ export class LspServer {
                         text: params.textDocument.text
                     }
                 ]
-            })
-        } else {
-            this.tspClient.notify(CommandTypes.Open, {
-                file,
-                fileContent: params.textDocument.text,
-                scriptKindName: this.getScriptKindName(params.textDocument.languageId),
-                projectRootPath: this.rootPath()
             });
-            this.openedDocumentUris.set(params.textDocument.uri, new LspDocument(params.textDocument));
-            this.requestDiagnostics();
         }
     }
 
@@ -237,36 +221,45 @@ export class LspServer {
         return undefined;
     }
 
-    didCloseTextDocument(params: lsp.DidOpenTextDocumentParams): void {
+    didCloseTextDocument(params: lsp.DidCloseTextDocumentParams): void {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('onDidCloseTextDocument', params, file);
         if (!file) {
             return;
         }
+        this.closeDocument(file);
+    }
+    protected closeDocument(file: string): void {
+        const document = this.documents.close(file);
+        if (!document) {
+            return;
+        }
         this.tspClient.notify(CommandTypes.Close, { file });
-        this.openedDocumentUris.delete(params.textDocument.uri)
 
         // We won't be updating diagnostics anymore for that file, so clear them
         // so we don't leave stale ones.
         this.options.lspClient.publishDiagnostics({
-            uri: params.textDocument.uri,
+            uri: document.uri,
             diagnostics: [],
         });
     }
 
     didChangeTextDocument(params: lsp.DidChangeTextDocumentParams): void {
-        const file = uriToPath(params.textDocument.uri);
+        const { textDocument } = params;
+        const file = uriToPath(textDocument.uri);
         this.logger.log('onDidChangeTextDocument', params, file);
         if (!file) {
             return;
         }
 
-        const document = this.openedDocumentUris.get(params.textDocument.uri);
+        const document = this.documents.get(file);
         if (!document) {
-            this.logger.error("Received change on non-opened document " + params.textDocument.uri);
-            throw new Error("Received change on non-opened document " + params.textDocument.uri);
+            this.logger.error("Received change on non-opened document " + textDocument.uri);
+            throw new Error("Received change on non-opened document " + textDocument.uri);
         }
-        document.markAccessed();
+        if (textDocument.version === null) {
+            throw new Error(`Recevied document change event for ${textDocument.uri} without valid version identifier`);
+        }
 
         for (const change of params.contentChanges) {
             let line, offset, endLine, endOffset = 0;
@@ -290,6 +283,7 @@ export class LspServer {
                 endOffset,
                 insertString: change.text
             });
+            document.applyEdit(textDocument.version, change);
         }
         this.requestDiagnostics();
     }
@@ -382,7 +376,7 @@ export class LspServer {
             return [];
         }
 
-        const document = this.openedDocumentUris.get(params.textDocument.uri);
+        const document = this.documents.get(file);
         if (!document) {
             throw new Error("The document should be opened for completion, file: " + file);
         }
@@ -725,10 +719,7 @@ export class LspServer {
     }
 
     private lastFileOrDummy(): string {
-        for (const uri of this.openedDocumentUris.keys()) {
-            return uriToPath(uri)!;
-        }
-        return this.rootPath();
+        return this.documents.files[0] || this.rootPath();
     }
 
     async workspaceSymbol(params: lsp.WorkspaceSymbolParams): Promise<lsp.SymbolInformation[]> {
@@ -764,7 +755,7 @@ export class LspServer {
             return undefined;
         }
 
-        const document = this.openedDocumentUris.get(params.textDocument.uri);
+        const document = this.documents.get(file);
         if (!document) {
             throw new Error("The document should be opened for foldingRanges', file: " + file);
         }

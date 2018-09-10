@@ -9,16 +9,11 @@ import * as lsp from 'vscode-languageserver';
 
 export class LspDocument implements lsp.TextDocument {
 
-    protected readonly document: lsp.TextDocument;
-    lastAccessed: number = new Date().getTime();
+    protected document: lsp.TextDocument;
 
     constructor(doc: lsp.TextDocumentItem) {
         const { uri, languageId, version, text } = doc;
         this.document = lsp.TextDocument.create(uri, languageId, version, text);
-    }
-
-    markAccessed(): void {
-        this.lastAccessed = new Date().getTime();
     }
 
     get uri(): string {
@@ -33,7 +28,7 @@ export class LspDocument implements lsp.TextDocument {
         return this.document.version;
     }
 
-    getText(range?: lsp.Range | undefined): string {
+    getText(range?: lsp.Range): string {
         return this.document.getText(range);
     }
 
@@ -73,4 +68,61 @@ export class LspDocument implements lsp.TextDocument {
     getLineStart(line: number): lsp.Position {
         return lsp.Position.create(line, 0);
     }
+
+    applyEdit(version: number, change: lsp.TextDocumentContentChangeEvent): void {
+        const content = this.getText();
+        let newContent = change.text;
+        if (change.range) {
+            const start = this.offsetAt(change.range.start);
+            const end = this.offsetAt(change.range.end);
+            newContent = content.substr(0, start) + change.text + content.substr(end);
+        }
+        this.document = lsp.TextDocument.create(this.uri, this.languageId, version, newContent);
+    }
+
+}
+
+export class LspDocuments {
+
+    private readonly _files: string[] = [];
+    private readonly documents = new Map<string, LspDocument>();
+
+    /**
+     * Sorted by last access.
+     */
+    get files(): string[] {
+        return this._files;
+    }
+
+    get(file: string): LspDocument | undefined {
+        const document = this.documents.get(file);
+        if (!document) {
+            return undefined;
+        }
+        if (this.files[0] !== file) {
+            this._files.splice(this._files.indexOf(file), 1);
+            this._files.unshift(file);
+        }
+        return document;
+    }
+
+    open(file: string, doc: lsp.TextDocumentItem): boolean {
+        if (this.documents.has(file)) {
+            return false;
+        }
+        this.documents.set(file, new LspDocument(doc));
+        this._files.unshift(file);
+        return true;
+    }
+
+    close(file: string): LspDocument | undefined {
+        const document = this.documents.get(file);
+        if (!document) {
+            return undefined;
+        }
+        this.documents.delete(file);
+        this._files.splice(this._files.indexOf(file), 1);
+        return document;
+    }
+
 }
