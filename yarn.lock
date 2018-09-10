@@ -516,16 +516,6 @@
   dependencies:
     "@types/node" "*"
 
-"@types/lodash.debounce@^4.0.4":
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/@types/lodash.debounce/-/lodash.debounce-4.0.4.tgz#a3d082628ef1bb1964c2b6a2d4f45acae7209e7a"
-  dependencies:
-    "@types/lodash" "*"
-
-"@types/lodash@*":
-  version "4.14.116"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.116.tgz#5ccf215653e3e8c786a58390751033a9adca0eb9"
-
 "@types/mime@*":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-2.0.0.tgz#5a7306e367c539b9f6543499de8dd519fac37a8b"
@@ -549,6 +539,10 @@
 "@types/normalize-url@^1.9.1":
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/@types/normalize-url/-/normalize-url-1.9.1.tgz#d19c631dfd938e5113322efc076e74185a7f5aaa"
+
+"@types/p-debounce@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@types/p-debounce/-/p-debounce-1.0.0.tgz#c7fab3d61f9bc6454337c4aef0dec069456d00ee"
 
 "@types/range-parser@*":
   version "1.2.2"
@@ -3887,6 +3881,10 @@ osenv@0, osenv@^0.1.4, osenv@^0.1.5:
   dependencies:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
+
+p-debounce@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/p-debounce/-/p-debounce-1.0.0.tgz#cb7f2cbeefd87a09eba861e112b67527e621e2fd"
 
 p-finally@^1.0.0:
   version "1.0.0"
