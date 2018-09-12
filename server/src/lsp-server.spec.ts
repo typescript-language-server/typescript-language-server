@@ -13,17 +13,18 @@ import { TextDocument } from 'vscode-languageserver';
 
 const assert = chai.assert;
 
-let diagnostics: lsp.PublishDiagnosticsParams | undefined;
+let diagnostics: Array<lsp.PublishDiagnosticsParams | undefined>;
 
 let server: LspServer;
 
 before(async () => {
     server = await createServer({
         rootUri: null,
-        publishDiagnostics: args => diagnostics = args
+        publishDiagnostics: args => diagnostics.push(args)
     })
 });
 beforeEach(() => {
+    diagnostics = [];
     server.closeAll();
 })
 
@@ -60,7 +61,7 @@ describe('completion', () => {
 describe('diagnostics', () => {
     it('simple test', async () => {
         const doc = {
-            uri: uri('bar.ts'),
+            uri: uri('diagnosticsBar.ts'),
             languageId: 'typescript',
             version: 1,
             text: `
@@ -72,12 +73,50 @@ describe('diagnostics', () => {
         server.didOpenTextDocument({
             textDocument: doc
         })
-        await server.requestDiagnostics();
+        
+        server.requestDiagnostics();
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        const diags = diagnostics!.diagnostics;
-        assert.equal(1, diags.length);
-        assert.equal("Cannot find name 'unknown'.", diags[0].message);
+        const diagnosticsForThisFile = diagnostics.filter(d => d!.uri === doc.uri);
+        assert.equal(diagnosticsForThisFile.length, 1, JSON.stringify(diagnostics));
+        const fileDiagnostics = diagnosticsForThisFile[0]!.diagnostics;
+        assert.equal(fileDiagnostics.length, 1);
+        assert.equal("Cannot find name 'unknown'.", fileDiagnostics[0].message);
+    }).timeout(10000);
+    
+    it('multiple files test', async () => {
+        const doc = {
+            uri: uri('multipleFileDiagnosticsBar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+    export function bar(): void {
+        unknown('test')
+    }
+`
+        }
+        const doc2 = {
+            uri: uri('multipleFileDiagnosticsFoo.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+    export function foo(): void {
+        unknown('test')
+    }
+`
+        }
+        server.didOpenTextDocument({
+            textDocument: doc
+        })
+        server.didOpenTextDocument({
+            textDocument: doc2
+        })
+        
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const diagnosticsForThisTest = diagnostics.filter(d => d!.uri === doc.uri || d!.uri === doc2.uri);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        assert.equal(diagnosticsForThisTest.length, 2, JSON.stringify(diagnostics));
     }).timeout(10000);
 });
 
@@ -131,7 +170,7 @@ function symbolsAsString(symbols: (lsp.DocumentSymbol | lsp.SymbolInformation)[]
 describe('editing', () => {
     it('open and change', async () => {
         const doc = {
-            uri: uri('bar.ts'),
+            uri: uri('openAndChangeBar.ts'),
             languageId: 'typescript',
             version: 1,
             text: `
@@ -157,9 +196,9 @@ describe('editing', () => {
         await server.requestDiagnostics()
         await server.requestDiagnostics()
         await new Promise(resolve => setTimeout(resolve, 200));
-        const diags = diagnostics!.diagnostics;
-        assert.isTrue(diags.length >= 1, diags.map(d => d.message).join(','));
-        assert.equal("Cannot find name 'unknown'.", diags[0].message);
+        const fileDiagnostics = diagnostics.filter(d => d!.uri === doc.uri)[0]!.diagnostics;
+        assert.isTrue(fileDiagnostics.length >= 1, fileDiagnostics.map(d => d.message).join(','));
+        assert.equal("Cannot find name 'unknown'.", fileDiagnostics[0].message);
     }).timeout(10000);
 });
 
