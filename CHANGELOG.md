@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2018-09-12
+- Restore containerName for non-hierarchical symbols [#69](https://github.com/theia-ide/typescript-language-server/pull/69)
+
 ## [0.3.3] - 2018-09-11
 - Fix updating documents on `didChange` notification [#65](https://github.com/theia-ide/typescript-language-server/pull/65)
 - Debounce triggering diagnostics if a client is spamming with edits [#65](https://github.com/theia-ide/typescript-language-server/pull/65)
@@ -25,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Organize imports support [#51](https://github.com/theia-ide/typescript-language-server/pull/51)
 - Added `Apply Rename File` command [#56](https://github.com/theia-ide/typescript-language-server/pull/56)
 
+[0.3.4]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/theia-ide/typescript-language-server/compare/961d937f3ee3ea6b68cb98a6c235c6beea5f2fa5...v0.3.1
