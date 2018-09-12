@@ -39,28 +39,29 @@ export function collectDocumentSymbols(parent: tsp.NavigationTree, symbols: lsp.
     return shouldInclude;
 }
 
-export function collectSymbolInformations(uri: string, parent: tsp.NavigationTree, symbols: lsp.SymbolInformation[]): boolean {
-    let shouldInclude = shouldInclueEntry(parent);
-
-    for (const span of parent.spans) {
+export function collectSymbolInformations(uri: string, current: tsp.NavigationTree, symbols: lsp.SymbolInformation[], containerName?: string): boolean {
+    let shouldInclude = shouldInclueEntry(current);
+    const name = current.text;
+    for (const span of current.spans) {
         const range = asRange(span);
         const children = [];
-        if (parent.childItems) {
-            for (const child of parent.childItems) {
+        if (current.childItems) {
+            for (const child of current.childItems) {
                 if (child.spans.some(span => !!Range.intersection(range, asRange(span)))) {
-                    const includedChild = collectSymbolInformations(uri, child, children);
+                    const includedChild = collectSymbolInformations(uri, child, children, name);
                     shouldInclude = shouldInclude || includedChild;
                 }
             }
         }
         if (shouldInclude) {
             symbols.push({
-                name: parent.text,
-                kind: toSymbolKind(parent.kind),
+                name,
+                kind: toSymbolKind(current.kind),
                 location: {
                     uri,
                     range
-                }
+                },
+                containerName
             });
             symbols.push(...children);
         }

@@ -115,8 +115,14 @@ Foo
 function symbolsAsString(symbols: (lsp.DocumentSymbol | lsp.SymbolInformation)[], indentation: string = ''): string {
     return symbols.map(symbol => {
         let result = '\n' + indentation + symbol.name;
-        if (lsp.DocumentSymbol.is(symbol) && symbol.children) {
-            result = result + symbolsAsString(symbol.children, indentation + '  ');
+        if (lsp.DocumentSymbol.is(symbol)) {
+            if (symbol.children) {
+                result = result + symbolsAsString(symbol.children, indentation + '  ');
+            }
+        } else {
+            if (symbol.containerName) {
+                result = result + ` in ${symbol.containerName}`;
+            }
         }
         return result;
     }).join('');
