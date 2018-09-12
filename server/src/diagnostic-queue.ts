@@ -12,12 +12,36 @@ import { pathToUri, toDiagnostic } from './protocol-translation';
 import { EventTypes } from './tsp-command-types';
 import debounce = require('p-debounce');
 
+class FileDiagnostics {
+    private readonly diagnosticsPerKind = new Map<EventTypes, lsp.Diagnostic[]>();
+    
+    constructor(readonly uri: string) { }
+    
+    private readonly returnDiagnostics = debounce((resolve: (params: lsp.PublishDiagnosticsParams) => void) => {
+        const diagnostics = this.getDiagnostics();
+        resolve({ uri: this.uri, diagnostics });
+    }, 50);
+    
+    public updateDiagnostics(kind: EventTypes, diagnostics: tsp.Diagnostic[]): Promise<lsp.PublishDiagnosticsParams> {
+        this.diagnosticsPerKind.set(kind, diagnostics.map(toDiagnostic));
+        return new Promise((resolve) => this.returnDiagnostics(resolve));
+    }
+    
+    protected getDiagnostics(): lsp.Diagnostic[] {
+        const result: lsp.Diagnostic[] = [];
+        for (const value of this.diagnosticsPerKind.values()) {
+            result.push(...value);
+        }
+        return result;
+    }
+}
+
 export class DiagnosticEventQueue {
 
-    protected readonly diagnostics = new Map<string, Map<EventTypes, lsp.Diagnostic[]>>();
+    protected readonly diagnostics = new Map<string, FileDiagnostics>();
 
     constructor(
-        protected publicDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
+        protected publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected logger: Logger
     ) { }
 
@@ -27,27 +51,11 @@ export class DiagnosticEventQueue {
             return;
         }
         const { file } = event.body;
-        const diagnostics = this.diagnostics.get(file) || new Map<EventTypes, lsp.Diagnostic[]>();
-        diagnostics.set(kind, event.body.diagnostics.map(toDiagnostic));
-        this.diagnostics.set(file, diagnostics);
-        this.firePublishDiagnostics(file);
-    }
-
-    protected firePublishDiagnostics = debounce((file: string): void => {
-        const uri = pathToUri(file);
-        const diagnostics = this.getDiagnostics(file);
-        this.publicDiagnostics({ uri, diagnostics });
-    }, 50);
-    protected getDiagnostics(file: string): lsp.Diagnostic[] {
-        const diagnostics = this.diagnostics.get(file);
-        if (!diagnostics) {
-            return [];
+        let fileDiagnostics = this.diagnostics.get(file);
+        if (!fileDiagnostics) {
+            fileDiagnostics = new FileDiagnostics(pathToUri(file));
+            this.diagnostics.set(file, fileDiagnostics);
         }
-        const result: lsp.Diagnostic[] = [];
-        for (const value of diagnostics.values()) {
-            result.push(...value);
-        }
-        return result;
+        fileDiagnostics.updateDiagnostics(kind, event.body.diagnostics).then(this.publishDiagnostics);
     }
-
 }
