@@ -14,19 +14,19 @@ import debounce = require('p-debounce');
 
 class FileDiagnostics {
     private readonly diagnosticsPerKind = new Map<EventTypes, lsp.Diagnostic[]>();
-    
+
     constructor(readonly uri: string) { }
-    
+
     private readonly returnDiagnostics = debounce((resolve: (params: lsp.PublishDiagnosticsParams) => void) => {
         const diagnostics = this.getDiagnostics();
         resolve({ uri: this.uri, diagnostics });
     }, 50);
-    
+
     public updateDiagnostics(kind: EventTypes, diagnostics: tsp.Diagnostic[]): Promise<lsp.PublishDiagnosticsParams> {
         this.diagnosticsPerKind.set(kind, diagnostics.map(toDiagnostic));
         return new Promise((resolve) => this.returnDiagnostics(resolve));
     }
-    
+
     protected getDiagnostics(): lsp.Diagnostic[] {
         const result: lsp.Diagnostic[] = [];
         for (const value of this.diagnosticsPerKind.values()) {
