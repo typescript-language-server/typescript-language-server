@@ -15,17 +15,19 @@ import debounce = require('p-debounce');
 class FileDiagnostics {
     private readonly diagnosticsPerKind = new Map<EventTypes, lsp.Diagnostic[]>();
 
-    constructor(readonly uri: string) { }
+    constructor(
+        protected readonly uri: string,
+        protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void
+    ) { }
 
-    private readonly returnDiagnostics = debounce((resolve: (params: lsp.PublishDiagnosticsParams) => void) => {
-        const diagnostics = this.getDiagnostics();
-        resolve({ uri: this.uri, diagnostics });
-    }, 50);
-
-    public updateDiagnostics(kind: EventTypes, diagnostics: tsp.Diagnostic[]): Promise<lsp.PublishDiagnosticsParams> {
+    update(kind: EventTypes, diagnostics: tsp.Diagnostic[]): void {
         this.diagnosticsPerKind.set(kind, diagnostics.map(toDiagnostic));
-        return new Promise((resolve) => this.returnDiagnostics(resolve));
+        this.firePublishDiagnostics();
     }
+    protected readonly firePublishDiagnostics = debounce(() => {
+        const diagnostics = this.getDiagnostics();
+        this.publishDiagnostics({ uri: this.uri, diagnostics });
+    }, 50);
 
     protected getDiagnostics(): lsp.Diagnostic[] {
         const result: lsp.Diagnostic[] = [];
@@ -51,11 +53,8 @@ export class DiagnosticEventQueue {
             return;
         }
         const { file } = event.body;
-        let fileDiagnostics = this.diagnostics.get(file);
-        if (!fileDiagnostics) {
-            fileDiagnostics = new FileDiagnostics(pathToUri(file));
-            this.diagnostics.set(file, fileDiagnostics);
-        }
-        fileDiagnostics.updateDiagnostics(kind, event.body.diagnostics).then(this.publishDiagnostics);
+        const diagnostics = this.diagnostics.get(file) || new FileDiagnostics(pathToUri(file), this.publishDiagnostics);
+        diagnostics.update(kind, event.body.diagnostics);
+        this.diagnostics.set(file, diagnostics);
     }
 }
