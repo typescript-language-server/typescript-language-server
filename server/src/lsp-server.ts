@@ -260,7 +260,7 @@ export class LspServer {
             throw new Error("Received change on non-opened document " + textDocument.uri);
         }
         if (textDocument.version === null) {
-            throw new Error(`Recevied document change event for ${textDocument.uri} without valid version identifier`);
+            throw new Error(`Received document change event for ${textDocument.uri} without valid version identifier`);
         }
 
         for (const change of params.contentChanges) {
