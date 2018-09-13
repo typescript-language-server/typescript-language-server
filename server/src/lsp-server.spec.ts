@@ -73,7 +73,7 @@ describe('diagnostics', () => {
         server.didOpenTextDocument({
             textDocument: doc
         })
-        
+
         server.requestDiagnostics();
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -83,7 +83,7 @@ describe('diagnostics', () => {
         assert.equal(fileDiagnostics.length, 1);
         assert.equal("Cannot find name 'unknown'.", fileDiagnostics[0].message);
     }).timeout(10000);
-    
+
     it('multiple files test', async () => {
         const doc = {
             uri: uri('multipleFileDiagnosticsBar.ts'),
@@ -111,7 +111,7 @@ describe('diagnostics', () => {
         server.didOpenTextDocument({
             textDocument: doc2
         })
-        
+
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const diagnosticsForThisTest = diagnostics.filter(d => d!.uri === doc.uri || d!.uri === doc2.uri);
