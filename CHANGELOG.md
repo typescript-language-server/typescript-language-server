@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2018-09-14
+- Fixed publishing diagnostics for all opened documents [#71](https://github.com/theia-ide/typescript-language-server/pull/71) - thanks to [@keyboardDrummer](https://github.com/keyboardDrummer)
+- Support global tsserver plugins [#73](https://github.com/theia-ide/typescript-language-server/pull/73)
+- Configure a tsserver log file via `TSSERVER_LOG_FILE` env variable [#73](https://github.com/theia-ide/typescript-language-server/pull/73)
+
 ## [0.3.4] - 2018-09-12
 - Restore containerName for non-hierarchical symbols [#69](https://github.com/theia-ide/typescript-language-server/pull/69)
 
@@ -28,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Organize imports support [#51](https://github.com/theia-ide/typescript-language-server/pull/51)
 - Added `Apply Rename File` command [#56](https://github.com/theia-ide/typescript-language-server/pull/56)
 
+[0.3.5]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.1...v0.3.2
