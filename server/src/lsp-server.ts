@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import * as path from 'path';
 import * as tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
@@ -97,7 +98,7 @@ export class LspServer {
             plugins: [],
             ...this.initializeParams.initializationOptions
         };
-        const logFile = logVerbosity !== undefined ? this.options.tsserverLogFile || tempy.file(<any>{ name: 'tsserver.log' }) : undefined;
+        const logFile = this.getLogFile(logVerbosity);
         const globalPlugins: string[] = [];
         const pluginProbeLocations: string[] = [];
         for (const plugin of plugins) {
@@ -161,6 +162,33 @@ export class LspServer {
 
         this.logger.log('onInitialize result', this.initializeResult);
         return this.initializeResult;
+    }
+    protected getLogFile(logVerbosity: string | undefined): string | undefined {
+        if (logVerbosity === undefined) {
+            return undefined;
+        }
+        const logFile = this.doGetLogFile();
+        if (logFile) {
+            fs.ensureFileSync(logFile);
+            return logFile;
+        }
+        return tempy.file(<any>{ name: 'tsserver.log' });
+
+    }
+    protected doGetLogFile(): string | undefined {
+        if (process.env.TSSERVER_LOG_FILE) {
+            return process.env.TSSERVER_LOG_FILE;
+        }
+        if (this.options.tsserverLogFile) {
+            return this.options.tsserverLogFile;
+        }
+        if (this.initializeParams.rootUri) {
+            return path.join(uriToPath(this.initializeParams.rootUri)!, '.log/tsserver.log');
+        }
+        if (this.initializeParams.rootPath) {
+            return path.join(this.initializeParams.rootPath, '.log/tsserver.log');
+        }
+        return undefined;
     }
 
     protected diagnosticsTokenSource: lsp.CancellationTokenSource | undefined;
