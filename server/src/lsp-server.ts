@@ -92,17 +92,26 @@ export class LspServer {
         this.logger.log('initialize', params);
         this.initializeParams = params;
 
-        const { logVerbosity }: TypeScriptInitializationOptions = {
+        const { logVerbosity, plugins }: TypeScriptInitializationOptions = {
             logVerbosity: this.options.tsserverLogVerbosity,
+            plugins: [],
             ...this.initializeParams.initializationOptions
         };
         const logFile = logVerbosity !== undefined ? this.options.tsserverLogFile || tempy.file(<any>{ name: 'tsserver.log' }) : undefined;
+        const globalPlugins: string[] = [];
+        const pluginProbeLocations: string[] = [];
+        for (const plugin of plugins) {
+            globalPlugins.push(plugin.name);
+            pluginProbeLocations.push(plugin.location);
+        }
 
         const tsserverPath = this.findTsserverPath();
         this.tspClient = new TspClient({
             tsserverPath,
             logFile,
             logVerbosity,
+            globalPlugins,
+            pluginProbeLocations,
             logger: this.options.logger,
             onEvent: this.onTsEvent.bind(this)
         });
