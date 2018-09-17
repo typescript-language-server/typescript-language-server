@@ -11,17 +11,19 @@ import { Logger } from './logger';
 import { pathToUri, toDiagnostic } from './protocol-translation';
 import { EventTypes } from './tsp-command-types';
 import debounce = require('p-debounce');
+import { LspDocuments } from './document';
 
 class FileDiagnostics {
-    private readonly diagnosticsPerKind = new Map<EventTypes, lsp.Diagnostic[]>();
+    private readonly diagnosticsPerKind = new Map<EventTypes, tsp.Diagnostic[]>();
 
     constructor(
         protected readonly uri: string,
-        protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void
+        protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
+        protected readonly documents: LspDocuments
     ) { }
 
     update(kind: EventTypes, diagnostics: tsp.Diagnostic[]): void {
-        this.diagnosticsPerKind.set(kind, diagnostics.map(toDiagnostic));
+        this.diagnosticsPerKind.set(kind, diagnostics);
         this.firePublishDiagnostics();
     }
     protected readonly firePublishDiagnostics = debounce(() => {
@@ -31,8 +33,10 @@ class FileDiagnostics {
 
     protected getDiagnostics(): lsp.Diagnostic[] {
         const result: lsp.Diagnostic[] = [];
-        for (const value of this.diagnosticsPerKind.values()) {
-            result.push(...value);
+        for (const diagnostics of this.diagnosticsPerKind.values()) {
+            for (const diagnostic of diagnostics) {
+                result.push(toDiagnostic(diagnostic, this.documents));
+            }
         }
         return result;
     }
@@ -43,8 +47,9 @@ export class DiagnosticEventQueue {
     protected readonly diagnostics = new Map<string, FileDiagnostics>();
 
     constructor(
-        protected publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
-        protected logger: Logger
+        protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
+        protected readonly documents: LspDocuments,
+        protected readonly logger: Logger
     ) { }
 
     updateDiagnostics(kind: EventTypes, event: tsp.DiagnosticEvent): void {
@@ -53,8 +58,9 @@ export class DiagnosticEventQueue {
             return;
         }
         const { file } = event.body;
-        const diagnostics = this.diagnostics.get(file) || new FileDiagnostics(pathToUri(file), this.publishDiagnostics);
+        const uri = pathToUri(file, this.documents);
+        const diagnostics = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.documents);
         diagnostics.update(kind, event.body.diagnostics);
-        this.diagnostics.set(file, diagnostics);
+        this.diagnostics.set(uri, diagnostics);
     }
 }

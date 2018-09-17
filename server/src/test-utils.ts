@@ -14,7 +14,7 @@ import { ConsoleLogger } from './logger';
 
 export function uri(suffix: string = ''): string {
     const resolved = this.filePath(suffix);
-    return pathToUri(resolved);
+    return pathToUri(resolved, undefined);
 }
 
 export function filePath(suffix: string = ''): string {

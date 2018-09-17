@@ -5,11 +5,10 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as path from 'path';
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
 import URI from "vscode-uri";
-import { isWindows } from './utils';
+import { LspDocuments } from './document';
 
 export function uriToPath(stringUri: string): string | undefined {
     const uri = URI.parse(stringUri);
@@ -19,8 +18,10 @@ export function uriToPath(stringUri: string): string | undefined {
     return uri.fsPath;
 }
 
-export function pathToUri(p: string): string {
-    return 'file://' + (isWindows() ? '/' + p.replace(/\//g, '/') : p);
+export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
+    const fileUri = URI.file(filepath);
+    const document = documents && documents.get(fileUri.fsPath);
+    return document ? document.uri : fileUri.toString();
 }
 
 export function toPosition(location: tsp.Location): lsp.Position {
@@ -30,9 +31,9 @@ export function toPosition(location: tsp.Location): lsp.Position {
     }
 }
 
-export function toLocation(fileSpan: tsp.FileSpan): lsp.Location {
+export function toLocation(fileSpan: tsp.FileSpan, documents: LspDocuments | undefined): lsp.Location {
     return {
-        uri: pathToUri(fileSpan.file),
+        uri: pathToUri(fileSpan.file, documents),
         range: {
             start: toPosition(fileSpan.start),
             end: toPosition(fileSpan.end)
@@ -89,7 +90,7 @@ export function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     }
 }
 
-export function toDiagnostic(diagnostic: tsp.Diagnostic): lsp.Diagnostic {
+export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments | undefined): lsp.Diagnostic {
     return {
         range: {
             start: toPosition(diagnostic.start),
@@ -99,11 +100,11 @@ export function toDiagnostic(diagnostic: tsp.Diagnostic): lsp.Diagnostic {
         severity: toDiagnosticSeverity(diagnostic.category),
         code: diagnostic.code,
         source: diagnostic.source || 'typescript',
-        relatedInformation: asRelatedInformation(diagnostic.relatedInformation)
+        relatedInformation: asRelatedInformation(diagnostic.relatedInformation, documents)
     }
 }
 
-export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
+export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
     if (!info) {
         return undefined;
     }
@@ -112,7 +113,7 @@ export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | 
         const span = item.span;
         if (span) {
             result.push(lsp.DiagnosticRelatedInformation.create(
-                toLocation(span),
+                toLocation(span, documents),
                 item.message
             ));
         }
@@ -152,10 +153,10 @@ export function toMarkDown(documentation: tsp.SymbolDisplayPart[], tags: tsp.JSD
     return result;
 }
 
-export function toTextDocumentEdit(change: tsp.FileCodeEdits): lsp.TextDocumentEdit {
+export function toTextDocumentEdit(change: tsp.FileCodeEdits, documents: LspDocuments | undefined): lsp.TextDocumentEdit {
     return {
         textDocument: {
-            uri: pathToUri(change.fileName),
+            uri: pathToUri(change.fileName, documents),
             version: 0 // TODO
         },
         edits: change.textChanges.map(c => toTextEdit(c))

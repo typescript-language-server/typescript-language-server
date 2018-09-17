@@ -59,7 +59,9 @@ export class LspServer {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]')
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
-            this.logger);
+            this.documents,
+            this.logger
+        );
     }
 
     closeAll(): void {
@@ -124,7 +126,7 @@ export class LspServer {
             }
         });
 
-        const logFileUri = logFile && pathToUri(logFile);
+        const logFileUri = logFile && pathToUri(logFile, undefined);
         this.initializeResult = {
             capabilities: {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
@@ -368,7 +370,7 @@ export class LspServer {
             line: params.position.line + 1,
             offset: params.position.character + 1
         });
-        return result.body ? result.body.map(fileSpan => toLocation(fileSpan)) : [];
+        return result.body ? result.body.map(fileSpan => toLocation(fileSpan, this.documents)) : [];
     }
 
     async documentSymbol(params: lsp.TextDocumentPositionParams): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
@@ -496,7 +498,7 @@ export class LspServer {
         };
         result.body.locs
             .forEach((spanGroup) => {
-                const uri = pathToUri(spanGroup.file),
+                const uri = pathToUri(spanGroup.file, this.documents),
                     textEdits = workspaceEdit.changes[uri] || (workspaceEdit.changes[uri] = []);
 
                 spanGroup.locs.forEach((textSpan) => {
@@ -529,7 +531,7 @@ export class LspServer {
             return [];
         }
         return result.body.refs
-            .map(fileSpan => toLocation(fileSpan));
+            .map(fileSpan => toLocation(fileSpan, this.documents));
     }
 
     async documentFormatting(params: lsp.DocumentFormattingParams): Promise<lsp.TextEdit[]> {
@@ -611,7 +613,7 @@ export class LspServer {
         const args = toFileRangeRequestArgs(file, params.range);
         const codeActions: (lsp.Command | lsp.CodeAction)[] = [];
         const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
-        provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), codeActions);
+        provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), codeActions, this.documents);
         provideRefactors(await this.getRefactors(args), codeActions, args);
         provideOrganizeImports(file, params.context, codeActions);
         return codeActions;
@@ -664,7 +666,7 @@ export class LspServer {
             if (renameLocation) {
                 await this.options.lspClient.rename({
                     textDocument: {
-                        uri: pathToUri(args.file)
+                        uri: pathToUri(args.file, this.documents)
                     },
                     position: toPosition(renameLocation)
                 });
@@ -694,7 +696,7 @@ export class LspServer {
         }
         const changes: { [uri: string]: lsp.TextEdit[] } = {};
         for (const edit of edits) {
-            changes[pathToUri(edit.fileName)] = edit.textChanges.map(toTextEdit);
+            changes[pathToUri(edit.fileName, this.documents)] = edit.textChanges.map(toTextEdit);
         }
         const { applied } = await this.options.lspClient.applyWorkspaceEdit({
             edit: { changes }
@@ -772,7 +774,7 @@ export class LspServer {
         return result.body.map(item => {
             return <lsp.SymbolInformation>{
                 location: {
-                    uri: pathToUri(item.file),
+                    uri: pathToUri(item.file, this.documents),
                     range: {
                         start: toPosition(item.start),
                         end: toPosition(item.end)
