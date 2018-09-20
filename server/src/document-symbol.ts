@@ -7,19 +7,27 @@
 
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
-import { asRange, toSymbolKind, Range, toPosition } from "./protocol-translation";
+import { asRange, toSymbolKind, Range } from "./protocol-translation";
 import { ScriptElementKind } from './tsp-command-types';
 
 export function collectDocumentSymbols(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[]): boolean {
-    let shouldInclude = shouldInclueEntry(parent);
+    return collectDocumentSymbolsInRange(parent, symbols, { start: asRange(parent.spans[0]).start, end: asRange(parent.spans[parent.spans.length - 1]).end });
+}
+
+function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[], range: lsp.Range): boolean {
+    let shouldInclude = shouldIncludeEntry(parent);
 
     for (const span of parent.spans) {
-        const range = asRange(span);
+        const spanRange = asRange(span);
+        if (!Range.intersection(range, spanRange)) {
+            continue;
+        }
+
         const children = [];
         if (parent.childItems) {
             for (const child of parent.childItems) {
-                if (child.spans.some(span => !!Range.intersection(range, asRange(span)))) {
-                    const includedChild = collectDocumentSymbols(child, children);
+                if (child.spans.some(childSpan => !!Range.intersection(spanRange, asRange(childSpan)))) {
+                    const includedChild = collectDocumentSymbolsInRange(child, children, spanRange);
                     shouldInclude = shouldInclude || includedChild;
                 }
             }
@@ -40,7 +48,7 @@ export function collectDocumentSymbols(parent: tsp.NavigationTree, symbols: lsp.
 }
 
 export function collectSymbolInformations(uri: string, current: tsp.NavigationTree, symbols: lsp.SymbolInformation[], containerName?: string): boolean {
-    let shouldInclude = shouldInclueEntry(current);
+    let shouldInclude = shouldIncludeEntry(current);
     const name = current.text;
     for (const span of current.spans) {
         const range = asRange(span);
@@ -70,7 +78,7 @@ export function collectSymbolInformations(uri: string, current: tsp.NavigationTr
     return shouldInclude;
 }
 
-export function shouldInclueEntry(item: tsp.NavigationTree | tsp.NavigationBarItem): boolean {
+export function shouldIncludeEntry(item: tsp.NavigationTree | tsp.NavigationBarItem): boolean {
     if (item.kind === ScriptElementKind.alias) {
         return false;
     }
