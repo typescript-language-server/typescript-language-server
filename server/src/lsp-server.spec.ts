@@ -120,8 +120,7 @@ describe('diagnostics', () => {
     }).timeout(10000);
 });
 
-
-describe('symbol', () => {
+describe('document symbol', () => {
     it('simple test', async () => {
         const doc = {
             uri: uri('bar.ts'),
@@ -144,6 +143,74 @@ describe('symbol', () => {
         });
 
         assert.equal(`
+Foo
+  foo
+  myFunction
+`, symbolsAsString(symbols) + '\n');
+    }).timeout(10000);
+
+    it('merges interfaces correctly', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+interface Box {
+    height: number;
+    width: number;
+}
+
+interface Box {
+    scale: number;
+}`
+        }
+        server.didOpenTextDocument({
+            textDocument: doc
+        })
+        const symbols = await server.documentSymbol({
+            textDocument: doc,
+            position: lsp.Position.create(1, 1)
+        });
+
+        assert.equal(`
+Box
+  height
+  width
+Box
+  scale
+`, symbolsAsString(symbols) + '\n');
+    }).timeout(10000);
+
+    it('duplication test', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+        export class Foo {
+          protected foo: string;
+          public myFunction(arg: string) {
+          }
+        }
+        export class Foo {
+          protected foo: string;
+          public myFunction(arg: string) {
+          }
+        }
+      `
+        }
+        server.didOpenTextDocument({
+            textDocument: doc
+        })
+        const symbols = await server.documentSymbol({
+            textDocument: doc,
+            position: lsp.Position.create(1, 1)
+        });
+
+        assert.equal(`
+Foo
+  foo
+  myFunction
 Foo
   foo
   myFunction
