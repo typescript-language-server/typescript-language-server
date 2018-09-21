@@ -32,13 +32,21 @@ function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.
                 }
             }
         }
+        let selectionRange = spanRange;
+        if (parent.nameSpan) {
+            const nameRange = asRange(parent.nameSpan);
+            // In the case of mergeable definitions, the nameSpan is only correct for the first definition.
+            if (Range.intersection(spanRange, nameRange)) {
+                selectionRange = nameRange;
+            }
+        }
         if (shouldInclude) {
             symbols.push({
                 name: parent.text,
                 detail: '',
                 kind: toSymbolKind(parent.kind),
-                range,
-                selectionRange: range,
+                range: spanRange,
+                selectionRange: selectionRange,
                 children
             });
         }

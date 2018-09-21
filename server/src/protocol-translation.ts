@@ -194,7 +194,7 @@ function toDocumentHighlightKind(kind: tsp.HighlightSpanKind): lsp.DocumentHighl
 
 export function asRange(span: tsp.TextSpan): lsp.Range {
     return lsp.Range.create(
-        Math.max(0, span.start.line - 1), Math.max(span.start.offset - 1, 0),
+        Math.max(0, span.start.line - 1), Math.max(0, span.start.offset - 1),
         Math.max(0, span.end.line - 1), Math.max(0, span.end.offset - 1)
     );
 }

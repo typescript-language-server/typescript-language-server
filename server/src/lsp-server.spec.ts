@@ -205,16 +205,23 @@ Box
         const symbols = await server.documentSymbol({
             textDocument: doc,
             position: lsp.Position.create(1, 1)
-        });
+        }) as lsp.DocumentSymbol[];
 
-        assert.equal(`
+        const expectation = `
 Foo
   foo
   myFunction
 Foo
   foo
   myFunction
-`, symbolsAsString(symbols) + '\n');
+`;
+        assert.equal(symbolsAsString(symbols) + '\n', expectation);
+        assert.deepEqual(symbols[0].selectionRange, {"start": {"line": 1, "character": 21}, "end": {"line": 1, "character": 24}});
+        assert.deepEqual(symbols[0].range, {"start": {"line": 1, "character": 8}, "end": {"line": 5, "character": 9}});
+
+        assert.deepEqual(symbols[1].selectionRange, symbols[1].range);
+        assert.deepEqual(symbols[1].range, {"start": {"line": 6, "character": 8}, "end": {"line": 10, "character": 9}});
+
     }).timeout(10000);
 });
 
