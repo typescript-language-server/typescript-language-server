@@ -410,7 +410,7 @@ export class LspServer {
      * implemented based on
      * https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/completions.ts
      */
-    async completion(params: lsp.CompletionParams): Promise<TSCompletionItem[]> {
+    async completion(params: lsp.CompletionParams): Promise<TSCompletionItem[] | null> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('completion', params, file);
         if (!file) {
@@ -422,15 +422,24 @@ export class LspServer {
             throw new Error("The document should be opened for completion, file: " + file);
         }
 
-        const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.Completions, {
-            file,
-            line: params.position.line + 1,
-            offset: params.position.character + 1,
-            includeExternalModuleExports: true,
-            includeInsertTextCompletions: true
-        }));
-        const body = result.body || [];
-        return body.map(entry => asCompletionItem(entry, file, params.position, document));
+        try {
+            const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.Completions, {
+                file,
+                line: params.position.line + 1,
+                offset: params.position.character + 1,
+                includeExternalModuleExports: true,
+                includeInsertTextCompletions: true
+            }));
+            const body = result.body || [];
+            return body.map(entry => asCompletionItem(entry, file, params.position, document));
+        } catch (error) {
+            if (error.message === "No content available.") {
+                this.logger.warn('No content was available for completion request');
+                return null;
+            } else {
+                throw error;
+            }
+        }
     }
 
     async completionResolve(item: TSCompletionItem): Promise<lsp.CompletionItem> {

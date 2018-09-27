@@ -10,6 +10,7 @@ import * as lsp from 'vscode-languageserver';
 import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition } from './test-utils';
 import { TextDocument } from 'vscode-languageserver';
+import { TSCompletionItem } from './completion';
 
 const assert = chai.assert;
 
@@ -47,7 +48,7 @@ describe('completion', () => {
         const proposals = await server.completion({
             textDocument: doc,
             position: pos
-        });
+        }) as TSCompletionItem[];
         assert.isTrue(proposals.length > 800, String(proposals.length));
         const item = proposals.filter(i => i.label === 'addEventListener')[0];
         const resolvedItem = await server.completionResolve(item)
