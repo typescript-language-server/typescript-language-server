@@ -434,7 +434,7 @@ export class LspServer {
             return body.map(entry => asCompletionItem(entry, file, params.position, document));
         } catch (error) {
             if (error.message === "No content available.") {
-                this.logger.warn('No content was available for completion request');
+                this.logger.info('No content was available for completion request');
                 return null;
             } else {
                 throw error;

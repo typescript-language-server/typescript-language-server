@@ -57,6 +57,31 @@ describe('completion', () => {
             textDocument: doc
         });
     }).timeout(10000);
+
+    it('incorrect source location', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+        export function foo(): void {
+          console.log('test')
+        }
+      `
+        }
+        server.didOpenTextDocument({
+            textDocument: doc
+        })
+        const pos = position(doc, 'foo');
+        const proposals = await server.completion({
+            textDocument: doc,
+            position: pos
+        }) as TSCompletionItem[];
+        assert.isTrue(proposals === null);
+        server.didCloseTextDocument({
+            textDocument: doc
+        });
+    }).timeout(10000);
 })
 
 describe('diagnostics', () => {
