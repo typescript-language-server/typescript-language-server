@@ -71,18 +71,33 @@ export class LspServer {
     }
 
     protected findTsserverPath(): string {
-        if (this.options.tsserverPath) {
+        if (this.options.tsserverPath) { // Attempt to maintain backwards compatability
+          if (fs.existsSync(this.options.tsserverPath)) {
             return this.options.tsserverPath;
+          } else {
+            try {
+              return require.resolve(this.options.tsserverPath)
+            } catch (e) {
+              try {
+                return require.resolve('typescript/bin/' + this.options.tsserverPath)
+              } catch (e) {
+                throw Error(`Could not find passed TSServer Path: '${this.options.tsserverPath}'. Path does not exist nor does resolve to a module.`)
+              }
+            }
+          }
         }
+
         // 1) look into node_modules of workspace root
         let executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`)
         if (executable) {
             return executable;
         }
         // 2) use globally installed tsserver
-        if (commandExists.sync(getTsserverExecutable())) {
-            return getTsserverExecutable();
-        }
+        try {
+          let path = require.resolve(getTsserverExecutable())
+          return path
+        } catch (e) {}
+
         // 3) look into node_modules of typescript-language-server
         const bundled = findPathToModule(__dirname, `.bin/${getTsserverExecutable()}`);
         if (!bundled) {

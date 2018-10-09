@@ -16,7 +16,7 @@ const assert = chai.assert;
 
 const server = new TspClient({
   logger: new ConsoleLogger(),
-  tsserverPath: 'tsserver'
+  tsserverPath: '../node_modules/.bin/tsserver'
 });
 
 server.start();

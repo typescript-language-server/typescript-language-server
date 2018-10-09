@@ -33,7 +33,7 @@ export class Deferred<T> {
 }
 
 export function getTsserverExecutable(): string {
-    return isWindows() ? 'tsserver.cmd' : 'tsserver'
+    return isWindows() ? 'typescript/bin/tsserver.cmd' : 'typescript/bin/tsserver'
 }
 
 export function isWindows(): boolean {
