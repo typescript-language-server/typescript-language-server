@@ -6,6 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
+import * as lspcalls from './lsp-protocol.calls.proposed'
 
 import { Logger, LspClientLogger } from './logger';
 import { LspServer } from './lsp-server';
@@ -53,6 +54,9 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     connection.onSignatureHelp(server.signatureHelp.bind(server));
     connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
     connection.onFoldingRanges(server.foldingRanges.bind(server));
+
+    // proposed `textDocument/calls` request
+    connection.onRequest(lspcalls.CallsRequest.type, server.calls.bind(server));
 
     return connection;
 }
