@@ -11,64 +11,77 @@ import { TspClient } from './tsp-client';
 import { ConsoleLogger } from './logger';
 import { filePath, readContents } from './test-utils';
 import { CommandTypes } from './tsp-command-types';
+import { findPathToModule } from './modules-resolver';
 
 const assert = chai.assert;
 
-const server = new TspClient({
+const executableServer = new TspClient({
   logger: new ConsoleLogger(),
   tsserverPath: 'tsserver'
 });
 
-server.start();
+const tsserverModuleRelativePath = path.join("typescript", "lib", "tsserver.js");
+const bundled = findPathToModule(__dirname, tsserverModuleRelativePath) as string;
+const moduleServer = new TspClient({
+  logger: new ConsoleLogger(),
+  tsserverPath: bundled
+});
 
-describe('ts server client', () => {
-  it('completion', () => {
-    const f = filePath('module2.ts')
-    server.notify(CommandTypes.Open, {
-      file: f,
-      fileContent: readContents(f)
-    });
-    return server.request(CommandTypes.Completions, {
-      file: f,
-      line: 1,
-      offset: 0,
-      prefix: 'im',
-      includeExternalModuleExports: true,
-      includeInsertTextCompletions: true
-    }).then(completions => {
-      assert.equal(completions.body![1].name, "ImageData");
-    });
-  }).timeout(5000);
+const servers = { executableServer, moduleServer };
+Object.keys(servers).forEach(serverName => {
+  const server = servers[serverName];
+  server.start();
 
-  it('references', () => {
-    const f = filePath('module2.ts')
-    server.notify(CommandTypes.Open, {
-      file: f,
-      fileContent: readContents(f)
-    });
-    return server.request(CommandTypes.References, {
-      file: f,
-      line: 8,
-      offset: 16
-    }).then(references => {
-      assert.equal(references.body!.symbolName, "doStuff");
-    });
-  }).timeout(5000);
+  describe('ts server client using ' + serverName, () => {
+    it('completion', () => {
+      const f = filePath('module2.ts')
+      server.notify(CommandTypes.Open, {
+        file: f,
+        fileContent: readContents(f)
+      });
+      return server.request(CommandTypes.Completions, {
+        file: f,
+        line: 1,
+        offset: 0,
+        prefix: 'im',
+        includeExternalModuleExports: true,
+        includeInsertTextCompletions: true
+      }).then(completions => {
+        assert.equal(completions.body![1].name, "ImageData");
+      });
+    }).timeout(5000);
 
-  it('documentHighlight', () => {
-    const f = filePath('module2.ts')
-    server.notify(CommandTypes.Open, {
-      file: f,
-      fileContent: readContents(f)
-    });
-    return server.request(CommandTypes.DocumentHighlights, {
-      file: f,
-      line: 8,
-      offset: 16,
-      filesToSearch: [f]
-    }).then(response => {
-      assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')), JSON.stringify(response.body, undefined, 2));
-      assert.isFalse(response.body!.some(({ file }) => file.endsWith('module1.ts')), JSON.stringify(response.body, undefined, 2));
-    });
-  }).timeout(5000);
+    it('references', () => {
+      const f = filePath('module2.ts')
+      server.notify(CommandTypes.Open, {
+        file: f,
+        fileContent: readContents(f)
+      });
+      return server.request(CommandTypes.References, {
+        file: f,
+        line: 8,
+        offset: 16
+      }).then(references => {
+        assert.equal(references.body!.symbolName, "doStuff");
+      });
+    }).timeout(5000);
+
+    it('documentHighlight', () => {
+      const f = filePath('module2.ts')
+      server.notify(CommandTypes.Open, {
+        file: f,
+        fileContent: readContents(f)
+      });
+      return server.request(CommandTypes.DocumentHighlights, {
+        file: f,
+        line: 8,
+        offset: 16,
+        filesToSearch: [f]
+      }).then(response => {
+        assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')), JSON.stringify(response.body, undefined, 2));
+        assert.isFalse(response.body!.some(({ file }) => file.endsWith('module1.ts')), JSON.stringify(response.body, undefined, 2));
+      });
+    }).timeout(5000);
+  });
+
 });

@@ -18,7 +18,7 @@ export function findPathToModule(dir: string, moduleName: string): string|undefi
     }
     const parent = paths.resolve(dir, '..')
     if (parent !== dir) {
-        return findPathToModule(paths.resolve(dir, '..'), moduleName)
+        return findPathToModule(parent, moduleName)
     }
     return undefined
 }
