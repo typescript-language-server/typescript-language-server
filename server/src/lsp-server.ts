@@ -77,7 +77,7 @@ export class LspServer {
             return this.options.tsserverPath;
         }
         // 1) look into node_modules of workspace root
-        let executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`)
+        let executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`);
         if (executable) {
             return executable;
         }
@@ -86,9 +86,9 @@ export class LspServer {
             return getTsserverExecutable();
         }
         // 3) look into node_modules of typescript-language-server
-        const bundled = findPathToModule(__dirname, `.bin/${getTsserverExecutable()}`);
+        const bundled = findPathToModule(__dirname, path.join("typescript", "lib", "tsserver.js"));
         if (!bundled) {
-            throw Error(`Couldn't find '${getTsserverExecutable()}' executable`)
+            throw Error(`Couldn't find '${getTsserverExecutable()}' executable or 'tsserver.js' module`)
         }
         return bundled;
     }

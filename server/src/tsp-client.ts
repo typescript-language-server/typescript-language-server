@@ -86,7 +86,7 @@ export class TspClient {
             return;
         }
         const { tsserverPath, logFile, logVerbosity, globalPlugins, pluginProbeLocations } = this.options;
-        const args: string[] = []
+        const args: string[] = [];
         if (logFile) {
             args.push('--logFile', logFile);
         }
@@ -102,7 +102,10 @@ export class TspClient {
         this.cancellationPipeName = tempy.file({ name: 'tscancellation' } as any);
         args.push('--cancellationPipeName', this.cancellationPipeName + '*');
         this.logger.info(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
-        this.tsserverProc = cp.spawn(tsserverPath, args);
+        const tsserverPathIsModule = path.extname(tsserverPath) === ".js";
+        this.tsserverProc = tsserverPathIsModule
+            ? cp.fork(tsserverPath, args, { silent: true })
+            : cp.spawn(tsserverPath, args);
         this.readlineInterface = readline.createInterface(this.tsserverProc.stdout, this.tsserverProc.stdin, undefined);
         process.on('exit', () => {
             this.readlineInterface.close();
