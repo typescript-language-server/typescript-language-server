@@ -11,11 +11,15 @@
                     "spec",
                     "--require",
                     "source-map-support/register",
-                    "--compilers",
-                    "ts:ts-node/register",
+                    "--require",
+                    "ts-node/register",
                     "--no-timeouts",
                     "${file}"
                 ],
+                "env": {
+                    "TS_NODE_PROJECT": "${workspaceRoot}/server/tsconfig.json",
+                    "PATH": "${workspaceRoot}/node_modules/.bin/:${env:PATH}"
+                },
                 "internalConsoleOptions": "openOnSessionStart"
             }
         ]

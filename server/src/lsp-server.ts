@@ -8,6 +8,7 @@
 import * as path from 'path';
 import * as tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
+import * as lspcalls from './lsp-protocol.calls.proposed';
 import * as tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
@@ -36,6 +37,7 @@ import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
+import { computeCallers, computeCallees } from './calls';
 
 export interface IServerOptions {
     logger: Logger
@@ -161,7 +163,7 @@ export class LspServer {
             },
             logFileUri
         };
-
+        (this.initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
         this.logger.log('onInitialize result', this.initializeResult);
         return this.initializeResult;
     }
@@ -868,5 +870,21 @@ export class LspServer {
                 "event": event.event
             });
         }
+    }
+
+    async calls(params: lspcalls.CallsParams): Promise<lspcalls.CallsResult> {
+        let callsResult = <lspcalls.CallsResult>{ calls: [] };
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('calls', params, file);
+        if (!file) {
+            return callsResult;
+        }
+        if (params.direction === lspcalls.CallDirection.Outgoing) {
+            const documentProvider = (file: string) => this.documents.get(file);
+            callsResult = await computeCallees(this.tspClient, params, documentProvider);
+        } else {
+            callsResult = await computeCallers(this.tspClient, params);
+        }
+        return callsResult;
     }
 }
