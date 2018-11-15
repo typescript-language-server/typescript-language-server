@@ -133,7 +133,7 @@ export class TspClient {
     ): Promise<TypeScriptRequestTypes[K][1]> {
         this.sendMessage(command, false, args);
         const seq = this.seq;
-        const request = (this.deferreds[seq] = new Deferred<any>(command)).promise;
+        const request = (this.deferreds[seq] = new Deferred<any>()).promise;
         if (token) {
             const onCancelled = token.onCancellationRequested(() => {
                 onCancelled.dispose();
