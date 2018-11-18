@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.7] - 2018-11-18
+
+- Let documentSymbol return the correct results when mergeable elements are used [#77](https://github.com/theia-ide/typescript-language-server/pull/77)
+- Return correct ranges for hierarchical document symbol [#79](https://github.com/theia-ide/typescript-language-server/pull/79)
+- Return null when resolving completion request at an invalid location [#81](https://github.com/theia-ide/typescript-language-server/pull/81)
+- Initial call hierarchy support [#85](https://github.com/theia-ide/typescript-language-server/pull/85)
+- Allowing starting tsserver as a module using cp.fork [#88](https://github.com/theia-ide/typescript-language-server/pull/88)
+
+Thanks to [@AlexTugarev](https://github.com/AlexTugarev) and [@keyboardDrummer](https://github.com/keyboardDrummer)
+
 ## [0.3.6] - 2018-09-18
 
 - Respect URIs received from clients [#75](https://github.com/theia-ide/typescript-language-server/pull/75)
@@ -37,6 +47,7 @@ All notable changes to this project will be documented in this file.
 - Organize imports support [#51](https://github.com/theia-ide/typescript-language-server/pull/51)
 - Added `Apply Rename File` command [#56](https://github.com/theia-ide/typescript-language-server/pull/56)
 
+[0.3.7]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.3...v0.3.4
