@@ -18,13 +18,18 @@ const program = new Command('typescript-language-server')
     .option('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.')
     .option('--socket <port>', 'use socket. example: --socket=5000')
     .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')
-    .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). example: --tsserver-log-verbosity verbose')
+    .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
+      ' example: --tsserver-log-verbosity verbose')
     .option('--tsserver-path <path>', `Specify path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
     .parse(process.argv);
 
 if (!(program.stdio || program.socket || program.nodeIpc)) {
     console.error('Connection type required (stdio, node-ipc, socket). Refer to --help for more details.');
     process.exit(1);
+}
+
+if (program.tsserverLogFile && !program.tsserverLogVerbosity) {
+  program.tsserverLogVerbosity = 'normal'
 }
 
 let logLevel = lsp.MessageType.Warning
