@@ -1,5 +1,0 @@
-ports:
-  - port: 3000
-    protocol: "http"
-tasks:
-  - command: "yarn && yarn start"
