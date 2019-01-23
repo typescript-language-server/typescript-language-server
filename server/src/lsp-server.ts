@@ -691,7 +691,7 @@ export class LspServer {
                 }
             });
             await this.applyFileCodeEdits(body);
-        } if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {
+        } else if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {
             const { sourceUri, targetUri } = arg.arguments[0] as {
                 sourceUri: string
                 targetUri: string
