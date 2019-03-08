@@ -8,11 +8,13 @@
 import * as path from 'path';
 import * as tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
-import * as lspcalls from './lsp-protocol.calls.proposed';
 import * as tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
 import debounce = require('p-debounce');
+
+import * as lspCallHierarchy from './call-hierarchy.lsp.proposed';
+import { computeCallHierarchy, resolveCallHierarchy } from './call-hierarchy';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
 
@@ -37,7 +39,6 @@ import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
-import { computeCallers, computeCallees } from './calls';
 
 export interface IServerOptions {
     logger: Logger
@@ -163,7 +164,7 @@ export class LspServer {
             },
             logFileUri
         };
-        (this.initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
+        (this.initializeResult.capabilities as lspCallHierarchy.CallHierarchyServerCapabilities).callHierarchyProvider = true;
         this.logger.log('onInitialize result', this.initializeResult);
         return this.initializeResult;
     }
@@ -260,6 +261,16 @@ export class LspServer {
             case 'typescriptreact': return 'TSX';
             case 'javascript': return 'JS';
             case 'javascriptreact': return 'JSX';
+        }
+        return undefined;
+    }
+
+    protected getLanguageId(scriptKindName: string): string | undefined {
+        switch (scriptKindName) {
+            case 'TS': return 'typescript';
+            case 'TSX': return 'typescriptreact';
+            case 'JS': return 'javascript';
+            case 'JSX': return 'javascriptreact';
         }
         return undefined;
     }
@@ -872,19 +883,39 @@ export class LspServer {
         }
     }
 
-    async calls(params: lspcalls.CallsParams): Promise<lspcalls.CallsResult> {
-        let callsResult = <lspcalls.CallsResult>{ calls: [] };
-        const file = uriToPath(params.textDocument.uri);
-        this.logger.log('calls', params, file);
-        if (!file) {
-            return callsResult;
-        }
-        if (params.direction === lspcalls.CallDirection.Outgoing) {
-            const documentProvider = (file: string) => this.documents.get(file);
-            callsResult = await computeCallees(this.tspClient, params, documentProvider);
-        } else {
-            callsResult = await computeCallers(this.tspClient, params);
-        }
-        return callsResult;
+    async callHierarchy(params: lspCallHierarchy.CallHierarchyParams): Promise<lspCallHierarchy.CallHierarchyItem | null> {
+        this.logger.log('callHierarchy', params);
+        const result = await computeCallHierarchy(this.tspClient, this.documentProvider, params);
+        return result;
     }
+
+    async callHierarchyResolve(params: lspCallHierarchy.ResolveCallHierarchyItemParams): Promise<lspCallHierarchy.CallHierarchyItem> {
+        this.logger.log('callHierarchyResolve', params);
+        const result = await resolveCallHierarchy(this.tspClient, this.documentProvider, params);
+        return result;
+    }
+
+    /**
+     * Used to read documents which are referenced.
+     */
+    protected documentProvider = (file: string) => {
+        const existingDocument = this.documents.get(file);
+        if (existingDocument) {
+            return existingDocument;
+        }
+        const languageId = this.getLanguageId((file.split('.').pop() || '').toUpperCase())
+        if (languageId) {
+            try {
+                const text = fs.readFileSync(file, 'utf-8').toString();
+                return new LspDocument({
+                    uri: pathToUri(file, undefined),
+                    languageId,
+                    version: 1,
+                    text
+                });
+            } catch {
+            }
+        }
+    };
+
 }

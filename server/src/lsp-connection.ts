@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as lspcalls from './lsp-protocol.calls.proposed'
+import * as lspCallHierarchy from './call-hierarchy.lsp.proposed'
 
 import { Logger, LspClientLogger } from './logger';
 import { LspServer } from './lsp-server';
@@ -55,8 +55,9 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
     connection.onFoldingRanges(server.foldingRanges.bind(server));
 
-    // proposed `textDocument/calls` request
-    connection.onRequest(lspcalls.CallsRequest.type, server.calls.bind(server));
+    // proposed `textDocument/callHierarchy` request
+    connection.onRequest(lspCallHierarchy.CallHierarchyRequest.type, server.callHierarchy.bind(server));
+    connection.onRequest(lspCallHierarchy.CallHierarchyResolveRequest.type, server.callHierarchyResolve.bind(server));
 
     return connection;
 }

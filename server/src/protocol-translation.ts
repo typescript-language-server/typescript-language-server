@@ -199,6 +199,19 @@ export function asRange(span: tsp.TextSpan): lsp.Range {
     );
 }
 
+export function asTextSpan(range: lsp.Range): tsp.TextSpan {
+    return <tsp.TextSpan> {
+        start: {
+            line: range.start.line + 1,
+            offset: range.start.character + 1
+        },
+        end: {
+            line: range.end.line + 1,
+            offset: range.end.character + 1
+        }
+    };
+}
+
 export function asDocumentation(data: {
     documentation?: tsp.SymbolDisplayPart[]
     tags?: tsp.JSDocTagInfo[]
