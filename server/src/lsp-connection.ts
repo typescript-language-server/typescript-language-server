@@ -12,6 +12,8 @@ import { Logger, LspClientLogger } from './logger';
 import { LspServer } from './lsp-server';
 import { LspClient, LspClientImpl } from './lsp-client';
 
+import * as lspTypeHierarchy from './type-hierarchy.lsp.proposal'
+
 export interface IServerOptions {
     tsserverPath: string;
     tsserverLogFile?: string;
@@ -58,6 +60,10 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     // proposed `textDocument/callHierarchy` request
     connection.onRequest(lspCallHierarchy.CallHierarchyRequest.type, server.callHierarchy.bind(server));
     connection.onRequest(lspCallHierarchy.CallHierarchyResolveRequest.type, server.callHierarchyResolve.bind(server));
+
+    // proposed `textDocument/typeHierarchy` request
+    connection.onRequest(lspTypeHierarchy.TypeHierarchyRequest.type, server.typeHierarchy.bind(server));
+    connection.onRequest(lspTypeHierarchy.ResolveTypeHierarchyRequest.type, server.typeHierarchyResolve.bind(server));
 
     return connection;
 }

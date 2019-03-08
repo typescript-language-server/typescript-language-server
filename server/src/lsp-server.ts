@@ -40,6 +40,9 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
 
+import * as lspTypeHierarchy from './type-hierarchy.lsp.proposal';
+import { computeTypeHierarchy, resolveTypeHierarchy } from './type-hierarchy';
+
 export interface IServerOptions {
     logger: Logger
     tsserverPath?: string;
@@ -165,6 +168,7 @@ export class LspServer {
             logFileUri
         };
         (this.initializeResult.capabilities as lspCallHierarchy.CallHierarchyServerCapabilities).callHierarchyProvider = true;
+        (this.initializeResult.capabilities as lspTypeHierarchy.TypeHierarchyServerCapabilities).typeHierarchyProvider = true;
         this.logger.log('onInitialize result', this.initializeResult);
         return this.initializeResult;
     }
@@ -918,4 +922,15 @@ export class LspServer {
         }
     };
 
+    async typeHierarchy(params: lspTypeHierarchy.TypeHierarchyParams): Promise<lspTypeHierarchy.TypeHierarchyItem | null> {
+        this.logger.log('typeHierarchy', params);
+        const result = await computeTypeHierarchy(this.tspClient, this.documentProvider, params);
+        return result;
+    }
+
+    async typeHierarchyResolve(params: lspTypeHierarchy.ResolveTypeHierarchyItemParams): Promise<lspTypeHierarchy.TypeHierarchyItem> {
+        this.logger.log('typeHierarchyResolve', params);
+        const result = await resolveTypeHierarchy(this.tspClient, this.documentProvider, params);
+        return result;
+    }
 }
