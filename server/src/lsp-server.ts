@@ -39,6 +39,9 @@ import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScript
 import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
 
+import * as lspTypeHierarchy from './type-hierarchy.lsp.proposal';
+import { computeTypeHierarchy, resolveTypeHierarchy } from './type-hierarchy';
+
 export interface IServerOptions {
     logger: Logger
     tsserverPath?: string;
@@ -164,6 +167,7 @@ export class LspServer {
             logFileUri
         };
         (this.initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
+        (this.initializeResult.capabilities as lspTypeHierarchy.TypeHierarchyServerCapabilities).typeHierarchyProvider = true;
         this.logger.log('onInitialize result', this.initializeResult);
         return this.initializeResult;
     }
@@ -260,6 +264,16 @@ export class LspServer {
             case 'typescriptreact': return 'TSX';
             case 'javascript': return 'JS';
             case 'javascriptreact': return 'JSX';
+        }
+        return undefined;
+    }
+
+    protected getLanguageId(scriptKindName: string): string | undefined {
+        switch (scriptKindName) {
+            case 'TS': return 'typescript';
+            case 'TSX': return 'typescriptreact';
+            case 'JS': return 'javascript';
+            case 'JSX': return 'javascriptreact';
         }
         return undefined;
     }
@@ -886,5 +900,40 @@ export class LspServer {
             callsResult = await computeCallers(this.tspClient, params);
         }
         return callsResult;
+    }
+
+    /**
+     * Used to read documents which are referenced.
+     */
+    protected documentProvider = (file: string) => {
+        const existingDocument = this.documents.get(file);
+        if (existingDocument) {
+            return existingDocument;
+        }
+        const languageId = this.getLanguageId((file.split('.').pop() || '').toUpperCase())
+        if (languageId) {
+            try {
+                const text = fs.readFileSync(file, 'utf-8').toString();
+                return new LspDocument({
+                    uri: pathToUri(file, undefined),
+                    languageId,
+                    version: 1,
+                    text
+                });
+            } catch {
+            }
+        }
+    };
+
+    async typeHierarchy(params: lspTypeHierarchy.TypeHierarchyParams): Promise<lspTypeHierarchy.TypeHierarchyItem | null> {
+        this.logger.log('typeHierarchy', params);
+        const result = await computeTypeHierarchy(this.tspClient, this.documentProvider, params);
+        return result;
+    }
+
+    async typeHierarchyResolve(params: lspTypeHierarchy.ResolveTypeHierarchyItemParams): Promise<lspTypeHierarchy.TypeHierarchyItem> {
+        this.logger.log('typeHierarchyResolve', params);
+        const result = await resolveTypeHierarchy(this.tspClient, this.documentProvider, params);
+        return result;
     }
 }
