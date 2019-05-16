@@ -1,14 +1,14 @@
 {
     "private": true,
     "name": "example",
-    "version": "0.3.7",
+    "version": "0.3.8",
     "dependencies": {
         "express": "^4.15.2",
         "monaco-editor-core": "^0.14.6",
         "monaco-languageclient": "^0.9.0",
         "normalize-url": "^2.0.1",
         "reconnecting-websocket": "^3.2.2",
-        "typescript-language-server": "0.3.7",
+        "typescript-language-server": "0.3.8",
         "vscode-ws-jsonrpc": "^0.0.2-1",
         "ws": "^5.0.0"
     },
