@@ -24,6 +24,12 @@ export function pathToUri(filepath: string, documents: LspDocuments | undefined)
     return document ? document.uri : fileUri.toString();
 }
 
+export function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
+    const fileUri = URI.file(filepath);
+    const document = documents && documents.get(fileUri.fsPath);
+    return document ? document.version : 0;
+}
+
 export function toPosition(location: tsp.Location): lsp.Position {
     return {
         line: location.line - 1,
@@ -157,7 +163,7 @@ export function toTextDocumentEdit(change: tsp.FileCodeEdits, documents: LspDocu
     return {
         textDocument: {
             uri: pathToUri(change.fileName, documents),
-            version: 0 // TODO
+            version: currentVersion(change.fileName, documents)
         },
         edits: change.textChanges.map(c => toTextEdit(c))
     }
