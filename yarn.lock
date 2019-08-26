@@ -3556,17 +3556,19 @@ moment@^2.6.0:
   version "2.22.2"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.22.2.tgz#3c257f9839fc0e93ff53149632239eb90783ff66"
 
-monaco-editor-core@^0.14.6:
-  version "0.14.6"
-  resolved "https://registry.yarnpkg.com/monaco-editor-core/-/monaco-editor-core-0.14.6.tgz#25fae6a2e7c7da6eb2a3bba653a283627dc624e4"
+monaco-editor-core@^0.17.0:
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor-core/-/monaco-editor-core-0.17.0.tgz#8d2b7f7e02ac68f68eecc881d7a26457cbc09b49"
+  integrity sha512-8q7b0itiX4UDv6e2F/EJc53G0iLL7P905IZsemu/bXffS7mIcjKKtX+TlzT13YbkuGFC/86Q32ANXERaJTM+mw==
 
-monaco-languageclient@^0.9.0:
-  version "0.9.0"
-  resolved "https://registry.yarnpkg.com/monaco-languageclient/-/monaco-languageclient-0.9.0.tgz#4b65684e277edab07625e76eb3d3d93e8f2130fa"
+monaco-languageclient@^0.10.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/monaco-languageclient/-/monaco-languageclient-0.10.0.tgz#d7164f8d041de074b984514f69b7c49d477438a2"
+  integrity sha512-WC29RQq1ltpMCiLhI6jeelCQ1QqIlW2ZrH5hrAuvguVqYahup+PDn3a1QnJp7OnS+qYnOXwLLJb9xWQcK8JmKw==
   dependencies:
     glob-to-regexp "^0.3.0"
-    vscode-base-languageclient "4.4.0"
-    vscode-jsonrpc "^3.6.2"
+    vscode-jsonrpc "^4.1.0-next"
+    vscode-languageclient "^5.3.0-next"
     vscode-uri "^1.0.5"
 
 move-concurrently@^1.0.1:
@@ -4828,6 +4830,11 @@ schema-utils@^0.4.4, schema-utils@^0.4.5:
   version "5.5.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.5.0.tgz#dc4bbc7a6ca9d916dee5d43516f0092b58f7b8ab"
 
+semver@^6.3.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-6.3.0.tgz#ee0a64c8af5e8ceea67687b133761e1becbd1d3d"
+  integrity sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==
+
 semver@~5.3.0:
   version "5.3.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.3.0.tgz#9b2ce5d3de02d17c6012ad326aa6b4d0cf54f94f"
@@ -5647,43 +5654,55 @@ vm-browserify@0.0.4:
   dependencies:
     indexof "0.0.1"
 
-vscode-base-languageclient@4.4.0:
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/vscode-base-languageclient/-/vscode-base-languageclient-4.4.0.tgz#07098fe42a986e8b65e47960de5ccf656aefe8d0"
+vscode-jsonrpc@^4.1.0-next, vscode-jsonrpc@^4.1.0-next.3:
+  version "4.1.0-next.3"
+  resolved "https://registry.yarnpkg.com/vscode-jsonrpc/-/vscode-jsonrpc-4.1.0-next.3.tgz#05fe742959a2726020d4d0bfbc3d3c97873c7fde"
+  integrity sha512-Z6oxBiMks2+UADV1QHXVooSakjyhI+eHTnXzDyVvVMmegvSfkXk2w6mPEdSkaNHFBdtWW7n20H1yw2nA3A17mg==
+
+vscode-languageclient@^5.3.0-next:
+  version "5.3.0-next.9"
+  resolved "https://registry.yarnpkg.com/vscode-languageclient/-/vscode-languageclient-5.3.0-next.9.tgz#34f58017647f15cd86015f7af45935dc750611f7"
+  integrity sha512-BFA3X1y2EI2CfsSBy0KG2Xr5BOYfd/97jTmD+doqL6oj+cY8S7AmRCOwb2f9Hbjq8GWL7YC+OJ0leZEUSPgP0A==
   dependencies:
-    vscode-languageserver-protocol "^3.10.0"
+    semver "^6.3.0"
+    vscode-languageserver-protocol "^3.15.0-next.8"
 
-vscode-jsonrpc@^3.6.0, vscode-jsonrpc@^3.6.2:
-  version "3.6.2"
-  resolved "https://registry.yarnpkg.com/vscode-jsonrpc/-/vscode-jsonrpc-3.6.2.tgz#3b5eef691159a15556ecc500e9a8a0dd143470c8"
-
-vscode-languageserver-protocol@^3.10.0:
-  version "3.10.0"
-  resolved "https://registry.yarnpkg.com/vscode-languageserver-protocol/-/vscode-languageserver-protocol-3.10.0.tgz#f8dcdf987687f64a26e7c32d498fc781a0e886dc"
+vscode-languageserver-protocol@^3.15.0-next.8:
+  version "3.15.0-next.8"
+  resolved "https://registry.yarnpkg.com/vscode-languageserver-protocol/-/vscode-languageserver-protocol-3.15.0-next.8.tgz#5e3cc0ae143fe3364820249e32f6019ce974fa9e"
+  integrity sha512-9FigDhuYTUqX73IGKgJeyLmfXQJv9p3t22RF3peT+HM33uFiTZE3MUgHj4I9m/dKCDvuJt0yvbI27ut4hDoGRQ==
   dependencies:
-    vscode-jsonrpc "^3.6.2"
-    vscode-languageserver-types "^3.10.0"
+    vscode-jsonrpc "^4.1.0-next.3"
+    vscode-languageserver-types "^3.15.0-next.4"
 
-vscode-languageserver-types@^3.10.0:
-  version "3.10.0"
-  resolved "https://registry.yarnpkg.com/vscode-languageserver-types/-/vscode-languageserver-types-3.10.0.tgz#944e5308f3b36a3f372c766f1a344e903ec9c389"
+vscode-languageserver-types@^3.15.0-next.4:
+  version "3.15.0-next.4"
+  resolved "https://registry.yarnpkg.com/vscode-languageserver-types/-/vscode-languageserver-types-3.15.0-next.4.tgz#9aae49844ef826ae656382facecc20664113c060"
+  integrity sha512-IKIWTdUPBnOtwznIrhxKnjVZ7hYxEzwZ3M2xmDi7OjjexuOM6LnGtoo1Dv4wYSik4epK4STEib6e8da2GxUsJA==
 
-vscode-languageserver@^4.4.0:
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/vscode-languageserver/-/vscode-languageserver-4.4.0.tgz#b6e8b37a739ccb629d92f3635f0099d191c856fa"
+vscode-languageserver@^5.3.0-next:
+  version "5.3.0-next.10"
+  resolved "https://registry.yarnpkg.com/vscode-languageserver/-/vscode-languageserver-5.3.0-next.10.tgz#995fe8b57fc4eb9fea0d11762d3a803de4278995"
+  integrity sha512-QL7Fe1FT6PdLtVzwJeZ78pTic4eZbzLRy7yAQgPb9xalqqgZESR0+yDZPwJrM3E7PzOmwHBceYcJR54eQZ7Kng==
   dependencies:
-    vscode-languageserver-protocol "^3.10.0"
-    vscode-uri "^1.0.3"
+    vscode-languageserver-protocol "^3.15.0-next.8"
+    vscode-textbuffer "^1.0.0"
 
-vscode-uri@^1.0.3, vscode-uri@^1.0.5:
+vscode-textbuffer@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/vscode-textbuffer/-/vscode-textbuffer-1.0.0.tgz#1faee638c8e0e4131c8d5c353993a1874acda086"
+  integrity sha512-zPaHo4urgpwsm+PrJWfNakolRpryNja18SUip/qIIsfhuEqEIPEXMxHOlFPjvDC4JgTaimkncNW7UMXRJTY6ow==
+
+vscode-uri@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/vscode-uri/-/vscode-uri-1.0.5.tgz#3b899a8ef71c37f3054d79bdbdda31c7bf36f20d"
 
-vscode-ws-jsonrpc@^0.0.2-1:
-  version "0.0.2-2"
-  resolved "https://registry.yarnpkg.com/vscode-ws-jsonrpc/-/vscode-ws-jsonrpc-0.0.2-2.tgz#3d977ea40a2f47148ea8cfcbf077196ecd7fe3a2"
+vscode-ws-jsonrpc@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/vscode-ws-jsonrpc/-/vscode-ws-jsonrpc-0.1.1.tgz#163ff05662635b4fd161ed132e112cec4d83f126"
+  integrity sha512-1O/FUORbb8dZAvh9AFF6HViLJ0Ja0RbF+sFRnUsoqkuKIRsXDDiiJpwYwT6fmglCLefE5afGPw9NoHvDVN/5yw==
   dependencies:
-    vscode-jsonrpc "^3.6.0"
+    vscode-jsonrpc "^4.1.0-next"
 
 watchpack@^1.5.0:
   version "1.6.0"
