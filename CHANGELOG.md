@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2019-08-28
+
+- Upgraded to LSP 5.3.0 and Monaco 0.17.0. [#115](https://github.com/theia-ide/typescript-language-server/pull/115)
+
 ## [0.3.7] - 2018-11-18
 
 - Let documentSymbol return the correct results when mergeable elements are used [#77](https://github.com/theia-ide/typescript-language-server/pull/77)
@@ -47,6 +51,7 @@ Thanks to [@AlexTugarev](https://github.com/AlexTugarev) and [@keyboardDrummer](
 - Organize imports support [#51](https://github.com/theia-ide/typescript-language-server/pull/51)
 - Added `Apply Rename File` command [#56](https://github.com/theia-ide/typescript-language-server/pull/56)
 
+[0.4.0]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.7...v0.4.0
 [0.3.7]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/theia-ide/typescript-language-server/compare/v0.3.4...v0.3.5
