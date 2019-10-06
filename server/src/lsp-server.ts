@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2018 TypeFox and others.
+ * Copyright (C) 2017 - 2019 TypeFox and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -758,7 +758,9 @@ export class LspServer {
         }
         const result: lsp.DocumentHighlight[] = [];
         for (const item of response.body) {
-            if (item.file === file) {
+            // tsp returns item.file with POSIX path delimiters, whereas file is platform specific.
+            // Normalizing both ensures that the comparison is consistent.
+            if (path.normalize(item.file) === path.normalize(file)) {
                 const highlights = toDocumentHighlight(item);
                 result.push(...highlights)
             }
