@@ -757,10 +757,11 @@ export class LspServer {
             return []
         }
         const result: lsp.DocumentHighlight[] = [];
+        const normalizedFile = path.normalize(file);
         for (const item of response.body) {
             // tsp returns item.file with POSIX path delimiters, whereas file is platform specific.
             // Normalizing both ensures that the comparison is consistent.
-            if (path.normalize(item.file) === path.normalize(file)) {
+            if (path.normalize(item.file) === normalizedFile) {
                 const highlights = toDocumentHighlight(item);
                 result.push(...highlights)
             }
