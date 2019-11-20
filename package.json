@@ -7,7 +7,7 @@
         "@types/node": "^8.0.31",
         "chai": "^4.1.2",
         "concurrently": "^3.6.1",
-        "lerna": "^3.0.0-rc.0",
+        "lerna": "^3.18.5",
         "mocha": "5.2.0",
         "rimraf": "^2.6.2",
         "source-map-support": "^0.4.18",
