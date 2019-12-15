@@ -128,6 +128,17 @@ export class LspServer {
             }
         });
 
+        this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
+            options: {
+                module: tsp.ModuleKind.CommonJS,
+                target: tsp.ScriptTarget.ES2016,
+                jsx: tsp.JsxEmit.Preserve,
+                allowJs: true,
+                allowSyntheticDefaultImports: true,
+                allowNonTsExtensions: true
+            }
+        });
+
         const logFileUri = logFile && pathToUri(logFile, undefined);
         this.initializeResult = {
             capabilities: {
