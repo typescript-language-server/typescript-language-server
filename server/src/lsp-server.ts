@@ -168,7 +168,7 @@ export class LspServer {
         return this.initializeResult;
     }
     protected getLogFile(logVerbosity: string | undefined): string | undefined {
-        if (logVerbosity === undefined) {
+        if (logVerbosity === undefined || logVerbosity === 'off') {
             return undefined;
         }
         const logFile = this.doGetLogFile();
