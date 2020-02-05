@@ -12,14 +12,14 @@ import { Logger, LspClientLogger } from './logger';
 import { LspServer } from './lsp-server';
 import { LspClient, LspClientImpl } from './lsp-client';
 
-export interface IServerOptions {
+export interface IConnectionOptions {
     tsserverPath: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
     showMessageLevel: lsp.MessageType
 }
 
-export function createLspConnection(options: IServerOptions): lsp.IConnection {
+export function createLspConnection(options: IConnectionOptions): lsp.IConnection {
     const connection = lsp.createConnection();
     const lspClient = new LspClientImpl(connection);
     const logger = new LspClientLogger(lspClient, options.showMessageLevel);

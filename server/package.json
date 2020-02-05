@@ -9,11 +9,14 @@
     "url": "https://github.com/theia-ide/typescript-language-server.git"
   },
   "files": [
-    "lib"
+    "lib",
+    "src"
   ],
   "bin": {
     "typescript-language-server": "./lib/cli.js"
   },
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.js",
   "dependencies": {
     "command-exists": "1.2.6",
     "commander": "^2.11.0",
