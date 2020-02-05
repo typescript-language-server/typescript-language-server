@@ -49,13 +49,13 @@ export interface IServerOptions {
 
 export class LspServer {
 
-    private initializeParams: TypeScriptInitializeParams;
-    private initializeResult: TypeScriptInitializeResult;
-    private tspClient: TspClient;
-    private diagnosticQueue: DiagnosticEventQueue;
-    private logger: Logger;
+    protected initializeParams: TypeScriptInitializeParams;
+    protected initializeResult: TypeScriptInitializeResult;
+    protected tspClient: TspClient;
+    protected diagnosticQueue: DiagnosticEventQueue;
+    protected logger: Logger;
 
-    private readonly documents = new LspDocuments();
+    protected readonly documents = new LspDocuments();
 
     constructor(private options: IServerOptions) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]')
