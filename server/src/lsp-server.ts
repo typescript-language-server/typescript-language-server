@@ -433,7 +433,8 @@ export class LspServer {
                 includeInsertTextCompletions: true
             }));
             const body = result.body || [];
-            return body.map(entry => asCompletionItem(entry, file, params.position, document));
+
+            return this.additionalTextEditsResolve(body.map((entry) => asCompletionItem(entry, file, params.position, document)));
         } catch (error) {
             if (error.message === "No content available.") {
                 this.logger.info('No content was available for completion request');
@@ -444,7 +445,29 @@ export class LspServer {
         }
     }
 
-    async completionResolve(item: TSCompletionItem): Promise<lsp.CompletionItem> {
+    async additionalTextEditsResolve(items: TSCompletionItem[]): Promise<TSCompletionItem[]> {
+        this.logger.log("completions/additionalTextEditsResolve", items);
+        return this.interuptDiagnostics(async () => {
+            return Promise.all(
+                items.map(async (item) => {
+                    if (!item.hasAction) {
+                        return item;
+                    }
+                    const { body } = await this.tspClient.request(
+                        CommandTypes.CompletionDetails,
+                        item.data
+                    );
+                    const details = body && body.length && body[0];
+                    if (!details) {
+                        return item;
+                    }
+                    return asResolvedCompletionItem(item, details);
+                })
+            );
+        });
+    }
+
+    async completionResolve(item: TSCompletionItem): Promise<TSCompletionItem> {
         this.logger.log('completion/resolve', item);
         const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
         const details = body && body.length && body[0];

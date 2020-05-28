@@ -13,7 +13,8 @@ import { asRange, toTextEdit, asPlainText, asTagsDocumentation, asDocumentation 
 import { Commands } from './commands';
 
 export interface TSCompletionItem extends lsp.CompletionItem {
-    data: tsp.CompletionDetailsRequestArgs
+    data: tsp.CompletionDetailsRequestArgs;
+    hasAction?: true;
 }
 
 export function asCompletionItem(entry: import('typescript/lib/protocol').CompletionEntry, file: string, position: lsp.Position, document: LspDocument): TSCompletionItem {
@@ -22,6 +23,7 @@ export function asCompletionItem(entry: import('typescript/lib/protocol').Comple
         kind: asCompletionItemKind(entry.kind),
         sortText: entry.sortText,
         commitCharacters: asCommitCharacters(entry.kind),
+        hasAction: entry.hasAction,
         data: {
             file,
             line: position.line + 1,
