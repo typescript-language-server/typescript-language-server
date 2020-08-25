@@ -41,6 +41,7 @@ import { computeCallers, computeCallees } from './calls';
 
 export interface IServerOptions {
     logger: Logger
+    tsserverFallbackPath?: string;
     tsserverPath?: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
@@ -54,10 +55,12 @@ export class LspServer {
     private tspClient: TspClient;
     private diagnosticQueue: DiagnosticEventQueue;
     private logger: Logger;
+    private serverOptions: IServerOptions;
 
     private readonly documents = new LspDocuments();
 
     constructor(private options: IServerOptions) {
+        this.serverOptions = options
         this.logger = new PrefixingLogger(options.logger, '[lspserver]')
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
@@ -90,7 +93,12 @@ export class LspServer {
         if (!bundled) {
             throw Error(`Couldn't find '${getTsserverExecutable()}' executable or 'tsserver.js' module`)
         }
-        return bundled;
+        // 4) fallback to passed tsserver
+        if (!this.serverOptions.tsserverFallbackPath) {
+            return bundled;
+        } else {
+            return this.serverOptions.tsserverFallbackPath
+        }
     }
 
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
@@ -304,7 +312,7 @@ export class LspServer {
             throw new Error(`Received document change event for ${textDocument.uri} without valid version identifier`);
         }
 
-        for (const change of params.contentChanges) {
+        for (const change of (params.contentChanges)as any) {
             let line, offset, endLine, endOffset = 0;
             if (!change.range) {
                 line = 1;
@@ -866,7 +874,7 @@ export class LspServer {
         if (event.event === EventTypes.SementicDiag ||
             event.event === EventTypes.SyntaxDiag ||
             event.event === EventTypes.SuggestionDiag) {
-            this.diagnosticQueue.updateDiagnostics(event.event, event);
+            this.diagnosticQueue.updateDiagnostics(event.event, (event as any));
         } else {
             this.logger.log("Ignored event", {
                 "event": event.event

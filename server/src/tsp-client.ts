@@ -106,16 +106,16 @@ export class TspClient {
         this.tsserverProc = tsserverPathIsModule
             ? cp.fork(tsserverPath, args, { silent: true })
             : cp.spawn(tsserverPath, args);
-        this.readlineInterface = readline.createInterface(this.tsserverProc.stdout, this.tsserverProc.stdin, undefined);
+        this.readlineInterface = readline.createInterface((this.tsserverProc.stdout as any), (this.tsserverProc.stdin as any), undefined);
         process.on('exit', () => {
             this.readlineInterface.close();
-            this.tsserverProc.stdin.destroy();
+            this.tsserverProc.stdin?.destroy();
             this.tsserverProc.kill();
         });
         this.readlineInterface.on('line', line => this.processMessage(line));
 
         const dec = new decoder.StringDecoder("utf-8");
-        this.tsserverProc.stderr.addListener('data', data => {
+        this.tsserverProc.stderr?.addListener('data', data => {
             const stringMsg = typeof data === 'string' ? data : dec.write(data);
             this.tsserverLogger.error(stringMsg);
         });
@@ -166,7 +166,7 @@ export class TspClient {
             request.arguments = args;
         }
         const serializedRequest = JSON.stringify(request) + "\n";
-        this.tsserverProc.stdin.write(serializedRequest);
+        this.tsserverProc.stdin?.write(serializedRequest);
         this.logger.log(notification ? "notify" : "request", request);
     }
 

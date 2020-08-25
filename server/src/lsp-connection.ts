@@ -14,6 +14,7 @@ import { LspClient, LspClientImpl } from './lsp-client';
 
 export interface IServerOptions {
     tsserverPath: string;
+    tsserverFallbackPath?: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
     showMessageLevel: lsp.MessageType
@@ -26,6 +27,7 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
     const server: LspServer = new LspServer({
         logger,
         lspClient,
+        tsserverFallbackPath: options.tsserverFallbackPath,
         tsserverPath: options.tsserverPath,
         tsserverLogFile: options.tsserverLogFile,
         tsserverLogVerbosity: options.tsserverLogVerbosity
