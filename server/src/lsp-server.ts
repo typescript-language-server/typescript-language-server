@@ -150,6 +150,7 @@ export class LspServer {
                 codeActionProvider: true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
+                documentRangeFormattingProvider: true,
                 documentHighlightProvider: true,
                 documentSymbolProvider: true,
                 executeCommandProvider: {
@@ -594,6 +595,50 @@ export class LspServer {
             offset: 1,
             endLine: Number.MAX_SAFE_INTEGER,
             endOffset: Number.MAX_SAFE_INTEGER,
+            options: opts
+        });
+        if (response.body) {
+            return response.body.map(e => toTextEdit(e));
+        }
+        return [];
+    }
+
+    async documentRangeFormatting(params: lsp.DocumentRangeFormattingParams): Promise<lsp.TextEdit[]> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('documentRangeFormatting', params, file);
+        if (!file) {
+            return [];
+        }
+
+        let opts = <tsp.FormatCodeSettings>{
+            ...params.options
+        }
+
+        // translate
+        if (opts.convertTabsToSpaces === undefined) {
+            opts.convertTabsToSpaces = params.options.insertSpaces
+        }
+        if (opts.indentSize === undefined) {
+            opts.indentSize = params.options.tabSize
+        }
+
+        try {
+            opts = JSON.parse(fs.readFileSync(this.rootPath() + "/tsfmt.json", 'utf-8'));
+        } catch (err) {
+            this.logger.log("No formatting options found " + err)
+        }
+
+        // options are not yet supported in tsserver, but we can send a configure request first
+        await this.tspClient.request(CommandTypes.Configure, {
+            formatOptions: opts
+        });
+
+        const response = await this.tspClient.request(CommandTypes.Format, {
+            file,
+            line: params.range.start.line + 1,
+            offset: params.range.start.character + 1,
+            endLine: params.range.end.line + 1,
+            endOffset: params.range.end.character + 1,
             options: opts
         });
         if (response.body) {

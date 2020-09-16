@@ -397,6 +397,33 @@ describe('formatting', () => {
         const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n\t// some code\n}', result);
     }).timeout(10000);
+
+    it('selected range', async () => {
+        const text = 'function foo() {\nconst first = 1;\nconst second = 2;\nconst val = foo( "something" );\n//const fourth = 4;\n}';
+        const textDocument = {
+            uri: uriString, languageId, version, text
+        }
+        server.didOpenTextDocument({ textDocument })
+        const edits = await server.documentRangeFormatting({
+            textDocument,
+            range: {
+                start: {
+                    line: 2,
+                    character: 0,
+                },
+                end: {
+                    line: 3,
+                    character: 30,
+                },
+            },
+            options: {
+                tabSize: 4,
+                insertSpaces: true
+            }
+        })
+        const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        assert.equal('function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}', result);
+    }).timeout(10000);
 });
 
 describe('signatureHelp', () => {
