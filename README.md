@@ -23,7 +23,8 @@ Maintained by [TypeFox](https://typefox.io) and others.
 - [x] textDocument/documentHighlight
 - [x] textDocument/documentSymbol
 - [x] textDocument/executeCommand
-- [x] textDocument/format
+- [x] textDocument/formatting
+- [x] textDocument/rangeFormatting
 - [x] textDocument/hover
 - [x] textDocument/rename
 - [x] textDocument/references
