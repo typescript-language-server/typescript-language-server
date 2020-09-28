@@ -3,3 +3,4 @@ lib
 node_modules
 *.log
 *.tsbuildinfo
+package-lock.json

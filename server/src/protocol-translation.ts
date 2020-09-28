@@ -7,7 +7,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
-import URI from "vscode-uri";
+import { URI } from "vscode-uri";
 import { LspDocuments } from './document';
 
 export function uriToPath(stringUri: string): string | undefined {
