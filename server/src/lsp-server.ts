@@ -444,7 +444,9 @@ export class LspServer {
                 includeInsertTextCompletions: true
             }));
             const body = result.body || [];
-            return body.map(entry => asCompletionItem(entry, file, params.position, document));
+            return body
+                .filter(entry => entry.kind !== 'warning')
+                .map(entry => asCompletionItem(entry, file, params.position, document));
         } catch (error) {
             if (error.message === "No content available.") {
                 this.logger.info('No content was available for completion request');
