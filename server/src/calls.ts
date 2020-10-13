@@ -191,7 +191,7 @@ async function findNonDefinitionReferences(tspClient: TspClient, args: tsp.FileS
     return (await findReferences(tspClient, args)).filter(ref => !ref.isDefinition);
 }
 
-async function findReferences(tspClient: TspClient, args: tsp.FileSpan): Promise<tsp.ReferencesResponseItem[]> {
+async function findReferences(tspClient: TspClient, args: tsp.FileSpan): Promise<readonly tsp.ReferencesResponseItem[]> {
     const file = args.file;
     const result = await tspClient.request(CommandTypes.References, {
         file,
