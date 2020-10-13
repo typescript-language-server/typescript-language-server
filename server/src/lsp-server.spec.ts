@@ -59,6 +59,45 @@ describe('completion', () => {
         });
     }).timeout(10000);
 
+    it('simple JS test', async () => {
+        const doc = {
+            uri: uri('bar.js'),
+            languageId: 'javascript',
+            version: 1,
+            text: `
+        export function foo() {
+          console.log('test')
+        }
+      `
+        }
+        server.didOpenTextDocument({
+            textDocument: doc
+        })
+        const pos = position(doc, 'console');
+        const proposals = await server.completion({
+            textDocument: doc,
+            position: pos
+        }) as TSCompletionItem[];
+        assert.isTrue(proposals.length > 800, String(proposals.length));
+        const item = proposals.filter(i => i.label === 'addEventListener')[0];
+        const resolvedItem = await server.completionResolve(item)
+        assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
+
+        const containsInvalidCompletions = proposals.reduce((accumulator, current) => {
+            if (accumulator) {
+                return accumulator
+            }
+
+            // console.log as a warning is erroneously mapped to a non-function type
+            return current.label === "log" && current.kind !== lsp.CompletionItemKind.Function
+        }, false)
+
+        assert.isFalse(containsInvalidCompletions)
+        server.didCloseTextDocument({
+            textDocument: doc
+        });
+    }).timeout(10000);
+
     it('incorrect source location', async () => {
         const doc = {
             uri: uri('bar.ts'),
@@ -359,7 +398,6 @@ describe('formatting', () => {
         assert.equal('function foo() {\n\t// some code\n}', result);
     }).timeout(10000);
 });
-
 
 describe('signatureHelp', () => {
     it('simple test', async () => {
