@@ -47,7 +47,7 @@ Object.keys(servers).forEach(serverName => {
         includeExternalModuleExports: true,
         includeInsertTextCompletions: true
       }).then(completions => {
-        assert.equal(completions.body![1].name, "ImageData");
+        assert.equal(completions.body![1].name, "ImageBitmap");
       });
     }).timeout(5000);
 

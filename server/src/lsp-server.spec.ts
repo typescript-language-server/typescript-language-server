@@ -132,7 +132,7 @@ describe('diagnostics', () => {
             version: 1,
             text: `
         export function foo(): void {
-          unknown('test')
+          missing('test')
         }
       `
         }
@@ -147,7 +147,7 @@ describe('diagnostics', () => {
         assert.equal(diagnosticsForThisFile.length, 1, JSON.stringify(diagnostics));
         const fileDiagnostics = diagnosticsForThisFile[0]!.diagnostics;
         assert.equal(fileDiagnostics.length, 1);
-        assert.equal("Cannot find name 'unknown'.", fileDiagnostics[0].message);
+        assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
     }).timeout(10000);
 
     it('multiple files test', async () => {
@@ -157,7 +157,7 @@ describe('diagnostics', () => {
             version: 1,
             text: `
     export function bar(): void {
-        unknown('test')
+        missing('test')
     }
 `
         }
@@ -167,7 +167,7 @@ describe('diagnostics', () => {
             version: 1,
             text: `
     export function foo(): void {
-        unknown('test')
+        missing('test')
     }
 `
         }
@@ -327,7 +327,7 @@ describe('editing', () => {
                 {
                     text: `
           export function foo(): void {
-            unknown('test');
+            missing('test');
           }
           `
                 }
@@ -338,7 +338,7 @@ describe('editing', () => {
         await new Promise(resolve => setTimeout(resolve, 200));
         const fileDiagnostics = diagnostics.filter(d => d!.uri === doc.uri)[0]!.diagnostics;
         assert.isTrue(fileDiagnostics.length >= 1, fileDiagnostics.map(d => d.message).join(','));
-        assert.equal("Cannot find name 'unknown'.", fileDiagnostics[0].message);
+        assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
     }).timeout(10000);
 });
 
