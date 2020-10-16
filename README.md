@@ -1,5 +1,6 @@
 [![Gitpod - Code Now](https://img.shields.io/badge/Gitpod-code%20now-blue.svg?longCache=true)](https://gitpod.io#https://github.com/theia-ide/typescript-language-server)
 [![Build Status](https://travis-ci.org/theia-ide/typescript-language-server.svg?branch=master)](https://travis-ci.org/theia-ide/typescript-language-server)
+[![IRC](https://img.shields.io/badge/IRC-%23typescript--language--server-1e72ff.svg?style=flat)](https://webchat.freenode.net/#typescript-language-server)
 
 # TypeScript Language Server
 [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) implementation for TypeScript wrapping `tsserver`.
