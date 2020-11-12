@@ -15,6 +15,8 @@ const program = new Command('typescript-language-server')
     .version(require('../package.json').version)
     .option('--stdio', 'use stdio')
     .option('--node-ipc', 'use node-ipc')
+    .option('--detailed-completions', 'use detailed completions')
+    .option('--detailed-completions-limit <limit>', 'limit the number of completions provided with details. Defaults to `500`')
     .option('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.')
     .option('--socket <port>', 'use socket. example: --socket=5000')
     .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')
@@ -32,6 +34,10 @@ if (program.tsserverLogFile && !program.tsserverLogVerbosity) {
   program.tsserverLogVerbosity = 'normal'
 }
 
+if (!program.detailedCompletionsLimit) {
+  program.detailedCompletionsLimit = 500
+}
+
 let logLevel = lsp.MessageType.Warning
 if (program.logLevel) {
     logLevel = parseInt(program.logLevel, 10);
@@ -45,5 +51,7 @@ createLspConnection({
     tsserverPath: program.tsserverPath as string,
     tsserverLogFile: program.tsserverLogFile as string,
     tsserverLogVerbosity: program.tsserverLogVerbosity as string,
-    showMessageLevel: logLevel as lsp.MessageType
+    showMessageLevel: logLevel as lsp.MessageType,
+    detailedCompletionsLimit: program.detailedCompletionsLimit,
+    detailedCompletions: program.detailedCompletions,
 }).listen();

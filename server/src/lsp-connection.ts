@@ -16,7 +16,9 @@ export interface IServerOptions {
     tsserverPath: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
-    showMessageLevel: lsp.MessageType
+    showMessageLevel: lsp.MessageType;
+    detailedCompletionsLimit: number;
+    detailedCompletions: boolean;
 }
 
 export function createLspConnection(options: IServerOptions): lsp.IConnection {
@@ -28,7 +30,9 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
         lspClient,
         tsserverPath: options.tsserverPath,
         tsserverLogFile: options.tsserverLogFile,
-        tsserverLogVerbosity: options.tsserverLogVerbosity
+        tsserverLogVerbosity: options.tsserverLogVerbosity,
+        detailedCompletions: options.detailedCompletions,
+        detailedCompletionsLimit: options.detailedCompletionsLimit,
     });
 
     connection.onInitialize(server.initialize.bind(server));

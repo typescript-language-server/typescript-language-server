@@ -29,7 +29,7 @@ import {
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
-import { asCompletionItem, TSCompletionItem, asResolvedCompletionItem } from './completion';
+import { asCompletionItem, TSCompletionItem, asResolvedCompletionItem, asDetailedCompletionItems } from './completion';
 import { asSignatureHelp } from './hover';
 import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
@@ -45,6 +45,8 @@ export interface IServerOptions {
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
     lspClient: LspClient;
+    detailedCompletions: boolean;
+    detailedCompletionsLimit: number;
 }
 
 export class LspServer {
@@ -444,10 +446,21 @@ export class LspServer {
                 includeExternalModuleExports: true,
                 includeInsertTextCompletions: true
             }));
+
             const body = result.body || [];
-            return body
-                .filter(entry => entry.kind !== 'warning')
-                .map(entry => asCompletionItem(entry, file, params.position, document));
+
+            if (!this.options.detailedCompletions || body.length > this.options.detailedCompletionsLimit) {
+                return body
+                    .filter(entry => entry.kind !== 'warning')
+                    .map(entry => asCompletionItem(entry, file, params.position, document));
+            }
+
+            return this.completionDetails(
+                body,
+                file,
+                params.position.line + 1,
+                params.position.character + 1,
+            )
         } catch (error) {
             if (error.message === "No content available.") {
                 this.logger.info('No content was available for completion request');
@@ -458,7 +471,23 @@ export class LspServer {
         }
     }
 
-    async completionResolve(item: TSCompletionItem): Promise<lsp.CompletionItem> {
+    async completionDetails(
+        items: tsp.CompletionEntry[],
+        file: string,
+        line: number,
+        offset: number
+    ): Promise<TSCompletionItem[]> {
+        const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, {
+            file,
+            line,
+            offset,
+            entryNames: items.map(entry => entry.name)
+        }))
+
+        return asDetailedCompletionItems(body || [], file, line, offset)
+    }
+
+    async completionResolve(item: TSCompletionItem): Promise<TSCompletionItem> {
         this.logger.log('completion/resolve', item);
         const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
         const details = body && body.length && body[0];

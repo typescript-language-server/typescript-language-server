@@ -145,6 +145,27 @@ export function asCommitCharacters(kind: ScriptElementKind): string[] | undefine
     return commitCharacters.length === 0 ? undefined : commitCharacters;
 }
 
+export function asDetailedCompletionItems(items: tsp.CompletionEntryDetails[], file: string, line: number, offset: number): TSCompletionItem[] {
+    return items.map(entry => {
+        const item: TSCompletionItem = {
+            label: entry.name,
+            kind: asCompletionItemKind(entry.kind),
+            commitCharacters: asCommitCharacters(entry.kind),
+            detail: asDetail(entry),
+            documentation: asDocumentation(entry),
+            data: {
+                file,
+                line,
+                offset,
+                entryNames: [
+                    entry.source ? { name: entry.name, source: entry.source.join(' ') } : entry.name
+                ]
+            }
+        }
+        return { ...item, ...asCodeActions(entry, file) }
+    })
+}
+
 export function asResolvedCompletionItem(item: TSCompletionItem, details: tsp.CompletionEntryDetails): TSCompletionItem {
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);

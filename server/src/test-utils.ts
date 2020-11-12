@@ -67,6 +67,8 @@ export async function createServer(options: {
             applyWorkspaceEdit: () => Promise.reject(new Error('unsupported')),
             rename: () => Promise.reject(new Error('unsupported'))
         },
+        detailedCompletions: false,
+        detailedCompletionsLimit: 500,
     });
 
     await server.initialize({
