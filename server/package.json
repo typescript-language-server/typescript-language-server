@@ -25,7 +25,7 @@
   },
   "scripts": {
     "prepare": "echo 'skip'",
-    "clean": "rimraf lib",
+    "clean": "rimraf lib *.tsbuildinfo",
     "test": "mocha --exit --reporter spec \"./lib/**/*.spec.js\"",
     "lint": "tslint -c ../tslint.json --project ."
   },
