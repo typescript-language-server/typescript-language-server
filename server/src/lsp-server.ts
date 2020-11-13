@@ -38,6 +38,7 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
+import { CodeActionKind } from "vscode-languageserver";
 
 export interface IServerOptions {
     logger: Logger
@@ -673,7 +674,7 @@ export class LspServer {
         }
     }
 
-    async codeAction(params: lsp.CodeActionParams): Promise<(lsp.Command | lsp.CodeAction)[]> {
+    async codeAction(params: lsp.CodeActionParams): Promise<lsp.CodeAction[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('codeAction', params, file);
         if (!file) {
@@ -681,16 +682,19 @@ export class LspServer {
         }
         const args = toFileRangeRequestArgs(file, params.range);
         const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
-        const codeActions: (lsp.Command | lsp.CodeAction)[] = [];
-        debugger;
-        provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), codeActions, this.documents);
-        provideRefactors(await this.getRefactors(args), codeActions, args);
-        provideOrganizeImports(
-            await this.getOrganizeImports({ scope: { type: "file", args } }),
-            params.context,
-            codeActions
-        );
-        return codeActions;
+        const actions: lsp.CodeAction[] = [];
+        if (!params.context.only || params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.QuickFix))) {
+            actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
+        }
+        if (!params.context.only || params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.Refactor))) {
+            actions.push(...provideRefactors(await this.getRefactors(args), args));
+        }
+        if (!params.context.only || params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.SourceOrganizeImports))) {
+            actions.push(...provideOrganizeImports(
+                await this.getOrganizeImports({ scope: { type: "file", args } }),
+            ));
+        }
+        return actions;
     }
     protected async getCodeFixes(args: tsp.CodeFixRequestArgs): Promise<tsp.GetCodeFixesResponse | undefined> {
         try {

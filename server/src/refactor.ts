@@ -8,19 +8,20 @@
 import * as lsp from 'vscode-languageserver';
 import * as tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
-import { toTextDocumentEdit } from './protocol-translation';
-import { LspDocument } from './document';
 
-export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, result: (lsp.Command | lsp.CodeAction)[], args: tsp.FileRangeRequestArgs): void {
+export function *provideRefactors(
+    response: tsp.GetApplicableRefactorsResponse | undefined,
+    args: tsp.FileRangeRequestArgs
+): IterableIterator<lsp.CodeAction> {
     if (!response || !response.body) {
         return;
     }
     for (const info of response.body) {
         if (info.inlineable === false) {
-            result.push(asSelectRefactoring(info, args));
+            yield asSelectRefactoring(info, args);
         } else {
             for (const action of info.actions) {
-                result.push(asApplyRefactoring(action, info, args));
+                yield asApplyRefactoring(action, info, args);
             }
         }
     }
