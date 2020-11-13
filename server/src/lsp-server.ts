@@ -680,11 +680,16 @@ export class LspServer {
             return [];
         }
         const args = toFileRangeRequestArgs(file, params.range);
-        const codeActions: (lsp.Command | lsp.CodeAction)[] = [];
         const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
+        const codeActions: (lsp.Command | lsp.CodeAction)[] = [];
+        debugger;
         provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), codeActions, this.documents);
         provideRefactors(await this.getRefactors(args), codeActions, args);
-        provideOrganizeImports(file, params.context, codeActions);
+        provideOrganizeImports(
+            await this.getOrganizeImports({ scope: { type: "file", args } }),
+            params.context,
+            codeActions
+        );
         return codeActions;
     }
     protected async getCodeFixes(args: tsp.CodeFixRequestArgs): Promise<tsp.GetCodeFixesResponse | undefined> {
@@ -697,6 +702,13 @@ export class LspServer {
     protected async getRefactors(args: tsp.GetApplicableRefactorsRequestArgs): Promise<tsp.GetApplicableRefactorsResponse | undefined> {
         try {
             return await this.tspClient.request(CommandTypes.GetApplicableRefactors, args);
+        } catch (err) {
+            return undefined;
+        }
+    }
+    protected async getOrganizeImports(args: tsp.OrganizeImportsRequestArgs): Promise<tsp.OrganizeImportsResponse | undefined> {
+        try {
+            return await this.tspClient.request(CommandTypes.OrganizeImports, args);
         } catch (err) {
             return undefined;
         }
