@@ -13,7 +13,7 @@ import { CodeActionKind } from "vscode-languageserver";
 export function *provideOrganizeImports(
     response: tsp.OrganizeImportsResponse | undefined,
 ): IterableIterator<lsp.CodeAction> {
-    if (!response || !response.body) {
+    if (!response) {
         return;
     }
 
