@@ -7,7 +7,7 @@
 import { listen, MessageConnection } from 'vscode-ws-jsonrpc';
 import {
     MonacoLanguageClient, CloseAction, ErrorAction,
-    MonacoServices, createConnection, TextDocumentPositionParams,
+    MonacoServices, createConnection,
     ProtocolToMonacoConverter
 } from 'monaco-languageclient';
 import { TypeScriptRenameRequest } from 'typescript-language-server/lib/ts-protocol';
