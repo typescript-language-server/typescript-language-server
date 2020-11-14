@@ -12,22 +12,20 @@ import { toTextDocumentEdit } from './protocol-translation';
 import { LspDocuments } from './document';
 import { CodeActionKind } from "vscode-languageserver";
 
-export function *provideQuickFix(
+export function provideQuickFix(
     response: tsp.GetCodeFixesResponse | undefined,
     documents: LspDocuments | undefined
-): IterableIterator<lsp.CodeAction> {
+): Array<lsp.CodeAction> {
     if (!response || !response.body) {
-        return;
+        return [];
     }
-    for (const fix of response.body) {
-        yield lsp.CodeAction.create(
-            fix.description,
-            {
-                title: fix.description,
-                command: Commands.APPLY_WORKSPACE_EDIT,
-                arguments: [{documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents))}]
-            },
-            CodeActionKind.QuickFix,
-        )
-    }
+    return response.body.map(fix => lsp.CodeAction.create(
+        fix.description,
+        {
+            title: fix.description,
+            command: Commands.APPLY_WORKSPACE_EDIT,
+            arguments: [{documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents))}]
+        },
+        CodeActionKind.QuickFix,
+    ))
 }

@@ -12,7 +12,7 @@ describe('provideOrganizeImports', () => {
                 }
             ]
         };
-        const actual = [...provideOrganizeImports(response as any as tsp.OrganizeImportsResponse)]
+        const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse)
         const expected = [{
             title: 'Organize imports',
             kind: 'source.organizeImports',
@@ -26,6 +26,6 @@ describe('provideOrganizeImports', () => {
     })
 
     it('handles a missing response', () => {
-        chai.assert.equal([...provideOrganizeImports(undefined)].length, 0)
+        chai.assert.equal(provideOrganizeImports(undefined).length, 0)
     })
 })
