@@ -458,30 +458,31 @@ describe('signatureHelp', () => {
 });
 
 describe('code actions', () => {
-    it('simple test', async () => {
-        const doc = {
-            uri: uri('bar.ts'),
-            languageId: 'typescript',
-            version: 1,
-            text: `import { something } from "something";
-        export function foo(bar: string, baz?:boolean): void {}
-        foo(param1, param2)
-      `
-        }
+    const doc = {
+        uri: uri('bar.ts'),
+        languageId: 'typescript',
+        version: 1,
+        text: `import { something } from "something";
+    export function foo(bar: string, baz?:boolean): void {}
+    foo(param1, param2)
+    `
+    }
+
+    it('can provide quickfix code actions', async () => {
         server.didOpenTextDocument({
             textDocument: doc
         })
         let result = (await server.codeAction({
             textDocument: doc,
             range: {
-                start: { line: 1, character: 29 },
-                end: { line: 1, character: 53 },
+                start: { line: 1, character: 25 },
+                end: { line: 1, character: 49 },
             },
             context: {
                 diagnostics: [{
                     range: {
-                        start: { line: 1, character: 29 },
-                        end: { line: 1, character: 53 },
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 },
                     },
                     code: 6133,
                     message: "unused arg"
@@ -508,11 +509,11 @@ describe('code actions', () => {
                                             newText: "",
                                             range: {
                                                 end: {
-                                                    character: 41,
+                                                    character: 37,
                                                     line: 1,
                                                 },
                                                 start: {
-                                                    character: 28,
+                                                    character: 24,
                                                     line: 1,
                                                 },
                                             },
@@ -521,11 +522,11 @@ describe('code actions', () => {
                                             newText: "",
                                             range: {
                                                 end: {
-                                                    character: 20,
+                                                    character: 16,
                                                     line: 2,
                                                 },
                                                 start: {
-                                                    character: 12,
+                                                    character: 8,
                                                     line: 2,
                                                 },
                                             },
@@ -556,11 +557,11 @@ describe('code actions', () => {
                                             newText: "_bar",
                                             range: {
                                                 end: {
-                                                    character: 31,
+                                                    character: 27,
                                                     line: 1,
                                                 },
                                                 start: {
-                                                    character: 28,
+                                                    character: 24,
                                                     line: 1,
                                                 },
                                             },
@@ -580,6 +581,40 @@ describe('code actions', () => {
                 kind: "quickfix",
                 title: "Prefix 'bar' with an underscore",
             },
+        ]);
+    }).timeout(10000);
+
+    it('can provide organize imports', async () => {
+        server.didOpenTextDocument({
+            textDocument: doc
+        })
+        let result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 29 },
+                end: { line: 1, character: 53 },
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 },
+                    },
+                    code: 6133,
+                    message: "unused arg"
+                }],
+                only: ["source.organizeImports"]
+            }
+        }))!;
+
+        // ensure this works on other peoples computers
+        try {
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(homedir(), "g"), "HOME"))
+        } catch {
+            // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
+        }
+
+        assert.deepEqual(result, [
             {
                 command: {
                     arguments: ["HOME/Dev/typescript-language-server/server/test-data/bar.ts"],

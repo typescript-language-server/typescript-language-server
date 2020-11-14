@@ -681,19 +681,22 @@ export class LspServer {
             return [];
         }
         const args = toFileRangeRequestArgs(file, params.range);
-        const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
         const actions: lsp.CodeAction[] = [];
-        if (!params.context.only || params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.QuickFix))) {
+        if (!params.context.only || params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.QuickFix)) > -1) {
+            const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
             actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
         }
-        if (!params.context.only || params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.Refactor))) {
+        if (!params.context.only || params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.Refactor)) > -1) {
             actions.push(...provideRefactors(await this.getRefactors(args), args));
         }
-        if (!params.context.only || params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.SourceOrganizeImports))) {
+
+        // organize import is provided by tsserver for any line, so we only get it if explicitly requested
+        if (params.context.only && params.context.only.indexOf(CodeActionKind.SourceOrganizeImports) > -1) {
             actions.push(...provideOrganizeImports(
                 await this.getOrganizeImports({ scope: { type: "file", args } }),
             ));
         }
+
         return actions;
     }
     protected async getCodeFixes(args: tsp.CodeFixRequestArgs): Promise<tsp.GetCodeFixesResponse | undefined> {
