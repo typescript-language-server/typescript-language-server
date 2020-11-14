@@ -24,7 +24,7 @@
     },
     "scripts": {
         "prepare": "echo 'skip'",
-        "clean": "rimraf lib",
+        "clean": "rimraf lib *.tsbuildinfo",
         "bundle": "webpack --mode development",
         "start": "node lib/server.js"
     }
