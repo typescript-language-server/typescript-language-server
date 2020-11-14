@@ -7,7 +7,6 @@
 
 import * as chai from 'chai';
 import * as lsp from 'vscode-languageserver';
-import { homedir } from 'os';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition } from './test-utils';
@@ -15,6 +14,7 @@ import { TextDocument } from 'vscode-languageserver';
 import { TSCompletionItem } from './completion';
 
 const assert = chai.assert;
+const projectDir = __dirname.split("/").slice(0, -2).join("/");
 
 let diagnostics: Array<lsp.PublishDiagnosticsParams | undefined>;
 
@@ -492,7 +492,7 @@ describe('code actions', () => {
 
         // ensure this works on other peoples computers
         try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(homedir(), "g"), "HOME"))
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, "g"), "ROOT"))
         } catch {
             // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
         }
@@ -533,7 +533,7 @@ describe('code actions', () => {
                                         },
                                     ],
                                     textDocument: {
-                                        uri: "file://HOME/Dev/typescript-language-server/server/test-data/bar.ts",
+                                        uri: "file://ROOT/server/test-data/bar.ts",
                                         version: 1,
                                     },
                                 },
@@ -568,7 +568,7 @@ describe('code actions', () => {
                                         },
                                     ],
                                     textDocument: {
-                                        uri: "file://HOME/Dev/typescript-language-server/server/test-data/bar.ts",
+                                        uri: "file://ROOT/server/test-data/bar.ts",
                                         version: 1,
                                     },
                                 },
@@ -609,7 +609,7 @@ describe('code actions', () => {
 
         // ensure this works on other peoples computers
         try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(homedir(), "g"), "HOME"))
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, "g"), "ROOT"))
         } catch {
             // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
         }
@@ -617,7 +617,7 @@ describe('code actions', () => {
         assert.deepEqual(result, [
             {
                 command: {
-                    arguments: ["HOME/Dev/typescript-language-server/server/test-data/bar.ts"],
+                    arguments: ["ROOT/server/test-data/bar.ts"],
                     command: "_typescript.organizeImports",
                     title: "",
                 },
