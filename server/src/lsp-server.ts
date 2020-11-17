@@ -447,11 +447,10 @@ export class LspServer {
                 includeInsertTextCompletions: true
             }));
 
-            const body = result.body || [];
+            const body = (result.body || []).filter(entry => entry.kind !== 'warning');
 
             if (!this.options.detailedCompletions || body.length > this.options.detailedCompletionsLimit) {
                 return body
-                    .filter(entry => entry.kind !== 'warning')
                     .map(entry => asCompletionItem(entry, file, params.position, document));
             }
 
