@@ -89,7 +89,8 @@ describe('completion', () => {
             }
 
             // console.log as a warning is erroneously mapped to a non-function type
-            return current.label === "log" && current.kind !== lsp.CompletionItemKind.Function
+            return current.label === "log" &&
+                (current.kind !== lsp.CompletionItemKind.Function && current.kind !== lsp.CompletionItemKind.Method)
         }, false)
 
         assert.isFalse(containsInvalidCompletions)
