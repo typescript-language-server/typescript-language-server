@@ -49,7 +49,8 @@ export class DiagnosticEventQueue {
     constructor(
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly documents: LspDocuments,
-        protected readonly logger: Logger
+        protected readonly logger: Logger,
+        protected readonly ignoredDiagnosticCodes: number[],
     ) { }
 
     updateDiagnostics(kind: EventTypes, event: tsp.DiagnosticEvent): void {
@@ -57,10 +58,14 @@ export class DiagnosticEventQueue {
             this.logger.error(`Received empty ${event.event} diagnostics.`)
             return;
         }
-        const { file } = event.body;
+        const { file, diagnostics: diagnosticsFromServer } = event.body;
+
+        // `d.code` can be undefined
+        const isDiagnosticAllowed = (d: tsp.Diagnostic) => !d.code || this.ignoredDiagnosticCodes.indexOf(d.code) === -1;
+        const filteredDiagnostics = diagnosticsFromServer.filter(isDiagnosticAllowed);
         const uri = pathToUri(file, this.documents);
         const diagnostics = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.documents);
-        diagnostics.update(kind, event.body.diagnostics);
+        diagnostics.update(kind, filteredDiagnostics);
         this.diagnostics.set(uri, diagnostics);
     }
 }

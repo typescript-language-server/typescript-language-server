@@ -16,7 +16,14 @@ export interface IServerOptions {
     tsserverPath: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
-    showMessageLevel: lsp.MessageType
+    showMessageLevel: lsp.MessageType;
+
+    /**
+     * Diagnostics code to be omitted in the client response
+     * See https://github.com/microsoft/TypeScript/blob/master/src/compiler/diagnosticMessages.json
+     * for a full list of valid codes
+     */
+    ignoredDiagnosticCodes: number[];
 }
 
 export function createLspConnection(options: IServerOptions): lsp.IConnection {
@@ -28,7 +35,8 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
         lspClient,
         tsserverPath: options.tsserverPath,
         tsserverLogFile: options.tsserverLogFile,
-        tsserverLogVerbosity: options.tsserverLogVerbosity
+        tsserverLogVerbosity: options.tsserverLogVerbosity,
+        ignoredDiagnosticCodes: options.ignoredDiagnosticCodes,
     });
 
     connection.onInitialize(server.initialize.bind(server));

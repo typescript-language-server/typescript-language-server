@@ -21,6 +21,7 @@ const program = new Command('typescript-language-server')
     .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
       ' example: --tsserver-log-verbosity verbose')
     .option('--tsserver-path <path>', `Specify path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
+    .option('--ignored-diagnostic-codes <code...>', 'Specify a diagnostic codes to be ignored. example: --ignored-diagnostic-codes 1337 42')
     .parse(process.argv);
 
 if (!(program.stdio || program.socket || program.nodeIpc)) {
@@ -45,5 +46,6 @@ createLspConnection({
     tsserverPath: program.tsserverPath as string,
     tsserverLogFile: program.tsserverLogFile as string,
     tsserverLogVerbosity: program.tsserverLogVerbosity as string,
-    showMessageLevel: logLevel as lsp.MessageType
+    showMessageLevel: logLevel as lsp.MessageType,
+    ignoredDiagnosticCodes: program.ignoredDiagnosticCodes || [] as number[],
 }).listen();

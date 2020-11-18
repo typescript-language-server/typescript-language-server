@@ -45,6 +45,13 @@ export interface IServerOptions {
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
     lspClient: LspClient;
+
+    /**
+     * Diagnostics code to be omitted in the client response
+     * See https://github.com/microsoft/TypeScript/blob/master/src/compiler/diagnosticMessages.json
+     * for a full list of valid codes
+     */
+    ignoredDiagnosticCodes: number[];
 }
 
 export class LspServer {
@@ -62,7 +69,8 @@ export class LspServer {
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.documents,
-            this.logger
+            this.logger,
+            this.options.ignoredDiagnosticCodes,
         );
     }
 
