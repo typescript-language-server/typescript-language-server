@@ -185,16 +185,16 @@ describe('diagnostics', () => {
         assert.equal(diagnosticsForThisTest.length, 2, JSON.stringify(diagnostics));
     }).timeout(10000);
 
-    it('code 80006 is ignored', async () => {
+    it('code 6133 (ununsed variable) is ignored', async () => {
         const doc = {
             uri: uri('diagnosticsBar2.ts'),
             languageId: 'typescript',
             version: 1,
             text: `
-                function x() {
-                    return Promise.resolve(1).then(a => a + 1);
-                }
-                const i = 1;
+            function foo() {
+                const x = 42;
+                return 1;
+            }
       `
         }
         server.didOpenTextDocument({

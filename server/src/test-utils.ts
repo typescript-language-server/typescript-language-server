@@ -42,6 +42,12 @@ export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp
     return positionAt(document, document.text.lastIndexOf(match));
 }
 
+/**
+ * Creates a tsserver instance for testing.
+ *
+ * Warning: The diagnostic code `6133` ("'x' is declared but its value is never read.") is ignored
+ * is ignored for the purpose of testing that ignoring a code works.
+ */
 export async function createServer(options: {
     rootUri: string | null
     tsserverLogVerbosity?: string
@@ -67,7 +73,7 @@ export async function createServer(options: {
             applyWorkspaceEdit: () => Promise.reject(new Error('unsupported')),
             rename: () => Promise.reject(new Error('unsupported'))
         },
-        ignoredDiagnosticCodes: [80006],
+        ignoredDiagnosticCodes: [6133],
     });
 
     await server.initialize({
