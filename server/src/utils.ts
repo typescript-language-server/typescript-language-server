@@ -9,7 +9,7 @@ import { clearTimeout } from "timers";
 
 export class Deferred<T> {
 
-    private timer: any
+    private timer: NodeJS.Timer
 
     constructor(private operation: string, timeout?: number) {
         this.timer = setTimeout(() => {
@@ -17,8 +17,13 @@ export class Deferred<T> {
         }, timeout || 20000)
     }
 
+    cancel() {
+        // ignore rejections due to timeouts
+        clearTimeout(this.timer);
+    }
+
     resolve: (value?: T) => void;
-    reject: (err?: any) => void;
+    reject: (err?: unknown) => void;
 
     promise = new Promise<T | undefined>((resolve, reject) => {
         this.resolve = obj => {
@@ -36,6 +41,6 @@ export function getTsserverExecutable(): string {
     return isWindows() ? 'tsserver.cmd' : 'tsserver'
 }
 
-export function isWindows(): boolean {
+function isWindows(): boolean {
     return /^win/.test(process.platform);
 }

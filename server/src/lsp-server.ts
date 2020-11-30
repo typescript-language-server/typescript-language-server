@@ -136,6 +136,17 @@ export class LspServer {
             }
         });
 
+        this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
+            options: {
+                module: tsp.ModuleKind.CommonJS,
+                target: tsp.ScriptTarget.ES2016,
+                jsx: tsp.JsxEmit.Preserve,
+                allowJs: true,
+                allowSyntheticDefaultImports: true,
+                allowNonTsExtensions: true
+            }
+        });
+
         const logFileUri = logFile && pathToUri(logFile, undefined);
         this.initializeResult = {
             capabilities: {
@@ -147,6 +158,7 @@ export class LspServer {
                 codeActionProvider: true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
+                documentRangeFormattingProvider: true,
                 documentHighlightProvider: true,
                 documentSymbolProvider: true,
                 executeCommandProvider: {
@@ -176,7 +188,7 @@ export class LspServer {
         return this.initializeResult;
     }
     protected getLogFile(logVerbosity: string | undefined): string | undefined {
-        if (logVerbosity === undefined) {
+        if (logVerbosity === undefined || logVerbosity === 'off') {
             return undefined;
         }
         const logFile = this.doGetLogFile();
@@ -441,7 +453,9 @@ export class LspServer {
                 includeInsertTextCompletions: true
             }));
             const body = result.body || [];
-            return body.map(entry => asCompletionItem(entry, file, params.position, document));
+            return body
+                .filter(entry => entry.kind !== 'warning')
+                .map(entry => asCompletionItem(entry, file, params.position, document));
         } catch (error) {
             if (error.message === "No content available.") {
                 this.logger.info('No content was available for completion request');
@@ -589,6 +603,50 @@ export class LspServer {
             offset: 1,
             endLine: Number.MAX_SAFE_INTEGER,
             endOffset: Number.MAX_SAFE_INTEGER,
+            options: opts
+        });
+        if (response.body) {
+            return response.body.map(e => toTextEdit(e));
+        }
+        return [];
+    }
+
+    async documentRangeFormatting(params: lsp.DocumentRangeFormattingParams): Promise<lsp.TextEdit[]> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('documentRangeFormatting', params, file);
+        if (!file) {
+            return [];
+        }
+
+        let opts = <tsp.FormatCodeSettings>{
+            ...params.options
+        }
+
+        // translate
+        if (opts.convertTabsToSpaces === undefined) {
+            opts.convertTabsToSpaces = params.options.insertSpaces
+        }
+        if (opts.indentSize === undefined) {
+            opts.indentSize = params.options.tabSize
+        }
+
+        try {
+            opts = JSON.parse(fs.readFileSync(this.rootPath() + "/tsfmt.json", 'utf-8'));
+        } catch (err) {
+            this.logger.log("No formatting options found " + err)
+        }
+
+        // options are not yet supported in tsserver, but we can send a configure request first
+        await this.tspClient.request(CommandTypes.Configure, {
+            formatOptions: opts
+        });
+
+        const response = await this.tspClient.request(CommandTypes.Format, {
+            file,
+            line: params.range.start.line + 1,
+            offset: params.range.start.character + 1,
+            endLine: params.range.end.line + 1,
+            endOffset: params.range.end.character + 1,
             options: opts
         });
         if (response.body) {
@@ -874,7 +932,7 @@ export class LspServer {
         if (event.event === EventTypes.SementicDiag ||
             event.event === EventTypes.SyntaxDiag ||
             event.event === EventTypes.SuggestionDiag) {
-            this.diagnosticQueue.updateDiagnostics(event.event, (event as any));
+            this.diagnosticQueue.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
         } else {
             this.logger.log("Ignored event", {
                 "event": event.event

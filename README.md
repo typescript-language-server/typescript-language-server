@@ -53,11 +53,8 @@ node lib/cli.js --stdio
     --tsserver-log-verbosity <verbosity>   Specify tsserver log verbosity:
     				            (terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
     --tsserver-path <path>                 Specify path to tsserver. example: --tsserver-path=tsserver
-    --tsserver-fallback-path               Specify path to fallback tsserver. example: --tsserver-fallback-path=fallback_tsserver.js
     -h, --help                             output usage information
 ```
-
-### Build
 
 ```sh
 npm run compile

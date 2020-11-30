@@ -30,6 +30,7 @@ export interface TspClientOptions {
 
 interface TypeScriptRequestTypes {
     'geterr': [protocol.GeterrRequestArgs, any],
+    'compilerOptionsForInferredProjects': [protocol.SetCompilerOptionsForInferredProjectsArgs, protocol.SetCompilerOptionsForInferredProjectsResponse];
     'documentHighlights': [protocol.DocumentHighlightsRequestArgs, protocol.DocumentHighlightsResponse],
     'applyCodeActionCommand': [protocol.ApplyCodeActionCommandRequestArgs, protocol.ApplyCodeActionCommandResponse];
     'completionEntryDetails': [protocol.CompletionDetailsRequestArgs, protocol.CompletionDetailsResponse];
@@ -136,9 +137,12 @@ export class TspClient {
     ): Promise<TypeScriptRequestTypes[K][1]> {
         this.sendMessage(command, false, args);
         const seq = this.seq;
-        const request = (this.deferreds[seq] = new Deferred<any>(command)).promise;
+        const deferred = new Deferred<TypeScriptRequestTypes[K][1]>(command);
+        this.deferreds[seq] = deferred;
+        const request = deferred.promise;
         if (token) {
             const onCancelled = token.onCancellationRequested(() => {
+                deferred.cancel();
                 onCancelled.dispose();
                 if (this.cancellationPipeName) {
                     const requestCancellationPipeName = this.cancellationPipeName + seq;
