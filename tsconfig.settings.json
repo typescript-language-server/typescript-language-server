@@ -1,9 +1,6 @@
 {
     "compilerOptions": {
         "composite": true,
-        "declaration": true,
-        "declarationMap": true,
-        "sourceMap": true,
         "target": "es6",
         "module": "commonjs",
         "moduleResolution": "node",
