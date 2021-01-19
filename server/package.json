@@ -20,7 +20,7 @@
     "fs-extra": "^7.0.0",
     "p-debounce": "^1.0.0",
     "tempy": "^0.2.1",
-    "vscode-languageserver": "^5.3.0-next",
+    "vscode-languageserver": "6.1.1",
     "vscode-uri": "^1.0.5"
   },
   "scripts": {

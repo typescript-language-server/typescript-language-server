@@ -318,7 +318,7 @@ export class LspServer {
 
         for (const change of params.contentChanges) {
             let line, offset, endLine, endOffset = 0;
-            if (!change.range) {
+            if (!('range' in change)) {
                 line = 1;
                 offset = 1;
                 const endPos = document.positionAt(document.getText().length);
@@ -860,7 +860,7 @@ export class LspServer {
     /**
      * implemented based on https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/folding.ts
      */
-    async foldingRanges(params: lsp.FoldingRangeRequestParam): Promise<lsp.FoldingRange[] | undefined> {
+    async foldingRanges(params: lsp.FoldingRangeParams): Promise<lsp.FoldingRange[] | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('foldingRanges', params, file);
         if (!file) {
