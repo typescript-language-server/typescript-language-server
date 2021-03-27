@@ -11,7 +11,7 @@ import * as paths from 'path';
 export function findPathToModule(dir: string, moduleName: string): string|undefined {
     const stat = fs.statSync(dir)
     if (stat.isDirectory()) {
-        const candidate = paths.resolve(dir, 'node_modules', moduleName)
+        const candidate = require.resolve(moduleName, { paths: [dir] });
         if (fs.existsSync(candidate)) {
             return candidate;
         }
