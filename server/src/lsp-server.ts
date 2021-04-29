@@ -94,93 +94,94 @@ export class LspServer {
     }
 
     initialize(preferences?: tsp.UserPreferences) {
-      return async function(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
-        this.logger.log('initialize', params);
-        this.initializeParams = params;
+        return async function(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
+            this.logger.log('initialize', params);
+            this.initializeParams = params;
 
-        const { logVerbosity, plugins }: TypeScriptInitializationOptions = {
-            logVerbosity: this.options.tsserverLogVerbosity,
-            plugins: [],
-            ...this.initializeParams.initializationOptions
-        };
-        const logFile = this.getLogFile(logVerbosity);
-        const globalPlugins: string[] = [];
-        const pluginProbeLocations: string[] = [];
-        for (const plugin of plugins) {
-            globalPlugins.push(plugin.name);
-            pluginProbeLocations.push(plugin.location);
+            const { logVerbosity, plugins }: TypeScriptInitializationOptions = {
+                logVerbosity: this.options.tsserverLogVerbosity,
+                plugins: [],
+                ...this.initializeParams.initializationOptions
+            };
+            const logFile = this.getLogFile(logVerbosity);
+            const globalPlugins: string[] = [];
+            const pluginProbeLocations: string[] = [];
+            for (const plugin of plugins) {
+                globalPlugins.push(plugin.name);
+                pluginProbeLocations.push(plugin.location);
+            }
+
+            const tsserverPath = this.findTsserverPath();
+            this.tspClient = new TspClient({
+                tsserverPath,
+                logFile,
+                logVerbosity,
+                globalPlugins,
+                pluginProbeLocations,
+                logger: this.options.logger,
+                onEvent: this.onTsEvent.bind(this)
+            });
+
+            this.tspClient.start();
+            this.tspClient.request(CommandTypes.Configure, {
+                preferences: {
+                    allowTextChangesInNewFiles: true,
+                    ...preferences
+                }
+            });
+
+            this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
+                options: {
+                    module: tsp.ModuleKind.CommonJS,
+                    target: tsp.ScriptTarget.ES2016,
+                    jsx: tsp.JsxEmit.Preserve,
+                    allowJs: true,
+                    allowSyntheticDefaultImports: true,
+                    allowNonTsExtensions: true
+                }
+            });
+
+            const logFileUri = logFile && pathToUri(logFile, undefined);
+            this.initializeResult = {
+                capabilities: {
+                    textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
+                    completionProvider: {
+                        triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
+                        resolveProvider: true
+                    },
+                    codeActionProvider: true,
+                    definitionProvider: true,
+                    documentFormattingProvider: true,
+                    documentRangeFormattingProvider: true,
+                    documentHighlightProvider: true,
+                    documentSymbolProvider: true,
+                    executeCommandProvider: {
+                        commands: [
+                            Commands.APPLY_WORKSPACE_EDIT,
+                            Commands.APPLY_CODE_ACTION,
+                            Commands.APPLY_REFACTORING,
+                            Commands.ORGANIZE_IMPORTS,
+                            Commands.APPLY_RENAME_FILE
+                        ]
+                    },
+                    hoverProvider: true,
+                    renameProvider: true,
+                    referencesProvider: true,
+                    signatureHelpProvider: {
+                        triggerCharacters: ['(', ',', '<']
+                    },
+                    workspaceSymbolProvider: true,
+                    implementationProvider: true,
+                    typeDefinitionProvider: true,
+                    foldingRangeProvider: true
+                },
+                logFileUri
+            };
+            (this.initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
+            this.logger.log('onInitialize result', this.initializeResult);
+            return this.initializeResult;
         }
-
-        const tsserverPath = this.findTsserverPath();
-        this.tspClient = new TspClient({
-            tsserverPath,
-            logFile,
-            logVerbosity,
-            globalPlugins,
-            pluginProbeLocations,
-            logger: this.options.logger,
-            onEvent: this.onTsEvent.bind(this)
-        });
-
-        this.tspClient.start();
-        this.tspClient.request(CommandTypes.Configure, {
-            preferences: {
-                allowTextChangesInNewFiles: true,
-                ...preferences
-            }
-        });
-
-        this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
-            options: {
-                module: tsp.ModuleKind.CommonJS,
-                target: tsp.ScriptTarget.ES2016,
-                jsx: tsp.JsxEmit.Preserve,
-                allowJs: true,
-                allowSyntheticDefaultImports: true,
-                allowNonTsExtensions: true
-            }
-        });
-
-        const logFileUri = logFile && pathToUri(logFile, undefined);
-        this.initializeResult = {
-            capabilities: {
-                textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
-                completionProvider: {
-                    triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
-                    resolveProvider: true
-                },
-                codeActionProvider: true,
-                definitionProvider: true,
-                documentFormattingProvider: true,
-                documentRangeFormattingProvider: true,
-                documentHighlightProvider: true,
-                documentSymbolProvider: true,
-                executeCommandProvider: {
-                    commands: [
-                        Commands.APPLY_WORKSPACE_EDIT,
-                        Commands.APPLY_CODE_ACTION,
-                        Commands.APPLY_REFACTORING,
-                        Commands.ORGANIZE_IMPORTS,
-                        Commands.APPLY_RENAME_FILE
-                    ]
-                },
-                hoverProvider: true,
-                renameProvider: true,
-                referencesProvider: true,
-                signatureHelpProvider: {
-                    triggerCharacters: ['(', ',', '<']
-                },
-                workspaceSymbolProvider: true,
-                implementationProvider: true,
-                typeDefinitionProvider: true,
-                foldingRangeProvider: true
-            },
-            logFileUri
-        };
-        (this.initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
-        this.logger.log('onInitialize result', this.initializeResult);
-        return this.initializeResult;
-    }}
+    }
     protected getLogFile(logVerbosity: string | undefined): string | undefined {
         if (logVerbosity === undefined || logVerbosity === 'off') {
             return undefined;
