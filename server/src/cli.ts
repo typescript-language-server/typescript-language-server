@@ -10,6 +10,7 @@ import { Command } from 'commander';
 import { getTsserverExecutable } from './utils';
 import { createLspConnection } from './lsp-connection';
 import * as lsp from 'vscode-languageserver';
+import { UserPreferences } from 'typescript/lib/protocol';
 
 const program = new Command('typescript-language-server')
     .version(require('../package.json').version)
@@ -21,6 +22,7 @@ const program = new Command('typescript-language-server')
     .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
       ' example: --tsserver-log-verbosity verbose')
     .option('--tsserver-path <path>', `Specify path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
+    .option('--tsserver-user-preferences <preferences-json-string>', 'Specify user preferences. example: --tsserver-user-preferences="{\"importModuleSpecifierPreference\":\"relative\"}"')
     .parse(process.argv);
 
 if (!(program.stdio || program.socket || program.nodeIpc)) {
@@ -41,9 +43,17 @@ if (program.logLevel) {
     }
 }
 
+let userPreferences: UserPreferences | undefined;
+try {
+    userPreferences = program.tsserverUserPreferences && JSON.parse(program.tsserverUserPreferences)
+} catch(error) {
+    console.error('Something went wrong trying to parse --tsserver-user-preferences', error);
+}
+
 createLspConnection({
     tsserverPath: program.tsserverPath as string,
     tsserverLogFile: program.tsserverLogFile as string,
     tsserverLogVerbosity: program.tsserverLogVerbosity as string,
-    showMessageLevel: logLevel as lsp.MessageType
+    showMessageLevel: logLevel as lsp.MessageType,
+    preferences: userPreferences
 }).listen();

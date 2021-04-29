@@ -93,7 +93,8 @@ export class LspServer {
         return bundled;
     }
 
-    async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
+    initialize(preferences?: tsp.UserPreferences) {
+      return async function(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
 
@@ -124,7 +125,8 @@ export class LspServer {
         this.tspClient.start();
         this.tspClient.request(CommandTypes.Configure, {
             preferences: {
-                allowTextChangesInNewFiles: true
+                allowTextChangesInNewFiles: true,
+                ...preferences
             }
         });
 
@@ -178,7 +180,7 @@ export class LspServer {
         (this.initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
         this.logger.log('onInitialize result', this.initializeResult);
         return this.initializeResult;
-    }
+    }}
     protected getLogFile(logVerbosity: string | undefined): string | undefined {
         if (logVerbosity === undefined || logVerbosity === 'off') {
             return undefined;

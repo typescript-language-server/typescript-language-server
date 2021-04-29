@@ -69,7 +69,7 @@ export async function createServer(options: {
         },
     });
 
-    await server.initialize({
+    await server.initialize(undefined)({
         rootPath: undefined,
         rootUri: options.rootUri,
         processId: 42,

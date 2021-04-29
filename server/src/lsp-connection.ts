@@ -11,12 +11,14 @@ import * as lspcalls from './lsp-protocol.calls.proposed'
 import { Logger, LspClientLogger } from './logger';
 import { LspServer } from './lsp-server';
 import { LspClient, LspClientImpl } from './lsp-client';
+import { UserPreferences } from 'typescript/lib/protocol';
 
 export interface IServerOptions {
     tsserverPath: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
-    showMessageLevel: lsp.MessageType
+    showMessageLevel: lsp.MessageType;
+    preferences?: UserPreferences;
 }
 
 export function createLspConnection(options: IServerOptions): lsp.IConnection {
@@ -31,7 +33,7 @@ export function createLspConnection(options: IServerOptions): lsp.IConnection {
         tsserverLogVerbosity: options.tsserverLogVerbosity
     });
 
-    connection.onInitialize(server.initialize.bind(server));
+    connection.onInitialize(server.initialize(options.preferences).bind(server));
 
     connection.onDidOpenTextDocument(server.didOpenTextDocument.bind(server));
     connection.onDidSaveTextDocument(server.didSaveTextDocument.bind(server));
