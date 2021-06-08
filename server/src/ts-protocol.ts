@@ -9,6 +9,7 @@
  * **IMPORTANT** this module should not depend on `vscode-languageserver` only protocol and types
  */
 import * as lsp from 'vscode-languageserver-protocol';
+import { UserPreferences } from 'typescript/lib/protocol';
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, any, void, void>("_typescript.rename");
@@ -22,6 +23,7 @@ export interface TypeScriptPlugin {
 export interface TypeScriptInitializationOptions {
     logVerbosity?: string
     plugins: TypeScriptPlugin[]
+    preferences?: UserPreferences
 }
 
 export type TypeScriptInitializeParams = lsp.InitializeParams & {
