@@ -6,7 +6,7 @@
         "express": "^4.15.2",
         "monaco-editor-core": "^0.17.0",
         "monaco-languageclient": "^0.10.0",
-        "normalize-url": "^2.0.1",
+        "normalize-url": "^4.5.1",
         "reconnecting-websocket": "^3.2.2",
         "typescript-language-server": "0.5.1",
         "vscode-ws-jsonrpc": "^0.1.1",
