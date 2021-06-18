@@ -101,7 +101,7 @@ export class LspServer {
         this.logger.log('initialize', params);
         this.initializeParams = params;
 
-        const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
+        const { logVerbosity, plugins, preferences, hostInfo }: TypeScriptInitializationOptions = {
             logVerbosity: this.options.tsserverLogVerbosity,
             plugins: [],
             preferences: {},
@@ -128,6 +128,7 @@ export class LspServer {
 
         this.tspClient.start();
         this.tspClient.request(CommandTypes.Configure, {
+            ...hostInfo ? { hostInfo } : {},
             preferences: {
                 allowTextChangesInNewFiles: true,
                 ...preferences

@@ -24,6 +24,7 @@ export interface TypeScriptInitializationOptions {
     logVerbosity?: string;
     plugins: TypeScriptPlugin[];
     preferences?: UserPreferences;
+    hostInfo?: string;
 }
 
 export type TypeScriptInitializeParams = lsp.InitializeParams & {
