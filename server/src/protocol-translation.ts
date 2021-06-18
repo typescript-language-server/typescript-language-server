@@ -18,10 +18,27 @@ export function uriToPath(stringUri: string): string | undefined {
     return uri.fsPath;
 }
 
+// Identify yarn PnP archive files (.zip)
+const archivePathRE = /^\/zipfile:/;
+const extractURIPath = (fileUri: URI): string => {
+    if (archivePathRE.test(fileUri.fsPath)) {
+        // vscode-uri prepends the path with `/` which causes problems
+        return fileUri.fsPath.slice(1);
+    }
+    return fileUri.fsPath;
+}
+const uriToString = (fileUri: URI): string => {
+    if (archivePathRE.test(fileUri.fsPath)) {
+        // vscode-uri prepends the path with `/` which causes problems
+        return `${fileUri.scheme}://${fileUri.fsPath.slice(1)}`;
+    }
+    return fileUri.toString();
+}
+
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
     const fileUri = URI.file(filepath);
-    const document = documents && documents.get(fileUri.fsPath);
-    return document ? document.uri : fileUri.toString();
+    const document = documents && documents.get(extractURIPath(fileUri));
+    return document ? document.uri : uriToString(fileUri);
 }
 
 export function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
