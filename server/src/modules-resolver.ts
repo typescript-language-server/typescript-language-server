@@ -9,16 +9,16 @@ import * as fs from 'fs';
 import * as paths from 'path';
 
 export function findPathToModule(dir: string, moduleName: string): string|undefined {
-    const stat = fs.statSync(dir)
+    const stat = fs.statSync(dir);
     if (stat.isDirectory()) {
-        const candidate = paths.resolve(dir, 'node_modules', moduleName)
+        const candidate = paths.resolve(dir, 'node_modules', moduleName);
         if (fs.existsSync(candidate)) {
             return candidate;
         }
     }
-    const parent = paths.resolve(dir, '..')
+    const parent = paths.resolve(dir, '..');
     if (parent !== dir) {
-        return findPathToModule(parent, moduleName)
+        return findPathToModule(parent, moduleName);
     }
-    return undefined
+    return undefined;
 }

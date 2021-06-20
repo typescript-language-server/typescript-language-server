@@ -12,6 +12,7 @@ import { createLspConnection } from './lsp-connection';
 import * as lsp from 'vscode-languageserver';
 
 const program = new Command('typescript-language-server')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     .version(require('../package.json').version)
     .option('--stdio', 'use stdio')
     .option('--node-ipc', 'use node-ipc')
@@ -29,14 +30,14 @@ if (!(program.stdio || program.socket || program.nodeIpc)) {
 }
 
 if (program.tsserverLogFile && !program.tsserverLogVerbosity) {
-  program.tsserverLogVerbosity = 'normal'
+    program.tsserverLogVerbosity = 'normal';
 }
 
-let logLevel = lsp.MessageType.Warning
+let logLevel = lsp.MessageType.Warning;
 if (program.logLevel) {
     logLevel = parseInt(program.logLevel, 10);
     if (logLevel && (logLevel < 1 || logLevel > 4)) {
-        console.error('Invalid `--log-level ' + logLevel + '`. Falling back to `info` level.');
+        console.error(`Invalid '--log-level ${logLevel}'. Falling back to 'info' level.`);
         logLevel = lsp.MessageType.Warning;
     }
 }

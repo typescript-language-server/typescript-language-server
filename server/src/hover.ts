@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import { asDocumentation, asPlainText } from './protocol-translation';
 
 export function asSignatureHelp(info: tsp.SignatureHelpItems): lsp.SignatureHelp {
@@ -44,5 +44,5 @@ export function asParameterInformation(parameter: tsp.SignatureHelpParameter): l
     return {
         label: asPlainText(parameter.displayParts),
         documentation: asDocumentation(parameter)
-    }
+    };
 }

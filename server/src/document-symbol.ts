@@ -6,8 +6,8 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
-import { asRange, toSymbolKind, Range } from "./protocol-translation";
+import tsp from 'typescript/lib/protocol';
+import { asRange, toSymbolKind, Range } from './protocol-translation';
 import { ScriptElementKind } from './tsp-command-types';
 
 export function collectDocumentSymbols(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[]): boolean {
