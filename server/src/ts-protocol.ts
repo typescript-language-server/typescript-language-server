@@ -12,24 +12,24 @@ import * as lsp from 'vscode-languageserver-protocol';
 import { UserPreferences } from 'typescript/lib/protocol';
 
 export namespace TypeScriptRenameRequest {
-    export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, any, void, void>("_typescript.rename");
+    export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, any, void, void>('_typescript.rename');
 }
 
 export interface TypeScriptPlugin {
-    name: string
-    location: string
+    name: string;
+    location: string;
 }
 
 export interface TypeScriptInitializationOptions {
-    logVerbosity?: string
-    plugins: TypeScriptPlugin[]
-    preferences?: UserPreferences
+    logVerbosity?: string;
+    plugins: TypeScriptPlugin[];
+    preferences?: UserPreferences;
 }
 
 export type TypeScriptInitializeParams = lsp.InitializeParams & {
-    initializationOptions?: Partial<TypeScriptInitializationOptions>
-}
+    initializationOptions?: Partial<TypeScriptInitializationOptions>;
+};
 
 export interface TypeScriptInitializeResult extends lsp.InitializeResult {
-    logFileUri?: string
+    logFileUri?: string;
 }

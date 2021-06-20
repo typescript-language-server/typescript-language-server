@@ -24,7 +24,7 @@ export interface CallsClientCapabilities {
              */
             dynamicRegistration?: boolean;
         };
-    }
+    };
 }
 
 export interface CallsServerCapabilities {
@@ -62,11 +62,11 @@ export enum CallDirection {
     /**
      * Incoming calls aka. callers
      */
-    Incoming = "incoming",
+    Incoming = 'incoming',
     /**
      * Outgoing calls aka. callees
      */
-    Outgoing = "outgoing",
+    Outgoing = 'outgoing',
 }
 
 /**

@@ -23,12 +23,12 @@ before(async () => {
     server = await createServer({
         rootUri: null,
         publishDiagnostics: args => diagnostics.push(args)
-    })
+    });
 });
 beforeEach(() => {
     diagnostics = [];
     server.closeAll();
-})
+});
 
 describe('completion', () => {
     it('simple test', async () => {
@@ -41,10 +41,10 @@ describe('completion', () => {
           console.log('test')
         }
       `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         const pos = position(doc, 'console');
         const proposals = await server.completion({
             textDocument: doc,
@@ -52,7 +52,7 @@ describe('completion', () => {
         }) as TSCompletionItem[];
         assert.isTrue(proposals.length > 800, String(proposals.length));
         const item = proposals.filter(i => i.label === 'addEventListener')[0];
-        const resolvedItem = await server.completionResolve(item)
+        const resolvedItem = await server.completionResolve(item);
         assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
         server.didCloseTextDocument({
             textDocument: doc
@@ -69,10 +69,10 @@ describe('completion', () => {
           console.log('test')
         }
       `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         const pos = position(doc, 'console');
         const proposals = await server.completion({
             textDocument: doc,
@@ -80,20 +80,20 @@ describe('completion', () => {
         }) as TSCompletionItem[];
         assert.isTrue(proposals.length > 800, String(proposals.length));
         const item = proposals.filter(i => i.label === 'addEventListener')[0];
-        const resolvedItem = await server.completionResolve(item)
+        const resolvedItem = await server.completionResolve(item);
         assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
 
         const containsInvalidCompletions = proposals.reduce((accumulator, current) => {
             if (accumulator) {
-                return accumulator
+                return accumulator;
             }
 
             // console.log as a warning is erroneously mapped to a non-function type
-            return current.label === "log" &&
-                (current.kind !== lsp.CompletionItemKind.Function && current.kind !== lsp.CompletionItemKind.Method)
-        }, false)
+            return current.label === 'log' &&
+                (current.kind !== lsp.CompletionItemKind.Function && current.kind !== lsp.CompletionItemKind.Method);
+        }, false);
 
-        assert.isFalse(containsInvalidCompletions)
+        assert.isFalse(containsInvalidCompletions);
         server.didCloseTextDocument({
             textDocument: doc
         });
@@ -109,10 +109,10 @@ describe('completion', () => {
           console.log('test')
         }
       `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         const pos = position(doc, 'foo');
         const proposals = await server.completion({
             textDocument: doc,
@@ -123,7 +123,7 @@ describe('completion', () => {
             textDocument: doc
         });
     }).timeout(10000);
-})
+});
 
 describe('diagnostics', () => {
     it('simple test', async () => {
@@ -136,10 +136,10 @@ describe('diagnostics', () => {
           missing('test')
         }
       `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
 
         server.requestDiagnostics();
         await server.requestDiagnostics();
@@ -161,7 +161,7 @@ describe('diagnostics', () => {
         missing('test')
     }
 `
-        }
+        };
         const doc2 = {
             uri: uri('multipleFileDiagnosticsFoo.ts'),
             languageId: 'typescript',
@@ -171,13 +171,13 @@ describe('diagnostics', () => {
         missing('test')
     }
 `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         server.didOpenTextDocument({
             textDocument: doc2
-        })
+        });
 
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -200,10 +200,10 @@ describe('document symbol', () => {
           }
         }
       `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         const symbols = await server.documentSymbol({
             textDocument: doc,
             position: lsp.Position.create(1, 1)
@@ -230,10 +230,10 @@ interface Box {
 interface Box {
     scale: number;
 }`
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         const symbols = await server.documentSymbol({
             textDocument: doc,
             position: lsp.Position.create(1, 1)
@@ -265,10 +265,10 @@ Box
           }
         }
       `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         const symbols = await server.documentSymbol({
             textDocument: doc,
             position: lsp.Position.create(1, 1)
@@ -283,16 +283,15 @@ Foo
   myFunction
 `;
         assert.equal(symbolsAsString(symbols) + '\n', expectation);
-        assert.deepEqual(symbols[0].selectionRange, {"start": {"line": 1, "character": 21}, "end": {"line": 1, "character": 24}});
-        assert.deepEqual(symbols[0].range, {"start": {"line": 1, "character": 8}, "end": {"line": 5, "character": 9}});
+        assert.deepEqual(symbols[0].selectionRange, { start: { line: 1, character: 21 }, end: { line: 1, character: 24 } });
+        assert.deepEqual(symbols[0].range, { start: { line: 1, character: 8 }, end: { line: 5, character: 9 } });
 
         assert.deepEqual(symbols[1].selectionRange, symbols[1].range);
-        assert.deepEqual(symbols[1].range, {"start": {"line": 6, "character": 8}, "end": {"line": 10, "character": 9}});
-
+        assert.deepEqual(symbols[1].range, { start: { line: 6, character: 8 }, end: { line: 10, character: 9 } });
     }).timeout(10000);
 });
 
-function symbolsAsString(symbols: (lsp.DocumentSymbol | lsp.SymbolInformation)[], indentation: string = ''): string {
+function symbolsAsString(symbols: (lsp.DocumentSymbol | lsp.SymbolInformation)[], indentation = ''): string {
     return symbols.map(symbol => {
         let result = '\n' + indentation + symbol.name;
         if (lsp.DocumentSymbol.is(symbol)) {
@@ -318,10 +317,10 @@ describe('editing', () => {
         export function foo(): void {
         }
       `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         server.didChangeTextDocument({
             textDocument: doc,
             contentChanges: [
@@ -333,9 +332,9 @@ describe('editing', () => {
           `
                 }
             ]
-        })
-        await server.requestDiagnostics()
-        await server.requestDiagnostics()
+        });
+        await server.requestDiagnostics();
+        await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const fileDiagnostics = diagnostics.filter(d => d!.uri === doc.uri)[0]!.diagnostics;
         assert.isTrue(fileDiagnostics.length >= 1, fileDiagnostics.map(d => d.message).join(','));
@@ -352,15 +351,15 @@ describe('formatting', () => {
         const text = 'export  function foo (     )   :  void   {   }';
         const textDocument = {
             uri: uriString, languageId, version, text
-        }
-        server.didOpenTextDocument({ textDocument })
+        };
+        server.didOpenTextDocument({ textDocument });
         const edits = await server.documentFormatting({
             textDocument,
             options: {
                 tabSize: 4,
                 insertSpaces: true
             }
-        })
+        });
         const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('export function foo(): void { }', result);
     }).timeout(10000);
@@ -369,15 +368,15 @@ describe('formatting', () => {
         const text = 'function foo() {\n// some code\n}';
         const textDocument = {
             uri: uriString, languageId, version, text
-        }
-        server.didOpenTextDocument({ textDocument })
+        };
+        server.didOpenTextDocument({ textDocument });
         const edits = await server.documentFormatting({
             textDocument,
             options: {
                 tabSize: 3,
                 insertSpaces: true
             }
-        })
+        });
         const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n   // some code\n}', result);
     }).timeout(10000);
@@ -386,15 +385,15 @@ describe('formatting', () => {
         const text = 'function foo() {\n// some code\n}';
         const textDocument = {
             uri: uriString, languageId, version, text
-        }
-        server.didOpenTextDocument({ textDocument })
+        };
+        server.didOpenTextDocument({ textDocument });
         const edits = await server.documentFormatting({
             textDocument,
             options: {
                 tabSize: 4,
                 insertSpaces: false
             }
-        })
+        });
         const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n\t// some code\n}', result);
     }).timeout(10000);
@@ -403,25 +402,25 @@ describe('formatting', () => {
         const text = 'function foo() {\nconst first = 1;\nconst second = 2;\nconst val = foo( "something" );\n//const fourth = 4;\n}';
         const textDocument = {
             uri: uriString, languageId, version, text
-        }
-        server.didOpenTextDocument({ textDocument })
+        };
+        server.didOpenTextDocument({ textDocument });
         const edits = await server.documentRangeFormatting({
             textDocument,
             range: {
                 start: {
                     line: 2,
-                    character: 0,
+                    character: 0
                 },
                 end: {
                     line: 3,
-                    character: 30,
-                },
+                    character: 30
+                }
             },
             options: {
                 tabSize: 4,
                 insertSpaces: true
             }
-        })
+        });
         const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}', result);
     }).timeout(10000);
@@ -437,16 +436,16 @@ describe('signatureHelp', () => {
         export function foo(bar: string, baz?:boolean): void {}
         foo(param1, param2)
       `
-        }
+        };
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         let result = (await server.signatureHelp({
             textDocument: doc,
             position: position(doc, 'param1')
         }))!;
 
-        assert.equal('bar: string', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label)
+        assert.equal('bar: string', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
 
         result = (await server.signatureHelp({
             textDocument: doc,
