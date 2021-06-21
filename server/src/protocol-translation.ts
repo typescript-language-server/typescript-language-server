@@ -18,27 +18,22 @@ export function uriToPath(stringUri: string): string | undefined {
     return uri.fsPath;
 }
 
-// Identify yarn PnP archive files (.zip)
-const archivePathRE = /^\/zipfile:/;
-const extractURIPath = (fileUri: URI): string => {
-    if (archivePathRE.test(fileUri.fsPath)) {
-        // vscode-uri prepends the path with `/` which causes problems
-        return fileUri.fsPath.slice(1);
+const parseURI = (filepath: string): URI => {
+    try {
+        // handles valid URIs from yarn pnp, will error if doesn't have scheme
+        // zipfile:/foo/bar/baz.zip::path/to/module
+        return URI.parse(filepath);
+    } catch (e) {
+        // handles valid filepaths from everything else
+        // /path/to/module
+        return URI.file(filepath);
     }
-    return fileUri.fsPath;
-}
-const uriToString = (fileUri: URI): string => {
-    if (archivePathRE.test(fileUri.fsPath)) {
-        // vscode-uri prepends the path with `/` which causes problems
-        return `${fileUri.scheme}://${fileUri.fsPath.slice(1)}`;
-    }
-    return fileUri.toString();
-}
+};
 
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
-    const fileUri = URI.file(filepath);
-    const document = documents && documents.get(extractURIPath(fileUri));
-    return document ? document.uri : uriToString(fileUri);
+    const fileUri = parseURI(filepath);
+    const document = documents && documents.get(fileUri.fsPath);
+    return document ? document.uri : fileUri.toString();
 }
 
 export function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
