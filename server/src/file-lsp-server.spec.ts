@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as chai from 'chai';
+import chai from 'chai';
 import { LspServer } from './lsp-server';
 import { uri, createServer, lastPosition, filePath, readContents } from './test-utils';
 
