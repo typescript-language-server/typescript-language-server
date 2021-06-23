@@ -24,18 +24,20 @@ const program = new Command('typescript-language-server')
     .option('--tsserver-path <path>', `Specify path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
     .parse(process.argv);
 
-if (!(program.stdio || program.socket || program.nodeIpc)) {
+const options = program.opts();
+
+if (!(options.stdio || options.socket || options.nodeIpc)) {
     console.error('Connection type required (stdio, node-ipc, socket). Refer to --help for more details.');
     process.exit(1);
 }
 
-if (program.tsserverLogFile && !program.tsserverLogVerbosity) {
-    program.tsserverLogVerbosity = 'normal';
+if (options.tsserverLogFile && !options.tsserverLogVerbosity) {
+    options.tsserverLogVerbosity = 'normal';
 }
 
 let logLevel = lsp.MessageType.Warning;
-if (program.logLevel) {
-    logLevel = parseInt(program.logLevel, 10);
+if (options.logLevel) {
+    logLevel = parseInt(options.logLevel, 10);
     if (logLevel && (logLevel < 1 || logLevel > 4)) {
         console.error(`Invalid '--log-level ${logLevel}'. Falling back to 'info' level.`);
         logLevel = lsp.MessageType.Warning;
@@ -43,8 +45,8 @@ if (program.logLevel) {
 }
 
 createLspConnection({
-    tsserverPath: program.tsserverPath as string,
-    tsserverLogFile: program.tsserverLogFile as string,
-    tsserverLogVerbosity: program.tsserverLogVerbosity as string,
+    tsserverPath: options.tsserverPath as string,
+    tsserverLogFile: options.tsserverLogFile as string,
+    tsserverLogVerbosity: options.tsserverLogVerbosity as string,
     showMessageLevel: logLevel as lsp.MessageType
 }).listen();

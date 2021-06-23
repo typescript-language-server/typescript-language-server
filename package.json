@@ -5,7 +5,6 @@
     ],
     "devDependencies": {
         "@types/chai": "^4.0.4",
-        "@types/commander": "^2.9.2",
         "@types/mocha": "^2.2.43",
         "@types/node": "^8.0.31",
         "@typescript-eslint/eslint-plugin": "^4.27.0",
