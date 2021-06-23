@@ -6,7 +6,7 @@
  */
 
 import * as path from 'path';
-import * as tempy from 'tempy';
+import tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import tsp from 'typescript/lib/protocol';
