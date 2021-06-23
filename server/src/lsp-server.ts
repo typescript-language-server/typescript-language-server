@@ -9,10 +9,10 @@ import * as path from 'path';
 import * as tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
-import debounce = require('p-debounce');
+import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
 
@@ -25,7 +25,7 @@ import { findPathToModule } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toFileRangeRequestArgs,
+    pathToUri, toTextEdit, toFileRangeRequestArgs
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
@@ -40,7 +40,7 @@ import { collectDocumentSymbols, collectSymbolInformations } from './document-sy
 import { computeCallers, computeCallees } from './calls';
 
 export interface IServerOptions {
-    logger: Logger
+    logger: Logger;
     tsserverPath?: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
@@ -48,7 +48,6 @@ export interface IServerOptions {
 }
 
 export class LspServer {
-
     private initializeParams: TypeScriptInitializeParams;
     private initializeResult: TypeScriptInitializeResult;
     private tspClient: TspClient;
@@ -58,7 +57,7 @@ export class LspServer {
     private readonly documents = new LspDocuments();
 
     constructor(private options: IServerOptions) {
-        this.logger = new PrefixingLogger(options.logger, '[lspserver]')
+        this.logger = new PrefixingLogger(options.logger, '[lspserver]');
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.documents,
@@ -77,7 +76,7 @@ export class LspServer {
             return this.options.tsserverPath;
         }
         // 1) look into node_modules of workspace root
-        let executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`);
+        const executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`);
         if (executable) {
             return executable;
         }
@@ -86,9 +85,9 @@ export class LspServer {
             return getTsserverExecutable();
         }
         // 3) look into node_modules of typescript-language-server
-        const bundled = findPathToModule(__dirname, path.join("typescript", "lib", "tsserver.js"));
+        const bundled = findPathToModule(__dirname, path.join('typescript', 'lib', 'tsserver.js'));
         if (!bundled) {
-            throw Error(`Couldn't find '${getTsserverExecutable()}' executable or 'tsserver.js' module`)
+            throw Error(`Couldn't find '${getTsserverExecutable()}' executable or 'tsserver.js' module`);
         }
         return bundled;
     }
@@ -97,9 +96,10 @@ export class LspServer {
         this.logger.log('initialize', params);
         this.initializeParams = params;
 
-        const { logVerbosity, plugins }: TypeScriptInitializationOptions = {
+        const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
             logVerbosity: this.options.tsserverLogVerbosity,
             plugins: [],
+            preferences: {},
             ...this.initializeParams.initializationOptions
         };
         const logFile = this.getLogFile(logVerbosity);
@@ -124,7 +124,8 @@ export class LspServer {
         this.tspClient.start();
         this.tspClient.request(CommandTypes.Configure, {
             preferences: {
-                allowTextChangesInNewFiles: true
+                allowTextChangesInNewFiles: true,
+                ...preferences
             }
         });
 
@@ -189,7 +190,6 @@ export class LspServer {
             return logFile;
         }
         return tempy.file(<any>{ name: 'tsserver.log' });
-
     }
     protected doGetLogFile(): string | undefined {
         if (process.env.TSSERVER_LOG_FILE) {
@@ -294,7 +294,7 @@ export class LspServer {
         // so we don't leave stale ones.
         this.options.lspClient.publishDiagnostics({
             uri: document.uri,
-            diagnostics: [],
+            diagnostics: []
         });
     }
 
@@ -308,15 +308,18 @@ export class LspServer {
 
         const document = this.documents.get(file);
         if (!document) {
-            this.logger.error("Received change on non-opened document " + textDocument.uri);
-            throw new Error("Received change on non-opened document " + textDocument.uri);
+            this.logger.error('Received change on non-opened document ' + textDocument.uri);
+            throw new Error('Received change on non-opened document ' + textDocument.uri);
         }
         if (textDocument.version === null) {
             throw new Error(`Received document change event for ${textDocument.uri} without valid version identifier`);
         }
 
         for (const change of params.contentChanges) {
-            let line, offset, endLine, endOffset = 0;
+            let line,
+                offset,
+                endLine,
+                endOffset = 0;
             if (!change.range) {
                 line = 1;
                 offset = 1;
@@ -342,7 +345,7 @@ export class LspServer {
         this.requestDiagnostics();
     }
 
-    didSaveTextDocument(params: lsp.DidChangeTextDocumentParams): void {
+    didSaveTextDocument(_params: lsp.DidChangeTextDocumentParams): void {
         // do nothing
     }
 
@@ -369,8 +372,8 @@ export class LspServer {
     }
 
     protected async getDefinition({ type, params }: {
-        type: 'definition' | 'implementation' | 'typeDefinition',
-        params: lsp.TextDocumentPositionParams
+        type: 'definition' | 'implementation' | 'typeDefinition';
+        params: lsp.TextDocumentPositionParams;
     }): Promise<lsp.Definition> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log(type, params, file);
@@ -416,7 +419,7 @@ export class LspServer {
     protected get supportHierarchicalDocumentSymbol(): boolean {
         const textDocument = this.initializeParams.capabilities.textDocument;
         const documentSymbol = textDocument && textDocument.documentSymbol;
-        return !!documentSymbol && !!documentSymbol.hierarchicalDocumentSymbolSupport
+        return !!documentSymbol && !!documentSymbol.hierarchicalDocumentSymbolSupport;
     }
 
     /*
@@ -432,7 +435,7 @@ export class LspServer {
 
         const document = this.documents.get(file);
         if (!document) {
-            throw new Error("The document should be opened for completion, file: " + file);
+            throw new Error('The document should be opened for completion, file: ' + file);
         }
 
         try {
@@ -448,7 +451,7 @@ export class LspServer {
                 .filter(entry => entry.kind !== 'warning')
                 .map(entry => asCompletionItem(entry, file, params.position, document));
         } catch (error) {
-            if (error.message === "No content available.") {
+            if (error.message === 'No content available.') {
                 this.logger.info('No content was available for completion request');
                 return null;
             } else {
@@ -487,7 +490,7 @@ export class LspServer {
         return {
             contents,
             range
-        }
+        };
     }
     protected async getQuickInfo(file: string, position: lsp.Position): Promise<tsp.QuickInfoResponse | undefined> {
         try {
@@ -567,20 +570,20 @@ export class LspServer {
 
         let opts = <tsp.FormatCodeSettings>{
             ...params.options
-        }
+        };
 
         // translate
         if (opts.convertTabsToSpaces === undefined) {
-            opts.convertTabsToSpaces = params.options.insertSpaces
+            opts.convertTabsToSpaces = params.options.insertSpaces;
         }
         if (opts.indentSize === undefined) {
-            opts.indentSize = params.options.tabSize
+            opts.indentSize = params.options.tabSize;
         }
 
         try {
-            opts = JSON.parse(fs.readFileSync(this.rootPath() + "/tsfmt.json", 'utf-8'));
+            opts = JSON.parse(fs.readFileSync(this.rootPath() + '/tsfmt.json', 'utf-8'));
         } catch (err) {
-            this.logger.log("No formatting options found " + err)
+            this.logger.log(`No formatting options found ${err}`);
         }
 
         // options are not yet supported in tsserver, but we can send a configure request first
@@ -611,20 +614,20 @@ export class LspServer {
 
         let opts = <tsp.FormatCodeSettings>{
             ...params.options
-        }
+        };
 
         // translate
         if (opts.convertTabsToSpaces === undefined) {
-            opts.convertTabsToSpaces = params.options.insertSpaces
+            opts.convertTabsToSpaces = params.options.insertSpaces;
         }
         if (opts.indentSize === undefined) {
-            opts.indentSize = params.options.tabSize
+            opts.indentSize = params.options.tabSize;
         }
 
         try {
-            opts = JSON.parse(fs.readFileSync(this.rootPath() + "/tsfmt.json", 'utf-8'));
+            opts = JSON.parse(fs.readFileSync(this.rootPath() + '/tsfmt.json', 'utf-8'));
         } catch (err) {
-            this.logger.log("No formatting options found " + err)
+            this.logger.log(`No formatting options found ${err}`);
         }
 
         // options are not yet supported in tsserver, but we can send a configure request first
@@ -653,11 +656,10 @@ export class LspServer {
             return undefined;
         }
 
-        const response = await await this.interuptDiagnostics(() => this.getSignatureHelp(file, params.position));
+        const response = await this.interuptDiagnostics(() => this.getSignatureHelp(file, params.position));
         if (!response || !response.body) {
             return undefined;
         }
-        const info = response.body;
         return asSignatureHelp(response.body);
     }
     protected async getSignatureHelp(file: string, position: lsp.Position): Promise<tsp.SignatureHelpResponse | undefined> {
@@ -715,7 +717,7 @@ export class LspServer {
             }
             if (codeAction.commands && codeAction.commands.length) {
                 for (const command of codeAction.commands) {
-                    await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command })
+                    await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command });
                 }
             }
         } else if (arg.command === Commands.APPLY_REFACTORING && arg.arguments) {
@@ -750,19 +752,19 @@ export class LspServer {
             await this.applyFileCodeEdits(body);
         } else if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {
             const { sourceUri, targetUri } = arg.arguments[0] as {
-                sourceUri: string
-                targetUri: string
+                sourceUri: string;
+                targetUri: string;
             };
             this.applyRenameFile(sourceUri, targetUri);
         } else {
-            this.logger.error(`Unknown command ${arg.command}.`)
+            this.logger.error(`Unknown command ${arg.command}.`);
         }
     }
     protected async applyFileCodeEdits(edits: ReadonlyArray<tsp.FileCodeEdits>): Promise<boolean> {
         if (!edits.length) {
             return false;
         }
-        const changes: { [uri: string]: lsp.TextEdit[] } = {};
+        const changes: { [uri: string]: lsp.TextEdit[]; } = {};
         for (const edit of edits) {
             changes[pathToUri(edit.fileName, this.documents)] = edit.textChanges.map(toTextEdit);
         }
@@ -806,12 +808,12 @@ export class LspServer {
                 line: arg.position.line + 1,
                 offset: arg.position.character + 1,
                 filesToSearch: [file]
-            })
+            });
         } catch (err) {
             return [];
         }
         if (!response.body) {
-            return []
+            return [];
         }
         const result: lsp.DocumentHighlight[] = [];
         for (const item of response.body) {
@@ -819,7 +821,7 @@ export class LspServer {
             // Converting to a URI and back to a path ensures consistency.
             if (uriToPath(pathToUri(item.file, this.documents)) === file) {
                 const highlights = toDocumentHighlight(item);
-                result.push(...highlights)
+                result.push(...highlights);
             }
         }
         return result;
@@ -839,7 +841,7 @@ export class LspServer {
             searchValue: params.query
         });
         if (!result.body) {
-            return []
+            return [];
         }
         return result.body.map(item => {
             return <lsp.SymbolInformation>{
@@ -898,16 +900,16 @@ export class LspServer {
         const startLine = range.start.line;
 
         // workaround for https://github.com/Microsoft/vscode/issues/47240
-        const endLine = (range.end.character > 0 && document.getText(lsp.Range.create(
+        const endLine = range.end.character > 0 && document.getText(lsp.Range.create(
             lsp.Position.create(range.end.line, range.end.character - 1),
             range.end
-        )) === '}') ? Math.max(range.end.line - 1, range.start.line) : range.end.line;
+        )) === '}' ? Math.max(range.end.line - 1, range.start.line) : range.end.line;
 
         return {
             startLine,
             endLine,
             kind
-        }
+        };
     }
     protected asFoldingRangeKind(span: tsp.OutliningSpan): lsp.FoldingRangeKind | undefined {
         switch (span.kind) {
@@ -925,8 +927,8 @@ export class LspServer {
             event.event === EventTypes.SuggestionDiag) {
             this.diagnosticQueue.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
         } else {
-            this.logger.log("Ignored event", {
-                "event": event.event
+            this.logger.log('Ignored event', {
+                event: event.event
             });
         }
     }

@@ -8,7 +8,6 @@
 import * as lsp from 'vscode-languageserver';
 
 export class LspDocument implements lsp.TextDocument {
-
     protected document: lsp.TextDocument;
 
     constructor(doc: lsp.TextDocumentItem) {
@@ -79,11 +78,9 @@ export class LspDocument implements lsp.TextDocument {
         }
         this.document = lsp.TextDocument.create(this.uri, this.languageId, version, newContent);
     }
-
 }
 
 export class LspDocuments {
-
     private readonly _files: string[] = [];
     private readonly documents = new Map<string, LspDocument>();
 
@@ -124,5 +121,4 @@ export class LspDocuments {
         this._files.splice(this._files.indexOf(file), 1);
         return document;
     }
-
 }

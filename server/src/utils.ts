@@ -5,10 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { clearTimeout } from "timers";
-
 export class Deferred<T> {
-
     resolve: (value?: T) => void;
     reject: (err?: unknown) => void;
 
@@ -19,7 +16,7 @@ export class Deferred<T> {
 }
 
 export function getTsserverExecutable(): string {
-    return isWindows() ? 'tsserver.cmd' : 'tsserver'
+    return isWindows() ? 'tsserver.cmd' : 'tsserver';
 }
 
 function isWindows(): boolean {

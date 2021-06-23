@@ -6,8 +6,8 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
-import URI from "vscode-uri";
+import tsp from 'typescript/lib/protocol';
+import URI from 'vscode-uri';
 import { LspDocuments } from './document';
 
 export function uriToPath(stringUri: string): string | undefined {
@@ -34,7 +34,7 @@ export function toPosition(location: tsp.Location): lsp.Position {
     return {
         line: location.line - 1,
         character: location.offset - 1
-    }
+    };
 }
 
 export function toLocation(fileSpan: tsp.FileSpan, documents: LspDocuments | undefined): lsp.Location {
@@ -54,10 +54,10 @@ export function toFileRangeRequestArgs(file: string, range: lsp.Range): tsp.File
         startOffset: range.start.character + 1,
         endLine: range.end.line + 1,
         endOffset: range.end.character + 1
-    }
-};
+    };
+}
 
-const symbolKindsMapping: { [name: string]: lsp.SymbolKind } = {
+const symbolKindsMapping: { [name: string]: lsp.SymbolKind; } = {
     'enum member': lsp.SymbolKind.Constant,
     'JSX attribute': lsp.SymbolKind.Property,
     'local class': lsp.SymbolKind.Class,
@@ -84,15 +84,15 @@ const symbolKindsMapping: { [name: string]: lsp.SymbolKind } = {
 };
 
 export function toSymbolKind(tspKind: string): lsp.SymbolKind {
-    return symbolKindsMapping[tspKind] || lsp.SymbolKind.Variable
+    return symbolKindsMapping[tspKind] || lsp.SymbolKind.Variable;
 }
 
 export function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     switch (category) {
-        case 'error': return lsp.DiagnosticSeverity.Error
-        case 'warning': return lsp.DiagnosticSeverity.Warning
-        case 'suggestion': return lsp.DiagnosticSeverity.Hint
-        default: return lsp.DiagnosticSeverity.Error
+        case 'error': return lsp.DiagnosticSeverity.Error;
+        case 'warning': return lsp.DiagnosticSeverity.Warning;
+        case 'suggestion': return lsp.DiagnosticSeverity.Hint;
+        default: return lsp.DiagnosticSeverity.Error;
     }
 }
 
@@ -107,7 +107,7 @@ export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments
         code: diagnostic.code,
         source: diagnostic.source || 'typescript',
         relatedInformation: asRelatedInformation(diagnostic.relatedInformation, documents)
-    }
+    };
 }
 
 export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
@@ -134,7 +134,7 @@ export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
             end: toPosition(edit.end)
         },
         newText: edit.newText
-    }
+    };
 }
 
 function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
@@ -150,7 +150,7 @@ function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
 }
 
 export function toMarkDown(documentation: tsp.SymbolDisplayPart[], tags: tsp.JSDocTagInfo[]): string {
-    let result = "";
+    let result = '';
     result += asPlainText(documentation);
     const tagsPreview = tagsMarkdownPreview(tags);
     if (tagsPreview) {
@@ -166,7 +166,7 @@ export function toTextDocumentEdit(change: tsp.FileCodeEdits, documents: LspDocu
             version: currentVersion(change.fileName, documents)
         },
         edits: change.textChanges.map(c => toTextEdit(c))
-    }
+    };
 }
 
 export function toDocumentHighlight(item: tsp.DocumentHighlightsItem): lsp.DocumentHighlight[] {
@@ -177,24 +177,24 @@ export function toDocumentHighlight(item: tsp.DocumentHighlightsItem): lsp.Docum
                 start: toPosition(i.start),
                 end: toPosition(i.end)
             }
-        }
+        };
     });
 }
 
 // copied because the protocol module is not available at runtime (js version).
 enum HighlightSpanKind {
-    none = "none",
-    definition = "definition",
-    reference = "reference",
-    writtenReference = "writtenReference",
+    none = 'none',
+    definition = 'definition',
+    reference = 'reference',
+    writtenReference = 'writtenReference',
 }
 
 function toDocumentHighlightKind(kind: tsp.HighlightSpanKind): lsp.DocumentHighlightKind {
     switch (kind) {
-        case HighlightSpanKind.definition: return lsp.DocumentHighlightKind.Write
+        case HighlightSpanKind.definition: return lsp.DocumentHighlightKind.Write;
         case HighlightSpanKind.reference:
-        case HighlightSpanKind.writtenReference: return lsp.DocumentHighlightKind.Read
-        default: return lsp.DocumentHighlightKind.Text
+        case HighlightSpanKind.writtenReference: return lsp.DocumentHighlightKind.Read;
+        default: return lsp.DocumentHighlightKind.Text;
     }
 }
 
@@ -206,8 +206,8 @@ export function asRange(span: tsp.TextSpan): lsp.Range {
 }
 
 export function asDocumentation(data: {
-    documentation?: tsp.SymbolDisplayPart[]
-    tags?: tsp.JSDocTagInfo[]
+    documentation?: tsp.SymbolDisplayPart[];
+    tags?: tsp.JSDocTagInfo[];
 }): lsp.MarkupContent | undefined {
     let value = '';
     const documentation = asPlainText(data.documentation);
@@ -232,8 +232,8 @@ export function asTagsDocumentation(tags: tsp.JSDocTagInfo[]): string {
 
 export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
     switch (tag.name) {
-        case 'param':
-            const body = (tag.text || '').split(/^([\w\.]+)\s*-?\s*/);
+        case 'param': {
+            const body = (tag.text || '').split(/^([\w.]+)\s*-?\s*/);
             if (body && body.length === 3) {
                 const param = body[1];
                 const doc = body[2];
@@ -243,6 +243,8 @@ export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
                 }
                 return label + (doc.match(/\r\n|\n/g) ? '  \n' + doc : ` — ${doc}`);
             }
+            // fall-through
+        }
     }
 
     // Generic tag
@@ -290,7 +292,7 @@ export namespace Position {
             return undefined;
         }
         let result = positions.pop()!;
-        for (let p of positions) {
+        for (const p of positions) {
             if (isBefore(p, result)) {
                 result = p;
             }
@@ -313,7 +315,7 @@ export namespace Position {
             return undefined;
         }
         let result = positions.pop()!;
-        for (let p of positions) {
+        for (const p of positions) {
             if (isAfter(p, result)) {
                 result = p;
             }

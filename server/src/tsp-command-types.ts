@@ -18,62 +18,62 @@ and limitations under the License.
 ***************************************************************************** */
 
 export const enum CommandTypes {
-    Brace = "brace",
-    BraceCompletion = "braceCompletion",
-    GetSpanOfEnclosingComment = "getSpanOfEnclosingComment",
-    Change = "change",
-    Close = "close",
-    Completions = "completions",
-    CompletionDetails = "completionEntryDetails",
-    CompileOnSaveAffectedFileList = "compileOnSaveAffectedFileList",
-    CompileOnSaveEmitFile = "compileOnSaveEmitFile",
-    Configure = "configure",
-    Definition = "definition",
-    DefinitionAndBoundSpan = "definitionAndBoundSpan",
-    Implementation = "implementation",
-    Exit = "exit",
-    Format = "format",
-    Formatonkey = "formatonkey",
-    Geterr = "geterr",
-    GeterrForProject = "geterrForProject",
-    SemanticDiagnosticsSync = "semanticDiagnosticsSync",
-    SyntacticDiagnosticsSync = "syntacticDiagnosticsSync",
-    SuggestionDiagnosticsSync = "suggestionDiagnosticsSync",
-    NavBar = "navbar",
-    Navto = "navto",
-    NavTree = "navtree",
-    NavTreeFull = "navtree-full",
+    Brace = 'brace',
+    BraceCompletion = 'braceCompletion',
+    GetSpanOfEnclosingComment = 'getSpanOfEnclosingComment',
+    Change = 'change',
+    Close = 'close',
+    Completions = 'completions',
+    CompletionDetails = 'completionEntryDetails',
+    CompileOnSaveAffectedFileList = 'compileOnSaveAffectedFileList',
+    CompileOnSaveEmitFile = 'compileOnSaveEmitFile',
+    Configure = 'configure',
+    Definition = 'definition',
+    DefinitionAndBoundSpan = 'definitionAndBoundSpan',
+    Implementation = 'implementation',
+    Exit = 'exit',
+    Format = 'format',
+    Formatonkey = 'formatonkey',
+    Geterr = 'geterr',
+    GeterrForProject = 'geterrForProject',
+    SemanticDiagnosticsSync = 'semanticDiagnosticsSync',
+    SyntacticDiagnosticsSync = 'syntacticDiagnosticsSync',
+    SuggestionDiagnosticsSync = 'suggestionDiagnosticsSync',
+    NavBar = 'navbar',
+    Navto = 'navto',
+    NavTree = 'navtree',
+    NavTreeFull = 'navtree-full',
     /** @deprecated */
-    Occurrences = "occurrences",
-    DocumentHighlights = "documentHighlights",
-    Open = "open",
-    Quickinfo = "quickinfo",
-    References = "references",
-    Reload = "reload",
-    Rename = "rename",
-    Saveto = "saveto",
-    SignatureHelp = "signatureHelp",
-    Status = "status",
-    TypeDefinition = "typeDefinition",
-    ProjectInfo = "projectInfo",
-    ReloadProjects = "reloadProjects",
-    Unknown = "unknown",
-    OpenExternalProject = "openExternalProject",
-    OpenExternalProjects = "openExternalProjects",
-    CloseExternalProject = "closeExternalProject",
-    GetOutliningSpans = "getOutliningSpans",
-    TodoComments = "todoComments",
-    Indentation = "indentation",
-    DocCommentTemplate = "docCommentTemplate",
-    CompilerOptionsForInferredProjects = "compilerOptionsForInferredProjects",
-    GetCodeFixes = "getCodeFixes",
-    GetCombinedCodeFix = "getCombinedCodeFix",
-    ApplyCodeActionCommand = "applyCodeActionCommand",
-    GetSupportedCodeFixes = "getSupportedCodeFixes",
-    GetApplicableRefactors = "getApplicableRefactors",
-    GetEditsForRefactor = "getEditsForRefactor",
-    OrganizeImports = "organizeImports",
-    GetEditsForFileRename = "getEditsForFileRename"
+    Occurrences = 'occurrences',
+    DocumentHighlights = 'documentHighlights',
+    Open = 'open',
+    Quickinfo = 'quickinfo',
+    References = 'references',
+    Reload = 'reload',
+    Rename = 'rename',
+    Saveto = 'saveto',
+    SignatureHelp = 'signatureHelp',
+    Status = 'status',
+    TypeDefinition = 'typeDefinition',
+    ProjectInfo = 'projectInfo',
+    ReloadProjects = 'reloadProjects',
+    Unknown = 'unknown',
+    OpenExternalProject = 'openExternalProject',
+    OpenExternalProjects = 'openExternalProjects',
+    CloseExternalProject = 'closeExternalProject',
+    GetOutliningSpans = 'getOutliningSpans',
+    TodoComments = 'todoComments',
+    Indentation = 'indentation',
+    DocCommentTemplate = 'docCommentTemplate',
+    CompilerOptionsForInferredProjects = 'compilerOptionsForInferredProjects',
+    GetCodeFixes = 'getCodeFixes',
+    GetCombinedCodeFix = 'getCombinedCodeFix',
+    ApplyCodeActionCommand = 'applyCodeActionCommand',
+    GetSupportedCodeFixes = 'getSupportedCodeFixes',
+    GetApplicableRefactors = 'getApplicableRefactors',
+    GetEditsForRefactor = 'getEditsForRefactor',
+    OrganizeImports = 'organizeImports',
+    GetEditsForFileRename = 'getEditsForFileRename'
 }
 
 export const enum EventTypes {
@@ -86,71 +86,71 @@ export const enum EventTypes {
 }
 
 export enum ScriptElementKind {
-    unknown = "",
-    warning = "warning",
+    unknown = '',
+    warning = 'warning',
     /** predefined type (void) or keyword (class) */
-    keyword = "keyword",
+    keyword = 'keyword',
     /** top level script node */
-    scriptElement = "script",
+    scriptElement = 'script',
     /** module foo {} */
-    moduleElement = "module",
+    moduleElement = 'module',
     /** class X {} */
-    classElement = "class",
+    classElement = 'class',
     /** var x = class X {} */
-    localClassElement = "local class",
+    localClassElement = 'local class',
     /** interface Y {} */
-    interfaceElement = "interface",
+    interfaceElement = 'interface',
     /** type T = ... */
-    typeElement = "type",
+    typeElement = 'type',
     /** enum E */
-    enumElement = "enum",
-    enumMemberElement = "enum member",
+    enumElement = 'enum',
+    enumMemberElement = 'enum member',
     /**
      * Inside module and script only
      * const v = ..
      */
-    variableElement = "var",
+    variableElement = 'var',
     /** Inside function */
-    localVariableElement = "local var",
+    localVariableElement = 'local var',
     /**
      * Inside module and script only
      * function f() { }
      */
-    functionElement = "function",
+    functionElement = 'function',
     /** Inside function */
-    localFunctionElement = "local function",
+    localFunctionElement = 'local function',
     /** class X { [public|private]* foo() {} } */
-    memberFunctionElement = "method",
+    memberFunctionElement = 'method',
     /** class X { [public|private]* [get|set] foo:number; } */
-    memberGetAccessorElement = "getter",
-    memberSetAccessorElement = "setter",
+    memberGetAccessorElement = 'getter',
+    memberSetAccessorElement = 'setter',
     /**
      * class X { [public|private]* foo:number; }
      * interface Y { foo:number; }
      */
-    memberVariableElement = "property",
+    memberVariableElement = 'property',
     /** class X { constructor() { } } */
-    constructorImplementationElement = "constructor",
+    constructorImplementationElement = 'constructor',
     /** interface Y { ():number; } */
-    callSignatureElement = "call",
+    callSignatureElement = 'call',
     /** interface Y { []:number; } */
-    indexSignatureElement = "index",
+    indexSignatureElement = 'index',
     /** interface Y { new():Y; } */
-    constructSignatureElement = "construct",
+    constructSignatureElement = 'construct',
     /** function foo(*Y*: string) */
-    parameterElement = "parameter",
-    typeParameterElement = "type parameter",
-    primitiveType = "primitive type",
-    label = "label",
-    alias = "alias",
-    constElement = "const",
-    letElement = "let",
-    directory = "directory",
-    externalModuleName = "external module name",
+    parameterElement = 'parameter',
+    typeParameterElement = 'type parameter',
+    primitiveType = 'primitive type',
+    label = 'label',
+    alias = 'alias',
+    constElement = 'const',
+    letElement = 'let',
+    directory = 'directory',
+    externalModuleName = 'external module name',
     /**
      * <JsxTagName attribute1 attribute2={0} />
      */
-    jsxAttribute = "JSX attribute",
+    jsxAttribute = 'JSX attribute',
     /** String literal */
-    string = "string"
+    string = 'string'
 }
