@@ -10,7 +10,7 @@
         "@typescript-eslint/eslint-plugin": "^4.27.0",
         "@typescript-eslint/parser": "^4.27.0",
         "chai": "^4.1.2",
-        "concurrently": "^3.6.1",
+        "concurrently": "^6.2.0",
         "eslint": "^7.29.0",
         "lerna": "^3.0.0-rc.0",
         "mocha": "5.2.0",
