@@ -21,7 +21,7 @@ import { TspClient } from './tsp-client';
 
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
-import { findPathToModule } from './modules-resolver';
+import { findPathToModule, findPathToSdk } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
@@ -75,16 +75,21 @@ export class LspServer {
         if (this.options.tsserverPath) {
             return this.options.tsserverPath;
         }
-        // 1) look into node_modules of workspace root
+        // 1) look into .yarn/sdks of workspace root
+        const sdk = findPathToSdk(this.rootPath(), path.join('typescript', 'lib', 'tsserver.js'));
+        if (sdk) {
+            return sdk;
+        }
+        // 2) look into node_modules of workspace root
         const executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`);
         if (executable) {
             return executable;
         }
-        // 2) use globally installed tsserver
+        // 3) use globally installed tsserver
         if (commandExists.sync(getTsserverExecutable())) {
             return getTsserverExecutable();
         }
-        // 3) look into node_modules of typescript-language-server
+        // 4) look into node_modules of typescript-language-server
         const bundled = findPathToModule(__dirname, path.join('typescript', 'lib', 'tsserver.js'));
         if (!bundled) {
             throw Error(`Couldn't find '${getTsserverExecutable()}' executable or 'tsserver.js' module`);
