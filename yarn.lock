@@ -1067,13 +1067,6 @@
   dependencies:
     normalize-url "*"
 
-"@types/p-debounce@^1.0.0":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@types/p-debounce/-/p-debounce-1.0.1.tgz#c9956067a240dffedf2682a24d0712ffa5e3c8fe"
-  integrity sha512-zlAn04fH4cGYPAjmYW8Tst/vxn78IJmD3PVMxxBnl3IYAG+9aGKWCu/311fPHnePJMwyxGeOhi63neSiSgM+iw==
-  dependencies:
-    p-debounce "*"
-
 "@types/qs@*":
   version "6.9.5"
   resolved "https://registry.yarnpkg.com/@types/qs/-/qs-6.9.5.tgz#434711bdd49eb5ee69d90c1d67c354a9a8ecb18b"
@@ -5632,14 +5625,10 @@ osenv@^0.1.4, osenv@^0.1.5:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
 
-p-debounce@*:
+p-debounce@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/p-debounce/-/p-debounce-2.1.0.tgz#e79f70c6e325cbb9bddbcbec0b81025084671ad3"
   integrity sha512-M9bMt62TTnozdZhqFgs+V7XD2MnuKCaz+7fZdlu2/T7xruI3uIE5CicQ0vx1hV7HIUYF0jF+4/R1AgfOkl74Qw==
-
-p-debounce@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/p-debounce/-/p-debounce-1.0.0.tgz#cb7f2cbeefd87a09eba861e112b67527e621e2fd"
 
 p-finally@^1.0.0:
   version "1.0.0"
