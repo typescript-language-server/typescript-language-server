@@ -19,7 +19,7 @@
     "commander": "^7.2.0",
     "fs-extra": "^7.0.0",
     "p-debounce": "^2.1.0",
-    "tempy": "^0.2.1",
+    "tempy": "^1.0.1",
     "vscode-languageserver": "^5.3.0-next",
     "vscode-uri": "^1.0.5"
   },
@@ -30,7 +30,6 @@
     "lint": "eslint --ext '.js,.ts' src"
   },
   "devDependencies": {
-    "@types/fs-extra": "^5.0.4",
-    "@types/tempy": "^0.1.0"
+    "@types/fs-extra": "^5.0.4"
   }
 }
