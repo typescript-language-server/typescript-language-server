@@ -21,7 +21,7 @@ import { TspClient } from './tsp-client';
 
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
-import { findPathToModule, findPathToSdk } from './modules-resolver';
+import { findPathToModule, findPathToYarnSdk } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
@@ -76,7 +76,7 @@ export class LspServer {
             return this.options.tsserverPath;
         }
         // 1) look into .yarn/sdks of workspace root
-        const sdk = findPathToSdk(this.rootPath(), path.join('typescript', 'lib', 'tsserver.js'));
+        const sdk = findPathToYarnSdk(this.rootPath(), path.join('typescript', 'lib', 'tsserver.js'));
         if (sdk) {
             return sdk;
         }
