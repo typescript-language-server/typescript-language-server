@@ -15,7 +15,7 @@ export function findPathToModule(dir: string, moduleName: string): string|undefi
     }
 }
 
-export function findPathToSdk(dir: string, moduleName: string): string | undefined {
+export function findPathToYarnSdk(dir: string, moduleName: string): string | undefined {
     const stat = fs.statSync(dir);
     if (stat.isDirectory()) {
         const candidate = path.resolve(dir, '.yarn', 'sdks', moduleName);
@@ -25,6 +25,6 @@ export function findPathToSdk(dir: string, moduleName: string): string | undefin
     }
     const parent = path.resolve(dir, '..');
     if (parent !== dir) {
-        return findPathToSdk(parent, moduleName);
+        return findPathToYarnSdk(parent, moduleName);
     }
 }
