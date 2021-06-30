@@ -1,4 +1,4 @@
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import * as chai from 'chai';
 import { provideOrganizeImports } from './organize-imports';
 

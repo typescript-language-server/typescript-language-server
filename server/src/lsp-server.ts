@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
 import { CodeActionKind } from 'vscode-languageserver';

@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import * as readline from 'readline';
 import * as decoder from 'string_decoder';
-import * as protocol from 'typescript/lib/protocol';
+import protocol from 'typescript/lib/protocol';
 import * as tempy from 'tempy';
 
 import { CommandTypes } from './tsp-command-types';
