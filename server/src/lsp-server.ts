@@ -16,10 +16,8 @@ import { CodeActionKind } from 'vscode-languageserver';
 import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
-
 import { Logger, PrefixingLogger } from './logger';
 import { TspClient } from './tsp-client';
-
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
 import { findPathToModule } from './modules-resolver';
@@ -483,13 +481,23 @@ export class LspServer {
             return { contents: [] };
         }
         const range = asRange(result.body);
-        const contents: lsp.MarkedString[] = [
-            { language: 'typescript', value: result.body.displayString }
-        ];
+        let markdown = '```\n' + result.body.displayString + '\n```';
+        if (typeof result.body.documentation === 'string') {
+            markdown += '\n\n' + result.body.documentation;
+        } else {
+            for (const symbol of result.body.documentation) {
+                markdown += `- ${symbol.text} (_${symbol.kind}_)`;
+            }
+        }
         const tags = asTagsDocumentation(result.body.tags);
-        contents.push(result.body.documentation + (tags ? '\n\n' + tags : ''));
+        if (tags) {
+            markdown += '\n\n' + tags;
+        }
         return {
-            contents,
+            contents: {
+                kind: 'markdown',
+                value: markdown
+            },
             range
         };
     }

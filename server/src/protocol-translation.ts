@@ -144,7 +144,12 @@ function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
             if (!tag.text) {
                 return label;
             }
-            return label + (tag.text.match(/\r\n|\n/g) ? '  \n' + tag.text : ` — ${tag.text}`);
+            if (typeof tag.text === 'string') {
+                return label + (tag.text.match(/\r\n|\n/g) ? '  \n' + tag.text : ` — ${tag.text}`);
+            }
+            return label + '  \n' + tag.text.map(symbolDisplayPart => {
+                return `* ${symbolDisplayPart.text} _${symbolDisplayPart.kind}_`;
+            }).join('\n');
         })
         .join('  \n\n');
 }
@@ -233,7 +238,15 @@ export function asTagsDocumentation(tags: tsp.JSDocTagInfo[]): string {
 export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
     switch (tag.name) {
         case 'param': {
-            const body = (tag.text || '').split(/^([\w.]+)\s*-?\s*/);
+            // TODO: What does this actually look like? Is the original logic
+            // just doing something that the new type should do?
+            let formattedTag = '';
+            if (typeof tag.text === 'string') {
+                formattedTag = tag.text;
+            } else if (tag.text) {
+                formattedTag = tag.text.map(symbol => `${symbol.text} (${symbol.kind})`).join(', ');
+            }
+            const body = formattedTag.split(/^([\w.]+)\s*-?\s*/);
             if (body && body.length === 3) {
                 const param = body[1];
                 const doc = body[2];
@@ -261,17 +274,26 @@ export function asTagBodyText(tag: tsp.JSDocTagInfo): string | undefined {
         return undefined;
     }
 
+    // TODO: What does this actually look like? Is the original logic
+    // just doing something that the new type should do?
+    let formattedTag = '';
+    if (typeof tag.text === 'string') {
+        formattedTag = tag.text;
+    } else if (tag.text) {
+        formattedTag = tag.text.map(symbol => `${symbol.text} (${symbol.kind})`).join(', ');
+    }
+
     switch (tag.name) {
         case 'example':
         case 'default':
             // Convert to markdown code block if it not already one
-            if (tag.text.match(/^\s*[~`]{3}/g)) {
-                return tag.text;
+            if (formattedTag.match(/^\s*[~`]{3}/g)) {
+                return formattedTag;
             }
-            return '```\n' + tag.text + '\n```';
+            return '```\n' + formattedTag + '\n```';
     }
 
-    return tag.text;
+    return formattedTag;
 }
 
 export function asPlainText(parts: undefined): undefined;
