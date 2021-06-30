@@ -541,10 +541,10 @@ describe('code actions', () => {
                         }
                     ],
                     command: '_typescript.applyWorkspaceEdit',
-                    title: "Remove declaration for: 'bar'"
+                    title: "Remove unused declaration for: 'bar'"
                 },
                 kind: 'quickfix',
-                title: "Remove declaration for: 'bar'"
+                title: "Remove unused declaration for: 'bar'"
             },
             {
                 command: {
@@ -580,6 +580,25 @@ describe('code actions', () => {
                 },
                 kind: 'quickfix',
                 title: "Prefix 'bar' with an underscore"
+            },
+            {
+                command: {
+                    arguments: [
+                        {
+                            action: 'Convert parameters to destructured object',
+                            endLine: 2,
+                            endOffset: 50,
+                            file: 'ROOT/server/test-data/bar.ts',
+                            refactor: 'Convert parameters to destructured object',
+                            startLine: 2,
+                            startOffset: 26
+                        }
+                    ],
+                    command: '_typescript.applyRefactoring',
+                    title: 'Convert parameters to destructured object'
+                },
+                kind: 'refactor',
+                title: 'Convert parameters to destructured object'
             }
         ]);
     }).timeout(10000);
