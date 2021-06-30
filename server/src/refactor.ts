@@ -13,16 +13,17 @@ export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | 
     if (!response || !response.body) {
         return [];
     }
-    return response.body.reduce<Array<lsp.CodeAction>>((actions, info) => {
+    const actions: Array<lsp.CodeAction> = [];
+    for (const info of response.body) {
         if (info.inlineable === false) {
             actions.push(asSelectRefactoring(info, args));
         } else {
-            actions.push(...info.actions.map(action =>
-                asApplyRefactoring(action, info, args)
-            ));
+            for (const action of info.actions) {
+                actions.push(asApplyRefactoring(action, info, args));
+            }
         }
-        return actions;
-    }, []);
+    }
+    return actions;
 }
 
 export function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
