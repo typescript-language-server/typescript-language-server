@@ -6,13 +6,11 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 import { CodeActionKind } from 'vscode-languageserver';
 
-export function provideOrganizeImports(
-    response: tsp.OrganizeImportsResponse | undefined
-): Array<lsp.CodeAction> {
+export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined): Array<lsp.CodeAction> {
     if (!response) {
         return [];
     }

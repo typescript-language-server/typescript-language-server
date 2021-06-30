@@ -6,13 +6,10 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 
-export function provideRefactors(
-    response: tsp.GetApplicableRefactorsResponse | undefined,
-    args: tsp.FileRangeRequestArgs
-): Array<lsp.CodeAction> {
+export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, args: tsp.FileRangeRequestArgs): Array<lsp.CodeAction> {
     if (!response || !response.body) {
         return [];
     }
