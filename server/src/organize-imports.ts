@@ -6,7 +6,6 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 import { CodeActionKind, Range } from 'vscode-languageserver';
 

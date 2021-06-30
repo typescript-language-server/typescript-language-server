@@ -1,6 +1,6 @@
 {
   "name": "typescript-language-server",
-  "version": "0.4.0",
+  "version": "0.5.1",
   "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
   "author": "TypeFox and others",
   "license": "Apache-2.0",
@@ -25,9 +25,9 @@
   },
   "scripts": {
     "prepare": "echo 'skip'",
-    "clean": "rimraf lib",
+    "clean": "rimraf lib *.tsbuildinfo",
     "test": "mocha --exit --reporter spec \"./lib/**/*.spec.js\"",
-    "lint": "tslint -c ../tslint.json --project ."
+    "lint": "eslint --ext '.js,.ts' src"
   },
   "devDependencies": {
     "@types/fs-extra": "^5.0.4",

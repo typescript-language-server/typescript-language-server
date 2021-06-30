@@ -5,12 +5,12 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import * as lsp from 'vscode-languageserver';
 import { Logger } from './logger';
 import { pathToUri, toDiagnostic } from './protocol-translation';
 import { EventTypes } from './tsp-command-types';
-import debounce = require('p-debounce');
+import debounce from 'p-debounce';
 import { LspDocuments } from './document';
 
 class FileDiagnostics {
@@ -43,7 +43,6 @@ class FileDiagnostics {
 }
 
 export class DiagnosticEventQueue {
-
     protected readonly diagnostics = new Map<string, FileDiagnostics>();
 
     constructor(
@@ -54,7 +53,7 @@ export class DiagnosticEventQueue {
 
     updateDiagnostics(kind: EventTypes, event: tsp.DiagnosticEvent): void {
         if (!event.body) {
-            this.logger.error(`Received empty ${event.event} diagnostics.`)
+            this.logger.error(`Received empty ${event.event} diagnostics.`);
             return;
         }
         const { file } = event.body;

@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 
 export function provideRefactors(
@@ -28,22 +28,24 @@ export function provideRefactors(
     }, [])
 }
 
-function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
-    return lsp.CodeAction.create(info.description,
+export function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
+    return lsp.CodeAction.create(
+        info.description,
         lsp.Command.create(info.description, Commands.SELECT_REFACTORING, info, args),
         lsp.CodeActionKind.Refactor
-    )
+    );
 }
 
-function asApplyRefactoring(action: tsp.RefactorActionInfo, info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
-    return lsp.CodeAction.create(action.description,
+export function asApplyRefactoring(action: tsp.RefactorActionInfo, info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
+    return lsp.CodeAction.create(
+        action.description,
         lsp.Command.create(action.description, Commands.APPLY_REFACTORING, <tsp.GetEditsForRefactorRequestArgs>{
             ...args,
             refactor: info.name,
             action: action.name
         }),
         asKind(info)
-    )
+    );
 }
 
 function asKind(refactor: tsp.RefactorActionInfo): lsp.CodeActionKind {

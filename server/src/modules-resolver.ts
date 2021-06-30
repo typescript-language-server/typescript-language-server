@@ -5,20 +5,10 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as fs from 'fs';
-import * as paths from 'path';
-
 export function findPathToModule(dir: string, moduleName: string): string|undefined {
-    const stat = fs.statSync(dir)
-    if (stat.isDirectory()) {
-        const candidate = paths.resolve(dir, 'node_modules', moduleName)
-        if (fs.existsSync(candidate)) {
-            return candidate;
-        }
+    try {
+        return require.resolve(moduleName, { paths: [dir] });
+    } catch {
+        return undefined;
     }
-    const parent = paths.resolve(dir, '..')
-    if (parent !== dir) {
-        return findPathToModule(parent, moduleName)
-    }
-    return undefined
 }

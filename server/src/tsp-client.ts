@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import * as readline from 'readline';
 import * as decoder from 'string_decoder';
-import * as protocol from 'typescript/lib/protocol';
+import protocol from 'typescript/lib/protocol';
 import * as tempy from 'tempy';
 
 import { CommandTypes } from './tsp-command-types';
@@ -24,14 +24,14 @@ export interface TspClientOptions {
     logFile?: string;
     logVerbosity?: string;
     globalPlugins?: string[];
-    pluginProbeLocations?: string[]
+    pluginProbeLocations?: string[];
     onEvent?: (event: protocol.Event) => void;
 }
 
 interface TypeScriptRequestTypes {
-    'geterr': [protocol.GeterrRequestArgs, any],
+    'geterr': [protocol.GeterrRequestArgs, any];
     'compilerOptionsForInferredProjects': [protocol.SetCompilerOptionsForInferredProjectsArgs, protocol.SetCompilerOptionsForInferredProjectsResponse];
-    'documentHighlights': [protocol.DocumentHighlightsRequestArgs, protocol.DocumentHighlightsResponse],
+    'documentHighlights': [protocol.DocumentHighlightsRequestArgs, protocol.DocumentHighlightsResponse];
     'applyCodeActionCommand': [protocol.ApplyCodeActionCommandRequestArgs, protocol.ApplyCodeActionCommandResponse];
     'completionEntryDetails': [protocol.CompletionDetailsRequestArgs, protocol.CompletionDetailsResponse];
     'completionInfo': [protocol.CompletionsRequestArgs, protocol.CompletionInfoResponse];
@@ -69,20 +69,20 @@ export class TspClient {
     private seq = 0;
 
     private readonly deferreds: {
-        [seq: number]: Deferred<any>
+        [seq: number]: Deferred<any>;
     } = {};
 
-    private logger: Logger
-    private tsserverLogger: Logger
+    private logger: Logger;
+    private tsserverLogger: Logger;
 
     private cancellationPipeName: string | undefined;
 
     constructor(private options: TspClientOptions) {
-        this.logger = new PrefixingLogger(options.logger, '[tsclient]')
-        this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]')
+        this.logger = new PrefixingLogger(options.logger, '[tsclient]');
+        this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]');
     }
 
-    start() {
+    start(): void {
         if (this.readlineInterface) {
             return;
         }
@@ -95,7 +95,7 @@ export class TspClient {
             args.push('--logVerbosity', logVerbosity);
         }
         if (globalPlugins && globalPlugins.length) {
-            args.push('--globalPlugins', globalPlugins.join(','))
+            args.push('--globalPlugins', globalPlugins.join(','));
         }
         if (pluginProbeLocations && pluginProbeLocations.length) {
             args.push('--pluginProbeLocations', pluginProbeLocations.join(','));
@@ -103,7 +103,7 @@ export class TspClient {
         this.cancellationPipeName = tempy.file({ name: 'tscancellation' } as any);
         args.push('--cancellationPipeName', this.cancellationPipeName + '*');
         this.logger.info(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
-        const tsserverPathIsModule = path.extname(tsserverPath) === ".js";
+        const tsserverPathIsModule = path.extname(tsserverPath) === '.js';
         this.tsserverProc = tsserverPathIsModule
             ? cp.fork(tsserverPath, args, { silent: true })
             : cp.spawn(tsserverPath, args);
@@ -115,18 +115,18 @@ export class TspClient {
         });
         this.readlineInterface.on('line', line => this.processMessage(line));
 
-        const dec = new decoder.StringDecoder("utf-8");
+        const dec = new decoder.StringDecoder('utf-8');
         this.tsserverProc.stderr.addListener('data', data => {
             const stringMsg = typeof data === 'string' ? data : dec.write(data);
             this.tsserverLogger.error(stringMsg);
         });
     }
 
-    notify(command: CommandTypes.Open, args: protocol.OpenRequestArgs)
-    notify(command: CommandTypes.Close, args: protocol.FileRequestArgs)
-    notify(command: CommandTypes.Saveto, args: protocol.SavetoRequestArgs)
-    notify(command: CommandTypes.Change, args: protocol.ChangeRequestArgs)
-    notify(command: string, args: object): void {
+    notify(command: CommandTypes.Open, args: protocol.OpenRequestArgs): void
+    notify(command: CommandTypes.Close, args: protocol.FileRequestArgs): void
+    notify(command: CommandTypes.Saveto, args: protocol.SavetoRequestArgs): void
+    notify(command: CommandTypes.Change, args: protocol.ChangeRequestArgs): void
+    notify(command: string, args: any): void {
         this.sendMessage(command, true, args);
     }
 
@@ -137,12 +137,14 @@ export class TspClient {
     ): Promise<TypeScriptRequestTypes[K][1]> {
         this.sendMessage(command, false, args);
         const seq = this.seq;
-        const request = (this.deferreds[seq] = new Deferred<any>(command)).promise;
+        const deferred = new Deferred<TypeScriptRequestTypes[K][1]>();
+        this.deferreds[seq] = deferred;
+        const request = deferred.promise;
         if (token) {
             const onCancelled = token.onCancellationRequested(() => {
                 onCancelled.dispose();
                 if (this.cancellationPipeName) {
-                    const requestCancellationPipeName = this.cancellationPipeName + seq;
+                    const requestCancellationPipeName = `${this.cancellationPipeName}${seq}`;
                     fs.writeFile(requestCancellationPipeName, '', err => {
                         if (!err) {
                             request.then(() =>
@@ -158,7 +160,7 @@ export class TspClient {
 
     protected sendMessage(command: string, notification: boolean, args?: any): void {
         this.seq = this.seq + 1;
-        let request: protocol.Request = {
+        const request: protocol.Request = {
             command,
             seq: this.seq,
             type: 'request'
@@ -166,9 +168,9 @@ export class TspClient {
         if (args) {
             request.arguments = args;
         }
-        const serializedRequest = JSON.stringify(request) + "\n";
+        const serializedRequest = JSON.stringify(request) + '\n';
         this.tsserverProc.stdin.write(serializedRequest);
-        this.logger.log(notification ? "notify" : "request", request);
+        this.logger.log(notification ? 'notify' : 'request', request);
     }
 
     protected processMessage(untrimmedMessageString: string): void {

@@ -12,13 +12,13 @@ import { pathToUri } from './protocol-translation';
 import { LspServer } from './lsp-server';
 import { ConsoleLogger } from './logger';
 
-export function uri(suffix: string = ''): string {
+export function uri(suffix = ''): string {
     const resolved = this.filePath(suffix);
     return pathToUri(resolved, undefined);
 }
 
-export function filePath(suffix: string = ''): string {
-    return path.resolve(__dirname, `../test-data`, suffix);
+export function filePath(suffix = ''): string {
+    return path.resolve(__dirname, '../test-data', suffix);
 }
 
 export function readContents(path: string): string {
@@ -43,9 +43,9 @@ export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp
 }
 
 export async function createServer(options: {
-    rootUri: string | null
-    tsserverLogVerbosity?: string
-    publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void
+    rootUri: string | null;
+    tsserverLogVerbosity?: string;
+    publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
 }): Promise<LspServer> {
     const logger = new ConsoleLogger(false);
     const server = new LspServer({
@@ -56,7 +56,7 @@ export async function createServer(options: {
         lspClient: {
             publishDiagnostics: options.publishDiagnostics,
             showMessage(args: lsp.ShowMessageParams): void {
-                throw args // should not be called.
+                throw args; // should not be called.
             },
             logMessage(args: lsp.LogMessageParams): void {
                 logger.log('logMessage', JSON.stringify(args));
@@ -66,7 +66,7 @@ export async function createServer(options: {
             },
             applyWorkspaceEdit: () => Promise.reject(new Error('unsupported')),
             rename: () => Promise.reject(new Error('unsupported'))
-        },
+        }
     });
 
     await server.initialize({

@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 import { toTextDocumentEdit } from './protocol-translation';
 import { LspDocuments } from './document';
@@ -27,5 +27,5 @@ export function provideQuickFix(
             arguments: [{documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents))}]
         },
         CodeActionKind.QuickFix,
-    ))
+    ));
 }

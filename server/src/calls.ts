@@ -1,5 +1,5 @@
 
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { TspClient } from './tsp-client';
@@ -64,7 +64,6 @@ export async function computeCallees(tspClient: TspClient, args: lsp.TextDocumen
 }
 
 async function findOutgoingCalls(tspClient: TspClient, contextSymbol: lspcalls.DefinitionSymbol, documentProvider: DocumentProvider): Promise<tsp.FileSpan[]> {
-
     /**
      * The TSP does not provide call references.
      * As long as we are not able to access the AST in a tsserver plugin and return the information necessary as metadata to the reponse,
@@ -74,7 +73,7 @@ async function findOutgoingCalls(tspClient: TspClient, contextSymbol: lspcalls.D
         const symbolText = document.getText(range);
         const regex = /\W([$_a-zA-Z0-9\u{00C0}-\u{E007F}]+)(<.*>)?\(/gmu; // Example: matches `candidate` in " candidate()", "Foo.candidate<T>()", etc.
         let match = regex.exec(symbolText);
-        const candidates: { identifier: string; start: number; end: number; }[] = []
+        const candidates: { identifier: string; start: number; end: number; }[] = [];
         while (match) {
             const identifier = match[1];
             if (identifier) {
@@ -87,7 +86,7 @@ async function findOutgoingCalls(tspClient: TspClient, contextSymbol: lspcalls.D
         const offset = document.offsetAt(range.start);
         const candidateRanges = candidates.map(c => lsp.Range.create(document.positionAt(offset + c.start), document.positionAt(offset + c.end)));
         return candidateRanges;
-    }
+    };
 
     /**
      * This function tests a candidate and returns a locaion for a valid call.
@@ -96,12 +95,12 @@ async function findOutgoingCalls(tspClient: TspClient, contextSymbol: lspcalls.D
         const tspPosition = { line: candidateRange.start.line + 1, offset: candidateRange.start.character + 1 };
         const references = await findNonDefinitionReferences(tspClient, { file, start: tspPosition, end: tspPosition });
         for (const reference of references) {
-        const tspPosition = { line: candidateRange.start.line + 1, offset: candidateRange.start.character + 1 };
+            const tspPosition = { line: candidateRange.start.line + 1, offset: candidateRange.start.character + 1 };
             if (tspPosition.line === reference.start.line) {
                 return reference;
             }
         }
-    }
+    };
 
     const calls: tsp.FileSpan[] = [];
     const file = uriToPath(contextSymbol.location.uri)!;
@@ -180,7 +179,7 @@ async function findEnclosingSymbolInTree(parent: tsp.NavigationTree, range: lsp.
         kind: toSymbolKind(candidate.kind),
         range: spanRange,
         selectionRange: selectionRange
-    }
+    };
 }
 
 async function findDefinitionReferences(tspClient: TspClient, args: tsp.FileSpan): Promise<tsp.FileSpan[]> {
@@ -191,7 +190,7 @@ async function findNonDefinitionReferences(tspClient: TspClient, args: tsp.FileS
     return (await findReferences(tspClient, args)).filter(ref => !ref.isDefinition);
 }
 
-async function findReferences(tspClient: TspClient, args: tsp.FileSpan): Promise<tsp.ReferencesResponseItem[]> {
+async function findReferences(tspClient: TspClient, args: tsp.FileSpan): Promise<readonly tsp.ReferencesResponseItem[]> {
     const file = args.file;
     const result = await tspClient.request(CommandTypes.References, {
         file,

@@ -6,14 +6,14 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import * as tsp from 'typescript/lib/protocol';
+import tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
 import { ScriptElementKind } from './tsp-command-types';
-import { asRange, toTextEdit, asPlainText, asTagsDocumentation, asDocumentation } from './protocol-translation';
+import { asRange, toTextEdit, asPlainText, asDocumentation } from './protocol-translation';
 import { Commands } from './commands';
 
 export interface TSCompletionItem extends lsp.CompletionItem {
-    data: tsp.CompletionDetailsRequestArgs
+    data: tsp.CompletionDetailsRequestArgs;
 }
 
 export function asCompletionItem(entry: import('typescript/lib/protocol').CompletionEntry, file: string, position: lsp.Position, document: LspDocument): TSCompletionItem {
@@ -30,7 +30,7 @@ export function asCompletionItem(entry: import('typescript/lib/protocol').Comple
                 entry.source ? { name: entry.name, source: entry.source } : entry.name
             ]
         }
-    }
+    };
     if (entry.isRecommended) {
         // Make sure isRecommended property always comes first
         // https://github.com/Microsoft/vscode/issues/40325
@@ -153,7 +153,7 @@ export function asResolvedCompletionItem(item: TSCompletionItem, details: tsp.Co
 }
 
 export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
-    command?: lsp.Command, additionalTextEdits?: lsp.TextEdit[]
+    command?: lsp.Command; additionalTextEdits?: lsp.TextEdit[];
 } {
     if (!details.codeActions || !details.codeActions.length) {
         return {};
