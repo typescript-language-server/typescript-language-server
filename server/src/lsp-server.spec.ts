@@ -466,23 +466,23 @@ describe('code actions', () => {
     export function foo(bar: string, baz?:boolean): void {}
     foo(param1, param2)
     `
-    }
+    };
 
     it('can provide quickfix code actions', async () => {
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         let result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
-                end: { line: 1, character: 49 },
+                end: { line: 1, character: 49 }
             },
             context: {
                 diagnostics: [{
                     range: {
                         start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 },
+                        end: { line: 1, character: 49 }
                     },
                     code: 6133,
                     message: 'unused arg'
@@ -492,7 +492,7 @@ describe('code actions', () => {
 
         // ensure this works on other peoples computers
         try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'))
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'));
         } catch {
             // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
         }
@@ -510,41 +510,41 @@ describe('code actions', () => {
                                             range: {
                                                 end: {
                                                     character: 37,
-                                                    line: 1,
+                                                    line: 1
                                                 },
                                                 start: {
                                                     character: 24,
-                                                    line: 1,
-                                                },
-                                            },
+                                                    line: 1
+                                                }
+                                            }
                                         },
                                         {
                                             newText: '',
                                             range: {
                                                 end: {
                                                     character: 16,
-                                                    line: 2,
+                                                    line: 2
                                                 },
                                                 start: {
                                                     character: 8,
-                                                    line: 2,
-                                                },
-                                            },
-                                        },
+                                                    line: 2
+                                                }
+                                            }
+                                        }
                                     ],
                                     textDocument: {
                                         uri: 'file://ROOT/server/test-data/bar.ts',
-                                        version: 1,
-                                    },
-                                },
-                            ],
-                        },
+                                        version: 1
+                                    }
+                                }
+                            ]
+                        }
                     ],
                     command: '_typescript.applyWorkspaceEdit',
-                    title: "Remove declaration for: 'bar'",
+                    title: "Remove declaration for: 'bar'"
                 },
                 kind: 'quickfix',
-                title: "Remove declaration for: 'bar'",
+                title: "Remove declaration for: 'bar'"
             },
             {
                 command: {
@@ -558,47 +558,47 @@ describe('code actions', () => {
                                             range: {
                                                 end: {
                                                     character: 27,
-                                                    line: 1,
+                                                    line: 1
                                                 },
                                                 start: {
                                                     character: 24,
-                                                    line: 1,
-                                                },
-                                            },
-                                        },
+                                                    line: 1
+                                                }
+                                            }
+                                        }
                                     ],
                                     textDocument: {
                                         uri: 'file://ROOT/server/test-data/bar.ts',
-                                        version: 1,
-                                    },
-                                },
-                            ],
-                        },
+                                        version: 1
+                                    }
+                                }
+                            ]
+                        }
                     ],
                     command: '_typescript.applyWorkspaceEdit',
-                    title: "Prefix 'bar' with an underscore",
+                    title: "Prefix 'bar' with an underscore"
                 },
                 kind: 'quickfix',
-                title: "Prefix 'bar' with an underscore",
-            },
+                title: "Prefix 'bar' with an underscore"
+            }
         ]);
     }).timeout(10000);
 
     it('can provide organize imports', async () => {
         server.didOpenTextDocument({
             textDocument: doc
-        })
+        });
         let result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 29 },
-                end: { line: 1, character: 53 },
+                end: { line: 1, character: 53 }
             },
             context: {
                 diagnostics: [{
                     range: {
                         start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 },
+                        end: { line: 1, character: 49 }
                     },
                     code: 6133,
                     message: 'unused arg'
@@ -609,7 +609,7 @@ describe('code actions', () => {
 
         // ensure this works on other peoples computers
         try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'))
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'));
         } catch {
             // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
         }
@@ -619,11 +619,11 @@ describe('code actions', () => {
                 command: {
                     arguments: ['ROOT/server/test-data/bar.ts'],
                     command: '_typescript.organizeImports',
-                    title: '',
+                    title: ''
                 },
                 kind: 'source.organizeImports',
-                title: 'Organize imports',
-            },
+                title: 'Organize imports'
+            }
         ]);
     }).timeout(10000);
 });

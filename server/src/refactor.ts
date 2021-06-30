@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import tsp from 'typescript/lib/protocol';
+import * as tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 
 export function provideRefactors(
@@ -20,12 +20,12 @@ export function provideRefactors(
         if (info.inlineable === false) {
             actions.push(asSelectRefactoring(info, args));
         } else {
-            actions.push(...info.actions.map(action => (
+            actions.push(...info.actions.map(action =>
                 asApplyRefactoring(action, info, args)
-            )))
+            ));
         }
         return actions;
-    }, [])
+    }, []);
 }
 
 export function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {

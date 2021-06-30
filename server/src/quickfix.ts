@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import tsp from 'typescript/lib/protocol';
+import * as tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 import { toTextDocumentEdit } from './protocol-translation';
 import { LspDocuments } from './document';
@@ -24,8 +24,8 @@ export function provideQuickFix(
         {
             title: fix.description,
             command: Commands.APPLY_WORKSPACE_EDIT,
-            arguments: [{documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents))}]
+            arguments: [{ documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents)) }]
         },
-        CodeActionKind.QuickFix,
+        CodeActionKind.QuickFix
     ));
 }

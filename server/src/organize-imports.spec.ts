@@ -12,20 +12,20 @@ describe('provideOrganizeImports', () => {
                 }
             ]
         };
-        const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse)
+        const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse);
         const expected = [{
             title: 'Organize imports',
             kind: 'source.organizeImports',
             command: {
                 title: '',
                 command: '_typescript.organizeImports',
-                arguments: ['/my/file'],
-            },
-        }]
+                arguments: ['/my/file']
+            }
+        }];
         chai.assert.deepEqual(actual, expected);
-    })
+    });
 
     it('handles a missing response', () => {
-        chai.assert.equal(provideOrganizeImports(undefined).length, 0)
-    })
-})
+        chai.assert.equal(provideOrganizeImports(undefined).length, 0);
+    });
+});

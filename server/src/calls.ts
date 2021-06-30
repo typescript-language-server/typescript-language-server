@@ -1,5 +1,5 @@
 
-import tsp from 'typescript/lib/protocol';
+import * as tsp from 'typescript/lib/protocol';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { TspClient } from './tsp-client';

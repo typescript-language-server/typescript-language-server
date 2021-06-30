@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
-import tsp from 'typescript/lib/protocol';
+import * as tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
 import { CodeActionKind } from 'vscode-languageserver';
@@ -694,7 +694,7 @@ export class LspServer {
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
         if (params.context.only && params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.SourceOrganizeImports)) > -1) {
             actions.push(...provideOrganizeImports(
-                await this.getOrganizeImports({ scope: { type: 'file', args } }),
+                await this.getOrganizeImports({ scope: { type: 'file', args } })
             ));
         }
 
