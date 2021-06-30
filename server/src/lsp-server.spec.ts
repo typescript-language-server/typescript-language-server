@@ -603,7 +603,60 @@ describe('code actions', () => {
         ]);
     }).timeout(10000);
 
-    it('can provide organize imports', async () => {
+    it('can filter quickfix code actions filtered by only', async () => {
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        let result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 25 },
+                end: { line: 1, character: 49 }
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 }
+                    },
+                    code: 6133,
+                    message: 'unused arg'
+                }],
+                only: ['refactor']
+            }
+        }))!;
+
+        // ensure this works on other peoples computers
+        try {
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'));
+        } catch {
+            // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
+        }
+
+        assert.deepEqual(result, [
+            {
+                command: {
+                    arguments: [
+                        {
+                            action: 'Convert parameters to destructured object',
+                            endLine: 2,
+                            endOffset: 50,
+                            file: 'ROOT/server/test-data/bar.ts',
+                            refactor: 'Convert parameters to destructured object',
+                            startLine: 2,
+                            startOffset: 26
+                        }
+                    ],
+                    command: '_typescript.applyRefactoring',
+                    title: 'Convert parameters to destructured object'
+                },
+                kind: 'refactor',
+                title: 'Convert parameters to destructured object'
+            }
+        ]);
+    }).timeout(10000);
+
+    it('can provide organize imports when explicitly requested in only', async () => {
         server.didOpenTextDocument({
             textDocument: doc
         });
@@ -623,6 +676,49 @@ describe('code actions', () => {
                     message: 'unused arg'
                 }],
                 only: ['source.organizeImports']
+            }
+        }))!;
+
+        // ensure this works on other peoples computers
+        try {
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'));
+        } catch {
+            // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
+        }
+
+        assert.deepEqual(result, [
+            {
+                command: {
+                    arguments: ['ROOT/server/test-data/bar.ts'],
+                    command: '_typescript.organizeImports',
+                    title: ''
+                },
+                kind: 'source.organizeImports',
+                title: 'Organize imports'
+            }
+        ]);
+    }).timeout(10000);
+
+    it('provides organize imports for sub-actions of source.organizeImports', async () => {
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        let result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 29 },
+                end: { line: 1, character: 53 }
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 }
+                    },
+                    code: 6133,
+                    message: 'unused arg'
+                }],
+                only: ['source.organizeImports.test']
             }
         }))!;
 

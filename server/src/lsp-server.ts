@@ -48,6 +48,11 @@ export interface IServerOptions {
     lspClient: LspClient;
 }
 
+function onlyMatches(only: CodeActionKind[], actionKind: CodeActionKind): boolean {
+    const partsInKind = actionKind.split('.').length;
+    return only.some((k: string) => k.split('.').slice(0, partsInKind).join('.') === actionKind);
+}
+
 export class LspServer {
     private initializeParams: TypeScriptInitializeParams;
     private initializeResult: TypeScriptInitializeResult;
@@ -683,16 +688,16 @@ export class LspServer {
         }
         const args = toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
-        if (!params.context.only || params.context.only.some((k: string) => k.startsWith(CodeActionKind.QuickFix))) {
+        if (!params.context.only || onlyMatches(params.context.only, CodeActionKind.QuickFix)) {
             const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
             actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
         }
-        if (!params.context.only || params.context.only.some((k: string) => k.startsWith(CodeActionKind.Refactor))) {
+        if (!params.context.only || onlyMatches(params.context.only, CodeActionKind.Refactor)) {
             actions.push(...provideRefactors(await this.getRefactors(args), args));
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only && params.context.only.some((k: string) => k.startsWith(CodeActionKind.SourceOrganizeImports))) {
+        if (params.context.only && onlyMatches(params.context.only, CodeActionKind.SourceOrganizeImports)) {
             actions.push(...provideOrganizeImports(
                 await this.getOrganizeImports({ scope: { type: 'file', args } })
             ));
