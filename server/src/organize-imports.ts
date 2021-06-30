@@ -5,10 +5,10 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from "vscode-languageserver";
-import * as tsp from "typescript/lib/protocol";
-import { Commands } from "./commands";
-import { CodeActionKind } from "vscode-languageserver";
+import * as lsp from 'vscode-languageserver';
+import * as tsp from 'typescript/lib/protocol';
+import { Commands } from './commands';
+import { CodeActionKind, Range } from 'vscode-languageserver';
 
 export function provideOrganizeImports(
     response: tsp.OrganizeImportsResponse | undefined
@@ -17,8 +17,8 @@ export function provideOrganizeImports(
         return [];
     }
     return response.body.map(edit => lsp.CodeAction.create(
-        "Organize imports",
-        lsp.Command.create("", Commands.ORGANIZE_IMPORTS, edit.fileName),
+        'Organize imports',
+        lsp.Command.create('', Commands.ORGANIZE_IMPORTS, edit.fileName),
         CodeActionKind.SourceOrganizeImports
     ));
 }

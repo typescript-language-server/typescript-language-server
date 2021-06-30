@@ -7,7 +7,7 @@ describe('provideOrganizeImports', () => {
         const response = {
             body: [
                 {
-                    fileName: "/my/file",
+                    fileName: '/my/file',
                     textChanges: []
                 }
             ]

@@ -10,7 +10,7 @@ import * as tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 import { toTextDocumentEdit } from './protocol-translation';
 import { LspDocuments } from './document';
-import { CodeActionKind } from "vscode-languageserver";
+import { CodeActionKind } from 'vscode-languageserver';
 
 export function provideQuickFix(
     response: tsp.GetCodeFixesResponse | undefined,

@@ -14,7 +14,7 @@ import { TextDocument } from 'vscode-languageserver';
 import { TSCompletionItem } from './completion';
 
 const assert = chai.assert;
-const projectDir = __dirname.split("/").slice(0, -2).join("/");
+const projectDir = __dirname.split('/').slice(0, -2).join('/');
 
 let diagnostics: Array<lsp.PublishDiagnosticsParams | undefined>;
 
@@ -485,14 +485,14 @@ describe('code actions', () => {
                         end: { line: 1, character: 49 },
                     },
                     code: 6133,
-                    message: "unused arg"
+                    message: 'unused arg'
                 }]
             }
         }))!;
 
         // ensure this works on other peoples computers
         try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, "g"), "ROOT"))
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'))
         } catch {
             // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
         }
@@ -506,7 +506,7 @@ describe('code actions', () => {
                                 {
                                     edits: [
                                         {
-                                            newText: "",
+                                            newText: '',
                                             range: {
                                                 end: {
                                                     character: 37,
@@ -519,7 +519,7 @@ describe('code actions', () => {
                                             },
                                         },
                                         {
-                                            newText: "",
+                                            newText: '',
                                             range: {
                                                 end: {
                                                     character: 16,
@@ -533,17 +533,17 @@ describe('code actions', () => {
                                         },
                                     ],
                                     textDocument: {
-                                        uri: "file://ROOT/server/test-data/bar.ts",
+                                        uri: 'file://ROOT/server/test-data/bar.ts',
                                         version: 1,
                                     },
                                 },
                             ],
                         },
                     ],
-                    command: "_typescript.applyWorkspaceEdit",
+                    command: '_typescript.applyWorkspaceEdit',
                     title: "Remove declaration for: 'bar'",
                 },
-                kind: "quickfix",
+                kind: 'quickfix',
                 title: "Remove declaration for: 'bar'",
             },
             {
@@ -554,7 +554,7 @@ describe('code actions', () => {
                                 {
                                     edits: [
                                         {
-                                            newText: "_bar",
+                                            newText: '_bar',
                                             range: {
                                                 end: {
                                                     character: 27,
@@ -568,17 +568,17 @@ describe('code actions', () => {
                                         },
                                     ],
                                     textDocument: {
-                                        uri: "file://ROOT/server/test-data/bar.ts",
+                                        uri: 'file://ROOT/server/test-data/bar.ts',
                                         version: 1,
                                     },
                                 },
                             ],
                         },
                     ],
-                    command: "_typescript.applyWorkspaceEdit",
+                    command: '_typescript.applyWorkspaceEdit',
                     title: "Prefix 'bar' with an underscore",
                 },
-                kind: "quickfix",
+                kind: 'quickfix',
                 title: "Prefix 'bar' with an underscore",
             },
         ]);
@@ -601,15 +601,15 @@ describe('code actions', () => {
                         end: { line: 1, character: 49 },
                     },
                     code: 6133,
-                    message: "unused arg"
+                    message: 'unused arg'
                 }],
-                only: ["source.organizeImports"]
+                only: ['source.organizeImports']
             }
         }))!;
 
         // ensure this works on other peoples computers
         try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, "g"), "ROOT"))
+            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'))
         } catch {
             // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
         }
@@ -617,12 +617,12 @@ describe('code actions', () => {
         assert.deepEqual(result, [
             {
                 command: {
-                    arguments: ["ROOT/server/test-data/bar.ts"],
-                    command: "_typescript.organizeImports",
-                    title: "",
+                    arguments: ['ROOT/server/test-data/bar.ts'],
+                    command: '_typescript.organizeImports',
+                    title: '',
                 },
-                kind: "source.organizeImports",
-                title: "Organize imports",
+                kind: 'source.organizeImports',
+                title: 'Organize imports',
             },
         ]);
     }).timeout(10000);

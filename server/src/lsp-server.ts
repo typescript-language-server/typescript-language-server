@@ -12,6 +12,7 @@ import * as lspcalls from './lsp-protocol.calls.proposed';
 import * as tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
+import { CodeActionKind } from 'vscode-languageserver';
 import debounce = require('p-debounce');
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
@@ -38,7 +39,6 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
-import { CodeActionKind } from "vscode-languageserver";
 
 export interface IServerOptions {
     logger: Logger
@@ -691,9 +691,9 @@ export class LspServer {
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only && params.context.only.indexOf(CodeActionKind.SourceOrganizeImports) > -1) {
+        if (params.context.only && params.context.only.findIndex((k: string) => k.startsWith(CodeActionKind.SourceOrganizeImports)) > -1) {
             actions.push(...provideOrganizeImports(
-                await this.getOrganizeImports({ scope: { type: "file", args } }),
+                await this.getOrganizeImports({ scope: { type: 'file', args } }),
             ));
         }
 
