@@ -18,12 +18,15 @@ and limitations under the License.
 ***************************************************************************** */
 
 export const enum CommandTypes {
+    JsxClosingTag = 'jsxClosingTag',
     Brace = 'brace',
     BraceCompletion = 'braceCompletion',
     GetSpanOfEnclosingComment = 'getSpanOfEnclosingComment',
     Change = 'change',
     Close = 'close',
+    /** @deprecated Prefer CompletionInfo -- see comment on CompletionsResponse */
     Completions = 'completions',
+    CompletionInfo = 'completionInfo',
     CompletionDetails = 'completionEntryDetails',
     CompileOnSaveAffectedFileList = 'compileOnSaveAffectedFileList',
     CompileOnSaveEmitFile = 'compileOnSaveEmitFile',
@@ -32,6 +35,7 @@ export const enum CommandTypes {
     DefinitionAndBoundSpan = 'definitionAndBoundSpan',
     Implementation = 'implementation',
     Exit = 'exit',
+    FileReferences = 'fileReferences',
     Format = 'format',
     Formatonkey = 'formatonkey',
     Geterr = 'geterr',
@@ -61,6 +65,7 @@ export const enum CommandTypes {
     OpenExternalProject = 'openExternalProject',
     OpenExternalProjects = 'openExternalProjects',
     CloseExternalProject = 'closeExternalProject',
+    UpdateOpen = 'updateOpen',
     GetOutliningSpans = 'getOutliningSpans',
     TodoComments = 'todoComments',
     Indentation = 'indentation',
@@ -73,7 +78,16 @@ export const enum CommandTypes {
     GetApplicableRefactors = 'getApplicableRefactors',
     GetEditsForRefactor = 'getEditsForRefactor',
     OrganizeImports = 'organizeImports',
-    GetEditsForFileRename = 'getEditsForFileRename'
+    GetEditsForFileRename = 'getEditsForFileRename',
+    ConfigurePlugin = 'configurePlugin',
+    SelectionRange = 'selectionRange',
+    ToggleLineComment = 'toggleLineComment',
+    ToggleMultilineComment = 'toggleMultilineComment',
+    CommentSelection = 'commentSelection',
+    UncommentSelection = 'uncommentSelection',
+    PrepareCallHierarchy = 'prepareCallHierarchy',
+    ProvideCallHierarchyIncomingCalls = 'provideCallHierarchyIncomingCalls',
+    ProvideCallHierarchyOutgoingCalls = 'provideCallHierarchyOutgoingCalls'
 }
 
 export const enum EventTypes {
@@ -152,5 +166,11 @@ export enum ScriptElementKind {
      */
     jsxAttribute = 'JSX attribute',
     /** String literal */
-    string = 'string'
+    string = 'string',
+    /** Jsdoc @link: in `{@link C link text}`, the before and after text "{@link " and "}" */
+    link = 'link',
+    /** Jsdoc @link: in `{@link C link text}`, the entity name "C" */
+    linkName = 'link name',
+    /** Jsdoc @link: in `{@link C link text}`, the link text "link text" */
+    linkText = 'link text'
 }
