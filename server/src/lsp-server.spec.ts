@@ -676,68 +676,6 @@ describe('code actions', () => {
             }
         ]);
     }).timeout(10000);
-
-    it('provides sub-actions of source when only source actions are requested', async () => {
-        server.didOpenTextDocument({
-            textDocument: doc
-        });
-        const result = (await server.codeAction({
-            textDocument: doc,
-            range: {
-                start: { line: 1, character: 29 },
-                end: { line: 1, character: 53 }
-            },
-            context: {
-                diagnostics: [{
-                    range: {
-                        start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 }
-                    },
-                    code: 6133,
-                    message: 'unused arg'
-                }],
-                only: ['source']
-            }
-        }))!;
-
-        assert.deepEqual(result, [
-            {
-                command: {
-                    arguments: [filePath('bar.ts')],
-                    command: '_typescript.organizeImports',
-                    title: ''
-                },
-                kind: 'source.organizeImports',
-                title: 'Organize imports'
-            }
-        ]);
-    }).timeout(10000);
-
-    it("doesn't provide parent actions for specific sub-actions in only", async () => {
-        server.didOpenTextDocument({
-            textDocument: doc
-        });
-        const result = (await server.codeAction({
-            textDocument: doc,
-            range: {
-                start: { line: 1, character: 29 },
-                end: { line: 1, character: 53 }
-            },
-            context: {
-                diagnostics: [{
-                    range: {
-                        start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 }
-                    },
-                    code: 6133,
-                    message: 'unused arg'
-                }],
-                only: ['source.organizeImports.test']
-            }
-        }))!;
-
-        assert.deepEqual(result, []);
-    }).timeout(10000);
 });
 
 describe('documentHighlight', () => {
