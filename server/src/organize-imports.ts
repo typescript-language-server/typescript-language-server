@@ -6,14 +6,17 @@
  */
 
 import * as lsp from 'vscode-languageserver';
+import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
+import { CodeActionKind } from 'vscode-languageserver';
 
-export function provideOrganizeImports(file: string, context: lsp.CodeActionContext, result: (lsp.Command | lsp.CodeAction)[]): void {
-    if (!context.only || context.only.indexOf(lsp.CodeActionKind.SourceOrganizeImports) === -1) {
-        return;
+export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined): Array<lsp.CodeAction> {
+    if (!response) {
+        return [];
     }
-    result.push(lsp.CodeAction.create(
-        'Organize Imports',
-        lsp.Command.create('', Commands.ORGANIZE_IMPORTS, file),
-        lsp.CodeActionKind.SourceOrganizeImports));
+    return response.body.map(edit => lsp.CodeAction.create(
+        'Organize imports',
+        lsp.Command.create('', Commands.ORGANIZE_IMPORTS, edit.fileName),
+        CodeActionKind.SourceOrganizeImports
+    ));
 }

@@ -9,7 +9,7 @@ import * as chai from 'chai';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
-import { uri, createServer, position, lastPosition } from './test-utils';
+import { uri, createServer, position, lastPosition, filePath } from './test-utils';
 import { TextDocument } from 'vscode-languageserver';
 import { TSCompletionItem } from './completion';
 
@@ -453,6 +453,228 @@ describe('signatureHelp', () => {
         }))!;
 
         assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
+    }).timeout(10000);
+});
+
+describe('code actions', () => {
+    const doc = {
+        uri: uri('bar.ts'),
+        languageId: 'typescript',
+        version: 1,
+        text: `import { something } from "something";
+    export function foo(bar: string, baz?:boolean): void {}
+    foo(param1, param2)
+    `
+    };
+
+    it('can provide quickfix code actions', async () => {
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 25 },
+                end: { line: 1, character: 49 }
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 }
+                    },
+                    code: 6133,
+                    message: 'unused arg'
+                }]
+            }
+        }))!;
+
+        assert.deepEqual(result, [
+            {
+                command: {
+                    arguments: [
+                        {
+                            documentChanges: [
+                                {
+                                    edits: [
+                                        {
+                                            newText: '',
+                                            range: {
+                                                end: {
+                                                    character: 37,
+                                                    line: 1
+                                                },
+                                                start: {
+                                                    character: 24,
+                                                    line: 1
+                                                }
+                                            }
+                                        },
+                                        {
+                                            newText: '',
+                                            range: {
+                                                end: {
+                                                    character: 16,
+                                                    line: 2
+                                                },
+                                                start: {
+                                                    character: 8,
+                                                    line: 2
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    textDocument: {
+                                        uri: uri('bar.ts'),
+                                        version: 1
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    command: '_typescript.applyWorkspaceEdit',
+                    title: "Remove unused declaration for: 'bar'"
+                },
+                kind: 'quickfix',
+                title: "Remove unused declaration for: 'bar'"
+            },
+            {
+                command: {
+                    arguments: [
+                        {
+                            documentChanges: [
+                                {
+                                    edits: [
+                                        {
+                                            newText: '_bar',
+                                            range: {
+                                                end: {
+                                                    character: 27,
+                                                    line: 1
+                                                },
+                                                start: {
+                                                    character: 24,
+                                                    line: 1
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    textDocument: {
+                                        uri: uri('bar.ts'),
+                                        version: 1
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    command: '_typescript.applyWorkspaceEdit',
+                    title: "Prefix 'bar' with an underscore"
+                },
+                kind: 'quickfix',
+                title: "Prefix 'bar' with an underscore"
+            },
+            {
+                command: {
+                    arguments: [
+                        {
+                            action: 'Convert parameters to destructured object',
+                            endLine: 2,
+                            endOffset: 50,
+                            file: filePath('bar.ts'),
+                            refactor: 'Convert parameters to destructured object',
+                            startLine: 2,
+                            startOffset: 26
+                        }
+                    ],
+                    command: '_typescript.applyRefactoring',
+                    title: 'Convert parameters to destructured object'
+                },
+                kind: 'refactor',
+                title: 'Convert parameters to destructured object'
+            }
+        ]);
+    }).timeout(10000);
+
+    it('can filter quickfix code actions filtered by only', async () => {
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 25 },
+                end: { line: 1, character: 49 }
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 }
+                    },
+                    code: 6133,
+                    message: 'unused arg'
+                }],
+                only: ['refactor', 'invalid-action']
+            }
+        }))!;
+
+        assert.deepEqual(result, [
+            {
+                command: {
+                    arguments: [
+                        {
+                            action: 'Convert parameters to destructured object',
+                            endLine: 2,
+                            endOffset: 50,
+                            file: filePath('bar.ts'),
+                            refactor: 'Convert parameters to destructured object',
+                            startLine: 2,
+                            startOffset: 26
+                        }
+                    ],
+                    command: '_typescript.applyRefactoring',
+                    title: 'Convert parameters to destructured object'
+                },
+                kind: 'refactor',
+                title: 'Convert parameters to destructured object'
+            }
+        ]);
+    }).timeout(10000);
+
+    it('can provide organize imports when explicitly requested in only', async () => {
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 29 },
+                end: { line: 1, character: 53 }
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 }
+                    },
+                    code: 6133,
+                    message: 'unused arg'
+                }],
+                only: ['source.organizeImports']
+            }
+        }))!;
+
+        assert.deepEqual(result, [
+            {
+                command: {
+                    arguments: [filePath('bar.ts')],
+                    command: '_typescript.organizeImports',
+                    title: ''
+                },
+                kind: 'source.organizeImports',
+                title: 'Organize imports'
+            }
+        ]);
     }).timeout(10000);
 });
 
