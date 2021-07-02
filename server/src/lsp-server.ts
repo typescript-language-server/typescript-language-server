@@ -48,9 +48,18 @@ export interface IServerOptions {
     lspClient: LspClient;
 }
 
-function onlyMatches(only: CodeActionKind[], actionKind: CodeActionKind): boolean {
-    const partsInKind = actionKind.split('.').length;
-    return only.some((k: string) => k.split('.').slice(0, partsInKind).join('.') === actionKind);
+// This returns true if the code action kind matches one that was requested in `only`
+// Actions are identified as a dot-separated string, e.g. `source.organizeImports`
+//
+// For example, requesting "a.b" in `only` will match an action kind of
+// "a.b.c" and return true, since "a.b" is a "parent" of "a.b.c".
+// This will not match the action kind "a", since "a.b" is more specific.
+function actionIsRequested(actionKind: CodeActionKind, only: CodeActionKind[]): boolean {
+    return only.some((requestedAction: string) => {
+        const partsInRequestedAction = requestedAction.split('.').length;
+        const actionKindPrefix = actionKind.split('.').slice(0, partsInRequestedAction).join('.');
+        return actionKindPrefix === requestedAction;
+    });
 }
 
 export class LspServer {
@@ -688,16 +697,16 @@ export class LspServer {
         }
         const args = toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
-        if (!params.context.only || onlyMatches(params.context.only, CodeActionKind.QuickFix)) {
+        if (!params.context.only || actionIsRequested(CodeActionKind.QuickFix, params.context.only)) {
             const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
             actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
         }
-        if (!params.context.only || onlyMatches(params.context.only, CodeActionKind.Refactor)) {
+        if (!params.context.only || actionIsRequested(CodeActionKind.Refactor, params.context.only)) {
             actions.push(...provideRefactors(await this.getRefactors(args), args));
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only && onlyMatches(params.context.only, CodeActionKind.SourceOrganizeImports)) {
+        if (params.context.only && actionIsRequested(CodeActionKind.SourceOrganizeImports, params.context.only)) {
             actions.push(...provideOrganizeImports(
                 await this.getOrganizeImports({ scope: { type: 'file', args } })
             ));

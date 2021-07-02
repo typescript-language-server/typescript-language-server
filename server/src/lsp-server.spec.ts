@@ -9,12 +9,11 @@ import * as chai from 'chai';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
-import { uri, createServer, position, lastPosition } from './test-utils';
+import { uri, createServer, position, lastPosition, filePath } from './test-utils';
 import { TextDocument } from 'vscode-languageserver';
 import { TSCompletionItem } from './completion';
 
 const assert = chai.assert;
-const projectDir = __dirname.split('/').slice(0, -2).join('/');
 
 let diagnostics: Array<lsp.PublishDiagnosticsParams | undefined>;
 
@@ -472,7 +471,7 @@ describe('code actions', () => {
         server.didOpenTextDocument({
             textDocument: doc
         });
-        let result = (await server.codeAction({
+        const result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
@@ -489,13 +488,6 @@ describe('code actions', () => {
                 }]
             }
         }))!;
-
-        // ensure this works on other peoples computers
-        try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'));
-        } catch {
-            // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
-        }
 
         assert.deepEqual(result, [
             {
@@ -533,7 +525,7 @@ describe('code actions', () => {
                                         }
                                     ],
                                     textDocument: {
-                                        uri: 'file://ROOT/server/test-data/bar.ts',
+                                        uri: uri('bar.ts'),
                                         version: 1
                                     }
                                 }
@@ -568,7 +560,7 @@ describe('code actions', () => {
                                         }
                                     ],
                                     textDocument: {
-                                        uri: 'file://ROOT/server/test-data/bar.ts',
+                                        uri: uri('bar.ts'),
                                         version: 1
                                     }
                                 }
@@ -588,7 +580,7 @@ describe('code actions', () => {
                             action: 'Convert parameters to destructured object',
                             endLine: 2,
                             endOffset: 50,
-                            file: 'ROOT/server/test-data/bar.ts',
+                            file: filePath('bar.ts'),
                             refactor: 'Convert parameters to destructured object',
                             startLine: 2,
                             startOffset: 26
@@ -607,7 +599,7 @@ describe('code actions', () => {
         server.didOpenTextDocument({
             textDocument: doc
         });
-        let result = (await server.codeAction({
+        const result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
@@ -622,16 +614,9 @@ describe('code actions', () => {
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: ['refactor']
+                only: ['refactor', 'invalid-action']
             }
         }))!;
-
-        // ensure this works on other peoples computers
-        try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'));
-        } catch {
-            // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
-        }
 
         assert.deepEqual(result, [
             {
@@ -641,7 +626,7 @@ describe('code actions', () => {
                             action: 'Convert parameters to destructured object',
                             endLine: 2,
                             endOffset: 50,
-                            file: 'ROOT/server/test-data/bar.ts',
+                            file: filePath('bar.ts'),
                             refactor: 'Convert parameters to destructured object',
                             startLine: 2,
                             startOffset: 26
@@ -660,7 +645,7 @@ describe('code actions', () => {
         server.didOpenTextDocument({
             textDocument: doc
         });
-        let result = (await server.codeAction({
+        const result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 29 },
@@ -679,17 +664,10 @@ describe('code actions', () => {
             }
         }))!;
 
-        // ensure this works on other peoples computers
-        try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'));
-        } catch {
-            // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
-        }
-
         assert.deepEqual(result, [
             {
                 command: {
-                    arguments: ['ROOT/server/test-data/bar.ts'],
+                    arguments: [filePath('bar.ts')],
                     command: '_typescript.organizeImports',
                     title: ''
                 },
@@ -699,11 +677,47 @@ describe('code actions', () => {
         ]);
     }).timeout(10000);
 
-    it('provides organize imports for sub-actions of source.organizeImports', async () => {
+    it('provides sub-actions of source when only source actions are requested', async () => {
         server.didOpenTextDocument({
             textDocument: doc
         });
-        let result = (await server.codeAction({
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 29 },
+                end: { line: 1, character: 53 }
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 }
+                    },
+                    code: 6133,
+                    message: 'unused arg'
+                }],
+                only: ['source']
+            }
+        }))!;
+
+        assert.deepEqual(result, [
+            {
+                command: {
+                    arguments: [filePath('bar.ts')],
+                    command: '_typescript.organizeImports',
+                    title: ''
+                },
+                kind: 'source.organizeImports',
+                title: 'Organize imports'
+            }
+        ]);
+    }).timeout(10000);
+
+    it("doesn't provide parent actions for specific sub-actions in only", async () => {
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 29 },
@@ -722,24 +736,7 @@ describe('code actions', () => {
             }
         }))!;
 
-        // ensure this works on other peoples computers
-        try {
-            result = JSON.parse(JSON.stringify(result).replace(new RegExp(projectDir, 'g'), 'ROOT'));
-        } catch {
-            // this is ignored, since the matcher should fail if it fails, and the matcher will provide more useful output
-        }
-
-        assert.deepEqual(result, [
-            {
-                command: {
-                    arguments: ['ROOT/server/test-data/bar.ts'],
-                    command: '_typescript.organizeImports',
-                    title: ''
-                },
-                kind: 'source.organizeImports',
-                title: 'Organize imports'
-            }
-        ]);
+        assert.deepEqual(result, []);
     }).timeout(10000);
 });
 
