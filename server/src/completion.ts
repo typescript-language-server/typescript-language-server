@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import tsp from 'typescript/lib/protocol';
+import type tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
 import { ScriptElementKind } from './tsp-command-types';
 import { asRange, toTextEdit, asPlainText, asDocumentation } from './protocol-translation';
@@ -16,7 +16,7 @@ export interface TSCompletionItem extends lsp.CompletionItem {
     data: tsp.CompletionDetailsRequestArgs;
 }
 
-export function asCompletionItem(entry: import('typescript/lib/protocol').CompletionEntry, file: string, position: lsp.Position, document: LspDocument): TSCompletionItem {
+export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument): TSCompletionItem {
     const item: TSCompletionItem = {
         label: entry.name,
         kind: asCompletionItemKind(entry.kind),
