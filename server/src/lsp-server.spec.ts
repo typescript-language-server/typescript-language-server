@@ -491,106 +491,58 @@ describe('code actions', () => {
 
         assert.deepEqual(result, [
             {
+                title: "Prefix 'bar' with an underscore",
                 command: {
+                    title: "Prefix 'bar' with an underscore",
+                    command: '_typescript.applyWorkspaceEdit',
                     arguments: [
                         {
                             documentChanges: [
                                 {
+                                    textDocument: {
+                                        uri: 'file:///Users/cameronlittle/Developer/typescript-language-server/server/test-data/bar.ts',
+                                        version: 1
+                                    },
                                     edits: [
                                         {
-                                            newText: '',
                                             range: {
-                                                end: {
-                                                    character: 37,
-                                                    line: 1
-                                                },
                                                 start: {
-                                                    character: 24,
-                                                    line: 1
-                                                }
-                                            }
-                                        },
-                                        {
-                                            newText: '',
-                                            range: {
-                                                end: {
-                                                    character: 16,
-                                                    line: 2
+                                                    line: 1,
+                                                    character: 24
                                                 },
-                                                start: {
-                                                    character: 8,
-                                                    line: 2
+                                                end: {
+                                                    line: 1,
+                                                    character: 27
                                                 }
-                                            }
+                                            },
+                                            newText: '_bar'
                                         }
-                                    ],
-                                    textDocument: {
-                                        uri: uri('bar.ts'),
-                                        version: 1
-                                    }
+                                    ]
                                 }
                             ]
                         }
-                    ],
-                    command: '_typescript.applyWorkspaceEdit',
-                    title: "Remove unused declaration for: 'bar'"
+                    ]
                 },
-                kind: 'quickfix',
-                title: "Remove unused declaration for: 'bar'"
+                kind: 'quickfix'
             },
             {
+                title: 'Convert parameters to destructured object',
                 command: {
+                    title: 'Convert parameters to destructured object',
+                    command: '_typescript.applyRefactoring',
                     arguments: [
                         {
-                            documentChanges: [
-                                {
-                                    edits: [
-                                        {
-                                            newText: '_bar',
-                                            range: {
-                                                end: {
-                                                    character: 27,
-                                                    line: 1
-                                                },
-                                                start: {
-                                                    character: 24,
-                                                    line: 1
-                                                }
-                                            }
-                                        }
-                                    ],
-                                    textDocument: {
-                                        uri: uri('bar.ts'),
-                                        version: 1
-                                    }
-                                }
-                            ]
-                        }
-                    ],
-                    command: '_typescript.applyWorkspaceEdit',
-                    title: "Prefix 'bar' with an underscore"
-                },
-                kind: 'quickfix',
-                title: "Prefix 'bar' with an underscore"
-            },
-            {
-                command: {
-                    arguments: [
-                        {
-                            action: 'Convert parameters to destructured object',
+                            file: '/Users/cameronlittle/Developer/typescript-language-server/server/test-data/bar.ts',
+                            startLine: 2,
+                            startOffset: 26,
                             endLine: 2,
                             endOffset: 50,
-                            file: filePath('bar.ts'),
                             refactor: 'Convert parameters to destructured object',
-                            startLine: 2,
-                            startOffset: 26
+                            action: 'Convert parameters to destructured object'
                         }
-                    ],
-                    command: '_typescript.applyRefactoring',
-                    title: 'Convert parameters to destructured object'
+                    ]
                 },
-                kind: 'refactor',
-                title: 'Convert parameters to destructured object'
+                kind: 'refactor'
             }
         ]);
     }).timeout(10000);
