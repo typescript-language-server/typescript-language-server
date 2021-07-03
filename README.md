@@ -31,6 +31,34 @@ Maintained by [TypeFox](https://typefox.io) and others.
 - [x] textDocument/references
 - [x] textDocument/signatureHelp
 - [x] workspace/symbol
+- [x] [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#workspace_executeCommand)  
+    Most of the time, you'll execute commands with arguments retrieved from another request like `textDocument/codeAction`. There are some use cases for calling them
+    manually.
+
+    Supported commands:
+
+    `lsp` refers to the language server protocol, `tsp` refers to the typescript server protocol.
+    
+    * `_typescript.applyWorkspaceEdit`
+        ```ts
+        type Arguments = [lsp.WorkspaceEdit]
+        ```
+    * `_typescript.applyCodeAction`
+        ```ts
+        type Arguments = [tsp.CodeAction]
+        ```
+    * `_typescript.applyRefactoring`
+        ```ts
+        type Arguments = [tsp.GetEditsForRefactorRequestArgs]
+        ```
+    * `_typescript.organizeImports`
+        ```ts
+        type Arguments = [string] | [string, { skipDestructiveCodeActions?: boolean }]
+        ```
+    * `_typescript.applyRenameFile`
+        ```ts
+        type Arguments = [{ sourceUri: string; targetUri: string; }]
+        ```
 
 # Installing
 
