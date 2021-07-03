@@ -24,7 +24,7 @@ export function pathToUri(filepath: string, documents: LspDocuments | undefined)
     return document ? document.uri : fileUri.toString();
 }
 
-export function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
+function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
     const fileUri = URI.file(filepath);
     const document = documents && documents.get(fileUri.fsPath);
     return document ? document.version : 0;
@@ -87,7 +87,7 @@ export function toSymbolKind(tspKind: string): lsp.SymbolKind {
     return symbolKindsMapping[tspKind] || lsp.SymbolKind.Variable;
 }
 
-export function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
+function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     switch (category) {
         case 'error': return lsp.DiagnosticSeverity.Error;
         case 'warning': return lsp.DiagnosticSeverity.Warning;
@@ -110,7 +110,7 @@ export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments
     };
 }
 
-export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
+function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
     if (!info) {
         return undefined;
     }
@@ -135,34 +135,6 @@ export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
         },
         newText: edit.newText
     };
-}
-
-function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
-    return tags
-        .map(tag => {
-            const label = `*@${tag.name}*`;
-            if (!tag.text) {
-                return label;
-            }
-            let text: string;
-            if (typeof tag.text === 'string') {
-                text = tag.text;
-            } else {
-                text = tag.text?.map(p => p.text).join('') || '';
-            }
-            return label + (text.match(/\r\n|\n/g) ? '  \n' + text : ` — ${text}`);
-        })
-        .join('  \n\n');
-}
-
-export function toMarkDown(documentation: tsp.SymbolDisplayPart[], tags: tsp.JSDocTagInfo[]): string {
-    let result = '';
-    result += asPlainText(documentation);
-    const tagsPreview = tagsMarkdownPreview(tags);
-    if (tagsPreview) {
-        result += '\n\n' + tagsPreview;
-    }
-    return result;
 }
 
 export function toTextDocumentEdit(change: tsp.FileCodeEdits, documents: LspDocuments | undefined): lsp.TextDocumentEdit {
@@ -303,7 +275,7 @@ export function asPlainText(parts: tsp.SymbolDisplayPart[] | undefined): string 
     return parts.map(part => part.text).join('');
 }
 
-export namespace Position {
+namespace Position {
     export function Min(): undefined;
     export function Min(...positions: lsp.Position[]): lsp.Position;
     export function Min(...positions: lsp.Position[]): lsp.Position | undefined {

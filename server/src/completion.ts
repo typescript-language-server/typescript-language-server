@@ -70,7 +70,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
     return item;
 }
 
-export function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
+function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
     switch (kind) {
         case ScriptElementKind.primitiveType:
         case ScriptElementKind.keyword:
@@ -114,7 +114,7 @@ export function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionIte
     return lsp.CompletionItemKind.Property;
 }
 
-export function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
+function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
     const commitCharacters: string[] = [];
     switch (kind) {
         case ScriptElementKind.memberGetAccessorElement:
@@ -152,7 +152,7 @@ export function asResolvedCompletionItem(item: TSCompletionItem, details: tsp.Co
     return item;
 }
 
-export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
+function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
     command?: lsp.Command; additionalTextEdits?: lsp.TextEdit[];
 } {
     if (!details.codeActions || !details.codeActions.length) {
@@ -203,7 +203,7 @@ export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: str
     };
 }
 
-export function asDetail({ displayParts, source }: tsp.CompletionEntryDetails): string | undefined {
+function asDetail({ displayParts, source }: tsp.CompletionEntryDetails): string | undefined {
     const result: string[] = [];
     const importPath = asPlainText(source);
     if (importPath) {
