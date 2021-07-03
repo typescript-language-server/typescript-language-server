@@ -18,7 +18,7 @@ export function uriToPath(stringUri: string): string | undefined {
     return uri.fsPath;
 }
 
-function uriFromPathOrUri(filepath: string): URI {
+function parsePathOrUri(filepath: string): URI {
     try {
         // handles valid URIs from yarn pnp, will error if doesn't have scheme
         // zipfile:/foo/bar/baz.zip::path/to/module
@@ -31,7 +31,7 @@ function uriFromPathOrUri(filepath: string): URI {
 }
 
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
-    const fileUri = uriFromPathOrUri(filepath);
+    const fileUri = parsePathOrUri(filepath);
     const document = documents && documents.get(fileUri.fsPath);
     return document ? document.uri : fileUri.toString();
 }
