@@ -500,7 +500,7 @@ describe('code actions', () => {
                             documentChanges: [
                                 {
                                     textDocument: {
-                                        uri: 'file:///Users/cameronlittle/Developer/typescript-language-server/server/test-data/bar.ts',
+                                        uri: uri('bar.ts'),
                                         version: 1
                                     },
                                     edits: [
@@ -532,7 +532,7 @@ describe('code actions', () => {
                     command: '_typescript.applyRefactoring',
                     arguments: [
                         {
-                            file: '/Users/cameronlittle/Developer/typescript-language-server/server/test-data/bar.ts',
+                            file: filePath('bar.ts'),
                             startLine: 2,
                             startOffset: 26,
                             endLine: 2,
