@@ -50,11 +50,15 @@ describe('completion', () => {
             textDocument: doc,
             position: pos
         }) as TSCompletionItem[];
-        assert.isTrue(proposals.length > 800, String(proposals.length));
-        const item = proposals.filter(i => i.label === 'addEventListener')[0];
+        assert.isAtLeast(proposals.length, 800);
+        const item = proposals.find(i => i.label === 'addEventListener');
+        if (!item) {
+            assert.fail('missing addEventListener completion');
+            return;
+        }
         const resolvedItem = await server.completionResolve(item);
         assert.isNotTrue(resolvedItem.deprecated, 'resolved item is not deprecated');
-        assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
+        assert.isDefined(resolvedItem.detail);
         server.didCloseTextDocument({
             textDocument: doc
         });
@@ -79,10 +83,14 @@ describe('completion', () => {
             textDocument: doc,
             position: pos
         }) as TSCompletionItem[];
-        assert.isTrue(proposals.length > 800, String(proposals.length));
-        const item = proposals.filter(i => i.label === 'addEventListener')[0];
+        assert.isAtLeast(proposals.length, 800);
+        const item = proposals.find(i => i.label === 'addEventListener');
+        if (!item) {
+            assert.fail('missing addEventListener completion');
+            return;
+        }
         const resolvedItem = await server.completionResolve(item);
-        assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
+        assert.isDefined(resolvedItem.detail);
 
         const containsInvalidCompletions = proposals.reduce((accumulator, current) => {
             if (accumulator) {
@@ -100,7 +108,7 @@ describe('completion', () => {
         });
     }).timeout(10000);
 
-    it.only('deprecated by JSDoc', async () => {
+    it('deprecated by JSDoc', async () => {
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -125,9 +133,13 @@ describe('completion', () => {
             textDocument: doc,
             position: pos
         }) as TSCompletionItem[];
-        const item = proposals.filter(i => i.label === 'foo')[0];
+        const item = proposals.find(i => i.label === 'foo');
+        if (!item) {
+            assert.fail('missing foo completion');
+            return;
+        }
         const resolvedItem = await server.completionResolve(item);
-        assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
+        assert.isDefined(resolvedItem.detail);
         assert.isTrue(resolvedItem.deprecated, 'resolved item is deprecated');
         server.didCloseTextDocument({
             textDocument: doc
@@ -153,7 +165,7 @@ describe('completion', () => {
             textDocument: doc,
             position: pos
         }) as TSCompletionItem[];
-        assert.isTrue(proposals === null);
+        assert.isNull(proposals);
         server.didCloseTextDocument({
             textDocument: doc
         });
