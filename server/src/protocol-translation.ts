@@ -138,18 +138,19 @@ export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
 }
 
 function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
-    return (tags || [])
+    return tags
         .map(tag => {
             const label = `*@${tag.name}*`;
             if (!tag.text) {
                 return label;
             }
+            let text: string;
             if (typeof tag.text === 'string') {
-                return label + (tag.text.match(/\r\n|\n/g) ? '  \n' + tag.text : ` — ${tag.text}`);
+                text = tag.text;
+            } else {
+                text = tag.text?.map(p => p.text).join('') || '';
             }
-            return label + '  \n' + tag.text.map(symbolDisplayPart => {
-                return `* ${symbolDisplayPart.text} _${symbolDisplayPart.kind}_`;
-            }).join('\n');
+            return label + (text.match(/\r\n|\n/g) ? '  \n' + text : ` — ${text}`);
         })
         .join('  \n\n');
 }
@@ -238,15 +239,13 @@ export function asTagsDocumentation(tags: tsp.JSDocTagInfo[]): string {
 export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
     switch (tag.name) {
         case 'param': {
-            // TODO: What does this actually look like? Is the original logic
-            // just doing something that the new type should do?
-            let formattedTag = '';
+            let text: string;
             if (typeof tag.text === 'string') {
-                formattedTag = tag.text;
-            } else if (tag.text) {
-                formattedTag = tag.text.map(symbol => `${symbol.text} (${symbol.kind})`).join(', ');
+                text = tag.text;
+            } else {
+                text = tag.text?.map(p => p.text).join('') || '';
             }
-            const body = formattedTag.split(/^([\w.]+)\s*-?\s*/);
+            const body = text.split(/^([\w.]+)\s*-?\s*/);
             if (body && body.length === 3) {
                 const param = body[1];
                 const doc = body[2];
@@ -256,7 +255,7 @@ export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
                 }
                 return label + (doc.match(/\r\n|\n/g) ? '  \n' + doc : ` — ${doc}`);
             }
-            // fall-through
+            break;
         }
     }
 
@@ -274,26 +273,24 @@ export function asTagBodyText(tag: tsp.JSDocTagInfo): string | undefined {
         return undefined;
     }
 
-    // TODO: What does this actually look like? Is the original logic
-    // just doing something that the new type should do?
-    let formattedTag = '';
+    let text: string;
     if (typeof tag.text === 'string') {
-        formattedTag = tag.text;
-    } else if (tag.text) {
-        formattedTag = tag.text.map(symbol => `${symbol.text} (${symbol.kind})`).join(', ');
+        text = tag.text;
+    } else {
+        text = tag.text.map(p => p.text).join('');
     }
 
     switch (tag.name) {
         case 'example':
         case 'default':
             // Convert to markdown code block if it not already one
-            if (formattedTag.match(/^\s*[~`]{3}/g)) {
-                return formattedTag;
+            if (text.match(/^\s*[~`]{3}/g)) {
+                return text;
             }
-            return '```\n' + formattedTag + '\n```';
+            return '```\n' + text + '\n```';
     }
 
-    return formattedTag;
+    return text;
 }
 
 export function asPlainText(parts: undefined): undefined;

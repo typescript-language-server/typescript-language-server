@@ -35,7 +35,7 @@ import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
-import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
+import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
 
 export interface IServerOptions {
@@ -411,7 +411,7 @@ export class LspServer {
         }
         const symbols: lsp.SymbolInformation[] = [];
         for (const item of tree.childItems) {
-            collectSymbolInformations(params.textDocument.uri, item, symbols);
+            collectSymbolInformation(params.textDocument.uri, item, symbols);
         }
         return symbols;
     }
@@ -481,23 +481,19 @@ export class LspServer {
             return { contents: [] };
         }
         const range = asRange(result.body);
-        let markdown = '```\n' + result.body.displayString + '\n```';
-        if (typeof result.body.documentation === 'string') {
-            markdown += '\n\n' + result.body.documentation;
-        } else {
-            for (const symbol of result.body.documentation) {
-                markdown += `- ${symbol.text} (_${symbol.kind}_)`;
-            }
-        }
+        const contents: lsp.MarkedString[] = [
+            { language: 'typescript', value: result.body.displayString }
+        ];
         const tags = asTagsDocumentation(result.body.tags);
-        if (tags) {
-            markdown += '\n\n' + tags;
+        let documentation: string;
+        if (typeof result.body.documentation === 'string') {
+            documentation = result.body.documentation;
+        } else {
+            documentation = result.body.documentation?.map(p => p.text).join('') || '';
         }
+        contents.push(documentation + (tags ? '\n\n' + tags : ''));
         return {
-            contents: {
-                kind: 'markdown',
-                value: markdown
-            },
+            contents,
             range
         };
     }
