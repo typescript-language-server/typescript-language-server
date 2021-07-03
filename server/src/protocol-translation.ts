@@ -18,8 +18,20 @@ export function uriToPath(stringUri: string): string | undefined {
     return uri.fsPath;
 }
 
+function parsePathOrUri(filepath: string): URI {
+    try {
+        // handles valid URIs from yarn pnp, will error if doesn't have scheme
+        // zipfile:/foo/bar/baz.zip::path/to/module
+        return URI.parse(filepath);
+    } catch {
+        // handles valid filepaths from everything else
+        // /path/to/module
+        return URI.file(filepath);
+    }
+}
+
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
-    const fileUri = URI.file(filepath);
+    const fileUri = parsePathOrUri(filepath);
     const document = documents && documents.get(fileUri.fsPath);
     return document ? document.uri : fileUri.toString();
 }
