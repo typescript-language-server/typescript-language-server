@@ -148,8 +148,13 @@ export function asCommitCharacters(kind: ScriptElementKind): string[] | undefine
 export function asResolvedCompletionItem(item: TSCompletionItem, details: tsp.CompletionEntryDetails): TSCompletionItem {
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);
+    item.deprecated = isDeprecated(details.tags);
     Object.assign(item, asCodeActions(details, item.data.file));
     return item;
+}
+
+function isDeprecated(tags?: tsp.JSDocTagInfo[]): boolean | undefined {
+    return tags?.some(tag => tag.name.toLowerCase() === 'deprecated');
 }
 
 export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
