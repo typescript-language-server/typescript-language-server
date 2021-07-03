@@ -52,18 +52,13 @@ export class LspServer {
     private initializeParams: TypeScriptInitializeParams;
     private initializeResult: TypeScriptInitializeResult;
     private tspClient: TspClient;
-    private diagnosticQueue: DiagnosticEventQueue;
+    private diagnosticQueue?: DiagnosticEventQueue;
     private logger: Logger;
 
     private readonly documents = new LspDocuments();
 
     constructor(private options: IServerOptions) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
-        this.diagnosticQueue = new DiagnosticEventQueue(
-            diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
-            this.documents,
-            this.logger
-        );
     }
 
     closeAll(): void {
@@ -96,6 +91,14 @@ export class LspServer {
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
+
+        if (this.initializeParams.capabilities.textDocument?.publishDiagnostics) {
+            this.diagnosticQueue = new DiagnosticEventQueue(
+                diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
+                this.documents,
+                this.logger
+            );
+        }
 
         const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
             logVerbosity: this.options.tsserverLogVerbosity,
@@ -944,7 +947,9 @@ export class LspServer {
         if (event.event === EventTypes.SementicDiag ||
             event.event === EventTypes.SyntaxDiag ||
             event.event === EventTypes.SuggestionDiag) {
-            this.diagnosticQueue.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
+            if (this.diagnosticQueue) {
+                this.diagnosticQueue.updateDiagnostics(event.event, event);
+            }
         } else {
             this.logger.log('Ignored event', {
                 event: event.event
