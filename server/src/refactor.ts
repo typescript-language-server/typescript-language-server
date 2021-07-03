@@ -9,19 +9,21 @@ import * as lsp from 'vscode-languageserver';
 import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 
-export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, result: (lsp.Command | lsp.CodeAction)[], args: tsp.FileRangeRequestArgs): void {
+export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, args: tsp.FileRangeRequestArgs): Array<lsp.CodeAction> {
     if (!response || !response.body) {
-        return;
+        return [];
     }
+    const actions: Array<lsp.CodeAction> = [];
     for (const info of response.body) {
         if (info.inlineable === false) {
-            result.push(asSelectRefactoring(info, args));
+            actions.push(asSelectRefactoring(info, args));
         } else {
             for (const action of info.actions) {
-                result.push(asApplyRefactoring(action, info, args));
+                actions.push(asApplyRefactoring(action, info, args));
             }
         }
     }
+    return actions;
 }
 
 export function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
@@ -44,7 +46,7 @@ export function asApplyRefactoring(action: tsp.RefactorActionInfo, info: tsp.App
     );
 }
 
-export function asKind(refactor: tsp.RefactorActionInfo): lsp.CodeActionKind {
+function asKind(refactor: tsp.RefactorActionInfo): lsp.CodeActionKind {
     if (refactor.name.startsWith('function_')) {
         return lsp.CodeActionKind.RefactorExtract + '.function';
     } else if (refactor.name.startsWith('constant_')) {

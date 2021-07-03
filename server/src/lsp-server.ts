@@ -6,12 +6,13 @@
  */
 
 import * as path from 'path';
-import * as tempy from 'tempy';
+import tempy from 'tempy';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
+import { CodeActionKind } from 'vscode-languageserver';
 import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
@@ -680,19 +681,30 @@ export class LspServer {
         }
     }
 
-    async codeAction(params: lsp.CodeActionParams): Promise<(lsp.Command | lsp.CodeAction)[]> {
+    async codeAction(params: lsp.CodeActionParams): Promise<lsp.CodeAction[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('codeAction', params, file);
         if (!file) {
             return [];
         }
         const args = toFileRangeRequestArgs(file, params.range);
-        const codeActions: (lsp.Command | lsp.CodeAction)[] = [];
-        const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
-        provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), codeActions, this.documents);
-        provideRefactors(await this.getRefactors(args), codeActions, args);
-        provideOrganizeImports(file, params.context, codeActions);
-        return codeActions;
+        const actions: lsp.CodeAction[] = [];
+        if (!params.context.only || params.context.only.includes(CodeActionKind.QuickFix)) {
+            const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
+            actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
+        }
+        if (!params.context.only || params.context.only.includes(CodeActionKind.Refactor)) {
+            actions.push(...provideRefactors(await this.getRefactors(args), args));
+        }
+
+        // organize import is provided by tsserver for any line, so we only get it if explicitly requested
+        if (params.context.only && params.context.only.includes(CodeActionKind.SourceOrganizeImports)) {
+            actions.push(...provideOrganizeImports(
+                await this.getOrganizeImports({ scope: { type: 'file', args } })
+            ));
+        }
+
+        return actions;
     }
     protected async getCodeFixes(args: tsp.CodeFixRequestArgs): Promise<tsp.GetCodeFixesResponse | undefined> {
         try {
@@ -704,6 +716,13 @@ export class LspServer {
     protected async getRefactors(args: tsp.GetApplicableRefactorsRequestArgs): Promise<tsp.GetApplicableRefactorsResponse | undefined> {
         try {
             return await this.tspClient.request(CommandTypes.GetApplicableRefactors, args);
+        } catch (err) {
+            return undefined;
+        }
+    }
+    protected async getOrganizeImports(args: tsp.OrganizeImportsRequestArgs): Promise<tsp.OrganizeImportsResponse | undefined> {
+        try {
+            return await this.tspClient.request(CommandTypes.OrganizeImports, args);
         } catch (err) {
             return undefined;
         }

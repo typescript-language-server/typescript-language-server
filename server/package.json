@@ -1,6 +1,6 @@
 {
   "name": "typescript-language-server",
-  "version": "0.5.1",
+  "version": "0.5.4",
   "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
   "author": "TypeFox and others",
   "license": "Apache-2.0",
@@ -15,11 +15,11 @@
     "typescript-language-server": "./lib/cli.js"
   },
   "dependencies": {
-    "command-exists": "1.2.6",
-    "commander": "^2.11.0",
-    "fs-extra": "^7.0.0",
-    "p-debounce": "^1.0.0",
-    "tempy": "^0.2.1",
+    "command-exists": "^1.2.6",
+    "commander": "^7.2.0",
+    "fs-extra": "^10.0.0",
+    "p-debounce": "^2.1.0",
+    "tempy": "^1.0.1",
     "vscode-languageserver": "^5.3.0-next",
     "vscode-uri": "^1.0.5"
   },
@@ -30,8 +30,6 @@
     "lint": "eslint --ext '.js,.ts' src"
   },
   "devDependencies": {
-    "@types/fs-extra": "^5.0.4",
-    "@types/p-debounce": "^1.0.0",
-    "@types/tempy": "^0.1.0"
+    "@types/fs-extra": "^9.0.11"
   }
 }

@@ -11,7 +11,7 @@ import * as cp from 'child_process';
 import * as readline from 'readline';
 import * as decoder from 'string_decoder';
 import protocol from 'typescript/lib/protocol';
-import * as tempy from 'tempy';
+import tempy from 'tempy';
 
 import { CommandTypes } from './tsp-command-types';
 import { Logger, PrefixingLogger } from './logger';

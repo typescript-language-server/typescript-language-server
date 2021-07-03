@@ -10,18 +10,19 @@ import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 import { toTextDocumentEdit } from './protocol-translation';
 import { LspDocuments } from './document';
+import { CodeActionKind } from 'vscode-languageserver';
 
-export function provideQuickFix(response: tsp.GetCodeFixesResponse | undefined, result: (lsp.Command | lsp.CodeAction)[], documents: LspDocuments | undefined): void {
+export function provideQuickFix(response: tsp.GetCodeFixesResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
     if (!response || !response.body) {
-        return;
+        return [];
     }
-    for (const fix of response.body) {
-        result.push({
+    return response.body.map(fix => lsp.CodeAction.create(
+        fix.description,
+        {
             title: fix.description,
             command: Commands.APPLY_WORKSPACE_EDIT,
-            arguments: [<lsp.WorkspaceEdit>{
-                documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents))
-            }]
-        });
-    }
+            arguments: [{ documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents)) }]
+        },
+        CodeActionKind.QuickFix
+    ));
 }
