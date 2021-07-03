@@ -163,10 +163,10 @@ function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
     // Also check if we still have to apply other workspace edits and commands
     // using a vscode command
     const additionalTextEdits: lsp.TextEdit[] = [];
-    let hasReaminingCommandsOrEdits = false;
+    let hasRemainingCommandsOrEdits = false;
     for (const tsAction of details.codeActions) {
         if (tsAction.commands) {
-            hasReaminingCommandsOrEdits = true;
+            hasRemainingCommandsOrEdits = true;
         }
 
         // Apply all edits in the current file using `additionalTextEdits`
@@ -177,14 +177,14 @@ function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
                         additionalTextEdits.push(toTextEdit(textChange));
                     }
                 } else {
-                    hasReaminingCommandsOrEdits = true;
+                    hasRemainingCommandsOrEdits = true;
                 }
             }
         }
     }
 
     let command: lsp.Command | undefined = undefined;
-    if (hasReaminingCommandsOrEdits) {
+    if (hasRemainingCommandsOrEdits) {
         // Create command that applies all edits not in the current file.
         command = {
             title: '',
