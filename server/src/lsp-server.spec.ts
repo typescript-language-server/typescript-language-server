@@ -489,62 +489,65 @@ describe('code actions', () => {
             }
         }))!;
 
-        assert.deepEqual(result, [
-            {
+        assert.strictEqual(result.length, 2);
+        const quickFixDiagnostic = result.find(diagnostic => diagnostic.kind === 'quickfix');
+        assert.isDefined(quickFixDiagnostic);
+        assert.deepEqual(quickFixDiagnostic, {
+            title: "Prefix 'bar' with an underscore",
+            command: {
                 title: "Prefix 'bar' with an underscore",
-                command: {
-                    title: "Prefix 'bar' with an underscore",
-                    command: '_typescript.applyWorkspaceEdit',
-                    arguments: [
-                        {
-                            documentChanges: [
-                                {
-                                    textDocument: {
-                                        uri: uri('bar.ts'),
-                                        version: 1
-                                    },
-                                    edits: [
-                                        {
-                                            range: {
-                                                start: {
-                                                    line: 1,
-                                                    character: 24
-                                                },
-                                                end: {
-                                                    line: 1,
-                                                    character: 27
-                                                }
+                command: '_typescript.applyWorkspaceEdit',
+                arguments: [
+                    {
+                        documentChanges: [
+                            {
+                                textDocument: {
+                                    uri: uri('bar.ts'),
+                                    version: 1
+                                },
+                                edits: [
+                                    {
+                                        range: {
+                                            start: {
+                                                line: 1,
+                                                character: 24
                                             },
-                                            newText: '_bar'
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                },
-                kind: 'quickfix'
+                                            end: {
+                                                line: 1,
+                                                character: 27
+                                            }
+                                        },
+                                        newText: '_bar'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
             },
-            {
+            kind: 'quickfix'
+        });
+        const refactorDiagnostic = result.find(diagnostic => diagnostic.kind === 'refactor');
+        assert.isDefined(refactorDiagnostic);
+        assert.deepEqual(refactorDiagnostic, {
+            title: 'Convert parameters to destructured object',
+            command: {
                 title: 'Convert parameters to destructured object',
-                command: {
-                    title: 'Convert parameters to destructured object',
-                    command: '_typescript.applyRefactoring',
-                    arguments: [
-                        {
-                            file: filePath('bar.ts'),
-                            startLine: 2,
-                            startOffset: 26,
-                            endLine: 2,
-                            endOffset: 50,
-                            refactor: 'Convert parameters to destructured object',
-                            action: 'Convert parameters to destructured object'
-                        }
-                    ]
-                },
-                kind: 'refactor'
-            }
-        ]);
+                command: '_typescript.applyRefactoring',
+                arguments: [
+                    {
+                        file: filePath('bar.ts'),
+                        startLine: 2,
+                        startOffset: 26,
+                        endLine: 2,
+                        endOffset: 50,
+                        refactor: 'Convert parameters to destructured object',
+                        action: 'Convert parameters to destructured object'
+                    }
+                ]
+            },
+            kind: 'refactor'
+        });
     }).timeout(10000);
 
     it('can filter quickfix code actions filtered by only', async () => {
