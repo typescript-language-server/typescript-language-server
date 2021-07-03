@@ -767,11 +767,15 @@ export class LspServer {
             }
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
             const file = arg.arguments[0] as string;
+            const additionalArguments = arg.arguments[1] as undefined | {
+                skipDestructiveCodeActions?: boolean;
+            };
             const { body } = await this.tspClient.request(CommandTypes.OrganizeImports, {
                 scope: {
                     type: 'file',
                     args: { file }
-                }
+                },
+                ...additionalArguments
             });
             await this.applyFileCodeEdits(body);
         } else if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {
