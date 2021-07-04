@@ -952,9 +952,7 @@ export class LspServer {
         if (event.event === EventTypes.SementicDiag ||
             event.event === EventTypes.SyntaxDiag ||
             event.event === EventTypes.SuggestionDiag) {
-            if (this.diagnosticQueue) {
-                this.diagnosticQueue.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
-            }
+            this.diagnosticQueue?.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
         } else {
             this.logger.log('Ignored event', {
                 event: event.event

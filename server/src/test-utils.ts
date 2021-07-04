@@ -57,7 +57,7 @@ export async function createServer(options: {
     rootUri: string | null;
     tsserverLogVerbosity?: string;
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
-    clientCapabilitesOverride?: lsp.ClientCapabilities;
+    clientCapabilitiesOverride?: lsp.ClientCapabilities;
 }): Promise<LspServer> {
     const logger = new ConsoleLogger(false);
     const server = new LspServer({
@@ -85,7 +85,7 @@ export async function createServer(options: {
         rootPath: undefined,
         rootUri: options.rootUri,
         processId: 42,
-        capabilities: options.clientCapabilitesOverride || getDefaultClientCapabilities(),
+        capabilities: options.clientCapabilitiesOverride || getDefaultClientCapabilities(),
         workspaceFolders: null
     });
     return server;

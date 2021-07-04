@@ -30,6 +30,10 @@ beforeEach(() => {
     server.closeAll();
 });
 
+after(() => {
+    server.closeAll();
+});
+
 describe('completion', () => {
     it('simple test', async () => {
         const doc = {
@@ -804,12 +808,12 @@ export function factory() {
 describe('diagnostics (no client support)', () => {
     before(async () => {
         // Remove the "textDocument.publishDiagnostics" client capability.
-        const clientCapabilitesOverride = getDefaultClientCapabilities();
-        delete clientCapabilitesOverride.textDocument?.publishDiagnostics;
+        const clientCapabilitiesOverride = getDefaultClientCapabilities();
+        delete clientCapabilitiesOverride.textDocument?.publishDiagnostics;
         server = await createServer({
             rootUri: null,
             publishDiagnostics: args => diagnostics.push(args),
-            clientCapabilitesOverride
+            clientCapabilitiesOverride
         });
     });
 
@@ -832,6 +836,6 @@ describe('diagnostics (no client support)', () => {
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const diagnosticsForThisFile = diagnostics.filter(d => d!.uri === doc.uri);
-        assert.equal(diagnosticsForThisFile.length, 0, 'Unexpected diagnostics received');
+        assert.isEmpty(diagnosticsForThisFile, 'Unexpected diagnostics received');
     }).timeout(10000);
 });
