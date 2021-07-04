@@ -12,6 +12,17 @@ import { pathToUri } from './protocol-translation';
 import { LspServer } from './lsp-server';
 import { ConsoleLogger } from './logger';
 
+export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
+    return {
+        textDocument: {
+            documentSymbol: {
+                hierarchicalDocumentSymbolSupport: true
+            },
+            publishDiagnostics: {}
+        }
+    };
+}
+
 export function uri(suffix = ''): string {
     const resolved = this.filePath(suffix);
     return pathToUri(resolved, undefined);
@@ -46,6 +57,7 @@ export async function createServer(options: {
     rootUri: string | null;
     tsserverLogVerbosity?: string;
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
+    clientCapabilitiesOverride?: lsp.ClientCapabilities;
 }): Promise<LspServer> {
     const logger = new ConsoleLogger(false);
     const server = new LspServer({
@@ -73,13 +85,7 @@ export async function createServer(options: {
         rootPath: undefined,
         rootUri: options.rootUri,
         processId: 42,
-        capabilities: <any>{
-            textDocument: {
-                documentSymbol: {
-                    hierarchicalDocumentSymbolSupport: true
-                }
-            }
-        },
+        capabilities: options.clientCapabilitiesOverride || getDefaultClientCapabilities(),
         workspaceFolders: null
     });
     return server;

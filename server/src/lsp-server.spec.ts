@@ -9,7 +9,7 @@ import * as chai from 'chai';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
-import { uri, createServer, position, lastPosition, filePath } from './test-utils';
+import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities } from './test-utils';
 import { TextDocument } from 'vscode-languageserver';
 import { TSCompletionItem } from './completion';
 
@@ -27,6 +27,10 @@ before(async () => {
 });
 beforeEach(() => {
     diagnostics = [];
+    server.closeAll();
+});
+
+after(() => {
     server.closeAll();
 });
 
@@ -798,5 +802,40 @@ export function factory() {
   ↖ ttt (do.ts#6) - do.ts#7
             `.trim()
         );
+    }).timeout(10000);
+});
+
+describe('diagnostics (no client support)', () => {
+    before(async () => {
+        // Remove the "textDocument.publishDiagnostics" client capability.
+        const clientCapabilitiesOverride = getDefaultClientCapabilities();
+        delete clientCapabilitiesOverride.textDocument?.publishDiagnostics;
+        server = await createServer({
+            rootUri: null,
+            publishDiagnostics: args => diagnostics.push(args),
+            clientCapabilitiesOverride
+        });
+    });
+
+    it('no diagnostics are published', async () => {
+        const doc = {
+            uri: uri('diagnosticsBar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+        export function foo(): void {
+          missing('test')
+        }
+      `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+
+        server.requestDiagnostics();
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const diagnosticsForThisFile = diagnostics.filter(d => d!.uri === doc.uri);
+        assert.isEmpty(diagnosticsForThisFile, 'Unexpected diagnostics received');
     }).timeout(10000);
 });
