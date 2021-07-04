@@ -16,17 +16,15 @@ import { CodeActionKind } from 'vscode-languageserver';
 import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
-
 import { Logger, PrefixingLogger } from './logger';
 import { TspClient } from './tsp-client';
-
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
 import { findPathToModule, findPathToYarnSdk } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toFileRangeRequestArgs
+    pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
@@ -37,7 +35,7 @@ import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
-import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
+import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
 
 export interface IServerOptions {
@@ -419,7 +417,7 @@ export class LspServer {
         }
         const symbols: lsp.SymbolInformation[] = [];
         for (const item of tree.childItems) {
-            collectSymbolInformations(params.textDocument.uri, item, symbols);
+            collectSymbolInformation(params.textDocument.uri, item, symbols);
         }
         return symbols;
     }
@@ -493,7 +491,8 @@ export class LspServer {
             { language: 'typescript', value: result.body.displayString }
         ];
         const tags = asTagsDocumentation(result.body.tags);
-        contents.push(result.body.documentation + (tags ? '\n\n' + tags : ''));
+        const documentation = asPlainText(result.body.documentation);
+        contents.push(documentation + (tags ? '\n\n' + tags : ''));
         return {
             contents,
             range

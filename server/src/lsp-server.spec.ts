@@ -489,110 +489,65 @@ describe('code actions', () => {
             }
         }))!;
 
-        assert.deepEqual(result, [
-            {
-                command: {
-                    arguments: [
-                        {
-                            documentChanges: [
-                                {
-                                    edits: [
-                                        {
-                                            newText: '',
-                                            range: {
-                                                end: {
-                                                    character: 37,
-                                                    line: 1
-                                                },
-                                                start: {
-                                                    character: 24,
-                                                    line: 1
-                                                }
+        assert.strictEqual(result.length, 2);
+        const quickFixDiagnostic = result.find(diagnostic => diagnostic.kind === 'quickfix');
+        assert.isDefined(quickFixDiagnostic);
+        assert.deepEqual(quickFixDiagnostic, {
+            title: "Prefix 'bar' with an underscore",
+            command: {
+                title: "Prefix 'bar' with an underscore",
+                command: '_typescript.applyWorkspaceEdit',
+                arguments: [
+                    {
+                        documentChanges: [
+                            {
+                                textDocument: {
+                                    uri: uri('bar.ts'),
+                                    version: 1
+                                },
+                                edits: [
+                                    {
+                                        range: {
+                                            start: {
+                                                line: 1,
+                                                character: 24
+                                            },
+                                            end: {
+                                                line: 1,
+                                                character: 27
                                             }
                                         },
-                                        {
-                                            newText: '',
-                                            range: {
-                                                end: {
-                                                    character: 16,
-                                                    line: 2
-                                                },
-                                                start: {
-                                                    character: 8,
-                                                    line: 2
-                                                }
-                                            }
-                                        }
-                                    ],
-                                    textDocument: {
-                                        uri: uri('bar.ts'),
-                                        version: 1
+                                        newText: '_bar'
                                     }
-                                }
-                            ]
-                        }
-                    ],
-                    command: '_typescript.applyWorkspaceEdit',
-                    title: "Remove unused declaration for: 'bar'"
-                },
-                kind: 'quickfix',
-                title: "Remove unused declaration for: 'bar'"
+                                ]
+                            }
+                        ]
+                    }
+                ]
             },
-            {
-                command: {
-                    arguments: [
-                        {
-                            documentChanges: [
-                                {
-                                    edits: [
-                                        {
-                                            newText: '_bar',
-                                            range: {
-                                                end: {
-                                                    character: 27,
-                                                    line: 1
-                                                },
-                                                start: {
-                                                    character: 24,
-                                                    line: 1
-                                                }
-                                            }
-                                        }
-                                    ],
-                                    textDocument: {
-                                        uri: uri('bar.ts'),
-                                        version: 1
-                                    }
-                                }
-                            ]
-                        }
-                    ],
-                    command: '_typescript.applyWorkspaceEdit',
-                    title: "Prefix 'bar' with an underscore"
-                },
-                kind: 'quickfix',
-                title: "Prefix 'bar' with an underscore"
+            kind: 'quickfix'
+        });
+        const refactorDiagnostic = result.find(diagnostic => diagnostic.kind === 'refactor');
+        assert.isDefined(refactorDiagnostic);
+        assert.deepEqual(refactorDiagnostic, {
+            title: 'Convert parameters to destructured object',
+            command: {
+                title: 'Convert parameters to destructured object',
+                command: '_typescript.applyRefactoring',
+                arguments: [
+                    {
+                        file: filePath('bar.ts'),
+                        startLine: 2,
+                        startOffset: 26,
+                        endLine: 2,
+                        endOffset: 50,
+                        refactor: 'Convert parameters to destructured object',
+                        action: 'Convert parameters to destructured object'
+                    }
+                ]
             },
-            {
-                command: {
-                    arguments: [
-                        {
-                            action: 'Convert parameters to destructured object',
-                            endLine: 2,
-                            endOffset: 50,
-                            file: filePath('bar.ts'),
-                            refactor: 'Convert parameters to destructured object',
-                            startLine: 2,
-                            startOffset: 26
-                        }
-                    ],
-                    command: '_typescript.applyRefactoring',
-                    title: 'Convert parameters to destructured object'
-                },
-                kind: 'refactor',
-                title: 'Convert parameters to destructured object'
-            }
-        ]);
+            kind: 'refactor'
+        });
     }).timeout(10000);
 
     it('can filter quickfix code actions filtered by only', async () => {

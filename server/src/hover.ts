@@ -17,7 +17,7 @@ export function asSignatureHelp(info: tsp.SignatureHelpItems): lsp.SignatureHelp
     };
 }
 
-export function getActiveParameter(info: tsp.SignatureHelpItems): number {
+function getActiveParameter(info: tsp.SignatureHelpItems): number {
     const activeSignature = info.items[info.selectedItemIndex];
     if (activeSignature && activeSignature.isVariadic) {
         return Math.min(info.argumentIndex, activeSignature.parameters.length - 1);
@@ -25,7 +25,7 @@ export function getActiveParameter(info: tsp.SignatureHelpItems): number {
     return info.argumentIndex;
 }
 
-export function asSignatureInformation(item: tsp.SignatureHelpItem): lsp.SignatureInformation {
+function asSignatureInformation(item: tsp.SignatureHelpItem): lsp.SignatureInformation {
     const parameters = item.parameters.map(asParameterInformation);
     const signature: lsp.SignatureInformation = {
         label: asPlainText(item.prefixDisplayParts),
@@ -40,7 +40,7 @@ export function asSignatureInformation(item: tsp.SignatureHelpItem): lsp.Signatu
     return signature;
 }
 
-export function asParameterInformation(parameter: tsp.SignatureHelpParameter): lsp.ParameterInformation {
+function asParameterInformation(parameter: tsp.SignatureHelpParameter): lsp.ParameterInformation {
     return {
         label: asPlainText(parameter.displayParts),
         documentation: asDocumentation(parameter)
