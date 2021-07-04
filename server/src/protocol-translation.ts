@@ -213,12 +213,7 @@ export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
             if (!tag.text) {
                 break;
             }
-            let text: string;
-            if (typeof tag.text === 'string') {
-                text = tag.text;
-            } else {
-                text = asPlainText(tag.text);
-            }
+            const text = asPlainText(tag.text);
             const body = text.split(/^([\w.]+)\s*-?\s*/);
             if (body && body.length === 3) {
                 const param = body[1];
