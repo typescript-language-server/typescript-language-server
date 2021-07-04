@@ -18,7 +18,9 @@ export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
             documentSymbol: {
                 hierarchicalDocumentSymbolSupport: true
             },
-            publishDiagnostics: {}
+            publishDiagnostics: {
+                tagSupport: true
+            }
         }
     };
 }

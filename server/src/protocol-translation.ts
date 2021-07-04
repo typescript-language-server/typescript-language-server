@@ -108,8 +108,12 @@ function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     }
 }
 
-export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments | undefined): lsp.Diagnostic {
-    return {
+export function toDiagnostic(
+    diagnostic: tsp.Diagnostic,
+    documents: LspDocuments | undefined,
+    publishDiagnosticsCapabilities: NonNullable<lsp.TextDocumentClientCapabilities['publishDiagnostics']>
+): lsp.Diagnostic {
+    const lspDiagnostic: lsp.Diagnostic = {
         range: {
             start: toPosition(diagnostic.start),
             end: toPosition(diagnostic.end)
@@ -120,6 +124,21 @@ export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments
         source: diagnostic.source || 'typescript',
         relatedInformation: asRelatedInformation(diagnostic.relatedInformation, documents)
     };
+    if (publishDiagnosticsCapabilities.tagSupport) {
+        lspDiagnostic.tags = getDiagnosticTags(diagnostic);
+    }
+    return lspDiagnostic;
+}
+
+function getDiagnosticTags(diagnostic: tsp.Diagnostic): lsp.DiagnosticTag[] {
+    const tags: lsp.DiagnosticTag[] = [];
+    if (diagnostic.reportsUnnecessary) {
+        tags.push(lsp.DiagnosticTag.Unnecessary);
+    }
+    if (diagnostic.reportsDeprecated) {
+        tags.push(lsp.DiagnosticTag.Deprecated);
+    }
+    return tags;
 }
 
 function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
