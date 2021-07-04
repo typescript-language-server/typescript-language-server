@@ -24,7 +24,7 @@ import { findPathToModule } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toFileRangeRequestArgs
+    pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
@@ -485,12 +485,7 @@ export class LspServer {
             { language: 'typescript', value: result.body.displayString }
         ];
         const tags = asTagsDocumentation(result.body.tags);
-        let documentation: string;
-        if (typeof result.body.documentation === 'string') {
-            documentation = result.body.documentation;
-        } else {
-            documentation = result.body.documentation?.map(p => p.text).join('') || '';
-        }
+        const documentation = asPlainText(result.body.documentation);
         contents.push(documentation + (tags ? '\n\n' + tags : ''));
         return {
             contents,

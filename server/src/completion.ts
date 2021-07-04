@@ -203,11 +203,11 @@ function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
     };
 }
 
-function asDetail({ displayParts, source }: tsp.CompletionEntryDetails): string | undefined {
+function asDetail({ displayParts, sourceDisplay, source: deprecatedSource }: tsp.CompletionEntryDetails): string | undefined {
     const result: string[] = [];
-    const importPath = asPlainText(source);
-    if (importPath) {
-        result.push(`Auto import from '${importPath}'`);
+    const source = sourceDisplay || deprecatedSource;
+    if (source) {
+        result.push(`Auto import from '${asPlainText(source)}'`);
     }
     const detail = asPlainText(displayParts);
     if (detail) {

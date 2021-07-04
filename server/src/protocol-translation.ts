@@ -188,9 +188,8 @@ export function asDocumentation(data: {
     tags?: tsp.JSDocTagInfo[];
 }): lsp.MarkupContent | undefined {
     let value = '';
-    const documentation = asPlainText(data.documentation);
-    if (documentation) {
-        value += documentation;
+    if (data.documentation) {
+        value += asPlainText(data.documentation);
     }
     if (data.tags) {
         const tagsDocumentation = asTagsDocumentation(data.tags);
@@ -211,11 +210,14 @@ export function asTagsDocumentation(tags: tsp.JSDocTagInfo[]): string {
 export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
     switch (tag.name) {
         case 'param': {
+            if (!tag.text) {
+                break;
+            }
             let text: string;
             if (typeof tag.text === 'string') {
                 text = tag.text;
             } else {
-                text = tag.text?.map(p => p.text).join('') || '';
+                text = asPlainText(tag.text);
             }
             const body = text.split(/^([\w.]+)\s*-?\s*/);
             if (body && body.length === 3) {
@@ -245,12 +247,7 @@ export function asTagBodyText(tag: tsp.JSDocTagInfo): string | undefined {
         return undefined;
     }
 
-    let text: string;
-    if (typeof tag.text === 'string') {
-        text = tag.text;
-    } else {
-        text = tag.text.map(p => p.text).join('');
-    }
+    const text = asPlainText(tag.text);
 
     switch (tag.name) {
         case 'example':
@@ -265,12 +262,9 @@ export function asTagBodyText(tag: tsp.JSDocTagInfo): string | undefined {
     return text;
 }
 
-export function asPlainText(parts: undefined): undefined;
-export function asPlainText(parts: tsp.SymbolDisplayPart[]): string;
-export function asPlainText(parts: tsp.SymbolDisplayPart[] | undefined): string | undefined;
-export function asPlainText(parts: tsp.SymbolDisplayPart[] | undefined): string | undefined {
-    if (!parts) {
-        return undefined;
+export function asPlainText(parts: string | tsp.SymbolDisplayPart[]): string {
+    if (typeof parts === 'string') {
+        return parts;
     }
     return parts.map(part => part.text).join('');
 }
