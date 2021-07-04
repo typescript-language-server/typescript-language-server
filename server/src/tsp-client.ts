@@ -109,7 +109,7 @@ export class TspClient {
             : cp.spawn(tsserverPath, args);
         this.readlineInterface = readline.createInterface(this.tsserverProc.stdout, this.tsserverProc.stdin, undefined);
         process.on('exit', code => {
-            this.logger.log(`tsserver exited with exit code: ${code}`);
+            this.logger.log(`server exited with exit code: ${code}`);
             this.readlineInterface.close();
             this.tsserverProc.stdin.destroy();
             this.tsserverProc.kill();
