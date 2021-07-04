@@ -100,7 +100,7 @@ export class TspClient {
         if (pluginProbeLocations && pluginProbeLocations.length) {
             args.push('--pluginProbeLocations', pluginProbeLocations.join(','));
         }
-        this.cancellationPipeName = tempy.file({ name: 'tscancellation' } as any);
+        this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
         args.push('--cancellationPipeName', this.cancellationPipeName + '*');
         this.logger.info(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
         const tsserverPathIsModule = path.extname(tsserverPath) === '.js';
