@@ -15,7 +15,7 @@ import { TSCompletionItem } from './completion';
 
 const assert = chai.assert;
 
-let diagnostics: Array<lsp.PublishDiagnosticsParams | undefined>;
+let diagnostics: Array<lsp.PublishDiagnosticsParams>;
 
 let server: LspServer;
 
@@ -174,7 +174,7 @@ describe('diagnostics', () => {
 
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        const resultsForFile = diagnostics.find(d => d!.uri === doc.uri);
+        const resultsForFile = diagnostics.find(d => d.uri === doc.uri);
         assert.isDefined(resultsForFile);
         const fileDiagnostics = resultsForFile!.diagnostics;
         assert.equal(fileDiagnostics.length, 2);
