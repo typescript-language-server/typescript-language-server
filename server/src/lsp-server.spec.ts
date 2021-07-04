@@ -174,7 +174,6 @@ describe('diagnostics', () => {
 
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        // assert.deepEqual(JSON.stringify(diagnostics, null, 2), '');
         const resultsForFile = diagnostics.find(d => d!.uri === doc.uri);
         assert.isDefined(resultsForFile);
         const fileDiagnostics = resultsForFile!.diagnostics;
