@@ -170,7 +170,10 @@ export class TspClient {
             request.arguments = args;
         }
         const serializedRequest = JSON.stringify(request) + '\n';
-        this.tsserverProc.stdin.write(serializedRequest);
+        const success = this.tsserverProc.stdin.write(serializedRequest);
+        if (!success) {
+            this.logger.warn('Error writing to tsserver stdin');
+        }
         this.logger.log(notification ? 'notify' : 'request', request);
     }
 

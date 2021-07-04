@@ -223,14 +223,16 @@ export class LspServer {
         return result;
     }
     readonly requestDiagnostics = debounce(() => this.doRequestDiagnostics(), 200);
-    protected async doRequestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
+    protected async doRequestDiagnostics(): Promise<void> {
         this.cancelDiagnostics();
         const geterrTokenSource = new lsp.CancellationTokenSource();
         this.diagnosticsTokenSource = geterrTokenSource;
 
         const { files } = this.documents;
         try {
-            return await this.tspClient.request(CommandTypes.Geterr, { delay: 0, files }, this.diagnosticsTokenSource.token);
+            await this.tspClient.request(CommandTypes.Geterr, { delay: 0, files }, this.diagnosticsTokenSource.token);
+        } catch (error) {
+            this.logger.error('Error sending "Geterr" command', error);
         } finally {
             if (this.diagnosticsTokenSource === geterrTokenSource) {
                 this.diagnosticsTokenSource = undefined;
