@@ -16,17 +16,15 @@ import { CodeActionKind } from 'vscode-languageserver';
 import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
-
 import { Logger, PrefixingLogger } from './logger';
 import { TspClient } from './tsp-client';
-
 import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
-import { findPathToModule } from './modules-resolver';
+import { findPathToModule, findPathToYarnSdk } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toFileRangeRequestArgs
+    pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
@@ -37,7 +35,7 @@ import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
-import { collectDocumentSymbols, collectSymbolInformations } from './document-symbol';
+import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
 
 export interface IServerOptions {
@@ -71,16 +69,21 @@ export class LspServer {
         if (this.options.tsserverPath) {
             return this.options.tsserverPath;
         }
-        // 1) look into node_modules of workspace root
+        // 1) look into .yarn/sdks of workspace root
+        const sdk = findPathToYarnSdk(this.rootPath(), path.join('typescript', 'lib', 'tsserver.js'));
+        if (sdk) {
+            return sdk;
+        }
+        // 2) look into node_modules of workspace root
         const executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`);
         if (executable) {
             return executable;
         }
-        // 2) use globally installed tsserver
+        // 3) use globally installed tsserver
         if (commandExists.sync(getTsserverExecutable())) {
             return getTsserverExecutable();
         }
-        // 3) look into node_modules of typescript-language-server
+        // 4) look into node_modules of typescript-language-server
         const bundled = findPathToModule(__dirname, path.join('typescript', 'lib', 'tsserver.js'));
         if (!bundled) {
             throw Error(`Couldn't find '${getTsserverExecutable()}' executable or 'tsserver.js' module`);
@@ -100,7 +103,7 @@ export class LspServer {
             );
         }
 
-        const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
+        const { logVerbosity, plugins, preferences, hostInfo }: TypeScriptInitializationOptions = {
             logVerbosity: this.options.tsserverLogVerbosity,
             plugins: [],
             preferences: {},
@@ -127,6 +130,7 @@ export class LspServer {
 
         this.tspClient.start();
         this.tspClient.request(CommandTypes.Configure, {
+            ...hostInfo ? { hostInfo } : {},
             preferences: {
                 allowTextChangesInNewFiles: true,
                 ...preferences
@@ -416,7 +420,7 @@ export class LspServer {
         }
         const symbols: lsp.SymbolInformation[] = [];
         for (const item of tree.childItems) {
-            collectSymbolInformations(params.textDocument.uri, item, symbols);
+            collectSymbolInformation(params.textDocument.uri, item, symbols);
         }
         return symbols;
     }
@@ -490,7 +494,8 @@ export class LspServer {
             { language: 'typescript', value: result.body.displayString }
         ];
         const tags = asTagsDocumentation(result.body.tags);
-        contents.push(result.body.documentation + (tags ? '\n\n' + tags : ''));
+        const documentation = asPlainText(result.body.documentation);
+        contents.push(documentation + (tags ? '\n\n' + tags : ''));
         return {
             contents,
             range

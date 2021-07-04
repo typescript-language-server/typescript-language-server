@@ -18,13 +18,25 @@ export function uriToPath(stringUri: string): string | undefined {
     return uri.fsPath;
 }
 
+function parsePathOrUri(filepath: string): URI {
+    try {
+        // handles valid URIs from yarn pnp, will error if doesn't have scheme
+        // zipfile:/foo/bar/baz.zip::path/to/module
+        return URI.parse(filepath);
+    } catch {
+        // handles valid filepaths from everything else
+        // /path/to/module
+        return URI.file(filepath);
+    }
+}
+
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
-    const fileUri = URI.file(filepath);
+    const fileUri = parsePathOrUri(filepath);
     const document = documents && documents.get(fileUri.fsPath);
     return document ? document.uri : fileUri.toString();
 }
 
-export function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
+function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
     const fileUri = URI.file(filepath);
     const document = documents && documents.get(fileUri.fsPath);
     return document ? document.version : 0;
@@ -87,7 +99,7 @@ export function toSymbolKind(tspKind: string): lsp.SymbolKind {
     return symbolKindsMapping[tspKind] || lsp.SymbolKind.Variable;
 }
 
-export function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
+function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     switch (category) {
         case 'error': return lsp.DiagnosticSeverity.Error;
         case 'warning': return lsp.DiagnosticSeverity.Warning;
@@ -110,7 +122,7 @@ export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments
     };
 }
 
-export function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
+function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
     if (!info) {
         return undefined;
     }
@@ -135,28 +147,6 @@ export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
         },
         newText: edit.newText
     };
-}
-
-function tagsMarkdownPreview(tags: tsp.JSDocTagInfo[]): string {
-    return (tags || [])
-        .map(tag => {
-            const label = `*@${tag.name}*`;
-            if (!tag.text) {
-                return label;
-            }
-            return label + (tag.text.match(/\r\n|\n/g) ? '  \n' + tag.text : ` — ${tag.text}`);
-        })
-        .join('  \n\n');
-}
-
-export function toMarkDown(documentation: tsp.SymbolDisplayPart[], tags: tsp.JSDocTagInfo[]): string {
-    let result = '';
-    result += asPlainText(documentation);
-    const tagsPreview = tagsMarkdownPreview(tags);
-    if (tagsPreview) {
-        result += '\n\n' + tagsPreview;
-    }
-    return result;
 }
 
 export function toTextDocumentEdit(change: tsp.FileCodeEdits, documents: LspDocuments | undefined): lsp.TextDocumentEdit {
@@ -210,9 +200,8 @@ export function asDocumentation(data: {
     tags?: tsp.JSDocTagInfo[];
 }): lsp.MarkupContent | undefined {
     let value = '';
-    const documentation = asPlainText(data.documentation);
-    if (documentation) {
-        value += documentation;
+    if (data.documentation) {
+        value += asPlainText(data.documentation);
     }
     if (data.tags) {
         const tagsDocumentation = asTagsDocumentation(data.tags);
@@ -233,7 +222,11 @@ export function asTagsDocumentation(tags: tsp.JSDocTagInfo[]): string {
 export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
     switch (tag.name) {
         case 'param': {
-            const body = (tag.text || '').split(/^([\w.]+)\s*-?\s*/);
+            if (!tag.text) {
+                break;
+            }
+            const text = asPlainText(tag.text);
+            const body = text.split(/^([\w.]+)\s*-?\s*/);
             if (body && body.length === 3) {
                 const param = body[1];
                 const doc = body[2];
@@ -243,7 +236,7 @@ export function asTagDocumentation(tag: tsp.JSDocTagInfo): string {
                 }
                 return label + (doc.match(/\r\n|\n/g) ? '  \n' + doc : ` — ${doc}`);
             }
-            // fall-through
+            break;
         }
     }
 
@@ -261,30 +254,29 @@ export function asTagBodyText(tag: tsp.JSDocTagInfo): string | undefined {
         return undefined;
     }
 
+    const text = asPlainText(tag.text);
+
     switch (tag.name) {
         case 'example':
         case 'default':
             // Convert to markdown code block if it not already one
-            if (tag.text.match(/^\s*[~`]{3}/g)) {
-                return tag.text;
+            if (text.match(/^\s*[~`]{3}/g)) {
+                return text;
             }
-            return '```\n' + tag.text + '\n```';
+            return '```\n' + text + '\n```';
     }
 
-    return tag.text;
+    return text;
 }
 
-export function asPlainText(parts: undefined): undefined;
-export function asPlainText(parts: tsp.SymbolDisplayPart[]): string;
-export function asPlainText(parts: tsp.SymbolDisplayPart[] | undefined): string | undefined;
-export function asPlainText(parts: tsp.SymbolDisplayPart[] | undefined): string | undefined {
-    if (!parts) {
-        return undefined;
+export function asPlainText(parts: string | tsp.SymbolDisplayPart[]): string {
+    if (typeof parts === 'string') {
+        return parts;
     }
     return parts.map(part => part.text).join('');
 }
 
-export namespace Position {
+namespace Position {
     export function Min(): undefined;
     export function Min(...positions: lsp.Position[]): lsp.Position;
     export function Min(...positions: lsp.Position[]): lsp.Position | undefined {

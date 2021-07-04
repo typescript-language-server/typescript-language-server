@@ -55,7 +55,7 @@ function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.
     return shouldInclude;
 }
 
-export function collectSymbolInformations(uri: string, current: tsp.NavigationTree, symbols: lsp.SymbolInformation[], containerName?: string): boolean {
+export function collectSymbolInformation(uri: string, current: tsp.NavigationTree, symbols: lsp.SymbolInformation[], containerName?: string): boolean {
     let shouldInclude = shouldIncludeEntry(current);
     const name = current.text;
     for (const span of current.spans) {
@@ -64,7 +64,7 @@ export function collectSymbolInformations(uri: string, current: tsp.NavigationTr
         if (current.childItems) {
             for (const child of current.childItems) {
                 if (child.spans.some(span => !!Range.intersection(range, asRange(span)))) {
-                    const includedChild = collectSymbolInformations(uri, child, children, name);
+                    const includedChild = collectSymbolInformation(uri, child, children, name);
                     shouldInclude = shouldInclude || includedChild;
                 }
             }

@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import tsp from 'typescript/lib/protocol';
+import type tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
 import { ScriptElementKind } from './tsp-command-types';
 import { asRange, toTextEdit, asPlainText, asDocumentation } from './protocol-translation';
@@ -16,7 +16,7 @@ export interface TSCompletionItem extends lsp.CompletionItem {
     data: tsp.CompletionDetailsRequestArgs;
 }
 
-export function asCompletionItem(entry: import('typescript/lib/protocol').CompletionEntry, file: string, position: lsp.Position, document: LspDocument): TSCompletionItem {
+export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument): TSCompletionItem {
     const item: TSCompletionItem = {
         label: entry.name,
         kind: asCompletionItemKind(entry.kind),
@@ -70,7 +70,7 @@ export function asCompletionItem(entry: import('typescript/lib/protocol').Comple
     return item;
 }
 
-export function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
+function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
     switch (kind) {
         case ScriptElementKind.primitiveType:
         case ScriptElementKind.keyword:
@@ -114,7 +114,7 @@ export function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionIte
     return lsp.CompletionItemKind.Property;
 }
 
-export function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
+function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
     const commitCharacters: string[] = [];
     switch (kind) {
         case ScriptElementKind.memberGetAccessorElement:
@@ -152,7 +152,7 @@ export function asResolvedCompletionItem(item: TSCompletionItem, details: tsp.Co
     return item;
 }
 
-export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
+function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
     command?: lsp.Command; additionalTextEdits?: lsp.TextEdit[];
 } {
     if (!details.codeActions || !details.codeActions.length) {
@@ -163,10 +163,10 @@ export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: str
     // Also check if we still have to apply other workspace edits and commands
     // using a vscode command
     const additionalTextEdits: lsp.TextEdit[] = [];
-    let hasReaminingCommandsOrEdits = false;
+    let hasRemainingCommandsOrEdits = false;
     for (const tsAction of details.codeActions) {
         if (tsAction.commands) {
-            hasReaminingCommandsOrEdits = true;
+            hasRemainingCommandsOrEdits = true;
         }
 
         // Apply all edits in the current file using `additionalTextEdits`
@@ -177,14 +177,14 @@ export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: str
                         additionalTextEdits.push(toTextEdit(textChange));
                     }
                 } else {
-                    hasReaminingCommandsOrEdits = true;
+                    hasRemainingCommandsOrEdits = true;
                 }
             }
         }
     }
 
     let command: lsp.Command | undefined = undefined;
-    if (hasReaminingCommandsOrEdits) {
+    if (hasRemainingCommandsOrEdits) {
         // Create command that applies all edits not in the current file.
         command = {
             title: '',
@@ -203,11 +203,11 @@ export function asCodeActions(details: tsp.CompletionEntryDetails, filepath: str
     };
 }
 
-export function asDetail({ displayParts, source }: tsp.CompletionEntryDetails): string | undefined {
+function asDetail({ displayParts, sourceDisplay, source: deprecatedSource }: tsp.CompletionEntryDetails): string | undefined {
     const result: string[] = [];
-    const importPath = asPlainText(source);
-    if (importPath) {
-        result.push(`Auto import from '${importPath}'`);
+    const source = sourceDisplay || deprecatedSource;
+    if (source) {
+        result.push(`Auto import from '${asPlainText(source)}'`);
     }
     const detail = asPlainText(displayParts);
     if (detail) {
