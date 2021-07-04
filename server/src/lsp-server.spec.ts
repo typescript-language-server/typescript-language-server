@@ -26,8 +26,9 @@ before(async () => {
     });
 });
 beforeEach(() => {
-    diagnostics = [];
     server.closeAll();
+    // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+    diagnostics = [];
 });
 
 after(() => {
@@ -145,7 +146,6 @@ describe('diagnostics', () => {
             textDocument: doc
         });
 
-        server.requestDiagnostics();
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const diagnosticsForThisFile = diagnostics.filter(d => d!.uri === doc.uri);
@@ -153,6 +153,41 @@ describe('diagnostics', () => {
         const fileDiagnostics = diagnosticsForThisFile[0]!.diagnostics;
         assert.equal(fileDiagnostics.length, 1);
         assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
+    }).timeout(10000);
+
+    it('supports diagnostic tags', async () => {
+        const doc = {
+            uri: uri('diagnosticsBar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+        import { join } from 'path';
+        /**
+         * @deprecated
+         */
+        function foo(): void {
+        }
+
+        foo();
+      `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        // assert.deepEqual(JSON.stringify(diagnostics, null, 2), '');
+        const resultsForFile = diagnostics.find(d => d!.uri === doc.uri);
+        assert.isDefined(resultsForFile);
+        const fileDiagnostics = resultsForFile!.diagnostics;
+        assert.equal(fileDiagnostics.length, 2);
+        const unusedDiagnostic = fileDiagnostics.find(d => d.code === 6133);
+        assert.isDefined(unusedDiagnostic);
+        assert.deepEqual(unusedDiagnostic!.tags, [lsp.DiagnosticTag.Unnecessary]);
+        const deprecatedDiagnostic = fileDiagnostics.find(d => d.code === 6387);
+        assert.isDefined(deprecatedDiagnostic);
+        assert.deepEqual(deprecatedDiagnostic!.tags, [lsp.DiagnosticTag.Deprecated]);
     }).timeout(10000);
 
     it('multiple files test', async () => {
@@ -337,7 +372,6 @@ describe('editing', () => {
                 }
             ]
         });
-        await server.requestDiagnostics();
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const fileDiagnostics = diagnostics.filter(d => d!.uri === doc.uri)[0]!.diagnostics;
@@ -832,7 +866,6 @@ describe('diagnostics (no client support)', () => {
             textDocument: doc
         });
 
-        server.requestDiagnostics();
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const diagnosticsForThisFile = diagnostics.filter(d => d!.uri === doc.uri);
