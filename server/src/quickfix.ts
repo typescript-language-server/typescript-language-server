@@ -5,12 +5,12 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
 import { toTextDocumentEdit } from './protocol-translation';
 import { LspDocuments } from './document';
-import { CodeActionKind } from 'vscode-languageserver';
+import { CodeActionKind } from 'vscode-languageserver/node';
 
 export function provideQuickFix(response: tsp.GetCodeFixesResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
     if (!response || !response.body) {

@@ -7,10 +7,11 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import { pathToUri } from './protocol-translation';
 import { LspServer } from './lsp-server';
 import { ConsoleLogger } from './logger';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
 export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
     return {
@@ -18,7 +19,8 @@ export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
             documentSymbol: {
                 hierarchicalDocumentSymbolSupport: true
             },
-            publishDiagnostics: {}
+            publishDiagnostics: {},
+            moniker: {}
         }
     };
 }
@@ -37,7 +39,7 @@ export function readContents(path: string): string {
 }
 
 export function positionAt(document: lsp.TextDocumentItem, idx: number): lsp.Position {
-    const doc = lsp.TextDocument.create(document.uri, document.languageId, document.version, document.text);
+    const doc = TextDocument.create(document.uri, document.languageId, document.version, document.text);
     const pos = doc.positionAt(idx);
     return {
         line: pos.line,

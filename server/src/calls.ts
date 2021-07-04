@@ -1,10 +1,11 @@
 
 import tsp from 'typescript/lib/protocol';
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { TspClient } from './tsp-client';
 import { CommandTypes } from './tsp-command-types';
 import { uriToPath, toLocation, asRange, Range, toSymbolKind, pathToUri } from './protocol-translation';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
 export async function computeCallers(tspClient: TspClient, args: lsp.TextDocumentPositionParams): Promise<lspcalls.CallsResult> {
     const nullResult = { calls: [] };
@@ -31,7 +32,7 @@ export async function computeCallers(tspClient: TspClient, args: lsp.TextDocumen
     }
     return { calls, symbol: contextSymbol };
 }
-export type DocumentProvider = (file: string) => lsp.TextDocument | undefined;
+export type DocumentProvider = (file: string) => TextDocument | undefined;
 export async function computeCallees(tspClient: TspClient, args: lsp.TextDocumentPositionParams, documentProvider: DocumentProvider): Promise<lspcalls.CallsResult> {
     const nullResult = { calls: [] };
     const contextDefinition = await getDefinition(tspClient, args);
@@ -69,7 +70,7 @@ async function findOutgoingCalls(tspClient: TspClient, contextSymbol: lspcalls.D
      * As long as we are not able to access the AST in a tsserver plugin and return the information necessary as metadata to the reponse,
      * we need to test possible calls.
      */
-    const computeCallCandidates = (document: lsp.TextDocument, range: lsp.Range): lsp.Range[] => {
+    const computeCallCandidates = (document: TextDocument, range: lsp.Range): lsp.Range[] => {
         const symbolText = document.getText(range);
         const regex = /\W([$_a-zA-Z0-9\u{00C0}-\u{E007F}]+)(<.*>)?\(/gmu; // Example: matches `candidate` in " candidate()", "Foo.candidate<T>()", etc.
         let match = regex.exec(symbolText);

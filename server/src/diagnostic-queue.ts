@@ -6,7 +6,7 @@
  */
 
 import tsp from 'typescript/lib/protocol';
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import { Logger } from './logger';
 import { pathToUri, toDiagnostic } from './protocol-translation';
 import { EventTypes } from './tsp-command-types';
