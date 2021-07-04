@@ -162,12 +162,9 @@ describe('diagnostics', () => {
             version: 1,
             text: `
         import { join } from 'path';
-        /**
-         * @deprecated
-         */
-        function foo(): void {
-        }
 
+        /** @deprecated */
+        function foo(): void {}
         foo();
       `
         };
