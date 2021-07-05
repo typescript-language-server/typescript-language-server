@@ -35,13 +35,8 @@
         "publish:next": "lerna publish --registry=https://registry.npmjs.org/ --exact --canary=next --npm-tag=next --force-publish --skip-git --yes",
         "publish:dev": "lerna publish --registry=https://registry.npmjs.org/ --exact --canary=dev --npm-tag=dev --force-publish --skip-git --yes"
     },
-    "workspaces": {
-        "packages": [
-            "server",
-            "example"
-        ],
-        "nohoist": [
-            "*/monaco-languageclient/*"
-        ]
-    }
+    "workspaces": [
+        "server",
+        "example"
+    ]
 }

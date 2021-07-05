@@ -8,7 +8,6 @@
 const path = require('path');
 const fs = require('fs');
 const lib = path.resolve(__dirname, "lib");
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 fs.writeFileSync(path.resolve(lib, "index.html"), `<!DOCTYPE html>
 <html>
@@ -31,22 +30,22 @@ fs.writeFileSync(path.resolve(lib, "index.html"), `<!DOCTYPE html>
 module.exports = {
     entry: {
         "main": path.resolve(lib, "main.js"),
+        "editor.worker": 'monaco-editor-core/esm/vs/editor/editor.worker.js'
     },
     output: {
         filename: '[name].bundle.js',
         path: lib
     },
     module: {
-        rules: [
-            {
-                test: /\.css$/,
-                use: ['style-loader', 'css-loader']
-            },
-            {
-                test: /\.ttf$/,
-                loader: 'file-loader'
-            }
-        ]
+        rules: [{
+            test: /\.css$/,
+            use: ['style-loader', 'css-loader']
+        },
+        {
+            test: /\\.js$/,
+            enforce: 'pre',
+            loader: 'source-map-loader'
+        }]
     },
     devtool: 'source-map',
     target: 'web',
@@ -60,10 +59,5 @@ module.exports = {
         alias: {
             'vscode': require.resolve('monaco-languageclient/lib/vscode-compatibility')
         }
-    },
-    plugins: [
-        new MonacoWebpackPlugin({
-            globalAPI: true
-        })
-    ]
+    }
 };
