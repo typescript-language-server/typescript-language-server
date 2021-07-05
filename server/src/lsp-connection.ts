@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 
 import { LspClientLogger } from './logger';
@@ -19,8 +19,8 @@ export interface IServerOptions {
     showMessageLevel: lsp.MessageType;
 }
 
-export function createLspConnection(options: IServerOptions): lsp.IConnection {
-    const connection = lsp.createConnection();
+export function createLspConnection(options: IServerOptions): lsp.Connection {
+    const connection = lsp.createConnection(lsp.ProposedFeatures.all);
     const lspClient = new LspClientImpl(connection);
     const logger = new LspClientLogger(lspClient, options.showMessageLevel);
     const server: LspServer = new LspServer({

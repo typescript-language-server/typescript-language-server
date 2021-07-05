@@ -9,7 +9,7 @@
 import { Command } from 'commander';
 import { getTsserverExecutable } from './utils';
 import { createLspConnection } from './lsp-connection';
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 
 const program = new Command('typescript-language-server')
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

@@ -5,10 +5,10 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
-import { CodeActionKind } from 'vscode-languageserver';
+import { CodeActionKind } from 'vscode-languageserver/node';
 
 export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined): Array<lsp.CodeAction> {
     if (!response) {

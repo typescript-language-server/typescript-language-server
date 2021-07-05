@@ -7,12 +7,12 @@
 
 import * as path from 'path';
 import tempy from 'tempy';
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
-import { CodeActionKind } from 'vscode-languageserver';
+import { CodeActionKind } from 'vscode-languageserver/node';
 import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
@@ -325,21 +325,21 @@ export class LspServer {
         }
 
         for (const change of params.contentChanges) {
-            let line,
-                offset,
-                endLine,
-                endOffset = 0;
-            if (!change.range) {
+            let line = 0;
+            let offset = 0;
+            let endLine = 0;
+            let endOffset = 0;
+            if (lsp.TextDocumentContentChangeEvent.isIncremental(change)) {
+                line = change.range.start.line + 1;
+                offset = change.range.start.character + 1;
+                endLine = change.range.end.line + 1;
+                endOffset = change.range.end.character + 1;
+            } else {
                 line = 1;
                 offset = 1;
                 const endPos = document.positionAt(document.getText().length);
                 endLine = endPos.line + 1;
                 endOffset = endPos.character + 1;
-            } else {
-                line = change.range.start.line + 1;
-                offset = change.range.start.character + 1;
-                endLine = change.range.end.line + 1;
-                endOffset = change.range.end.character + 1;
             }
             this.tspClient.notify(CommandTypes.Change, {
                 file,
@@ -889,7 +889,7 @@ export class LspServer {
     /**
      * implemented based on https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/folding.ts
      */
-    async foldingRanges(params: lsp.FoldingRangeRequestParam): Promise<lsp.FoldingRange[] | undefined> {
+    async foldingRanges(params: lsp.FoldingRangeParams): Promise<lsp.FoldingRange[] | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('foldingRanges', params, file);
         if (!file) {

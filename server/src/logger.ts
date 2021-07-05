@@ -6,7 +6,7 @@
  */
 
 import { LspClient } from './lsp-client';
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 
 /**
  * the logger type

@@ -4,9 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { RequestHandler } from 'vscode-jsonrpc';
 import { Location, SymbolKind, Range, DocumentSymbol } from 'vscode-languageserver-types';
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 
 export interface CallsClientCapabilities {
     /**
@@ -40,7 +40,7 @@ export interface CallsServerCapabilities {
  * Thenable that resolves to such.
  */
 export namespace CallsRequest {
-    export const type = new RequestType<CallsParams, CallsResult, void, lsp.TextDocumentRegistrationOptions>('textDocument/calls');
+    export const type = new lsp.RequestType<CallsParams, CallsResult, lsp.TextDocumentRegistrationOptions>('textDocument/calls');
     export type HandlerSignature = RequestHandler<CallsParams, CallsResult | null, void>;
 }
 

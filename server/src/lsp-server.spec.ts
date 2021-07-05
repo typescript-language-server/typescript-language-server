@@ -6,12 +6,12 @@
  */
 
 import * as chai from 'chai';
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities } from './test-utils';
-import { TextDocument } from 'vscode-languageserver';
 import { TSCompletionItem } from './completion';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
 const assert = chai.assert;
 
@@ -394,7 +394,7 @@ describe('formatting', () => {
                 insertSpaces: true
             }
         });
-        const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('export function foo(): void { }', result);
     }).timeout(10000);
 
@@ -411,7 +411,7 @@ describe('formatting', () => {
                 insertSpaces: true
             }
         });
-        const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n   // some code\n}', result);
     }).timeout(10000);
 
@@ -428,7 +428,7 @@ describe('formatting', () => {
                 insertSpaces: false
             }
         });
-        const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n\t// some code\n}', result);
     }).timeout(10000);
 
@@ -455,7 +455,7 @@ describe('formatting', () => {
                 insertSpaces: true
             }
         });
-        const result = lsp.TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}', result);
     }).timeout(10000);
 });

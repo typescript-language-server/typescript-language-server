@@ -5,14 +5,15 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
-export class LspDocument implements lsp.TextDocument {
-    protected document: lsp.TextDocument;
+export class LspDocument implements TextDocument {
+    protected document: TextDocument;
 
     constructor(doc: lsp.TextDocumentItem) {
         const { uri, languageId, version, text } = doc;
-        this.document = lsp.TextDocument.create(uri, languageId, version, text);
+        this.document = TextDocument.create(uri, languageId, version, text);
     }
 
     get uri(): string {
@@ -71,12 +72,12 @@ export class LspDocument implements lsp.TextDocument {
     applyEdit(version: number, change: lsp.TextDocumentContentChangeEvent): void {
         const content = this.getText();
         let newContent = change.text;
-        if (change.range) {
+        if (lsp.TextDocumentContentChangeEvent.isIncremental(change)) {
             const start = this.offsetAt(change.range.start);
             const end = this.offsetAt(change.range.end);
             newContent = content.substr(0, start) + change.text + content.substr(end);
         }
-        this.document = lsp.TextDocument.create(this.uri, this.languageId, version, newContent);
+        this.document = TextDocument.create(this.uri, this.languageId, version, newContent);
     }
 }
 

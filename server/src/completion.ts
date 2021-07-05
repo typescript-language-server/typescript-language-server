@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import type tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
 import { ScriptElementKind } from './tsp-command-types';

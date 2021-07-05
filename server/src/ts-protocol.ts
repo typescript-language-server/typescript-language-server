@@ -12,7 +12,7 @@ import * as lsp from 'vscode-languageserver-protocol';
 import { UserPreferences } from 'typescript/lib/protocol';
 
 export namespace TypeScriptRenameRequest {
-    export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, any, void, void>('_typescript.rename');
+    export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
 }
 
 export interface TypeScriptPlugin {

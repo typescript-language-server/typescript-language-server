@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import * as lsp from 'vscode-languageserver/node';
 import { TypeScriptRenameRequest } from './ts-protocol';
 
 export interface LspClient {
@@ -18,7 +18,7 @@ export interface LspClient {
 }
 
 export class LspClientImpl implements LspClient {
-    constructor(protected connection: lsp.IConnection) {
+    constructor(protected connection: lsp.Connection) {
     }
 
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void {
