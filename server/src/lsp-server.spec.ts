@@ -9,7 +9,7 @@ import * as chai from 'chai';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
-import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities } from './test-utils';
+import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter } from './test-utils';
 import { TSCompletionItem } from './completion';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -51,14 +51,13 @@ describe('completion', () => {
             textDocument: doc
         });
         const pos = position(doc, 'console');
-        const proposals = await server.completion({
-            textDocument: doc,
-            position: pos
-        }) as TSCompletionItem[];
-        assert.isTrue(proposals.length > 800, String(proposals.length));
-        const item = proposals.filter(i => i.label === 'addEventListener')[0];
-        const resolvedItem = await server.completionResolve(item);
-        assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
+        const proposals = await server.completion({ textDocument: doc, position: pos });
+        assert.isNotNull(proposals);
+        assert.isAbove(proposals!.items.length, 800);
+        const item = proposals!.items.find(i => i.label === 'addEventListener');
+        assert.isDefined(item);
+        const resolvedItem = await server.completionResolve(item!);
+        assert.isDefined(resolvedItem.detail, JSON.stringify(resolvedItem, undefined, 2));
         server.didCloseTextDocument({
             textDocument: doc
         });
@@ -79,16 +78,14 @@ describe('completion', () => {
             textDocument: doc
         });
         const pos = position(doc, 'console');
-        const proposals = await server.completion({
-            textDocument: doc,
-            position: pos
-        }) as TSCompletionItem[];
-        assert.isTrue(proposals.length > 800, String(proposals.length));
-        const item = proposals.filter(i => i.label === 'addEventListener')[0];
-        const resolvedItem = await server.completionResolve(item);
+        const proposals = await server.completion({ textDocument: doc, position: pos });
+        assert.isNotNull(proposals);
+        assert.isAbove(proposals!.items.length, 800);
+        const item = proposals!.items.find(i => i.label === 'addEventListener');
+        const resolvedItem = await server.completionResolve(item!);
         assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
 
-        const containsInvalidCompletions = proposals.reduce((accumulator, current) => {
+        const containsInvalidCompletions = proposals!.items.reduce((accumulator, current) => {
             if (accumulator) {
                 return accumulator;
             }
@@ -119,11 +116,55 @@ describe('completion', () => {
             textDocument: doc
         });
         const pos = position(doc, 'foo');
-        const proposals = await server.completion({
-            textDocument: doc,
-            position: pos
-        }) as TSCompletionItem[];
-        assert.isTrue(proposals === null);
+        const proposals = await server.completion({ textDocument: doc, position: pos });
+        assert.isNull(proposals);
+        server.didCloseTextDocument({
+            textDocument: doc
+        });
+    }).timeout(10000);
+
+    it('includes completions from global modules', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'pathex'
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const proposals = await server.completion({ textDocument: doc, position: position(doc, 'ex') });
+        assert.isNotNull(proposals);
+        const pathExistsCompletion = proposals!.items.find(completion => completion.label === 'pathExists');
+        assert.isDefined(pathExistsCompletion);
+        server.didCloseTextDocument({
+            textDocument: doc
+        });
+    }).timeout(10000);
+
+    it('includes completions with invalid identifier names', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                interface Foo {
+                    'invalid-identifier-name': string
+                }
+
+                const foo: Foo
+                foo.i
+            `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.i') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'invalid-identifier-name');
+        assert.isDefined(completion);
+        assert.isDefined(completion!.textEdit);
+        assert.equal(completion!.textEdit!.newText, '["invalid-identifier-name"]');
         server.didCloseTextDocument({
             textDocument: doc
         });

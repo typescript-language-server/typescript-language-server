@@ -104,12 +104,18 @@ export class LspServer {
             );
         }
 
-        const { logVerbosity, plugins, preferences, hostInfo }: TypeScriptInitializationOptions = {
-            logVerbosity: this.options.tsserverLogVerbosity,
-            plugins: [],
-            preferences: {},
-            ...this.initializeParams.initializationOptions
+        const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
+        const { hostInfo } = userInitializationOptions;
+        const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
+            logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
+            plugins: userInitializationOptions.plugins || [],
+            preferences: {
+                includeCompletionsForModuleExports: true,
+                includeCompletionsWithInsertText: true,
+                ...userInitializationOptions.preferences
+            }
         };
+
         const logFile = this.getLogFile(logVerbosity);
         const globalPlugins: string[] = [];
         const pluginProbeLocations: string[] = [];
@@ -435,11 +441,11 @@ export class LspServer {
      * implemented based on
      * https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/completions.ts
      */
-    async completion(params: lsp.CompletionParams): Promise<TSCompletionItem[] | null> {
+    async completion(params: lsp.CompletionParams): Promise<lsp.CompletionList | null> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('completion', params, file);
         if (!file) {
-            return [];
+            return lsp.CompletionList.create([]);
         }
 
         const document = this.documents.get(file);
@@ -448,17 +454,16 @@ export class LspServer {
         }
 
         try {
-            const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.Completions, {
+            const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionInfo, {
                 file,
                 line: params.position.line + 1,
-                offset: params.position.character + 1,
-                includeExternalModuleExports: true,
-                includeInsertTextCompletions: true
+                offset: params.position.character + 1
             }));
-            const body = result.body || [];
-            return body
+            const { body } = result;
+            const completions = (body ? body.entries : [])
                 .filter(entry => entry.kind !== 'warning')
                 .map(entry => asCompletionItem(entry, file, params.position, document));
+            return lsp.CompletionList.create(completions, body?.isIncomplete);
         } catch (error) {
             if (error.message === 'No content available.') {
                 this.logger.info('No content was available for completion request');
@@ -469,7 +474,7 @@ export class LspServer {
         }
     }
 
-    async completionResolve(item: TSCompletionItem): Promise<lsp.CompletionItem> {
+    async completionResolve(item: lsp.CompletionItem): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
         const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
         const details = body && body.length && body[0];

@@ -58,6 +58,10 @@ export function position(document: lsp.TextDocumentItem, match: string): lsp.Pos
     return positionAt(document, document.text.indexOf(match));
 }
 
+export function positionAfter(document: lsp.TextDocumentItem, match: string): lsp.Position {
+    return positionAt(document, document.text.indexOf(match) + match.length);
+}
+
 export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp.Position {
     return positionAt(document, document.text.lastIndexOf(match));
 }
