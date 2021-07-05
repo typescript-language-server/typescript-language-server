@@ -8,10 +8,7 @@ import { listen, MessageConnection } from 'vscode-ws-jsonrpc';
 import {
     MonacoLanguageClient, CloseAction, ErrorAction,
     MonacoServices, createConnection,
-    ProtocolToMonacoConverter,
-    Position
 } from 'monaco-languageclient';
-import { TypeScriptRenameRequest } from 'typescript-language-server/lib/ts-protocol';
 import normalizeUrl = require('normalize-url');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
@@ -46,7 +43,6 @@ const editor = monaco.editor.create(document.getElementById("container")!, {
 
 // install Monaco language client services
 MonacoServices.install(editor, { rootUri });
-const p2m = new ProtocolToMonacoConverter();
 
 // create the web socket
 const url = createUrl('/sampleServer')
@@ -58,9 +54,14 @@ listen({
         // create and start the language client
         const languageClient = createLanguageClient(connection);
         languageClient.onReady().then(() => {
-            languageClient.onRequest(TypeScriptRenameRequest.type, params => {
-                editor.setPosition(p2m.asPosition((params as any).position as Position));
-                editor.trigger('', 'editor.action.rename', {});
+            console.log('registering notification listeners')
+
+            languageClient.onNotification('window/logMessage', (notification) => {
+                console.log('window/logMessage', notification)
+            });
+
+            languageClient.onNotification('window/showMessage', (notification) => {
+                alert(notification);
             });
         });
         const disposable = languageClient.start();
