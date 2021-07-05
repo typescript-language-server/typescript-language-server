@@ -6,7 +6,7 @@
  */
 import * as rpc from "vscode-ws-jsonrpc/lib";
 import * as server from "vscode-ws-jsonrpc/lib/server";
-import * as lsp from "vscode-languageserver/lib/main";
+import * as lsp from "vscode-languageserver";
 
 export function launch(socket: rpc.IWebSocket) {
     const reader = new rpc.WebSocketMessageReader(socket);

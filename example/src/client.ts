@@ -4,6 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
+import * as monaco from 'monaco-editor'
 import { listen, MessageConnection } from 'vscode-ws-jsonrpc';
 import {
     MonacoLanguageClient, CloseAction, ErrorAction,
@@ -57,8 +58,8 @@ listen({
         // create and start the language client
         const languageClient = createLanguageClient(connection);
         languageClient.onReady().then(() => {
-            languageClient.onRequest(TypeScriptRenameRequest.type, params => {
-                editor.setPosition(p2m.asPosition(params.position));
+            languageClient.onRequest(TypeScriptRenameRequest.type as any, (params: any) => {
+                editor.setPosition(p2m.asPosition(params.position) as any);
                 editor.trigger('', 'editor.action.rename', {});
             });
         });
