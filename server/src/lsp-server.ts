@@ -99,6 +99,7 @@ export class LspServer {
             this.diagnosticQueue = new DiagnosticEventQueue(
                 diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
                 this.documents,
+                this.initializeParams.capabilities.textDocument.publishDiagnostics,
                 this.logger
             );
         }

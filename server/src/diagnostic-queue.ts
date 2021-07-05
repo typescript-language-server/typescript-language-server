@@ -19,7 +19,8 @@ class FileDiagnostics {
     constructor(
         protected readonly uri: string,
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
-        protected readonly documents: LspDocuments
+        protected readonly documents: LspDocuments,
+        protected readonly publishDiagnosticsCapabilities: NonNullable<lsp.TextDocumentClientCapabilities['publishDiagnostics']>
     ) { }
 
     update(kind: EventTypes, diagnostics: tsp.Diagnostic[]): void {
@@ -35,7 +36,7 @@ class FileDiagnostics {
         const result: lsp.Diagnostic[] = [];
         for (const diagnostics of this.diagnosticsPerKind.values()) {
             for (const diagnostic of diagnostics) {
-                result.push(toDiagnostic(diagnostic, this.documents));
+                result.push(toDiagnostic(diagnostic, this.documents, this.publishDiagnosticsCapabilities));
             }
         }
         return result;
@@ -48,6 +49,7 @@ export class DiagnosticEventQueue {
     constructor(
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly documents: LspDocuments,
+        protected readonly publishDiagnosticsCapabilities: NonNullable<lsp.TextDocumentClientCapabilities['publishDiagnostics']>,
         protected readonly logger: Logger
     ) { }
 
@@ -58,7 +60,8 @@ export class DiagnosticEventQueue {
         }
         const { file } = event.body;
         const uri = pathToUri(file, this.documents);
-        const diagnostics = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.documents);
+        const diagnostics = this.diagnostics.get(uri) || new FileDiagnostics(
+            uri, this.publishDiagnostics, this.documents, this.publishDiagnosticsCapabilities);
         diagnostics.update(kind, event.body.diagnostics);
         this.diagnostics.set(uri, diagnostics);
     }

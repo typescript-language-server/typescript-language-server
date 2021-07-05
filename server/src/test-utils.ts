@@ -19,7 +19,14 @@ export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
             documentSymbol: {
                 hierarchicalDocumentSymbolSupport: true
             },
-            publishDiagnostics: {},
+            publishDiagnostics: {
+                tagSupport: {
+                    valueSet: [
+                        lsp.DiagnosticTag.Unnecessary,
+                        lsp.DiagnosticTag.Deprecated
+                    ]
+                }
+            },
             moniker: {}
         }
     };
