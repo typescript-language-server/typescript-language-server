@@ -12,7 +12,7 @@ import { ScriptElementKind } from './tsp-command-types';
 import { asRange, toTextEdit, asPlainText, asDocumentation } from './protocol-translation';
 import { Commands } from './commands';
 
-export interface TSCompletionItem extends lsp.CompletionItem {
+interface TSCompletionItem extends lsp.CompletionItem {
     data: tsp.CompletionDetailsRequestArgs;
 }
 

@@ -10,7 +10,6 @@ import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter } from './test-utils';
-import { TSCompletionItem } from './completion';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 const assert = chai.assert;
