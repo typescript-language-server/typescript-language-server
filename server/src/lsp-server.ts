@@ -28,7 +28,7 @@ import {
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
-import { asCompletionItem, TSCompletionItem, asResolvedCompletionItem } from './completion';
+import { asCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
 import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
