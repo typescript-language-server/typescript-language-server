@@ -105,7 +105,7 @@ export class TspClient {
         this.logger.info(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
         const tsserverPathIsModule = path.extname(tsserverPath) === '.js';
         this.tsserverProc = tsserverPathIsModule
-            ? cp.fork(tsserverPath, args, { silent: true })
+            ? cp.fork(tsserverPath, args, { silent: true, execArgv: [] })
             : cp.spawn(tsserverPath, args);
         this.readlineInterface = readline.createInterface(this.tsserverProc.stdout, this.tsserverProc.stdin, undefined);
         process.on('exit', () => {
