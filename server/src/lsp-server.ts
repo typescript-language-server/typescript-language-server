@@ -69,13 +69,14 @@ export class LspServer {
         if (this.options.tsserverPath) {
             return this.options.tsserverPath;
         }
+        const tsServerPath = path.join('typescript', 'lib', 'tsserver.js');
         // 1) look into .yarn/sdks of workspace root
-        const sdk = findPathToYarnSdk(this.rootPath(), path.join('typescript', 'lib', 'tsserver.js'));
+        const sdk = findPathToYarnSdk(this.rootPath(), tsServerPath);
         if (sdk) {
             return sdk;
         }
         // 2) look into node_modules of workspace root
-        const executable = findPathToModule(this.rootPath(), `.bin/${getTsserverExecutable()}`);
+        const executable = findPathToModule(this.rootPath(), tsServerPath);
         if (executable) {
             return executable;
         }
@@ -84,7 +85,7 @@ export class LspServer {
             return getTsserverExecutable();
         }
         // 4) look into node_modules of typescript-language-server
-        const bundled = findPathToModule(__dirname, path.join('typescript', 'lib', 'tsserver.js'));
+        const bundled = findPathToModule(__dirname, tsServerPath);
         if (!bundled) {
             throw Error(`Couldn't find '${getTsserverExecutable()}' executable or 'tsserver.js' module`);
         }
