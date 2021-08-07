@@ -7,9 +7,9 @@
 
 [![https://nodei.co/npm/typescript-language-server.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/typescript-language-server.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/typescript-language-server)
 
-Based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server.
+Based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server and originally maintained by [TypeFox](https://typefox.io)
 
-Maintained by [TypeFox](https://typefox.io) and others.
+Maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you
 
 # Supported Protocol features
 
