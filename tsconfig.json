@@ -1,11 +1,26 @@
 {
-    "files": [],
-    "extends": "./tsconfig.settings.json",
     "compilerOptions": {
         "outDir": "lib",
         "rootDir": "src"
     },
     "include": [
         "src"
-    ]
+    ],
+    "compilerOptions": {
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "target": "es6",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "lib": [
+            "es6"
+        ],
+        "alwaysStrict": true,
+        "strictNullChecks": true,
+        "skipLibCheck": true,
+    }
 }
