@@ -1,5 +1,0 @@
-ports:
-  - port: 3000
-tasks:
-  - init: yarn
-    command: scripts/auth.sh && yarn start
