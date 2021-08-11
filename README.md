@@ -1,4 +1,3 @@
-[![Gitpod - Code Now](https://img.shields.io/badge/Gitpod-code%20now-blue.svg?longCache=true)](https://gitpod.io#https://github.com/theia-ide/typescript-language-server)
 [![Build Status](https://travis-ci.org/theia-ide/typescript-language-server.svg?branch=master)](https://travis-ci.org/theia-ide/typescript-language-server)
 [![Discord](https://img.shields.io/discord/873659987413573634)](https://discord.gg/AC7Vs6hwFa)
 
@@ -65,8 +64,6 @@ typescript-language-server --stdio
 
 # Development
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io#https://github.com/theia-ide/typescript-language-server)
-
 ### Build
 
 ```sh
@@ -83,18 +80,6 @@ yarn test
 
 ```sh
 yarn watch
-```
-
-### Bundle the example
-
-```sh
-yarn bundle
-```
-
-### Start the example
-
-```sh
-yarn start
 ```
 
 ### Publishing
