@@ -1,12 +1,10 @@
 {
-    "compilerOptions": {
-        "outDir": "lib",
-        "rootDir": "src"
-    },
     "include": [
         "src"
     ],
     "compilerOptions": {
+        "outDir": "lib",
+        "rootDir": "src",
         "composite": true,
         "declaration": true,
         "declarationMap": true,
