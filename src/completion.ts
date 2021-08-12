@@ -53,14 +53,21 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
     if (insertText && replacementRange && insertText[0] === '[') { // o.x -> o['x']
         item.filterText = '.' + item.label;
     }
-    if (entry.kindModifiers && entry.kindModifiers.match(/\boptional\b/)) {
-        if (!insertText) {
-            insertText = item.label;
+    if (entry.kindModifiers) {
+        const kindModifiers = new Set(entry.kindModifiers.split(/,|\s+/g));
+        if (kindModifiers.has('optional')) {
+            if (!insertText) {
+                insertText = item.label;
+            }
+            if (!item.filterText) {
+                item.filterText = item.label;
+            }
+            item.label += '?';
         }
-        if (!item.filterText) {
-            item.filterText = item.label;
+
+        if (kindModifiers.has('deprecated')) {
+            item.tags = [lsp.CompletionItemTag.Deprecated];
         }
-        item.label += '?';
     }
     if (insertText && replacementRange) {
         item.textEdit = lsp.TextEdit.replace(replacementRange, insertText);
@@ -148,13 +155,8 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 export function asResolvedCompletionItem(item: lsp.CompletionItem, details: tsp.CompletionEntryDetails): lsp.CompletionItem {
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);
-    item.deprecated = isDeprecated(details.tags);
     Object.assign(item, asCodeActions(details, item.data.file));
     return item;
-}
-
-function isDeprecated(tags?: tsp.JSDocTagInfo[]): boolean | undefined {
-    return tags?.some(tag => tag.name.toLowerCase() === 'deprecated');
 }
 
 function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {

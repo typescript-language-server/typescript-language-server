@@ -125,7 +125,8 @@ describe('completion', () => {
         assert.isDefined(item);
         const resolvedItem = await server.completionResolve(item!);
         assert.isDefined(resolvedItem.detail);
-        assert.isTrue(resolvedItem.deprecated, 'resolved item is deprecated');
+        assert.isArray(resolvedItem.tags);
+        assert.include(resolvedItem.tags!, lsp.CompletionItemTag.Deprecated, 'resolved item is deprecated');
         server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
