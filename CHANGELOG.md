@@ -1,6 +1,32 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2021-08-12
+
+- Refactor code actions to better support filtering against "only" (#170)
+- Support Yarn PnP (#220)
+- Update internal Typescript dependency from 3.9.0 to 4.3.4 (#226)
+- Only publish diagnostics if client supports the capability (#229)
+- Add support for "unnecessary" and "deprecated" diagnostic tags (#230)
+- Upgrade vscode-languageserver (#231)
+- Lookup tsserver using direct path rather than through .bin alias (#234)
+- Don't pass deprecated options to Completion request
+
+## [0.5.4] - 2021-07-01
+
+- Remove hardcoded request timeouts
+- Forward user preferences in `initializationOptions`
+- Use `require.resolve` for module resolution (#195)
+
+## [0.5.0] - 2021-01-16
+
+- Fix empty documentHighlight results due to inconsistent path delimiters
+- Update command line option `tssserver-log-verbosity` to support `off`
+- Call compilerOptionsForInferredProjects during initialization (set good defaults when tsconfig.json missing)
+- Remove warnings from LSP completion results
+- Add support for formatting range (textDocument/rangeFormatting)
+- Ensure TSP request cancellation cancels timeout handling
+
 ## [0.4.0] - 2019-08-28
 
 - Upgraded to LSP 5.3.0 and Monaco 0.17.0. [#115](https://github.com/theia-ide/typescript-language-server/pull/115)
