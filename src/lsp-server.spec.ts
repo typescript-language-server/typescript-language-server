@@ -52,15 +52,13 @@ describe('completion', () => {
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         assert.isNotNull(proposals);
-        assert.isAtLeast(proposals.length, 800);
-        const item = proposals.find(i => i.label === 'addEventListener');
+        assert.isAtLeast(proposals!.items.length, 800);
+        const item = proposals!.items.find(i => i.label === 'addEventListener');
         assert.isDefined(item);
-        const resolvedItem = await server.completionResolve(item);
+        const resolvedItem = await server.completionResolve(item!);
         assert.isNotTrue(resolvedItem.deprecated, 'resolved item is not deprecated');
         assert.isDefined(resolvedItem.detail);
-        server.didCloseTextDocument({
-            textDocument: doc
-        });
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
     it('simple JS test', async () => {
@@ -80,10 +78,10 @@ describe('completion', () => {
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         assert.isNotNull(proposals);
-        assert.isAtLeast(proposals.length, 800);
-        const item = proposals.find(i => i.label === 'addEventListener');
+        assert.isAtLeast(proposals!.items.length, 800);
+        const item = proposals!.items.find(i => i.label === 'addEventListener');
         assert.isDefined(item);
-        const resolvedItem = await server.completionResolve(item);
+        const resolvedItem = await server.completionResolve(item!);
         assert.isDefined(resolvedItem.detail);
 
         const containsInvalidCompletions = proposals!.items.reduce((accumulator, current) => {
@@ -97,9 +95,7 @@ describe('completion', () => {
         }, false);
 
         assert.isFalse(containsInvalidCompletions);
-        server.didCloseTextDocument({
-            textDocument: doc
-        });
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
     it('deprecated by JSDoc', async () => {
@@ -123,21 +119,14 @@ describe('completion', () => {
             textDocument: doc
         });
         const pos = position(doc, 'foo(); // call me');
-        const proposals = await server.completion({
-            textDocument: doc,
-            position: pos
-        }) as TSCompletionItem[];
-        const item = proposals.find(i => i.label === 'foo');
-        if (!item) {
-            assert.fail('missing foo completion');
-            return;
-        }
-        const resolvedItem = await server.completionResolve(item);
+        const proposals = await server.completion({ textDocument: doc, position: pos });
+        assert.isNotNull(proposals);
+        const item = proposals!.items.find(i => i.label === 'foo');
+        assert.isDefined(item);
+        const resolvedItem = await server.completionResolve(item!);
         assert.isDefined(resolvedItem.detail);
         assert.isTrue(resolvedItem.deprecated, 'resolved item is deprecated');
-        server.didCloseTextDocument({
-            textDocument: doc
-        });
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
     it('incorrect source location', async () => {
