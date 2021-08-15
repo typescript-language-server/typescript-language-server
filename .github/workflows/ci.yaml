@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         node-version: [12.x, 14.x, 16.x]
-    name: Use Node.js ${{ matrix.node-version }}
+    name: Linux (Node.js ${{ matrix.node-version }})
     steps:
       - uses: actions/checkout@v2
       - name: Setup node
@@ -40,7 +40,7 @@ jobs:
     strategy:
       matrix:
         node-version: [12.x, 14.x, 16.x]
-    name: Use Node.js ${{ matrix.node-version }}
+    name: Windows (Node.js ${{ matrix.node-version }})
     steps:
       - uses: actions/checkout@v2
       - name: Setup node
