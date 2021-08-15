@@ -12,12 +12,13 @@ import { ConsoleLogger } from './logger';
 import { filePath, readContents } from './test-utils';
 import { CommandTypes } from './tsp-command-types';
 import { findPathToModule } from './modules-resolver';
+import { getTsserverExecutable } from './utils';
 
 const assert = chai.assert;
 
 const executableServer = new TspClient({
     logger: new ConsoleLogger(),
-    tsserverPath: 'tsserver'
+    tsserverPath: getTsserverExecutable()
 });
 
 const tsserverModuleRelativePath = path.join('typescript', 'lib', 'tsserver.js');
