@@ -31,7 +31,7 @@
   "scripts": {
     "clean": "rimraf lib *.tsbuildinfo",
     "test": "mocha --exit --reporter spec \"./lib/**/*.spec.js\"",
-    "lint": "eslint --ext '.js,.ts' src",
+    "lint": "eslint --ext \".js,.ts\" src",
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
     "compile": "tsc -b",
     "watch": "tsc -b --watch --verbose"
