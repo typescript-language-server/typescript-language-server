@@ -8,7 +8,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as lsp from 'vscode-languageserver/node';
-import { pathToUri } from './protocol-translation';
+import { normalizeFileNameToFsPath, pathToUri } from './protocol-translation';
 import { LspServer } from './lsp-server';
 import { ConsoleLogger } from './logger';
 import { getTsserverExecutable } from './utils';
@@ -39,7 +39,7 @@ export function uri(suffix = ''): string {
 }
 
 export function filePath(suffix = ''): string {
-    return path.resolve(__dirname, '../test-data', suffix);
+    return normalizeFileNameToFsPath(path.resolve(__dirname, '../test-data', suffix));
 }
 
 export function readContents(path: string): string {
