@@ -8,9 +8,10 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as lsp from 'vscode-languageserver/node';
-import { pathToUri } from './protocol-translation';
+import { normalizeFileNameToFsPath, pathToUri } from './protocol-translation';
 import { LspServer } from './lsp-server';
 import { ConsoleLogger } from './logger';
+import { getTsserverExecutable } from './utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
@@ -38,7 +39,7 @@ export function uri(suffix = ''): string {
 }
 
 export function filePath(suffix = ''): string {
-    return path.resolve(__dirname, '../test-data', suffix);
+    return normalizeFileNameToFsPath(path.resolve(__dirname, '../test-data', suffix));
 }
 
 export function readContents(path: string): string {
@@ -75,7 +76,7 @@ export async function createServer(options: {
     const logger = new ConsoleLogger(false);
     const server = new LspServer({
         logger,
-        tsserverPath: 'tsserver',
+        tsserverPath: getTsserverExecutable(),
         tsserverLogVerbosity: options.tsserverLogVerbosity,
         tsserverLogFile: path.resolve(__dirname, '../tsserver.log'),
         lspClient: {

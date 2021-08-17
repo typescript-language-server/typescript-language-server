@@ -34,6 +34,18 @@ export function pathToUri(filepath: string, documents: LspDocuments | undefined)
     return document ? document.uri : fileUri.toString();
 }
 
+/**
+ * Normalizes the file system path.
+ *
+ * On systems other than Windows it should be an no-op.
+ *
+ * On Windows, an input path in a format like "c:/path/file.ts"
+ * will be normalized to "c:\path\file.ts" (same as returned through URI.fsPath).
+ */
+export function normalizeFileNameToFsPath(fileName: string): string {
+    return URI.file(fileName).fsPath;
+}
+
 function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
     const fileUri = URI.file(filepath);
     const document = documents && documents.get(fileUri.fsPath);
