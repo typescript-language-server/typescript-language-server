@@ -48,7 +48,7 @@ for (const [serverName, server] of Object.entries({ executableServer, moduleServ
             });
             assert.isDefined(completions.body);
             assert.equal(completions.body!.entries[1].name, 'ImageBitmap');
-        }).timeout(5000);
+        }).timeout(10000);
 
         it('references', async () => {
             const f = filePath('module2.ts');
@@ -63,7 +63,7 @@ for (const [serverName, server] of Object.entries({ executableServer, moduleServ
             });
             assert.isDefined(references.body);
             assert.equal(references.body!.symbolName, 'doStuff');
-        }).timeout(5000);
+        }).timeout(10000);
 
         it('documentHighlight', async () => {
             const f = filePath('module2.ts');
@@ -80,6 +80,6 @@ for (const [serverName, server] of Object.entries({ executableServer, moduleServ
             assert.isDefined(response.body);
             assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')), JSON.stringify(response.body, undefined, 2));
             assert.isFalse(response.body!.some(({ file: file_1 }) => file_1.endsWith('module1.ts')), JSON.stringify(response.body, undefined, 2));
-        }).timeout(5000);
+        }).timeout(10000);
     });
 }
