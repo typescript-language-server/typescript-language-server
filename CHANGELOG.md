@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2021-08-16
+
+- Fix Windows path regression introduced in #220 (#249)
+
 ## [0.6.0] - 2021-08-12
 
 - Refactor code actions to better support filtering against "only" (#170)

@@ -1,13 +1,15 @@
 import tsp from 'typescript/lib/protocol';
 import * as chai from 'chai';
 import { provideOrganizeImports } from './organize-imports';
+import { filePath } from './test-utils';
 
 describe('provideOrganizeImports', () => {
     it('converts tsserver response to lsp code actions', () => {
+        const fileName = filePath('file');
         const response = {
             body: [
                 {
-                    fileName: '/my/file',
+                    fileName,
                     textChanges: []
                 }
             ]
@@ -19,7 +21,7 @@ describe('provideOrganizeImports', () => {
             command: {
                 title: '',
                 command: '_typescript.organizeImports',
-                arguments: ['/my/file']
+                arguments: [fileName]
             }
         }];
         chai.assert.deepEqual(actual, expected);

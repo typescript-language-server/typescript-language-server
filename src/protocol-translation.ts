@@ -19,21 +19,31 @@ export function uriToPath(stringUri: string): string | undefined {
 }
 
 function parsePathOrUri(filepath: string): URI {
-    try {
-        // handles valid URIs from yarn pnp, will error if doesn't have scheme
-        // zipfile:/foo/bar/baz.zip::path/to/module
+    // handles valid URIs from yarn pnp, will error if doesn't have scheme
+    // zipfile:/foo/bar/baz.zip::path/to/module
+    if (filepath.startsWith('zipfile:')) {
         return URI.parse(filepath);
-    } catch {
-        // handles valid filepaths from everything else
-        // /path/to/module
-        return URI.file(filepath);
     }
+    // handles valid filepaths from everything else /path/to/module
+    return URI.file(filepath);
 }
 
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
     const fileUri = parsePathOrUri(filepath);
     const document = documents && documents.get(fileUri.fsPath);
     return document ? document.uri : fileUri.toString();
+}
+
+/**
+ * Normalizes the file system path.
+ *
+ * On systems other than Windows it should be an no-op.
+ *
+ * On Windows, an input path in a format like "c:/path/file.ts"
+ * will be normalized to "c:\path\file.ts" (same as returned through URI.fsPath).
+ */
+export function normalizeFileNameToFsPath(fileName: string): string {
+    return URI.file(fileName).fsPath;
 }
 
 function currentVersion(filepath: string, documents: LspDocuments | undefined): number {

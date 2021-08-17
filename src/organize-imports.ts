@@ -8,6 +8,7 @@
 import * as lsp from 'vscode-languageserver/node';
 import tsp from 'typescript/lib/protocol';
 import { Commands } from './commands';
+import { normalizeFileNameToFsPath } from './protocol-translation';
 import { CodeActionKind } from 'vscode-languageserver/node';
 
 export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined): Array<lsp.CodeAction> {
@@ -16,7 +17,7 @@ export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | u
     }
     return response.body.map(edit => lsp.CodeAction.create(
         'Organize imports',
-        lsp.Command.create('', Commands.ORGANIZE_IMPORTS, edit.fileName),
+        lsp.Command.create('', Commands.ORGANIZE_IMPORTS, normalizeFileNameToFsPath(edit.fileName)),
         CodeActionKind.SourceOrganizeImports
     ));
 }
