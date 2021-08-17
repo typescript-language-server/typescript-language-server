@@ -35,7 +35,6 @@ interface TypeScriptRequestTypes {
     'applyCodeActionCommand': [protocol.ApplyCodeActionCommandRequestArgs, protocol.ApplyCodeActionCommandResponse];
     'completionEntryDetails': [protocol.CompletionDetailsRequestArgs, protocol.CompletionDetailsResponse];
     'completionInfo': [protocol.CompletionsRequestArgs, protocol.CompletionInfoResponse];
-    'completions': [protocol.CompletionsRequestArgs, protocol.CompletionsResponse];
     'configure': [protocol.ConfigureRequestArguments, protocol.ConfigureResponse];
     'definition': [protocol.FileLocationRequestArgs, protocol.DefinitionResponse];
     'definitionAndBoundSpan': [protocol.FileLocationRequestArgs, protocol.DefinitionInfoAndBoundSpanReponse];
