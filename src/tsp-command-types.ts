@@ -24,8 +24,6 @@ export const enum CommandTypes {
     GetSpanOfEnclosingComment = 'getSpanOfEnclosingComment',
     Change = 'change',
     Close = 'close',
-    /** @deprecated Prefer CompletionInfo -- see comment on CompletionsResponse */
-    Completions = 'completions',
     CompletionInfo = 'completionInfo',
     CompletionDetails = 'completionEntryDetails',
     CompileOnSaveAffectedFileList = 'compileOnSaveAffectedFileList',

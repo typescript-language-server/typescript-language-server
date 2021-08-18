@@ -28,60 +28,58 @@ const moduleServer = new TspClient({
     tsserverPath: bundled
 });
 
-const servers = { executableServer, moduleServer };
-Object.keys(servers).forEach(serverName => {
-    const server = servers[serverName];
-    server.start();
-
+for (const [serverName, server] of Object.entries({ executableServer, moduleServer })) {
     describe('ts server client using ' + serverName, () => {
-        it('completion', () => {
+        before(() => {
+            server.start();
+        });
+
+        it('completion', async () => {
             const f = filePath('module2.ts');
             server.notify(CommandTypes.Open, {
                 file: f,
                 fileContent: readContents(f)
             });
-            return server.request(CommandTypes.Completions, {
+            const completions = await server.request(CommandTypes.CompletionInfo, {
                 file: f,
                 line: 1,
                 offset: 0,
-                prefix: 'im',
-                includeExternalModuleExports: true,
-                includeInsertTextCompletions: true
-            }).then(completions => {
-                assert.equal(completions.body![1].name, 'ImageBitmap');
+                prefix: 'im'
             });
-        }).timeout(5000);
+            assert.isDefined(completions.body);
+            assert.equal(completions.body!.entries[1].name, 'ImageBitmap');
+        }).timeout(10000);
 
-        it('references', () => {
+        it('references', async () => {
             const f = filePath('module2.ts');
             server.notify(CommandTypes.Open, {
                 file: f,
                 fileContent: readContents(f)
             });
-            return server.request(CommandTypes.References, {
+            const references = await server.request(CommandTypes.References, {
                 file: f,
                 line: 8,
                 offset: 16
-            }).then(references => {
-                assert.equal(references.body!.symbolName, 'doStuff');
             });
-        }).timeout(5000);
+            assert.isDefined(references.body);
+            assert.equal(references.body!.symbolName, 'doStuff');
+        }).timeout(10000);
 
-        it('documentHighlight', () => {
+        it('documentHighlight', async () => {
             const f = filePath('module2.ts');
             server.notify(CommandTypes.Open, {
                 file: f,
                 fileContent: readContents(f)
             });
-            return server.request(CommandTypes.DocumentHighlights, {
+            const response = await server.request(CommandTypes.DocumentHighlights, {
                 file: f,
                 line: 8,
                 offset: 16,
                 filesToSearch: [f]
-            }).then(response => {
-                assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')), JSON.stringify(response.body, undefined, 2));
-                assert.isFalse(response.body!.some(({ file }) => file.endsWith('module1.ts')), JSON.stringify(response.body, undefined, 2));
             });
-        }).timeout(5000);
+            assert.isDefined(response.body);
+            assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')), JSON.stringify(response.body, undefined, 2));
+            assert.isFalse(response.body!.some(({ file: file_1 }) => file_1.endsWith('module1.ts')), JSON.stringify(response.body, undefined, 2));
+        }).timeout(10000);
     });
-});
+}
