@@ -22,6 +22,7 @@ export interface TypeScriptPlugin {
 
 export interface TypeScriptInitializationOptions {
     logVerbosity?: string;
+    maxTsServerMemory?: number;
     plugins: TypeScriptPlugin[];
     preferences?: UserPreferences;
     hostInfo?: string;

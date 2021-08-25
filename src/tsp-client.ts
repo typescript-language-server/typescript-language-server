@@ -23,6 +23,7 @@ export interface TspClientOptions {
     tsserverPath: string;
     logFile?: string;
     logVerbosity?: string;
+    maxTsServerMemory?: number;
     globalPlugins?: string[];
     pluginProbeLocations?: string[];
     onEvent?: (event: protocol.Event) => void;
@@ -85,26 +86,32 @@ export class TspClient {
         if (this.readlineInterface) {
             return;
         }
-        const { tsserverPath, logFile, logVerbosity, globalPlugins, pluginProbeLocations } = this.options;
+        const { tsserverPath, logFile, logVerbosity, maxTsServerMemory, globalPlugins, pluginProbeLocations } = this.options;
         const args: string[] = [];
         if (logFile) {
-            args.push('--logFile', logFile);
+            args.push(`--logFile=${logFile}`);
         }
         if (logVerbosity) {
-            args.push('--logVerbosity', logVerbosity);
+            args.push(`--logVerbosity=${logVerbosity}`);
         }
         if (globalPlugins && globalPlugins.length) {
-            args.push('--globalPlugins', globalPlugins.join(','));
+            args.push(`--globalPlugins=${globalPlugins.join(',')}`);
         }
         if (pluginProbeLocations && pluginProbeLocations.length) {
-            args.push('--pluginProbeLocations', pluginProbeLocations.join(','));
+            args.push(`--pluginProbeLocations=${pluginProbeLocations.join(',')}`);
         }
-        this.cancellationPipeName = tempy.file({ name: 'tscancellation' } as any);
-        args.push('--cancellationPipeName', this.cancellationPipeName + '*');
+        this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
+        args.push(`--cancellationPipeName=${this.cancellationPipeName}*`);
         this.logger.info(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
         const tsserverPathIsModule = path.extname(tsserverPath) === '.js';
+        const options = {
+            silent: true,
+            execArgv: [
+                ...maxTsServerMemory ? [`--max-old-space-size=${maxTsServerMemory}`] : []
+            ]
+        };
         this.tsserverProc = tsserverPathIsModule
-            ? cp.fork(tsserverPath, args, { silent: true, execArgv: [] })
+            ? cp.fork(tsserverPath, args, options)
             : cp.spawn(tsserverPath, args);
         this.readlineInterface = readline.createInterface(this.tsserverProc.stdout, this.tsserverProc.stdin, undefined);
         process.on('exit', () => {
