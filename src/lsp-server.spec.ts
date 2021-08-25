@@ -14,20 +14,20 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 
 const assert = chai.assert;
 
-let diagnostics: Array<lsp.PublishDiagnosticsParams>;
+const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 
 let server: LspServer;
 
 before(async () => {
     server = await createServer({
         rootUri: null,
-        publishDiagnostics: args => diagnostics.push(args)
+        publishDiagnostics: args => diagnostics.set(args.uri, args)
     });
 });
 beforeEach(() => {
     server.closeAll();
     // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
-    diagnostics = [];
+    diagnostics.clear();
 });
 
 after(() => {
@@ -208,9 +208,9 @@ describe('diagnostics', () => {
 
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        const diagnosticsForThisFile = diagnostics.filter(d => d!.uri === doc.uri);
-        assert.equal(diagnosticsForThisFile.length, 1, JSON.stringify(diagnostics));
-        const fileDiagnostics = diagnosticsForThisFile[0]!.diagnostics;
+        const resultsForFile = diagnostics.get(doc.uri);
+        assert.isDefined(resultsForFile);
+        const fileDiagnostics = resultsForFile!.diagnostics;
         assert.equal(fileDiagnostics.length, 1);
         assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
     }).timeout(10000);
@@ -234,7 +234,7 @@ describe('diagnostics', () => {
 
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        const resultsForFile = diagnostics.find(d => d.uri === doc.uri);
+        const resultsForFile = diagnostics.get(doc.uri);
         assert.isDefined(resultsForFile);
         const fileDiagnostics = resultsForFile!.diagnostics;
         assert.equal(fileDiagnostics.length, 2);
@@ -276,9 +276,13 @@ describe('diagnostics', () => {
 
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        const diagnosticsForThisTest = diagnostics.filter(d => d!.uri === doc.uri || d!.uri === doc2.uri);
-        await new Promise(resolve => setTimeout(resolve, 200));
-        assert.equal(diagnosticsForThisTest.length, 2, JSON.stringify(diagnostics));
+        assert.equal(diagnostics.size, 2);
+        const diagnosticsForDoc = diagnostics.get(doc.uri);
+        const diagnosticsForDoc2 = diagnostics.get(doc2.uri);
+        assert.isDefined(diagnosticsForDoc);
+        assert.isDefined(diagnosticsForDoc2);
+        assert.equal(diagnosticsForDoc!.diagnostics.length, 1, JSON.stringify(diagnostics));
+        assert.equal(diagnosticsForDoc2!.diagnostics.length, 1, JSON.stringify(diagnostics));
     }).timeout(10000);
 });
 
@@ -430,7 +434,9 @@ describe('editing', () => {
         });
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        const fileDiagnostics = diagnostics.filter(d => d!.uri === doc.uri)[0]!.diagnostics;
+        const resultsForFile = diagnostics.get(doc.uri);
+        assert.isDefined(resultsForFile);
+        const fileDiagnostics = resultsForFile!.diagnostics;
         assert.isTrue(fileDiagnostics.length >= 1, fileDiagnostics.map(d => d.message).join(','));
         assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
     }).timeout(10000);
@@ -902,7 +908,7 @@ describe('diagnostics (no client support)', () => {
         delete clientCapabilitiesOverride.textDocument?.publishDiagnostics;
         server = await createServer({
             rootUri: null,
-            publishDiagnostics: args => diagnostics.push(args),
+            publishDiagnostics: args => diagnostics.set(args.uri, args),
             clientCapabilitiesOverride
         });
     });
@@ -924,7 +930,7 @@ describe('diagnostics (no client support)', () => {
 
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        const diagnosticsForThisFile = diagnostics.filter(d => d!.uri === doc.uri);
-        assert.isEmpty(diagnosticsForThisFile, 'Unexpected diagnostics received');
+        const resultsForFile = diagnostics.get(doc.uri);
+        assert.isUndefined(resultsForFile, 'Unexpected diagnostics received');
     }).timeout(10000);
 });
