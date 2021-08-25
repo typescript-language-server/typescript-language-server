@@ -52,14 +52,13 @@ describe('completion', () => {
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         assert.isNotNull(proposals);
-        assert.isAbove(proposals!.items.length, 800);
+        assert.isAtLeast(proposals!.items.length, 800);
         const item = proposals!.items.find(i => i.label === 'addEventListener');
         assert.isDefined(item);
         const resolvedItem = await server.completionResolve(item!);
-        assert.isDefined(resolvedItem.detail, JSON.stringify(resolvedItem, undefined, 2));
-        server.didCloseTextDocument({
-            textDocument: doc
-        });
+        assert.isNotTrue(resolvedItem.deprecated, 'resolved item is not deprecated');
+        assert.isDefined(resolvedItem.detail);
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
     it('simple JS test', async () => {
@@ -79,10 +78,11 @@ describe('completion', () => {
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         assert.isNotNull(proposals);
-        assert.isAbove(proposals!.items.length, 800);
+        assert.isAtLeast(proposals!.items.length, 800);
         const item = proposals!.items.find(i => i.label === 'addEventListener');
+        assert.isDefined(item);
         const resolvedItem = await server.completionResolve(item!);
-        assert.isTrue(resolvedItem.detail !== undefined, JSON.stringify(resolvedItem, undefined, 2));
+        assert.isDefined(resolvedItem.detail);
 
         const containsInvalidCompletions = proposals!.items.reduce((accumulator, current) => {
             if (accumulator) {
@@ -95,9 +95,39 @@ describe('completion', () => {
         }, false);
 
         assert.isFalse(containsInvalidCompletions);
-        server.didCloseTextDocument({
+        server.didCloseTextDocument({ textDocument: doc });
+    }).timeout(10000);
+
+    it('deprecated by JSDoc', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+            /**
+             * documentation
+             * @deprecated for a reason
+             */
+            export function foo() {
+                console.log('test')
+            }
+
+            foo(); // call me
+            `
+        };
+        server.didOpenTextDocument({
             textDocument: doc
         });
+        const pos = position(doc, 'foo(); // call me');
+        const proposals = await server.completion({ textDocument: doc, position: pos });
+        assert.isNotNull(proposals);
+        const item = proposals!.items.find(i => i.label === 'foo');
+        assert.isDefined(item);
+        const resolvedItem = await server.completionResolve(item!);
+        assert.isDefined(resolvedItem.detail);
+        assert.isArray(resolvedItem.tags);
+        assert.include(resolvedItem.tags!, lsp.CompletionItemTag.Deprecated, 'resolved item is deprecated');
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
     it('incorrect source location', async () => {
@@ -117,9 +147,7 @@ describe('completion', () => {
         const pos = position(doc, 'foo');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         assert.isNull(proposals);
-        server.didCloseTextDocument({
-            textDocument: doc
-        });
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
     it('includes completions from global modules', async () => {
@@ -129,16 +157,12 @@ describe('completion', () => {
             version: 1,
             text: 'pathex'
         };
-        server.didOpenTextDocument({
-            textDocument: doc
-        });
+        server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: position(doc, 'ex') });
         assert.isNotNull(proposals);
         const pathExistsCompletion = proposals!.items.find(completion => completion.label === 'pathExists');
         assert.isDefined(pathExistsCompletion);
-        server.didCloseTextDocument({
-            textDocument: doc
-        });
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
     it('includes completions with invalid identifier names', async () => {
@@ -155,18 +179,14 @@ describe('completion', () => {
                 foo.i
             `
         };
-        server.didOpenTextDocument({
-            textDocument: doc
-        });
+        server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.i') });
         assert.isNotNull(proposals);
         const completion = proposals!.items.find(completion => completion.label === 'invalid-identifier-name');
         assert.isDefined(completion);
         assert.isDefined(completion!.textEdit);
         assert.equal(completion!.textEdit!.newText, '["invalid-identifier-name"]');
-        server.didCloseTextDocument({
-            textDocument: doc
-        });
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 });
 
