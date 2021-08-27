@@ -49,7 +49,7 @@ The language server accepts various settings through the `initializationOptions`
 | Setting           | Type     | Description                                                                                                                                                                                                                                                          |
 |:------------------|:---------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | hostInfo          | string   | Information about the host, for example `"Emacs 24.4"` or `"Sublime Text v3075"`. **Default**: `undefined`                                                                                                                                                           |
-| logVerbosity      | string   | The verbosity level of the information printed in the log. Accepts values: `"off"`, `"terse"`, `"normal"`, `"requesttime"`, `"verbose"`. **Default**: `undefined` (`"off"`).                                                                                         |
+| logVerbosity      | string   | The verbosity level of the information printed in the log by `tsserver`. Accepts values: `"off"`, `"terse"`, `"normal"`, `"requesttime"`, `"verbose"`. **Default**: `undefined` (`"off"`).                                                                                         |
 | maxTsServerMemory | number   | The maximum size of the V8's old memory section in megabytes (for example `4096` means 4GB). The default value is dynamically configured by Node so can differ per system. Increase for very big projects that exceed allowed memory usage. **Default**: `undefined` |
 | plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: []                                                                                                                                                         |
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more info.                                                                                                                              |
@@ -58,44 +58,44 @@ The `preferences` object is an object specifying preferences for the internal `t
 
 ```ts
 interface UserPreferences {
-    disableSuggestions?: boolean;
-    quotePreference?: "auto" | "double" | "single";
+    disableSuggestions: boolean;
+    quotePreference: "auto" | "double" | "single";
     /**
      * If enabled, TypeScript will search through all external modules' exports and add them to the completions list.
      * This affects lone identifier completions but not completions on the right hand side of `obj.`.
      */
-    includeCompletionsForModuleExports?: boolean;
+    includeCompletionsForModuleExports: boolean;
     /**
      * Enables auto-import-style completions on partially-typed import statements. E.g., allows
      * `import write|` to be completed to `import { writeFile } from "fs"`.
      */
-    includeCompletionsForImportStatements?: boolean;
+    includeCompletionsForImportStatements: boolean;
     /**
      * Allows completions to be formatted with snippet text, indicated by `CompletionItem["isSnippet"]`.
      */
-    includeCompletionsWithSnippetText?: boolean;
+    includeCompletionsWithSnippetText: boolean;
     /**
      * If enabled, the completion list will include completions with invalid identifier names.
      * For those entries, The `insertText` and `replacementSpan` properties will be set to change from `.x` property access to `["x"]`.
      */
-    includeCompletionsWithInsertText?: boolean;
+    includeCompletionsWithInsertText: boolean;
     /**
      * Unless this option is `false`, or `includeCompletionsWithInsertText` is not enabled,
      * member completion lists triggered with `.` will include entries on potentially-null and potentially-undefined
      * values, with insertion text to replace preceding `.` tokens with `?.`.
      */
-    includeAutomaticOptionalChainCompletions?: boolean;
-    importModuleSpecifierPreference?: "shortest" | "project-relative" | "relative" | "non-relative";
+    includeAutomaticOptionalChainCompletions: boolean;
+    importModuleSpecifierPreference: "shortest" | "project-relative" | "relative" | "non-relative";
     /** Determines whether we import `foo/index.ts` as "foo", "foo/index", or "foo/index.js" */
-    importModuleSpecifierEnding?: "auto" | "minimal" | "index" | "js";
-    allowTextChangesInNewFiles?: boolean;
-    lazyConfiguredProjectsFromExternalProject?: boolean;
-    providePrefixAndSuffixTextForRename?: boolean;
-    provideRefactorNotApplicableReason?: boolean;
-    allowRenameOfImportPath?: boolean;
-    includePackageJsonAutoImports?: "auto" | "on" | "off";
-    displayPartsForJSDoc?: boolean;
-    generateReturnInDocTemplate?: boolean;
+    importModuleSpecifierEnding: "auto" | "minimal" | "index" | "js";
+    allowTextChangesInNewFiles: boolean;
+    lazyConfiguredProjectsFromExternalProject: boolean;
+    providePrefixAndSuffixTextForRename: boolean;
+    provideRefactorNotApplicableReason: boolean;
+    allowRenameOfImportPath: boolean;
+    includePackageJsonAutoImports: "auto" | "on" | "off";
+    displayPartsForJSDoc: boolean;
+    generateReturnInDocTemplate: boolean;
 }
 ```
 
