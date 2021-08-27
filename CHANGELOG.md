@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2021-08-16
+
+ - Mark completion items as deprecated if JSDoc says so (#227)
+ - Add a `maxTsServerMemory` option (#252)
+ - (chore) Add Windows and Mac CI runner (#248)
+
 ## [0.6.1] - 2021-08-16
 
 - Fix Windows path regression introduced in #220 (#249)
