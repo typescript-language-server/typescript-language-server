@@ -85,7 +85,8 @@ export const enum CommandTypes {
     UncommentSelection = 'uncommentSelection',
     PrepareCallHierarchy = 'prepareCallHierarchy',
     ProvideCallHierarchyIncomingCalls = 'provideCallHierarchyIncomingCalls',
-    ProvideCallHierarchyOutgoingCalls = 'provideCallHierarchyOutgoingCalls'
+    ProvideCallHierarchyOutgoingCalls = 'provideCallHierarchyOutgoingCalls',
+    ProvideInlayHints = 'provideInlayHints',
 }
 
 export const enum EventTypes {

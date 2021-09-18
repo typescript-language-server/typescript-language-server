@@ -37,6 +37,7 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
+import { extensions } from './lsp-extensions';
 
 export interface IServerOptions {
     logger: Logger;
@@ -982,5 +983,42 @@ export class LspServer {
             callsResult = await computeCallers(this.tspClient, params);
         }
         return callsResult;
+    }
+
+    async inlayHints(
+        params: extensions.inlayHints.InlayHintsParams
+    ): Promise<extensions.inlayHints.InlayHintsResult> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('inlayHints', params, file);
+        if (!file) {
+            return { inlayHints: [] };
+        }
+
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return { inlayHints: [] };
+        }
+
+        const start = doc.offsetAt(params.range.start);
+        const end = doc.offsetAt(params.range.end);
+        const result = await this.tspClient.request(
+            CommandTypes.ProvideInlayHints,
+            {
+                file,
+                start: start,
+                length: end - start
+            }
+        );
+
+        return {
+            inlayHints:
+                result.body?.map((item) => ({
+                    text: item.text,
+                    position: toPosition(item.position),
+                    whitespaceAfter: item.whitespaceAfter,
+                    whitespaceBefore: item.whitespaceBefore,
+                    kind: item.kind
+                })) ?? []
+        };
     }
 }
