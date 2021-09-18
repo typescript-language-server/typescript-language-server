@@ -10,7 +10,7 @@ export namespace extensions.inlayHints {
         /**
          * The range to format
          */
-        range: lsp.Range;
+        range?: lsp.Range;
     };
 
     type InlayHint = {

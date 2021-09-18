@@ -999,8 +999,14 @@ export class LspServer {
             return { inlayHints: [] };
         }
 
-        const start = doc.offsetAt(params.range.start);
-        const end = doc.offsetAt(params.range.end);
+        const start = doc.offsetAt(params.range?.start ?? {
+            line: 0,
+            character: 0
+        });
+        const end = doc.offsetAt(params.range?.end ?? {
+            line: doc.lineCount + 1,
+            character: 0
+        });
         const result = await this.tspClient.request(
             CommandTypes.ProvideInlayHints,
             {
