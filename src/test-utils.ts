@@ -34,7 +34,7 @@ export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
 }
 
 export function uri(suffix = ''): string {
-    const resolved = this.filePath(suffix);
+    const resolved = filePath(suffix);
     return pathToUri(resolved, undefined);
 }
 
