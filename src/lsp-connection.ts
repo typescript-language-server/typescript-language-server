@@ -7,11 +7,11 @@
 
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
+import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
 
 import { LspClientLogger } from './logger';
 import { LspServer } from './lsp-server';
 import { LspClientImpl } from './lsp-client';
-import { extensions } from './lsp-extensions';
 
 export interface IServerOptions {
     tsserverPath: string;
@@ -60,7 +60,7 @@ export function createLspConnection(options: IServerOptions): lsp.Connection {
     // proposed `textDocument/calls` request
     connection.onRequest(lspcalls.CallsRequest.type, server.calls.bind(server));
 
-    connection.onRequest(extensions.inlayHints.type, server.inlayHints.bind(server));
+    connection.onRequest(lspinlayHints.type, server.inlayHints.bind(server));
 
     return connection;
 }

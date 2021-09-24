@@ -9,6 +9,7 @@ import * as path from 'path';
 import tempy from 'tempy';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
+import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
@@ -37,7 +38,6 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
-import { extensions } from './lsp-extensions';
 
 export interface IServerOptions {
     logger: Logger;
@@ -986,8 +986,8 @@ export class LspServer {
     }
 
     async inlayHints(
-        params: extensions.inlayHints.InlayHintsParams
-    ): Promise<extensions.inlayHints.InlayHintsResult> {
+        params: lspinlayHints.InlayHintsParams
+    ): Promise<lspinlayHints.InlayHintsResult> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('inlayHints', params, file);
         if (!file) {
