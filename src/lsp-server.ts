@@ -1007,24 +1007,31 @@ export class LspServer {
             line: doc.lineCount + 1,
             character: 0
         });
-        const result = await this.tspClient.request(
-            CommandTypes.ProvideInlayHints,
-            {
-                file,
-                start: start,
-                length: end - start
-            }
-        );
 
-        return {
-            inlayHints:
-                result.body?.map((item) => ({
-                    text: item.text,
-                    position: toPosition(item.position),
-                    whitespaceAfter: item.whitespaceAfter,
-                    whitespaceBefore: item.whitespaceBefore,
-                    kind: item.kind
-                })) ?? []
-        };
+        try {
+            const result = await this.tspClient.request(
+                CommandTypes.ProvideInlayHints,
+                {
+                    file,
+                    start: start,
+                    length: end - start
+                }
+            );
+
+            return {
+                inlayHints:
+                    result.body?.map((item) => ({
+                        text: item.text,
+                        position: toPosition(item.position),
+                        whitespaceAfter: item.whitespaceAfter,
+                        whitespaceBefore: item.whitespaceBefore,
+                        kind: item.kind
+                    })) ?? []
+            };
+        } catch {
+            return {
+                inlayHints: []
+            };
+        }
     }
 }
