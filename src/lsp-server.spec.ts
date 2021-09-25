@@ -954,7 +954,7 @@ describe('inlayHints', () => {
                 }
             },
             processId: null,
-            capabilities: {},
+            capabilities: getDefaultClientCapabilities(),
             workspaceFolders: [],
             rootUri: ''
         });
