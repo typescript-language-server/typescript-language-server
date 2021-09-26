@@ -151,7 +151,7 @@ type InlayHint = {
 };
 ```
 
-Requires the some or all of the following options to be passed through `preferences`:
+For the request to return any reuslts some or all of the following options need to be passed through `preferences`:
 
 ```ts
 // Not officially part of UserPreferences yet but you can send them along with the UserPreferences just fine:
