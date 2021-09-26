@@ -985,9 +985,7 @@ export class LspServer {
         return callsResult;
     }
 
-    async inlayHints(
-        params: lspinlayHints.InlayHintsParams
-    ): Promise<lspinlayHints.InlayHintsResult> {
+    async inlayHints(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('inlayHints', params, file);
         if (!file) {

@@ -98,16 +98,6 @@ interface UserPreferences {
     displayPartsForJSDoc: boolean;
     generateReturnInDocTemplate: boolean;
 }
-// Not officially part of UserPreferences yet but you can send them along with the UserPreferences just fine:
-export interface InlayHintsOptions extends UserPreferences {
-    includeInlayParameterNameHints: "none" | "literals" | "all";
-    includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
-    includeInlayFunctionParameterTypeHints: boolean,
-    includeInlayVariableTypeHints: boolean;
-    includeInlayPropertyDeclarationTypeHints: boolean;
-    includeInlayFunctionLikeReturnTypeHints: boolean;
-    includeInlayEnumMemberValueHints: boolean;
-}
 ```
 
 From the `preferences` options listed above, this server explicilty sets the following options (all other options use their default values):
@@ -139,6 +129,48 @@ From the `preferences` options listed above, this server explicilty sets the fol
 - [x] textDocument/references
 - [x] textDocument/signatureHelp
 - [x] workspace/symbol
+
+## `typescript/inlayHints` (experimental)
+
+Request:
+
+```ts
+type {
+  textDocument: TextDocumentIdentifier,
+  range?: Range,
+}
+```
+
+Response:
+
+```ts
+type {
+  inlayHints: InlayHint[];
+}
+
+type InlayHint = {
+    text: string;
+    position: lsp.Position;
+    kind: 'Type' | 'Parameter' | 'Enum';
+    whitespaceBefore?: boolean;
+    whitespaceAfter?: boolean;
+};
+```
+
+Requires the some or all of the following options to be passed through `preferences`:
+
+```ts
+// Not officially part of UserPreferences yet but you can send them along with the UserPreferences just fine:
+export interface InlayHintsOptions extends UserPreferences {
+    includeInlayParameterNameHints: "none" | "literals" | "all";
+    includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
+    includeInlayFunctionParameterTypeHints: boolean,
+    includeInlayVariableTypeHints: boolean;
+    includeInlayPropertyDeclarationTypeHints: boolean;
+    includeInlayFunctionLikeReturnTypeHints: boolean;
+    includeInlayEnumMemberValueHints: boolean;
+}
+```
 
 # Development
 

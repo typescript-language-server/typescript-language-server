@@ -967,8 +967,9 @@ describe('inlayHints', () => {
         });
 
         assert.isDefined(inlayHints);
-        assert.equal(inlayHints[0].text, ': number');
-        assert.isDefined(inlayHints[0].kind);
-        assert.isDefined(inlayHints[0].position);
+        assert.strictEqual(inlayHints.length, 1);
+        assert.strictEqual(inlayHints[0].text, ': number');
+        assert.strictEqual(inlayHints[0].kind, 'Type');
+        assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 33 });
     }).timeout(10000);
 });
