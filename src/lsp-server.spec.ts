@@ -970,6 +970,6 @@ describe('inlayHints', () => {
         assert.strictEqual(inlayHints.length, 1);
         assert.strictEqual(inlayHints[0].text, ': number');
         assert.strictEqual(inlayHints[0].kind, 'Type');
-        assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 33 });
+        assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 29 });
     }).timeout(10000);
 });
