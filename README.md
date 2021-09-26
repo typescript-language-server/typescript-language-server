@@ -132,19 +132,13 @@ From the `preferences` options listed above, this server explicilty sets the fol
 
 ## `typescript/inlayHints` (experimental)
 
-Request:
-
 ```ts
-type {
+type Request {
   textDocument: TextDocumentIdentifier,
   range?: Range,
 }
-```
 
-Response:
-
-```ts
-type {
+type Response {
   inlayHints: InlayHint[];
 }
 
