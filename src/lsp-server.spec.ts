@@ -934,3 +934,42 @@ describe('diagnostics (no client support)', () => {
         assert.isUndefined(resultsForFile, 'Unexpected diagnostics received');
     }).timeout(10000);
 });
+
+describe('inlayHints', () => {
+    it('inlayHints', async () => {
+        const doc = {
+            uri: uri('module.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+        export function foo() {
+          return 3
+        }
+      `
+        };
+        server.initialize({
+            initializationOptions: {
+                preferences: {
+                    includeInlayFunctionLikeReturnTypeHints: true
+                }
+            },
+            processId: null,
+            capabilities: getDefaultClientCapabilities(),
+            workspaceFolders: [],
+            rootUri: ''
+        });
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+
+        const { inlayHints } = await server.inlayHints({
+            textDocument: doc
+        });
+
+        assert.isDefined(inlayHints);
+        assert.strictEqual(inlayHints.length, 1);
+        assert.strictEqual(inlayHints[0].text, ': number');
+        assert.strictEqual(inlayHints[0].kind, 'Type');
+        assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 29 });
+    }).timeout(10000);
+});

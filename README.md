@@ -54,7 +54,7 @@ The language server accepts various settings through the `initializationOptions`
 | plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: []                                                                                                                                                         |
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more info.                                                                                                                              |
 
-The `preferences` object is an object specifying preferences for the internal `tsserver` process. Those options depend on the version of Typescript used but at the time of writing Typescript v4.3.4 contains these options:
+The `preferences` object is an object specifying preferences for the internal `tsserver` process. Those options depend on the version of Typescript used but at the time of writing Typescript v4.4.3 contains these options:
 
 ```ts
 interface UserPreferences {
@@ -85,6 +85,7 @@ interface UserPreferences {
      * values, with insertion text to replace preceding `.` tokens with `?.`.
      */
     includeAutomaticOptionalChainCompletions: boolean;
+    allowIncompleteCompletions: boolean;
     importModuleSpecifierPreference: "shortest" | "project-relative" | "relative" | "non-relative";
     /** Determines whether we import `foo/index.ts` as "foo", "foo/index", or "foo/index.js" */
     importModuleSpecifierEnding: "auto" | "minimal" | "index" | "js";
@@ -128,6 +129,42 @@ From the `preferences` options listed above, this server explicilty sets the fol
 - [x] textDocument/references
 - [x] textDocument/signatureHelp
 - [x] workspace/symbol
+
+## `typescript/inlayHints` (experimental, supported from Typescript v4.4.2)
+
+```ts
+type Request = {
+  textDocument: TextDocumentIdentifier,
+  range?: Range,
+}
+
+type Response = {
+  inlayHints: InlayHint[];
+}
+
+type InlayHint = {
+    text: string;
+    position: lsp.Position;
+    kind: 'Type' | 'Parameter' | 'Enum';
+    whitespaceBefore?: boolean;
+    whitespaceAfter?: boolean;
+};
+```
+
+For the request to return any results, some or all of the following options need to be enabled through `preferences`:
+
+```ts
+// Not officially part of UserPreferences yet but you can send them along with the UserPreferences just fine:
+export interface InlayHintsOptions extends UserPreferences {
+    includeInlayParameterNameHints: "none" | "literals" | "all";
+    includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
+    includeInlayFunctionParameterTypeHints: boolean,
+    includeInlayVariableTypeHints: boolean;
+    includeInlayPropertyDeclarationTypeHints: boolean;
+    includeInlayFunctionLikeReturnTypeHints: boolean;
+    includeInlayEnumMemberValueHints: boolean;
+}
+```
 
 # Development
 

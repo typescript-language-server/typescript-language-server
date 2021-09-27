@@ -7,6 +7,7 @@
 
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
+import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
 
 import { LspClientLogger } from './logger';
 import { LspServer } from './lsp-server';
@@ -58,6 +59,8 @@ export function createLspConnection(options: IServerOptions): lsp.Connection {
 
     // proposed `textDocument/calls` request
     connection.onRequest(lspcalls.CallsRequest.type, server.calls.bind(server));
+
+    connection.onRequest(lspinlayHints.type, server.inlayHints.bind(server));
 
     return connection;
 }

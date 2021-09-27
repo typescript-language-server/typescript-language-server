@@ -61,6 +61,7 @@ interface TypeScriptRequestTypes {
     'rename': [protocol.RenameRequestArgs, protocol.RenameResponse];
     'signatureHelp': [protocol.SignatureHelpRequestArgs, protocol.SignatureHelpResponse];
     'typeDefinition': [protocol.FileLocationRequestArgs, protocol.TypeDefinitionResponse];
+    'provideInlayHints': [protocol.InlayHintsRequestArgs, protocol.InlayHintsResponse];
 }
 
 export class TspClient {

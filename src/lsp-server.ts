@@ -9,6 +9,7 @@ import * as path from 'path';
 import tempy from 'tempy';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
+import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
@@ -982,5 +983,53 @@ export class LspServer {
             callsResult = await computeCallers(this.tspClient, params);
         }
         return callsResult;
+    }
+
+    async inlayHints(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('inlayHints', params, file);
+        if (!file) {
+            return { inlayHints: [] };
+        }
+
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return { inlayHints: [] };
+        }
+
+        const start = doc.offsetAt(params.range?.start ?? {
+            line: 0,
+            character: 0
+        });
+        const end = doc.offsetAt(params.range?.end ?? {
+            line: doc.lineCount + 1,
+            character: 0
+        });
+
+        try {
+            const result = await this.tspClient.request(
+                CommandTypes.ProvideInlayHints,
+                {
+                    file,
+                    start: start,
+                    length: end - start
+                }
+            );
+
+            return {
+                inlayHints:
+                    result.body?.map((item) => ({
+                        text: item.text,
+                        position: toPosition(item.position),
+                        whitespaceAfter: item.whitespaceAfter,
+                        whitespaceBefore: item.whitespaceBefore,
+                        kind: item.kind
+                    })) ?? []
+            };
+        } catch {
+            return {
+                inlayHints: []
+            };
+        }
     }
 }

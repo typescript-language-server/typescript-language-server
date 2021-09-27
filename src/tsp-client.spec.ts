@@ -65,6 +65,30 @@ for (const [serverName, server] of Object.entries({ executableServer, moduleServ
             assert.equal(references.body!.symbolName, 'doStuff');
         }).timeout(10000);
 
+        it('inlayHints', async () => {
+            const f = filePath('module2.ts');
+            server.notify(CommandTypes.Open, {
+                file: f,
+                fileContent: readContents(f)
+            });
+            await server.request(CommandTypes.Configure, {
+                preferences: {
+                    // @ts-expect-error preference exist
+                    includeInlayFunctionLikeReturnTypeHints: true
+                }
+            });
+            const inlayHints = await server.request(
+                CommandTypes.ProvideInlayHints,
+                {
+                    file: f,
+                    start: 0,
+                    length: 1000
+                }
+            );
+            assert.isDefined(inlayHints.body);
+            assert.equal(inlayHints.body![0].text, ': boolean');
+        }).timeout(10000);
+
         it('documentHighlight', async () => {
             const f = filePath('module2.ts');
             server.notify(CommandTypes.Open, {
