@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.3] - 2021-10-27
+
+ - Implement experimental inlay hints (#259) ([documentation](https://github.com/typescript-language-server/typescript-language-server#typescriptinlayhints-experimental-supported-from-typescript-v442))
+ - Send diagnostics even to clients that don't signal support (#261) (reverts #229)
+
 ## [0.6.2] - 2021-08-16
 
  - Mark completion items as deprecated if JSDoc says so (#227)
