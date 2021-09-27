@@ -126,7 +126,6 @@ export interface DefinitionSymbol {
      * Must be contained by the the `range`.
      */
     selectionRange: Range;
-
 }
 
 export namespace DefinitionSymbol {

@@ -166,6 +166,88 @@ export interface InlayHintsOptions extends UserPreferences {
 }
 ```
 
+## `textDocument/calls` (experimental)
+
+```ts
+type Request = {
+    /**
+     * The text document.
+     */
+    textDocument: TextDocumentIdentifier;
+    /**
+     * The position inside the text document.
+     */
+    position: Position;
+    /**
+     * Outgoing direction for callees.
+     * The default is incoming for callers.
+     */
+    direction?: CallDirection;
+}
+
+export enum CallDirection {
+    /**
+     * Incoming calls aka. callers
+     */
+    Incoming = 'incoming',
+    /**
+     * Outgoing calls aka. callees
+     */
+    Outgoing = 'outgoing',
+}
+
+type Result = {
+    /**
+     * The symbol of a definition for which the request was made.
+     *
+     * If no definition is found at a given text document position, the symbol is undefined.
+     */
+    symbol?: DefinitionSymbol;
+    /**
+     * List of calls.
+     */
+    calls: Call[];
+}
+
+interface Call {
+    /**
+     * Actual location of a call to a definition.
+     */
+    location: Location;
+    /**
+     * Symbol refered to by this call. For outgoing calls this is a callee,
+     * otherwise a caller.
+     */
+    symbol: DefinitionSymbol;
+}
+
+interface DefinitionSymbol {
+    /**
+     * The name of this symbol.
+     */
+    name: string;
+    /**
+     * More detail for this symbol, e.g the signature of a function.
+     */
+    detail?: string;
+    /**
+     * The kind of this symbol.
+     */
+    kind: SymbolKind;
+    /**
+     * The range enclosing this symbol not including leading/trailing whitespace but everything else
+     * like comments. This information is typically used to determine if the the clients cursor is
+     * inside the symbol to reveal in the symbol in the UI.
+     */
+    location: Location;
+    /**
+     * The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
+     * Must be contained by the the `range`.
+     */
+    selectionRange: Range;
+}
+```
+
 # Development
 
 ### Build
