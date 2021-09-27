@@ -121,7 +121,7 @@ function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
 export function toDiagnostic(
     diagnostic: tsp.Diagnostic,
     documents: LspDocuments | undefined,
-    publishDiagnosticsCapabilities: NonNullable<lsp.TextDocumentClientCapabilities['publishDiagnostics']>
+    publishDiagnosticsCapabilities: lsp.TextDocumentClientCapabilities['publishDiagnostics']
 ): lsp.Diagnostic {
     const lspDiagnostic: lsp.Diagnostic = {
         range: {
@@ -134,7 +134,7 @@ export function toDiagnostic(
         source: diagnostic.source || 'typescript',
         relatedInformation: asRelatedInformation(diagnostic.relatedInformation, documents)
     };
-    if (publishDiagnosticsCapabilities.tagSupport) {
+    if (publishDiagnosticsCapabilities?.tagSupport) {
         lspDiagnostic.tags = getDiagnosticTags(diagnostic);
     }
     return lspDiagnostic;

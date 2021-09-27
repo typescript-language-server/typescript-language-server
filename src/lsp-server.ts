@@ -96,15 +96,12 @@ export class LspServer {
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
-
-        if (this.initializeParams.capabilities.textDocument?.publishDiagnostics) {
-            this.diagnosticQueue = new DiagnosticEventQueue(
-                diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
-                this.documents,
-                this.initializeParams.capabilities.textDocument.publishDiagnostics,
-                this.logger
-            );
-        }
+        this.diagnosticQueue = new DiagnosticEventQueue(
+            diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
+            this.documents,
+            this.initializeParams.capabilities.textDocument?.publishDiagnostics,
+            this.logger
+        );
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
         const { hostInfo, maxTsServerMemory } = userInitializationOptions;
