@@ -130,15 +130,15 @@ From the `preferences` options listed above, this server explicilty sets the fol
 - [x] textDocument/signatureHelp
 - [x] workspace/symbol
 
-## `typescript/inlayHints` (experimental, supported from Typescript v4.4.2)
+## [x] `typescript/inlayHints` (experimental, supported from Typescript v4.4.2)
 
 ```ts
-type Request {
+type Request = {
   textDocument: TextDocumentIdentifier,
   range?: Range,
 }
 
-type Response {
+type Response = {
   inlayHints: InlayHint[];
 }
 
