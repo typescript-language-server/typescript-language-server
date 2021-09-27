@@ -20,7 +20,7 @@ class FileDiagnostics {
         protected readonly uri: string,
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly documents: LspDocuments,
-        protected readonly publishDiagnosticsCapabilities: NonNullable<lsp.TextDocumentClientCapabilities['publishDiagnostics']>
+        protected readonly publishDiagnosticsCapabilities: lsp.TextDocumentClientCapabilities['publishDiagnostics']
     ) { }
 
     update(kind: EventTypes, diagnostics: tsp.Diagnostic[]): void {
@@ -49,7 +49,7 @@ export class DiagnosticEventQueue {
     constructor(
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly documents: LspDocuments,
-        protected readonly publishDiagnosticsCapabilities: NonNullable<lsp.TextDocumentClientCapabilities['publishDiagnostics']>,
+        protected readonly publishDiagnosticsCapabilities: lsp.TextDocumentClientCapabilities['publishDiagnostics'],
         protected readonly logger: Logger
     ) { }
 

@@ -913,7 +913,7 @@ describe('diagnostics (no client support)', () => {
         });
     });
 
-    it('no diagnostics are published', async () => {
+    it('diagnostics are published', async () => {
         const doc = {
             uri: uri('diagnosticsBar.ts'),
             languageId: 'typescript',
@@ -931,6 +931,7 @@ describe('diagnostics (no client support)', () => {
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const resultsForFile = diagnostics.get(doc.uri);
-        assert.isUndefined(resultsForFile, 'Unexpected diagnostics received');
+        assert.isDefined(resultsForFile);
+        assert.strictEqual(resultsForFile?.diagnostics.length, 1);
     }).timeout(10000);
 });
