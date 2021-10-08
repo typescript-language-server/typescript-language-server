@@ -1,3 +1,5 @@
+import { TextDocument } from "vscode-languageserver-textdocument";
+
 /*
  * Copyright (C) 2017, 2018 TypeFox and others.
  *
@@ -21,4 +23,12 @@ export function getTsserverExecutable(): string {
 
 function isWindows(): boolean {
     return /^win/.test(process.platform);
+}
+
+export function getConfigKey<ConfigKey extends string>(configKey: ConfigKey, textDocument: TextDocument) : `typescript.${ConfigKey}` | `javascript.${ConfigKey}` {
+    return isTypeScriptDocument(textDocument) ? `typescript.${configKey}` : `javascript.${configKey}`
+}
+
+function isTypeScriptDocument(textDocument: TextDocument) {
+    return ['typescript', 'typescriptreact'].includes(textDocument.languageId);
 }

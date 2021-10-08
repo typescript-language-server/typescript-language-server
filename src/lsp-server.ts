@@ -27,7 +27,7 @@ import {
     uriToPath, toSymbolKind, toLocation, toPosition,
     pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText
 } from './protocol-translation';
-import { getTsserverExecutable } from './utils';
+import { getConfigKey, getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
 import { asCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
@@ -38,6 +38,8 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
+import { InlayHintsOptions } from './lsp-protocol.inlayHints.proposed';
+import { connection } from './lsp-connection';
 
 export interface IServerOptions {
     logger: Logger;
@@ -992,6 +994,14 @@ export class LspServer {
         const doc = this.documents.get(file);
         if (!doc) {
             return { inlayHints: [] };
+        }
+
+        const configKey = getConfigKey("inlayHints", doc)
+        const config: InlayHintsOptions | null = await connection.workspace.getConfiguration(configKey)
+        if (config) {
+            await this.tspClient.request(CommandTypes.Configure, {
+                preferences: config
+            });
         }
 
         const start = doc.offsetAt(params.range?.start ?? {
