@@ -10,6 +10,7 @@
  */
 import * as lsp from 'vscode-languageserver-protocol';
 import { UserPreferences } from 'typescript/lib/protocol';
+import { ExtendedUserPreferences } from './lsp-protocol.inlayHints.proposed';
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
@@ -25,6 +26,8 @@ export interface TypeScriptInitializationOptions {
     maxTsServerMemory?: number;
     plugins: TypeScriptPlugin[];
     preferences?: UserPreferences;
+    javascript?: ExtendedUserPreferences;
+    typescript?: ExtendedUserPreferences;
     hostInfo?: string;
 }
 
