@@ -90,19 +90,19 @@ export class TspClient {
         const { tsserverPath, logFile, logVerbosity, maxTsServerMemory, globalPlugins, pluginProbeLocations } = this.options;
         const args: string[] = [];
         if (logFile) {
-            args.push(`--logFile=${logFile}`);
+            args.push('--logFile', logFile);
         }
         if (logVerbosity) {
-            args.push(`--logVerbosity=${logVerbosity}`);
+            args.push('--logVerbosity', logVerbosity);
         }
         if (globalPlugins && globalPlugins.length) {
-            args.push(`--globalPlugins=${globalPlugins.join(',')}`);
+            args.push('--globalPlugins', globalPlugins.join(','));
         }
         if (pluginProbeLocations && pluginProbeLocations.length) {
-            args.push(`--pluginProbeLocations=${pluginProbeLocations.join(',')}`);
+            args.push('--pluginProbeLocations', pluginProbeLocations.join(','));
         }
         this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
-        args.push(`--cancellationPipeName=${this.cancellationPipeName}*`);
+        args.push('--cancellationPipeName', `${this.cancellationPipeName}*`);
         this.logger.info(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
         const tsserverPathIsModule = path.extname(tsserverPath) === '.js';
         const options = {
