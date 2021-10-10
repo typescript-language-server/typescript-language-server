@@ -30,9 +30,9 @@ export const type = new lsp.RequestType<InlayHintsParams, InlayHintsResult, lsp.
 export type HandlerSignature = RequestHandler<InlayHintsParams, InlayHintsResult | null, void>;
 
 export interface ExtendedUserPreferences extends UserPreferences {
-    includeInlayParameterNameHints: "none" | "literals" | "all";
+    includeInlayParameterNameHints: 'none' | 'literals' | 'all';
     includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
-    includeInlayFunctionParameterTypeHints: boolean,
+    includeInlayFunctionParameterTypeHints: boolean;
     includeInlayVariableTypeHints: boolean;
     includeInlayPropertyDeclarationTypeHints: boolean;
     includeInlayFunctionLikeReturnTypeHints: boolean;

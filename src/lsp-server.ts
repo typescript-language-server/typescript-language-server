@@ -983,13 +983,13 @@ export class LspServer {
         return callsResult;
     }
 
-    getPreferencesForLanguage(language: 'typescript' | 'javascript') {
-        const preferences = this.initializeParams.initializationOptions?.preferences ?? {}
-        const languagePreferences = this.initializeParams.initializationOptions?.[language] ?? {}
+    getPreferencesForLanguage(language: 'typescript' | 'javascript'): ExtendedUserPreferences {
+        const preferences = this.initializeParams.initializationOptions?.preferences ?? {};
+        const languagePreferences = this.initializeParams.initializationOptions?.[language] ?? {};
         return {
             ...preferences,
             ...languagePreferences
-        } as ExtendedUserPreferences
+        } as ExtendedUserPreferences;
     }
 
     async inlayHints(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
@@ -1004,8 +1004,8 @@ export class LspServer {
             return { inlayHints: [] };
         }
 
-        const language = isTypeScriptDocument( doc) ? 'typescript' : 'javascript'
-        const preferences = this.getPreferencesForLanguage(language)
+        const language = isTypeScriptDocument(doc) ? 'typescript' : 'javascript';
+        const preferences = this.getPreferencesForLanguage(language);
         await this.tspClient.request(CommandTypes.Configure, {
             preferences
         });
