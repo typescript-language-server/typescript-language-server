@@ -1,5 +1,5 @@
 import * as lsp from 'vscode-languageserver/node';
-import tsp from 'typescript/lib/protocol';
+import tsp, { UserPreferences } from 'typescript/lib/protocol';
 import { RequestHandler } from 'vscode-jsonrpc';
 
 export type InlayHintsParams = {
@@ -28,3 +28,13 @@ export type InlayHintsResult = {
 export const type = new lsp.RequestType<InlayHintsParams, InlayHintsResult, lsp.TextDocumentRegistrationOptions>('typescript/inlayHints');
 
 export type HandlerSignature = RequestHandler<InlayHintsParams, InlayHintsResult | null, void>;
+
+export interface InlayHintsOptions extends UserPreferences {
+    includeInlayParameterNameHints?: 'none' | 'literals' | 'all';
+    includeInlayParameterNameHintsWhenArgumentMatchesName?: boolean;
+    includeInlayFunctionParameterTypeHints?: boolean;
+    includeInlayVariableTypeHints?: boolean;
+    includeInlayPropertyDeclarationTypeHints?: boolean;
+    includeInlayFunctionLikeReturnTypeHints?: boolean;
+    includeInlayEnumMemberValueHints?: boolean;
+}

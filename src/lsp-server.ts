@@ -228,13 +228,13 @@ export class LspServer {
         this.workspaceConfiguration = params.settings || {};
     }
 
-    getWorkspacePreferencesForDocument(file: string): TypeScriptWorkspaceSettingsLanguageSettings | undefined {
+    getWorkspacePreferencesForDocument(file: string): TypeScriptWorkspaceSettingsLanguageSettings {
         const doc = this.documents.get(file);
         if (!doc) {
             return {};
         }
         const preferencesKey = doc.languageId.startsWith('typescript') ? 'typescript' : 'javascript';
-        return this.workspaceConfiguration[preferencesKey];
+        return this.workspaceConfiguration[preferencesKey] ?? {};
     }
 
     protected diagnosticsTokenSource: lsp.CancellationTokenSource | undefined;
@@ -990,12 +990,26 @@ export class LspServer {
         return callsResult;
     }
 
+    getInlayHintsOptions(file: string) : lspinlayHints.InlayHintsOptions {
+        const workspacePreference = this.getWorkspacePreferencesForDocument(file);
+        const userPreferences = this.initializeParams.initializationOptions?.preferences || {};
+        return {
+            ...userPreferences,
+            ...workspacePreference.inlayHints ?? {}
+        };
+    }
+
     async inlayHints(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('inlayHints', params, file);
         if (!file) {
             return { inlayHints: [] };
         }
+
+        const inlayHintsOptions = this.getInlayHintsOptions(file);
+        this.tspClient.request(CommandTypes.Configure, {
+            preferences: inlayHintsOptions
+        });
 
         const doc = this.documents.get(file);
         if (!doc) {
