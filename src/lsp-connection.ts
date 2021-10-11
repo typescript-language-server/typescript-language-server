@@ -33,6 +33,7 @@ export function createLspConnection(options: IServerOptions): lsp.Connection {
     });
 
     connection.onInitialize(server.initialize.bind(server));
+    connection.onDidChangeConfiguration(server.didChangeConfiguration.bind(server));
 
     connection.onDidOpenTextDocument(server.didOpenTextDocument.bind(server));
     connection.onDidSaveTextDocument(server.didSaveTextDocument.bind(server));
