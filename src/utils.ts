@@ -1,4 +1,4 @@
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 /*
  * Copyright (C) 2017, 2018 TypeFox and others.
@@ -25,6 +25,6 @@ function isWindows(): boolean {
     return /^win/.test(process.platform);
 }
 
-export function isTypeScriptDocument(textDocument: TextDocument): boolean {
+export function isTypeScriptDocument(textDocument: TextDocument) {
     return ['typescript', 'typescriptreact'].includes(textDocument.languageId);
 }
