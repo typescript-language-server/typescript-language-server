@@ -140,14 +140,6 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 [language].format.semicolons: 'ignore' | 'insert' | 'remove';
 [language].format.tabSize: number;
 [language].format.trimTrailingWhitespace: boolean;
-// Inlay Hints preferences
-[language].inlayHints.includeInlayEnumMemberValueHints: boolean;
-[language].inlayHints.includeInlayFunctionLikeReturnTypeHints: boolean;
-[language].inlayHints.includeInlayFunctionParameterTypeHints: boolean;
-[language].inlayHints.includeInlayParameterNameHints: 'none' | 'literals' | 'all';
-[language].inlayHints.includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
-[language].inlayHints.includeInlayPropertyDeclarationTypeHints: boolean;
-[language].inlayHints.includeInlayVariableTypeHints: boolean;
 ```
 
 # Supported Protocol features
