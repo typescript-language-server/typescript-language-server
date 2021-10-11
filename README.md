@@ -109,6 +109,47 @@ From the `preferences` options listed above, this server explicilty sets the fol
 }
 ```
 
+## workspace/didChangeConfiguration
+
+Some of the preferences can be controlled through the `workspace/didChangeConfiguration` notification. Below is a list of supported options that can be passed. Note that the settings are specified separately for the typescript and javascript files so `[language]` can be either `javascript` or `typescript`.
+
+```ts
+// Formatting preferences
+[language].format.baseIndentSize: number;
+[language].format.convertTabsToSpaces: boolean;
+[language].format.indentSize: number;
+[language].format.indentStyle: 'None' | 'Block' | 'Smart';
+[language].format.insertSpaceAfterCommaDelimiter: boolean;
+[language].format.insertSpaceAfterConstructor: boolean;
+[language].format.insertSpaceAfterFunctionKeywordForAnonymousFunctions: boolean;
+[language].format.insertSpaceAfterKeywordsInControlFlowStatements: boolean;
+[language].format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces: boolean;
+[language].format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces: boolean;
+[language].format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: boolean;
+[language].format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets: boolean;
+[language].format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis: boolean;
+[language].format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces: boolean;
+[language].format.insertSpaceAfterSemicolonInForStatements: boolean;
+[language].format.insertSpaceAfterTypeAssertion: boolean;
+[language].format.insertSpaceBeforeAndAfterBinaryOperators: boolean;
+[language].format.insertSpaceBeforeFunctionParenthesis: boolean;
+[language].format.insertSpaceBeforeTypeAnnotation: boolean;
+[language].format.newLineCharacter: string;
+[language].format.placeOpenBraceOnNewLineForControlBlocks: boolean;
+[language].format.placeOpenBraceOnNewLineForFunctions: boolean;
+[language].format.semicolons: 'ignore' | 'insert' | 'remove';
+[language].format.tabSize: number;
+[language].format.trimTrailingWhitespace: boolean;
+// Inlay Hints preferences
+[language].inlayHints.includeInlayEnumMemberValueHints: boolean;
+[language].inlayHints.includeInlayFunctionLikeReturnTypeHints: boolean;
+[language].inlayHints.includeInlayFunctionParameterTypeHints: boolean;
+[language].inlayHints.includeInlayParameterNameHints: 'none' | 'literals' | 'all';
+[language].inlayHints.includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
+[language].inlayHints.includeInlayPropertyDeclarationTypeHints: boolean;
+[language].inlayHints.includeInlayVariableTypeHints: boolean;
+```
+
 # Supported Protocol features
 
 - [x] textDocument/didChange (incremental)
@@ -129,6 +170,7 @@ From the `preferences` options listed above, this server explicilty sets the fol
 - [x] textDocument/references
 - [x] textDocument/signatureHelp
 - [x] workspace/symbol
+- [x] workspace/didChangeConfiguration
 
 ## `typescript/inlayHints` (experimental, supported from Typescript v4.4.2)
 

@@ -9,7 +9,7 @@
  * **IMPORTANT** this module should not depend on `vscode-languageserver` only protocol and types
  */
 import * as lsp from 'vscode-languageserver-protocol';
-import { UserPreferences } from 'typescript/lib/protocol';
+import { FormatCodeSettings, UserPreferences } from 'typescript/lib/protocol';
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
@@ -34,4 +34,13 @@ export type TypeScriptInitializeParams = lsp.InitializeParams & {
 
 export interface TypeScriptInitializeResult extends lsp.InitializeResult {
     logFileUri?: string;
+}
+
+export interface TypeScriptWorkspaceSettings {
+    javascript?: {
+        format?: FormatCodeSettings;
+    };
+    typescript?: {
+        format?: FormatCodeSettings;
+    };
 }
