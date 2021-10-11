@@ -13,7 +13,7 @@ import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
-import { CodeActionKind } from 'vscode-languageserver/node';
+import { CodeActionKind, FormattingOptions } from 'vscode-languageserver/node';
 import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
@@ -35,7 +35,7 @@ import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
-import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
+import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
 
@@ -53,11 +53,13 @@ export class LspServer {
     private tspClient: TspClient;
     private diagnosticQueue?: DiagnosticEventQueue;
     private logger: Logger;
+    private workspaceConfiguration: TypeScriptWorkspaceSettings;
 
     private readonly documents = new LspDocuments();
 
     constructor(private options: IServerOptions) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
+        this.workspaceConfiguration = {};
     }
 
     closeAll(): void {
@@ -220,6 +222,19 @@ export class LspServer {
             return path.join(this.initializeParams.rootPath, '.log/tsserver.log');
         }
         return undefined;
+    }
+
+    didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
+        this.workspaceConfiguration = params.settings || {};
+    }
+
+    getWorkspacePreferencesForDocument(file: string): TypeScriptWorkspaceSettingsLanguageSettings | undefined {
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return {};
+        }
+        const preferencesKey = doc.languageId.startsWith('typescript') ? 'typescript' : 'javascript';
+        return this.workspaceConfiguration[preferencesKey];
     }
 
     protected diagnosticsTokenSource: lsp.CancellationTokenSource | undefined;
@@ -583,27 +598,11 @@ export class LspServer {
             return [];
         }
 
-        let opts = <tsp.FormatCodeSettings>{
-            ...params.options
-        };
-
-        // translate
-        if (opts.convertTabsToSpaces === undefined) {
-            opts.convertTabsToSpaces = params.options.insertSpaces;
-        }
-        if (opts.indentSize === undefined) {
-            opts.indentSize = params.options.tabSize;
-        }
-
-        try {
-            opts = JSON.parse(fs.readFileSync(this.rootPath() + '/tsfmt.json', 'utf-8'));
-        } catch (err) {
-            this.logger.log(`No formatting options found ${err}`);
-        }
+        const formatOptions = this.getFormattingOptions(file, params.options);
 
         // options are not yet supported in tsserver, but we can send a configure request first
         await this.tspClient.request(CommandTypes.Configure, {
-            formatOptions: opts
+            formatOptions
         });
 
         const response = await this.tspClient.request(CommandTypes.Format, {
@@ -612,7 +611,7 @@ export class LspServer {
             offset: 1,
             endLine: Number.MAX_SAFE_INTEGER,
             endOffset: Number.MAX_SAFE_INTEGER,
-            options: opts
+            options: formatOptions
         });
         if (response.body) {
             return response.body.map(e => toTextEdit(e));
@@ -627,27 +626,11 @@ export class LspServer {
             return [];
         }
 
-        let opts = <tsp.FormatCodeSettings>{
-            ...params.options
-        };
-
-        // translate
-        if (opts.convertTabsToSpaces === undefined) {
-            opts.convertTabsToSpaces = params.options.insertSpaces;
-        }
-        if (opts.indentSize === undefined) {
-            opts.indentSize = params.options.tabSize;
-        }
-
-        try {
-            opts = JSON.parse(fs.readFileSync(this.rootPath() + '/tsfmt.json', 'utf-8'));
-        } catch (err) {
-            this.logger.log(`No formatting options found ${err}`);
-        }
+        const formatOptions = this.getFormattingOptions(file, params.options);
 
         // options are not yet supported in tsserver, but we can send a configure request first
         await this.tspClient.request(CommandTypes.Configure, {
-            formatOptions: opts
+            formatOptions
         });
 
         const response = await this.tspClient.request(CommandTypes.Format, {
@@ -656,12 +639,37 @@ export class LspServer {
             offset: params.range.start.character + 1,
             endLine: params.range.end.line + 1,
             endOffset: params.range.end.character + 1,
-            options: opts
+            options: formatOptions
         });
         if (response.body) {
             return response.body.map(e => toTextEdit(e));
         }
         return [];
+    }
+
+    private getFormattingOptions(file: string, requestOptions: FormattingOptions): tsp.FormatCodeSettings {
+        const workspacePreference = this.getWorkspacePreferencesForDocument(file);
+
+        let opts = <tsp.FormatCodeSettings>{
+            ...workspacePreference?.format || {},
+            ...requestOptions
+        };
+
+        // translate
+        if (opts.convertTabsToSpaces === undefined) {
+            opts.convertTabsToSpaces = requestOptions.insertSpaces;
+        }
+        if (opts.indentSize === undefined) {
+            opts.indentSize = requestOptions.tabSize;
+        }
+
+        try {
+            opts = JSON.parse(fs.readFileSync(this.rootPath() + '/tsfmt.json', 'utf-8'));
+        } catch (err) {
+            this.logger.log(`No formatting options found ${err}`);
+        }
+
+        return opts;
     }
 
     async signatureHelp(params: lsp.TextDocumentPositionParams): Promise<lsp.SignatureHelp | undefined> {
