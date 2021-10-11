@@ -36,11 +36,11 @@ export interface TypeScriptInitializeResult extends lsp.InitializeResult {
     logFileUri?: string;
 }
 
+export interface TypeScriptWorkspaceSettingsLanguageSettings {
+    format?: FormatCodeSettings;
+}
+
 export interface TypeScriptWorkspaceSettings {
-    javascript?: {
-        format?: FormatCodeSettings;
-    };
-    typescript?: {
-        format?: FormatCodeSettings;
-    };
+    javascript?: TypeScriptWorkspaceSettingsLanguageSettings;
+    typescript?: TypeScriptWorkspaceSettingsLanguageSettings;
 }

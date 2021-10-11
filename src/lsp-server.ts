@@ -35,7 +35,7 @@ import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
-import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings } from './ts-protocol';
+import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
 
@@ -228,7 +228,7 @@ export class LspServer {
         this.workspaceConfiguration = params.settings || {};
     }
 
-    private getWorkspacePreferencesForDocument(file: string) {
+    getWorkspacePreferencesForDocument(file: string): TypeScriptWorkspaceSettingsLanguageSettings | undefined {
         const doc = this.documents.get(file);
         if (!doc) {
             return {};

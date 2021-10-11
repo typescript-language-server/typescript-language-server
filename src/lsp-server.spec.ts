@@ -442,6 +442,43 @@ describe('editing', () => {
     }).timeout(10000);
 });
 
+describe('workspace configuration', () => {
+    it('receives workspace configuration notification', async ()=>{
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                export function foo(): void {
+                  console.log('test')
+                }
+            `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+
+        server.didChangeConfiguration({
+            settings: {
+                typescript: {
+                    format: {
+                        insertSpaceAfterCommaDelimiter: true
+                    }
+                },
+                javascript: {
+                    format: {
+                        insertSpaceAfterCommaDelimiter: false
+                    }
+                }
+            }
+        });
+
+        const file = filePath('bar.ts');
+        const settings = server.getWorkspacePreferencesForDocument(file);
+        assert.deepEqual(settings, { format: { insertSpaceAfterCommaDelimiter: true } });
+    });
+});
+
 describe('formatting', () => {
     const uriString = uri('bar.ts');
     const languageId = 'typescript';
@@ -496,6 +533,34 @@ describe('formatting', () => {
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n\t// some code\n}', result);
+    }).timeout(10000);
+
+    it('formatting setting set through workspace configuration', async () => {
+        const text = 'function foo() {\n// some code\n}';
+        const textDocument = {
+            uri: uriString, languageId, version, text
+        };
+        server.didOpenTextDocument({ textDocument });
+
+        server.didChangeConfiguration({
+            settings: {
+                typescript: {
+                    format: {
+                        placeOpenBraceOnNewLineForFunctions: true
+                    }
+                }
+            }
+        });
+
+        const edits = await server.documentFormatting({
+            textDocument,
+            options: {
+                tabSize: 4,
+                insertSpaces: false
+            }
+        });
+        const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        assert.equal('function foo()\n{\n\t// some code\n}', result);
     }).timeout(10000);
 
     it('selected range', async () => {
