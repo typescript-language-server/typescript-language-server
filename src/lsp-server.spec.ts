@@ -546,6 +546,7 @@ describe('formatting', () => {
             settings: {
                 typescript: {
                     format: {
+                        newLineCharacter: '\n',
                         placeOpenBraceOnNewLineForFunctions: true
                     }
                 }
