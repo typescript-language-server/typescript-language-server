@@ -27,7 +27,7 @@ import {
     uriToPath, toSymbolKind, toLocation, toPosition,
     pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText
 } from './protocol-translation';
-import { getTsserverExecutable, isTypeScriptDocument } from './utils';
+import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
 import { asCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
@@ -38,7 +38,6 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
-import { ExtendedUserPreferences } from './lsp-protocol.inlayHints.proposed';
 
 export interface IServerOptions {
     logger: Logger;
@@ -983,15 +982,6 @@ export class LspServer {
         return callsResult;
     }
 
-    getPreferencesForLanguage(language: 'typescript' | 'javascript') {
-        const preferences = this.initializeParams.initializationOptions?.preferences ?? {}
-        const languagePreferences = this.initializeParams.initializationOptions?.[language] ?? {}
-        return {
-            ...preferences,
-            ...languagePreferences
-        } as ExtendedUserPreferences
-    }
-
     async inlayHints(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('inlayHints', params, file);
@@ -1003,12 +993,6 @@ export class LspServer {
         if (!doc) {
             return { inlayHints: [] };
         }
-
-        const language = isTypeScriptDocument( doc) ? 'typescript' : 'javascript'
-        const preferences = this.getPreferencesForLanguage(language)
-        await this.tspClient.request(CommandTypes.Configure, {
-            preferences
-        });
 
         const start = doc.offsetAt(params.range?.start ?? {
             line: 0,
