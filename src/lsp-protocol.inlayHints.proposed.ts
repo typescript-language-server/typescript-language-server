@@ -29,7 +29,7 @@ export const type = new lsp.RequestType<InlayHintsParams, InlayHintsResult, lsp.
 
 export type HandlerSignature = RequestHandler<InlayHintsParams, InlayHintsResult | null, void>;
 
-export interface InlayHintsOptions extends tsp.UserPreferences {
+export interface InlayHintsOptions {
     includeInlayParameterNameHints?: 'none' | 'literals' | 'all';
     includeInlayParameterNameHintsWhenArgumentMatchesName?: boolean;
     includeInlayFunctionParameterTypeHints?: boolean;

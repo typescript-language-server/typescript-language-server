@@ -10,7 +10,7 @@ import tempy from 'tempy';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
-import tsp from 'typescript/lib/protocol';
+import tsp, { UserPreferences } from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
 import { CodeActionKind, FormattingOptions } from 'vscode-languageserver/node';
@@ -1043,7 +1043,7 @@ export class LspServer {
         }
     }
 
-    private getInlayHintsOptions(file: string): lspinlayHints.InlayHintsOptions {
+    private getInlayHintsOptions(file: string): lspinlayHints.InlayHintsOptions & UserPreferences {
         const workspacePreference = this.getWorkspacePreferencesForDocument(file);
         const userPreferences = this.initializeParams.initializationOptions?.preferences || {};
         return {
