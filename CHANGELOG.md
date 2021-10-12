@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.4] - 2021-10-12
+
+ - Fix broken logging (#267)
+ - Add support for `workspace/didChangeConfiguration` and setting formatting options per language (#268)
+ - Add option to set inlayHints preferences by language (#266)
+
 ## [0.6.3] - 2021-10-27
 
  - Implement experimental inlay hints (#259) ([documentation](https://github.com/typescript-language-server/typescript-language-server#typescriptinlayhints-experimental-supported-from-typescript-v442))
