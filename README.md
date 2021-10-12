@@ -140,6 +140,14 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 [language].format.semicolons: 'ignore' | 'insert' | 'remove';
 [language].format.tabSize: number;
 [language].format.trimTrailingWhitespace: boolean;
+// Inlay Hints preferences
+[language].inlayHints.includeInlayEnumMemberValueHints: boolean;
+[language].inlayHints.includeInlayFunctionLikeReturnTypeHints: boolean;
+[language].inlayHints.includeInlayFunctionParameterTypeHints: boolean;
+[language].inlayHints.includeInlayParameterNameHints: 'none' | 'literals' | 'all';
+[language].inlayHints.includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
+[language].inlayHints.includeInlayPropertyDeclarationTypeHints: boolean;
+[language].inlayHints.includeInlayVariableTypeHints: boolean;
 ```
 
 # Supported Protocol features
@@ -190,9 +198,9 @@ For the request to return any results, some or all of the following options need
 ```ts
 // Not officially part of UserPreferences yet but you can send them along with the UserPreferences just fine:
 export interface InlayHintsOptions extends UserPreferences {
-    includeInlayParameterNameHints: "none" | "literals" | "all";
+    includeInlayParameterNameHints: 'none' | 'literals' | 'all';
     includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
-    includeInlayFunctionParameterTypeHints: boolean,
+    includeInlayFunctionParameterTypeHints: boolean;
     includeInlayVariableTypeHints: boolean;
     includeInlayPropertyDeclarationTypeHints: boolean;
     includeInlayFunctionLikeReturnTypeHints: boolean;

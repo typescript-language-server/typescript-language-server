@@ -10,6 +10,7 @@
  */
 import * as lsp from 'vscode-languageserver-protocol';
 import { FormatCodeSettings, UserPreferences } from 'typescript/lib/protocol';
+import { InlayHintsOptions } from './lsp-protocol.inlayHints.proposed';
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
@@ -38,6 +39,7 @@ export interface TypeScriptInitializeResult extends lsp.InitializeResult {
 
 export interface TypeScriptWorkspaceSettingsLanguageSettings {
     format?: FormatCodeSettings;
+    inlayHints?: InlayHintsOptions;
 }
 
 export interface TypeScriptWorkspaceSettings {
