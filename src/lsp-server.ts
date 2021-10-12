@@ -990,15 +990,6 @@ export class LspServer {
         return callsResult;
     }
 
-    getInlayHintsOptions(file: string) : lspinlayHints.InlayHintsOptions {
-        const workspacePreference = this.getWorkspacePreferencesForDocument(file);
-        const userPreferences = this.initializeParams.initializationOptions?.preferences || {};
-        return {
-            ...userPreferences,
-            ...workspacePreference.inlayHints ?? {}
-        };
-    }
-
     async inlayHints(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('inlayHints', params, file);
@@ -1050,5 +1041,14 @@ export class LspServer {
                 inlayHints: []
             };
         }
+    }
+
+    private getInlayHintsOptions(file: string): lspinlayHints.InlayHintsOptions {
+        const workspacePreference = this.getWorkspacePreferencesForDocument(file);
+        const userPreferences = this.initializeParams.initializationOptions?.preferences || {};
+        return {
+            ...userPreferences,
+            ...workspacePreference.inlayHints ?? {}
+        };
     }
 }
