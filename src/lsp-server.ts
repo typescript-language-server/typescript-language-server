@@ -797,6 +797,13 @@ export class LspServer {
                 targetUri: string;
             };
             this.applyRenameFile(sourceUri, targetUri);
+        } else if (arg.command === Commands.APPLY_COMPLETION_CODE_ACTION && arg.arguments) {
+            const codeActions: tsp.CodeAction[] = arg.arguments;
+            const workspaceChanges: tsp.FileCodeEdits[] = [];
+            for (const codeAction of codeActions) {
+                workspaceChanges.push(...codeAction.changes);
+            }
+            await this.applyFileCodeEdits(workspaceChanges);
         } else {
             this.logger.error(`Unknown command ${arg.command}.`);
         }
