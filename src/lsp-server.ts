@@ -798,7 +798,7 @@ export class LspServer {
             };
             this.applyRenameFile(sourceUri, targetUri);
         } else if (arg.command === Commands.APPLY_COMPLETION_CODE_ACTION && arg.arguments) {
-            const codeActions: tsp.CodeAction[] = arg.arguments;
+            const [_, codeActions] = arg.arguments as [string, tsp.CodeAction[]];
             const workspaceChanges: tsp.FileCodeEdits[] = [];
             for (const codeAction of codeActions) {
                 workspaceChanges.push(...codeAction.changes);
