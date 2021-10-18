@@ -226,6 +226,8 @@ export class LspServer {
 
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
         this.workspaceConfiguration = params.settings || {};
+        const ignoredDiagnosticCodes = this.workspaceConfiguration.diagnostics?.ignoredCodes || [];
+        this.diagnosticQueue?.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes);
     }
 
     getWorkspacePreferencesForDocument(file: string): TypeScriptWorkspaceSettingsLanguageSettings {
