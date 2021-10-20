@@ -11,7 +11,7 @@ export const Commands = {
     APPLY_REFACTORING: '_typescript.applyRefactoring',
     ORGANIZE_IMPORTS: '_typescript.organizeImports',
     APPLY_RENAME_FILE: '_typescript.applyRenameFile',
-    /** Commands below should be implemented by the client */
     APPLY_COMPLETION_CODE_ACTION: '_typescript.applyCompletionCodeAction',
+    /** Commands below should be implemented by the client */
     SELECT_REFACTORING: '_typescript.selectRefactoring'
 };
