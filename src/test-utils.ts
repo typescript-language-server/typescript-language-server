@@ -39,7 +39,7 @@ export function uri(suffix = ''): string {
 }
 
 export function filePath(suffix = ''): string {
-    return normalizeFileNameToFsPath(path.resolve(__dirname, '..', 'test-data', suffix));
+    return normalizePath(path.resolve(__dirname, '..', 'test-data', suffix));
 }
 
 export function readContents(path: string): string {
