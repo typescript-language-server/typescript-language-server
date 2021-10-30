@@ -632,6 +632,7 @@ describe('code actions', () => {
     foo(param1, param2)
     `
     };
+    console.error('INPUT URI', doc.uri);
 
     it('can provide quickfix code actions', async () => {
         server.didOpenTextDocument({
@@ -656,6 +657,7 @@ describe('code actions', () => {
         }))!;
 
         assert.strictEqual(result.length, 2);
+        console.error('DIAGNOSTICS', result);
         const quickFixDiagnostic = result.find(diagnostic => diagnostic.kind === 'quickfix');
         assert.isDefined(quickFixDiagnostic);
         assert.deepEqual(quickFixDiagnostic, {

@@ -16,6 +16,7 @@ export function provideQuickFix(response: tsp.GetCodeFixesResponse | undefined, 
     if (!response || !response.body) {
         return [];
     }
+    console.error('provideQuickFix', response.body);
     return response.body.map(fix => lsp.CodeAction.create(
         fix.description,
         {

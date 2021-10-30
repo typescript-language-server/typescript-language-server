@@ -699,6 +699,7 @@ export class LspServer {
 
     async codeAction(params: lsp.CodeActionParams): Promise<lsp.CodeAction[]> {
         const file = uriToPath(params.textDocument.uri);
+        console.error('CodeAction: NORMALIZED PATH', file);
         this.logger.log('codeAction', params, file);
         if (!file) {
             return [];
