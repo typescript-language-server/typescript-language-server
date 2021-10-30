@@ -44,7 +44,7 @@ describe('documentHighlight', () => {
 });
 
 describe('completions', () => {
-    it('auto-imports from another module', async () => {
+    it('receives completion that auto-imports from another module', async () => {
         const doc = {
             uri: uri('completion.ts'),
             languageId: 'typescript',
@@ -52,8 +52,6 @@ describe('completions', () => {
             text: readContents(filePath('completion.ts'))
         };
         server.didOpenTextDocument({ textDocument: doc });
-
-        // Tries to complete the import from test-data/module1.ts
         const proposals = await server.completion({
             textDocument: doc,
             position: positionAfter(doc, 'doStuff')
