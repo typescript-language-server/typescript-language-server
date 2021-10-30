@@ -59,7 +59,8 @@ export function normalizeFsPath(fsPath: string): string {
 
 function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
     const fileUri = URI.file(filepath);
-    const document = documents && documents.get(fileUri.fsPath);
+    const normalizedFilepath = normalizePath(fileUri.fsPath);
+    const document = documents && documents.get(normalizedFilepath);
     return document ? document.version : 0;
 }
 
