@@ -657,7 +657,7 @@ describe('code actions', () => {
         }))!;
 
         assert.strictEqual(result.length, 2);
-        console.error('DIAGNOSTICS', result);
+        console.error('DIAGNOSTICS', JSON.stringify(result, null, 2));
         const quickFixDiagnostic = result.find(diagnostic => diagnostic.kind === 'quickfix');
         assert.isDefined(quickFixDiagnostic);
         assert.deepEqual(quickFixDiagnostic, {
