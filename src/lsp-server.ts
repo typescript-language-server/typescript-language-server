@@ -797,6 +797,18 @@ export class LspServer {
                 targetUri: string;
             };
             this.applyRenameFile(sourceUri, targetUri);
+        } else if (arg.command === Commands.APPLY_COMPLETION_CODE_ACTION && arg.arguments) {
+            const [_, codeActions] = arg.arguments as [string, tsp.CodeAction[]];
+            for (const codeAction of codeActions) {
+                await this.applyFileCodeEdits(codeAction.changes);
+                if (codeAction.commands && codeAction.commands.length) {
+                    for (const command of codeAction.commands) {
+                        await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command });
+                    }
+                }
+                // Execute only the first code action.
+                break;
+            }
         } else {
             this.logger.error(`Unknown command ${arg.command}.`);
         }
