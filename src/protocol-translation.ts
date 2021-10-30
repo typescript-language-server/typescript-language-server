@@ -32,7 +32,8 @@ function parsePathOrUri(filepath: string): URI {
 
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
     const fileUri = parsePathOrUri(filepath);
-    const document = documents && documents.get(fileUri.fsPath);
+    const normalizedFilepath = normalizePath(fileUri.fsPath);
+    const document = documents && documents.get(normalizedFilepath);
     return document ? document.uri : fileUri.toString();
 }
 
