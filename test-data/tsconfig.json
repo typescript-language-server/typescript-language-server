@@ -7,7 +7,6 @@
         "noEmit": true,
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,
-        "strict": true,
         "moduleResolution": "node",
     },
 }
