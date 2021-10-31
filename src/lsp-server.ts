@@ -511,9 +511,10 @@ export class LspServer {
             return { contents: [] };
         }
         const range = asRange(result.body);
-        const contents: lsp.MarkedString[] = [
-            { language: 'typescript', value: result.body.displayString }
-        ];
+        const contents: lsp.MarkedString[] = [];
+        if (result.body.displayString) {
+            contents.push({ language: 'typescript', value: result.body.displayString });
+        }
         const tags = asTagsDocumentation(result.body.tags);
         const documentation = asPlainText(result.body.documentation);
         contents.push(documentation + (tags ? '\n\n' + tags : ''));
