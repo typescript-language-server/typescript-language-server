@@ -14,10 +14,8 @@ import * as lsp from 'vscode-languageserver/node';
 const program = new Command('typescript-language-server')
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     .version(require('../package.json').version)
-    .option('--stdio', 'use stdio')
-    .option('--node-ipc', 'use node-ipc')
+    .requiredOption('--stdio', 'use stdio')
     .option('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.')
-    .option('--socket <port>', 'use socket. example: --socket=5000')
     .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')
     .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
       ' example: --tsserver-log-verbosity verbose')
@@ -25,11 +23,6 @@ const program = new Command('typescript-language-server')
     .parse(process.argv);
 
 const options = program.opts();
-
-if (!(options.stdio || options.socket || options.nodeIpc)) {
-    console.error('Connection type required (stdio, node-ipc, socket). Refer to --help for more details.');
-    process.exit(1);
-}
 
 if (options.tsserverLogFile && !options.tsserverLogVerbosity) {
     options.tsserverLogVerbosity = 'normal';
