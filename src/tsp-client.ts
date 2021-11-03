@@ -181,7 +181,7 @@ export class TspClient {
             request.arguments = args;
         }
         const serializedRequest = JSON.stringify(request) + '\n';
-        this.tsserverProc.stdin?.write(serializedRequest);
+        this.tsserverProc.stdin!.write(serializedRequest);
         this.logger.log(notification ? 'notify' : 'request', request);
     }
 
