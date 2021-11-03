@@ -25,7 +25,7 @@ import { findPathToModule, findPathToYarnSdk } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText
+    pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText, normalizePath
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
@@ -873,7 +873,7 @@ export class LspServer {
         for (const item of response.body) {
             // tsp returns item.file with POSIX path delimiters, whereas file is platform specific.
             // Converting to a URI and back to a path ensures consistency.
-            if (uriToPath(pathToUri(item.file, this.documents)) === file) {
+            if (normalizePath(item.file) === file) {
                 const highlights = toDocumentHighlight(item);
                 result.push(...highlights);
             }

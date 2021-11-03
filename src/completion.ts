@@ -9,7 +9,7 @@ import * as lsp from 'vscode-languageserver/node';
 import type tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
 import { ScriptElementKind } from './tsp-command-types';
-import { asRange, toTextEdit, asPlainText, asDocumentation } from './protocol-translation';
+import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation';
 import { Commands } from './commands';
 
 interface TSCompletionItem extends lsp.CompletionItem {
@@ -156,7 +156,8 @@ export function asResolvedCompletionItem(item: lsp.CompletionItem, details: tsp.
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);
     if (details.codeActions?.length) {
-        item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, item.data.file);
+        const filepath = normalizePath(item.data.file);
+        item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
         item.command = asCommand(details.codeActions, item.data.file);
     }
     return item;
