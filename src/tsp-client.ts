@@ -114,16 +114,21 @@ export class TspClient {
         this.tsserverProc = tsserverPathIsModule
             ? cp.fork(tsserverPath, args, options)
             : cp.spawn(tsserverPath, args);
-        this.readlineInterface = readline.createInterface(this.tsserverProc.stdout, this.tsserverProc.stdin, undefined);
         process.on('exit', () => {
-            this.readlineInterface.close();
-            this.tsserverProc.stdin.destroy();
+            this.readlineInterface?.close();
+            this.tsserverProc.stdin?.destroy();
             this.tsserverProc.kill();
         });
+        const { stdout, stdin, stderr } = this.tsserverProc;
+        if (!stdout || !stdin || !stderr) {
+            this.logger.error(`Failed initializing input/output of tsserver (stdin: ${!!stdin}, stdout: ${!!stdout}, stderr: ${!!stderr})`);
+            process.exit(1);
+        }
+        this.readlineInterface = readline.createInterface(stdout, stdin, undefined);
         this.readlineInterface.on('line', line => this.processMessage(line));
 
         const dec = new decoder.StringDecoder('utf-8');
-        this.tsserverProc.stderr.addListener('data', data => {
+        stderr.addListener('data', data => {
             const stringMsg = typeof data === 'string' ? data : dec.write(data);
             this.tsserverLogger.error(stringMsg);
         });
@@ -176,7 +181,7 @@ export class TspClient {
             request.arguments = args;
         }
         const serializedRequest = JSON.stringify(request) + '\n';
-        this.tsserverProc.stdin.write(serializedRequest);
+        this.tsserverProc.stdin!.write(serializedRequest);
         this.logger.log(notification ? 'notify' : 'request', request);
     }
 
