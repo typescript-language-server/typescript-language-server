@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.5] - 2021-11-03
+
+ - fix: normalize client and tsserver paths (#275)
+   This should ensure consistent behavior regradless of the platform. Previously some functionality could be malfunctioning on Windows depending on the LSP client used due to using non-normalized file paths.
+ - Handle the `APPLY_COMPLETION_CODE_ACTION` command internally (#270)
+   This means that the clients that have implemented a custom handling for the `_typescript.applyCompletionCodeAction` command can remove that code.
+   Without removing the custom handling everything should work as before but some edge cases might work better when custom handling is removed.
+ - fix: ignore empty code blocks in content returned from `textDocument/hover` (#276)
+ - fix: remove unsupported --node-ipc and --socket options (#278)
+
 ## [0.6.4] - 2021-10-12
 
  - Fix broken logging (#267)
