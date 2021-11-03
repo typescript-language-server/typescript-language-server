@@ -32,10 +32,8 @@ typescript-language-server --stdio
   Options:
 
     -V, --version                          output the version number
-    --stdio                                use stdio
-    --node-ipc                             use node-ipc
+    --stdio                                use stdio (the only supported and required option)
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.
-    --socket <port>                        use socket. example: --socket=5000
     --tsserver-log-file <tsServerLogFile>  Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt
     --tsserver-log-verbosity <verbosity>   Specify tsserver log verbosity (off, terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
     --tsserver-path <path>                 Specify path to tsserver. example: --tsserver-path=tsserver
