@@ -1,0 +1,2 @@
+# Force LF line endings everywhere (especially for Windows CI)
+* text eol=lf

@@ -10,14 +10,15 @@ on:
     - master
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      CI: true
+  tests:
     strategy:
       matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
         node-version: [12.x, 14.x, 16.x]
-    name: Use Node.js ${{ matrix.node-version }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CI: true
+    name: ${{ matrix.os }} (Node.js ${{ matrix.node-version }})
     steps:
       - uses: actions/checkout@v2
       - name: Setup node
@@ -26,6 +27,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: yarn install
         run: yarn
+      - name: build
+        run: yarn build
       - name: Unittesting
         run: yarn test
       - name: Linting

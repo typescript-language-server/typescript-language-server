@@ -1,6 +1,63 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.5] - 2021-11-03
+
+ - fix: normalize client and tsserver paths (#275)
+   This should ensure consistent behavior regradless of the platform. Previously some functionality could be malfunctioning on Windows depending on the LSP client used due to using non-normalized file paths.
+ - Handle the `APPLY_COMPLETION_CODE_ACTION` command internally (#270)
+   This means that the clients that have implemented a custom handling for the `_typescript.applyCompletionCodeAction` command can remove that code.
+   Without removing the custom handling everything should work as before but some edge cases might work better when custom handling is removed.
+ - fix: ignore empty code blocks in content returned from `textDocument/hover` (#276)
+ - fix: remove unsupported --node-ipc and --socket options (#278)
+
+## [0.6.4] - 2021-10-12
+
+ - Fix broken logging (#267)
+ - Add support for `workspace/didChangeConfiguration` and setting formatting options per language (#268)
+ - Add option to set inlayHints preferences by language (#266)
+
+## [0.6.3] - 2021-10-27
+
+ - Implement experimental inlay hints (#259) ([documentation](https://github.com/typescript-language-server/typescript-language-server#typescriptinlayhints-experimental-supported-from-typescript-v442))
+ - Send diagnostics even to clients that don't signal support (#261) (reverts #229)
+
+## [0.6.2] - 2021-08-16
+
+ - Mark completion items as deprecated if JSDoc says so (#227)
+ - Add a `maxTsServerMemory` option (#252)
+ - (chore) Add Windows and Mac CI runner (#248)
+
+## [0.6.1] - 2021-08-16
+
+- Fix Windows path regression introduced in #220 (#249)
+
+## [0.6.0] - 2021-08-12
+
+- Refactor code actions to better support filtering against "only" (#170)
+- Support Yarn PnP (#220)
+- Update internal Typescript dependency from 3.9.0 to 4.3.4 (#226)
+- Only publish diagnostics if client supports the capability (#229)
+- Add support for "unnecessary" and "deprecated" diagnostic tags (#230)
+- Upgrade vscode-languageserver (#231)
+- Lookup tsserver using direct path rather than through .bin alias (#234)
+- Don't pass deprecated options to Completion request
+
+## [0.5.4] - 2021-07-01
+
+- Remove hardcoded request timeouts
+- Forward user preferences in `initializationOptions`
+- Use `require.resolve` for module resolution (#195)
+
+## [0.5.0] - 2021-01-16
+
+- Fix empty documentHighlight results due to inconsistent path delimiters
+- Update command line option `tssserver-log-verbosity` to support `off`
+- Call compilerOptionsForInferredProjects during initialization (set good defaults when tsconfig.json missing)
+- Remove warnings from LSP completion results
+- Add support for formatting range (textDocument/rangeFormatting)
+- Ensure TSP request cancellation cancels timeout handling
+
 ## [0.4.0] - 2019-08-28
 
 - Upgraded to LSP 5.3.0 and Monaco 0.17.0. [#115](https://github.com/theia-ide/typescript-language-server/pull/115)
