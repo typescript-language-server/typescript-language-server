@@ -32,7 +32,7 @@ typescript-language-server --stdio
   Options:
 
     -V, --version                          output the version number
-    --stdio                                use stdio (the only supported and required option)
+    --stdio                                use stdio (required option)
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.
     --tsserver-log-file <tsServerLogFile>  Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt
     --tsserver-log-verbosity <verbosity>   Specify tsserver log verbosity (off, terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
@@ -83,6 +83,10 @@ interface UserPreferences {
      * values, with insertion text to replace preceding `.` tokens with `?.`.
      */
     includeAutomaticOptionalChainCompletions: boolean;
+    /**
+     * Allows import module names to be resolved in the initial completions request.
+     * @default false
+     */
     allowIncompleteCompletions: boolean;
     importModuleSpecifierPreference: "shortest" | "project-relative" | "relative" | "non-relative";
     /** Determines whether we import `foo/index.ts` as "foo", "foo/index", or "foo/index.js" */
@@ -93,6 +97,11 @@ interface UserPreferences {
     provideRefactorNotApplicableReason: boolean;
     allowRenameOfImportPath: boolean;
     includePackageJsonAutoImports: "auto" | "on" | "off";
+    /**
+     * Requires "includeCompletionsWithSnippetText" to be enabled.
+     * @default "none"
+     */
+    jsxAttributeCompletionStyle: "auto" | "braces" | "none";
     displayPartsForJSDoc: boolean;
     generateReturnInDocTemplate: boolean;
 }
@@ -102,8 +111,15 @@ From the `preferences` options listed above, this server explicilty sets the fol
 
 ```js
 {
-  includeCompletionsForModuleExports: true,
-  includeCompletionsWithInsertText: true,
+    allowIncompleteCompletions: true,
+    allowRenameOfImportPath: true,
+    displayPartsForJSDoc: true,
+    generateReturnInDocTemplate: true,
+    includeAutomaticOptionalChainCompletions: true,
+    includeCompletionsForImportStatements: true,
+    includeCompletionsForModuleExports: true,
+    includeCompletionsWithInsertText: true,
+    includeCompletionsWithSnippetText: true,
 }
 ```
 

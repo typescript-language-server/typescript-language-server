@@ -188,6 +188,54 @@ describe('completion', () => {
         assert.equal(completion!.textEdit!.newText, '["invalid-identifier-name"]');
         server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
+
+    it('includes detail field with package name for auto-imports', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'readFile'
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        assert.isDefined(completion);
+        assert.strictEqual(completion!.detail, 'fs');
+        assert.strictEqual(completion!.insertTextFormat, /* snippet */2);
+        server.didCloseTextDocument({ textDocument: doc });
+    }).timeout(10000);
+
+    it('resolves text edit for auto-import completion', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'readFile'
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        assert.isDefined(completion);
+        const resolvedItem = await server.completionResolve(completion!);
+        assert.deepEqual(resolvedItem.additionalTextEdits, [
+            {
+                newText: 'import { readFile } from "fs";\n\n',
+                range: {
+                    end: {
+                        character: 0,
+                        line: 0
+                    },
+                    start: {
+                        character: 0,
+                        line: 0
+                    }
+                }
+            }
+        ]);
+        server.didCloseTextDocument({ textDocument: doc });
+    }).timeout(10000);
 });
 
 describe('diagnostics', () => {
