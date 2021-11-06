@@ -165,7 +165,9 @@ export class LspServer {
                     triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
                     resolveProvider: true
                 },
-                codeActionProvider: true,
+                codeActionProvider: {
+                    codeActionKinds: [CodeActionKind.SourceOrganizeImports]
+                },
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
@@ -722,12 +724,11 @@ export class LspServer {
                 // assume no severity is an error
                 d => (d.severity ?? 0) <= 2
             );
-            actions.push(...provideOrganizeImports(
-                await this.getOrganizeImports({
-                    scope: { type: 'file', args },
-                    skipDestructiveCodeActions
-                })
-            ));
+            const response = await this.getOrganizeImports({
+                scope: { type: 'file', args },
+                skipDestructiveCodeActions
+            });
+            actions.push(...provideOrganizeImports(response, this.documents));
         }
 
         return actions;

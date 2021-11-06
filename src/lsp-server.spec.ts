@@ -762,7 +762,41 @@ describe('code actions', () => {
         ]);
     }).timeout(10000);
 
+    it('does not provide organize imports when there are errors', async () => {
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 29 },
+                end: { line: 1, character: 53 }
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 }
+                    },
+                    code: 6133,
+                    message: 'unused arg'
+                }],
+                only: ['source.organizeImports']
+            }
+        }))!;
+
+        assert.deepEqual(result, []);
+    }).timeout(10000);
+
     it('can provide organize imports when explicitly requested in only', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `import { existsSync } from 'fs';
+import { accessSync } from 'fs';
+existsSync('t');`
+        };
         server.didOpenTextDocument({
             textDocument: doc
         });
@@ -787,13 +821,46 @@ describe('code actions', () => {
 
         assert.deepEqual(result, [
             {
-                command: {
-                    arguments: [filePath('bar.ts')],
-                    command: '_typescript.organizeImports',
-                    title: ''
-                },
                 kind: 'source.organizeImports',
-                title: 'Organize imports'
+                title: 'Organize imports',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: "import { accessSync, existsSync } from 'fs';\n",
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 1
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 0
+                                        }
+                                    }
+                                },
+                                {
+                                    newText: '',
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 2
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 1
+                                        }
+                                    }
+                                }
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1
+                            }
+                        }
+                    ]
+                }
             }
         ]);
     }).timeout(10000);

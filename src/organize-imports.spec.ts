@@ -14,20 +14,26 @@ describe('provideOrganizeImports', () => {
                 }
             ]
         };
-        const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse);
+        const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse, undefined);
         const expected = [{
             title: 'Organize imports',
             kind: 'source.organizeImports',
-            command: {
-                title: '',
-                command: '_typescript.organizeImports',
-                arguments: [fileName]
+            edit: {
+                documentChanges: [
+                    {
+                        edits: [],
+                        textDocument: {
+                            uri: 'file:///Users/rafal/workspace/github/typescript-language-server/test-data/file',
+                            version: null
+                        }
+                    }
+                ]
             }
         }];
         chai.assert.deepEqual(actual, expected);
     });
 
     it('handles a missing response', () => {
-        chai.assert.equal(provideOrganizeImports(undefined).length, 0);
+        chai.assert.equal(provideOrganizeImports(undefined, undefined).length, 0);
     });
 });
