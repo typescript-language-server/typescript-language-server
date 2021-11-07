@@ -165,9 +165,7 @@ export class LspServer {
                     triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
                     resolveProvider: true
                 },
-                codeActionProvider: {
-                    codeActionKinds: [CodeActionKind.SourceOrganizeImports]
-                },
+                codeActionProvider: true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
