@@ -23,7 +23,7 @@ describe('provideOrganizeImports', () => {
                     {
                         edits: [],
                         textDocument: {
-                            uri: 'file:///Users/rafal/workspace/github/typescript-language-server/test-data/file',
+                            uri: filePath('file'),
                             version: null
                         }
                     }
