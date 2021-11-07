@@ -1,7 +1,7 @@
 import tsp from 'typescript/lib/protocol';
 import * as chai from 'chai';
 import { provideOrganizeImports } from './organize-imports';
-import { filePath } from './test-utils';
+import { filePath, uri } from './test-utils';
 
 describe('provideOrganizeImports', () => {
     it('converts tsserver response to lsp code actions', () => {
@@ -23,7 +23,7 @@ describe('provideOrganizeImports', () => {
                     {
                         edits: [],
                         textDocument: {
-                            uri: filePath('file'),
+                            uri: uri('file'),
                             version: null
                         }
                     }
