@@ -170,6 +170,7 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 - [x] workspace/symbol
 - [x] workspace/didChangeConfiguration
 - [x] [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#workspace_executeCommand)
+
     Most of the time, you'll execute commands with arguments retrieved from another request like `textDocument/codeAction`. There are some use cases for calling them manually.
 
     Supported commands:
