@@ -717,7 +717,7 @@ export class LspServer {
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only && params.context.only.includes(CodeActionKind.SourceOrganizeImports)) {
+        if (params.context.only?.includes(CodeActionKind.SourceOrganizeImports)) {
             // see this issue for more context about how this argument is used
             // https://github.com/microsoft/TypeScript/issues/43051
             const skipDestructiveCodeActions = params.context.diagnostics.some(

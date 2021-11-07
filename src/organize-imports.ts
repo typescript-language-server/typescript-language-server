@@ -12,12 +12,14 @@ import { LspDocuments } from './document';
 import { CodeActionKind } from 'vscode-languageserver/node';
 
 export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
-    if (!response) {
+    if (!response || response.body.length === 0) {
         return [];
     }
-    return response.body.map(edit => lsp.CodeAction.create(
-        'Organize imports',
-        { documentChanges: [toTextDocumentEdit(edit, documents)] },
-        CodeActionKind.SourceOrganizeImports
-    ));
+    // Return a single code action with potentially multiple edits.
+    return [
+        lsp.CodeAction.create(
+            'Organize imports',
+            { documentChanges: response.body.map(edit => toTextDocumentEdit(edit, documents)) },
+            CodeActionKind.SourceOrganizeImports
+        )];
 }
