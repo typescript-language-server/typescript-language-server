@@ -169,14 +169,13 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 - [x] textDocument/signatureHelp
 - [x] workspace/symbol
 - [x] workspace/didChangeConfiguration
-- [x] [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#workspace_executeCommand)  
-    Most of the time, you'll execute commands with arguments retrieved from another request like `textDocument/codeAction`. There are some use cases for calling them
-    manually.
+- [x] [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#workspace_executeCommand)
+    Most of the time, you'll execute commands with arguments retrieved from another request like `textDocument/codeAction`. There are some use cases for calling them manually.
 
     Supported commands:
 
     `lsp` refers to the language server protocol, `tsp` refers to the typescript server protocol.
-    
+
     * `_typescript.applyWorkspaceEdit`
         ```ts
         type Arguments = [lsp.WorkspaceEdit]
@@ -191,6 +190,7 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
         ```
     * `_typescript.organizeImports`
         ```ts
+        // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
         type Arguments = [string] | [string, { skipDestructiveCodeActions?: boolean }]
         ```
     * `_typescript.applyRenameFile`
