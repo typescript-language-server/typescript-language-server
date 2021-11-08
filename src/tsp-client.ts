@@ -23,6 +23,7 @@ export interface TspClientOptions {
     tsserverPath: string;
     logFile?: string;
     logVerbosity?: string;
+    disableAutomaticTypingAcquisition?: boolean;
     maxTsServerMemory?: number;
     globalPlugins?: string[];
     pluginProbeLocations?: string[];
@@ -87,7 +88,7 @@ export class TspClient {
         if (this.readlineInterface) {
             return;
         }
-        const { tsserverPath, logFile, logVerbosity, maxTsServerMemory, globalPlugins, pluginProbeLocations } = this.options;
+        const { tsserverPath, logFile, logVerbosity, disableAutomaticTypingAcquisition, maxTsServerMemory, globalPlugins, pluginProbeLocations } = this.options;
         const args: string[] = [];
         if (logFile) {
             args.push('--logFile', logFile);
@@ -100,6 +101,9 @@ export class TspClient {
         }
         if (pluginProbeLocations && pluginProbeLocations.length) {
             args.push('--pluginProbeLocations', pluginProbeLocations.join(','));
+        }
+        if (disableAutomaticTypingAcquisition) {
+            args.push('--disableAutomaticTypingAcquisition');
         }
         this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
         args.push('--cancellationPipeName', `${this.cancellationPipeName}*`);
