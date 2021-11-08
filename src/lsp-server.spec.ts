@@ -11,6 +11,7 @@ import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter } from './test-utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { CodeActions } from './commands';
 
 const assert = chai.assert;
 
@@ -829,7 +830,7 @@ describe('code actions', () => {
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: ['source.organizeImports']
+                only: [CodeActions.SourceOrganizeImportsTsLs]
             }
         }))!;
 
@@ -863,13 +864,13 @@ existsSync('t');`
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: ['source.organizeImports']
+                only: [CodeActions.SourceOrganizeImportsTsLs]
             }
         }))!;
 
         assert.deepEqual(result, [
             {
-                kind: 'source.organizeImports',
+                kind: CodeActions.SourceOrganizeImportsTsLs,
                 title: 'Organize imports',
                 edit: {
                     documentChanges: [
