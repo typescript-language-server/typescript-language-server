@@ -8,7 +8,7 @@
 import * as lsp from 'vscode-languageserver/node';
 import type tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
-import { ScriptElementKind } from './tsp-command-types';
+import { KindModifiers, ScriptElementKind } from './tsp-command-types';
 import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation';
 import { Commands } from './commands';
 
@@ -22,24 +22,32 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
         kind: asCompletionItemKind(entry.kind),
         sortText: entry.sortText,
         commitCharacters: asCommitCharacters(entry.kind),
+        preselect: entry.isRecommended,
         data: {
             file,
             line: position.line + 1,
             offset: position.character + 1,
             entryNames: [
-                entry.source ? { name: entry.name, source: entry.source } : entry.name
+                entry.source || entry.data ? {
+                    name: entry.name,
+                    source: entry.source,
+                    data: entry.data
+                } : entry.name
             ]
         }
     };
-    if (entry.isRecommended) {
-        // Make sure isRecommended property always comes first
-        // https://github.com/Microsoft/vscode/issues/40325
-        item.preselect = true;
-    } else if (entry.source) {
+
+    if (entry.source && entry.hasAction) {
         // De-prioritze auto-imports
         // https://github.com/Microsoft/vscode/issues/40311
         item.sortText = '\uffff' + entry.sortText;
     }
+
+    const { sourceDisplay } = entry;
+    if (sourceDisplay) {
+        item.detail = asPlainText(sourceDisplay);
+    }
+
     if (item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method) {
         item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     }
@@ -55,7 +63,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
     }
     if (entry.kindModifiers) {
         const kindModifiers = new Set(entry.kindModifiers.split(/,|\s+/g));
-        if (kindModifiers.has('optional')) {
+        if (kindModifiers.has(KindModifiers.optional)) {
             if (!insertText) {
                 insertText = item.label;
             }
@@ -65,8 +73,25 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
             item.label += '?';
         }
 
-        if (kindModifiers.has('deprecated')) {
+        if (kindModifiers.has(KindModifiers.deprecated)) {
             item.tags = [lsp.CompletionItemTag.Deprecated];
+        }
+
+        if (kindModifiers.has(KindModifiers.color)) {
+            item.kind = lsp.CompletionItemKind.Color;
+        }
+
+        if (entry.kind === ScriptElementKind.scriptElement) {
+            for (const extModifier of KindModifiers.fileExtensionKindModifiers) {
+                if (kindModifiers.has(extModifier)) {
+                    if (entry.name.toLowerCase().endsWith(extModifier)) {
+                        item.detail = entry.name;
+                    } else {
+                        item.detail = entry.name + extModifier;
+                    }
+                    break;
+                }
+            }
         }
     }
     if (insertText && replacementRange) {
