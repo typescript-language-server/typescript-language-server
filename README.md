@@ -97,11 +97,6 @@ interface UserPreferences {
     provideRefactorNotApplicableReason: boolean;
     allowRenameOfImportPath: boolean;
     includePackageJsonAutoImports: "auto" | "on" | "off";
-    /**
-     * Requires "includeCompletionsWithSnippetText" to be enabled.
-     * @default "none"
-     */
-    jsxAttributeCompletionStyle: "auto" | "braces" | "none";
     displayPartsForJSDoc: boolean;
     generateReturnInDocTemplate: boolean;
 }
@@ -111,15 +106,8 @@ From the `preferences` options listed above, this server explicilty sets the fol
 
 ```js
 {
-    allowIncompleteCompletions: true,
-    allowRenameOfImportPath: true,
-    displayPartsForJSDoc: true,
-    generateReturnInDocTemplate: true,
-    includeAutomaticOptionalChainCompletions: true,
-    includeCompletionsForImportStatements: true,
     includeCompletionsForModuleExports: true,
     includeCompletionsWithInsertText: true,
-    includeCompletionsWithSnippetText: true,
 }
 ```
 

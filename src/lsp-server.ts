@@ -111,15 +111,8 @@ export class LspServer {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
             preferences: {
-                allowIncompleteCompletions: true,
-                allowRenameOfImportPath: true,
-                displayPartsForJSDoc: true,
-                generateReturnInDocTemplate: true,
-                includeAutomaticOptionalChainCompletions: true,
-                includeCompletionsForImportStatements: true,
                 includeCompletionsForModuleExports: true,
                 includeCompletionsWithInsertText: true,
-                includeCompletionsWithSnippetText: true,
                 ...userInitializationOptions.preferences
             }
         };
