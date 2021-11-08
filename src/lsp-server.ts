@@ -111,6 +111,8 @@ export class LspServer {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
             preferences: {
+                allowIncompleteCompletions: true,
+                allowTextChangesInNewFiles: true,
                 includeCompletionsForModuleExports: true,
                 includeCompletionsWithInsertText: true,
                 ...userInitializationOptions.preferences
@@ -140,10 +142,11 @@ export class LspServer {
         this.tspClient.start();
         this.tspClient.request(CommandTypes.Configure, {
             ...hostInfo ? { hostInfo } : {},
-            preferences: {
-                allowTextChangesInNewFiles: true,
-                ...preferences
-            }
+            formatOptions: {
+                // We can use \n here since the editor should normalize later on to its line endings.
+                newLineCharacter: '\n'
+            },
+            preferences
         });
 
         this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
