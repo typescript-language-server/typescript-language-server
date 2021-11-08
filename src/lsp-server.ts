@@ -106,8 +106,8 @@ export class LspServer {
         );
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
-        const { hostInfo, maxTsServerMemory } = userInitializationOptions;
-        const { disableAutomaticTypingAcquisition, logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
+        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory } = userInitializationOptions;
+        const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
             preferences: {
