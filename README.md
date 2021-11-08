@@ -106,6 +106,8 @@ From the `preferences` options listed above, this server explicilty sets the fol
 
 ```js
 {
+    allowIncompleteCompletions: true,
+    allowTextChangesInNewFiles: true,
     includeCompletionsForModuleExports: true,
     includeCompletionsWithInsertText: true,
 }
