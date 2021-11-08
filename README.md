@@ -107,9 +107,15 @@ From the `preferences` options listed above, this server explicilty sets the fol
 ```js
 {
     allowIncompleteCompletions: true,
+    allowRenameOfImportPath: true,
     allowTextChangesInNewFiles: true,
+    displayPartsForJSDoc: true,
+    generateReturnInDocTemplate: true,
+    includeAutomaticOptionalChainCompletions: true,
+    includeCompletionsForImportStatements: true,
     includeCompletionsForModuleExports: true,
     includeCompletionsWithInsertText: true,
+    includeCompletionsWithSnippetText: true,
 }
 ```
 
