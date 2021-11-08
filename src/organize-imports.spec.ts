@@ -1,7 +1,7 @@
 import tsp from 'typescript/lib/protocol';
 import * as chai from 'chai';
 import { provideOrganizeImports } from './organize-imports';
-import { filePath } from './test-utils';
+import { filePath, uri } from './test-utils';
 
 describe('provideOrganizeImports', () => {
     it('converts tsserver response to lsp code actions', () => {
@@ -14,20 +14,26 @@ describe('provideOrganizeImports', () => {
                 }
             ]
         };
-        const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse);
+        const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse, undefined);
         const expected = [{
             title: 'Organize imports',
             kind: 'source.organizeImports',
-            command: {
-                title: '',
-                command: '_typescript.organizeImports',
-                arguments: [fileName]
+            edit: {
+                documentChanges: [
+                    {
+                        edits: [],
+                        textDocument: {
+                            uri: uri('file'),
+                            version: null
+                        }
+                    }
+                ]
             }
         }];
         chai.assert.deepEqual(actual, expected);
     });
 
     it('handles a missing response', () => {
-        chai.assert.equal(provideOrganizeImports(undefined).length, 0);
+        chai.assert.equal(provideOrganizeImports(undefined, undefined).length, 0);
     });
 });

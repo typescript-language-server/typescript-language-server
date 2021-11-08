@@ -718,10 +718,18 @@ export class LspServer {
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only && params.context.only.includes(CodeActionKind.SourceOrganizeImports)) {
-            actions.push(...provideOrganizeImports(
-                await this.getOrganizeImports({ scope: { type: 'file', args } })
-            ));
+        if (params.context.only?.includes(CodeActionKind.SourceOrganizeImports)) {
+            // see this issue for more context about how this argument is used
+            // https://github.com/microsoft/TypeScript/issues/43051
+            const skipDestructiveCodeActions = params.context.diagnostics.some(
+                // assume no severity is an error
+                d => (d.severity ?? 0) <= 2
+            );
+            const response = await this.getOrganizeImports({
+                scope: { type: 'file', args },
+                skipDestructiveCodeActions
+            });
+            actions.push(...provideOrganizeImports(response, this.documents));
         }
 
         return actions;
@@ -788,11 +796,13 @@ export class LspServer {
             }
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
             const file = arg.arguments[0] as string;
+            const additionalArguments: { skipDestructiveCodeActions?: boolean; } = arg.arguments[1] || {};
             const { body } = await this.tspClient.request(CommandTypes.OrganizeImports, {
                 scope: {
                     type: 'file',
                     args: { file }
-                }
+                },
+                skipDestructiveCodeActions: additionalArguments.skipDestructiveCodeActions
             });
             await this.applyFileCodeEdits(body);
         } else if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {

@@ -57,11 +57,11 @@ export function normalizeFsPath(fsPath: string): string {
     return fsPath.replace(RE_PATHSEP_WINDOWS, '/');
 }
 
-function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
+function currentVersion(filepath: string, documents: LspDocuments | undefined): number | null {
     const fileUri = URI.file(filepath);
     const normalizedFilepath = normalizePath(fileUri.fsPath);
     const document = documents && documents.get(normalizedFilepath);
-    return document ? document.version : 0;
+    return document ? document.version : null;
 }
 
 export function toPosition(location: tsp.Location): lsp.Position {
