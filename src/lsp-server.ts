@@ -169,7 +169,7 @@ export class LspServer {
 
         const tsserverPath = this.findTsserverPath();
         const typescriptVersion = this.getTypeScriptVersion(tsserverPath);
-        this.logger.warn(`Using Typescript version ${typescriptVersion?.displayName} in path: ${tsserverPath}`);
+        this.logger.info(`Using Typescript version ${typescriptVersion?.displayName} from path: ${tsserverPath}`);
         this.tspClient = new TspClient({
             tsserverPath,
             logFile,
