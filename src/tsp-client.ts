@@ -107,7 +107,7 @@ export class TspClient {
         }
         this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
         args.push('--cancellationPipeName', `${this.cancellationPipeName}*`);
-        this.logger.info(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
+        this.logger.log(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
         const tsserverPathIsModule = path.extname(tsserverPath) === '.js';
         const options = {
             silent: true,
