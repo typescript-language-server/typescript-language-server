@@ -146,7 +146,7 @@ export class LspServer {
         );
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
-        const { hostInfo, maxTsServerMemory } = userInitializationOptions;
+        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory } = userInitializationOptions;
         const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
@@ -174,6 +174,7 @@ export class LspServer {
             tsserverPath,
             logFile,
             logVerbosity,
+            disableAutomaticTypingAcquisition,
             maxTsServerMemory,
             globalPlugins,
             pluginProbeLocations,
