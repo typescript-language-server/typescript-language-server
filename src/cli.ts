@@ -11,6 +11,8 @@ import { getTsserverExecutable } from './utils';
 import { createLspConnection } from './lsp-connection';
 import * as lsp from 'vscode-languageserver/node';
 
+const DEFAULT_LOG_LEVEL = lsp.MessageType.Info;
+
 const program = new Command('typescript-language-server')
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     .version(require('../package.json').version)
@@ -28,12 +30,12 @@ if (options.tsserverLogFile && !options.tsserverLogVerbosity) {
     options.tsserverLogVerbosity = 'normal';
 }
 
-let logLevel = lsp.MessageType.Warning;
+let logLevel = DEFAULT_LOG_LEVEL;
 if (options.logLevel) {
     logLevel = parseInt(options.logLevel, 10);
     if (logLevel && (logLevel < 1 || logLevel > 4)) {
         console.error(`Invalid '--log-level ${logLevel}'. Falling back to 'info' level.`);
-        logLevel = lsp.MessageType.Warning;
+        logLevel = DEFAULT_LOG_LEVEL;
     }
 }
 
