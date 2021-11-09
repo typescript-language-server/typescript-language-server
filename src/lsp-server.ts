@@ -38,6 +38,7 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
+import API from './utils/api';
 
 export interface IServerOptions {
     logger: Logger;
@@ -54,6 +55,7 @@ export class LspServer {
     private diagnosticQueue?: DiagnosticEventQueue;
     private logger: Logger;
     private workspaceConfiguration: TypeScriptWorkspaceSettings;
+    private workspaceRoot: string | undefined;
 
     private readonly documents = new LspDocuments();
 
@@ -73,15 +75,17 @@ export class LspServer {
             return this.options.tsserverPath;
         }
         const tsServerPath = path.join('typescript', 'lib', 'tsserver.js');
-        // 1) look into .yarn/sdks of workspace root
-        const sdk = findPathToYarnSdk(this.rootPath(), tsServerPath);
-        if (sdk) {
-            return sdk;
-        }
-        // 2) look into node_modules of workspace root
-        const executable = findPathToModule(this.rootPath(), tsServerPath);
-        if (executable) {
-            return executable;
+        if (this.workspaceRoot) {
+            // 1) look into .yarn/sdks of workspace root
+            const sdk = findPathToYarnSdk(this.workspaceRoot, tsServerPath);
+            if (sdk) {
+                return sdk;
+            }
+            // 2) look into node_modules of workspace root
+            const executable = findPathToModule(this.workspaceRoot, tsServerPath);
+            if (executable) {
+                return executable;
+            }
         }
         // 3) use globally installed tsserver
         if (commandExists.sync(getTsserverExecutable())) {
@@ -95,9 +99,45 @@ export class LspServer {
         return bundled;
     }
 
+    private getTypeScriptVersion(serverPath: string): API | undefined {
+        if (!fs.existsSync(serverPath)) {
+            return undefined;
+        }
+
+        const p = serverPath.split(path.sep);
+        if (p.length <= 2) {
+            return undefined;
+        }
+        const p2 = p.slice(0, -2);
+        const modulePath = p2.join(path.sep);
+        let fileName = path.join(modulePath, 'package.json');
+        if (!fs.existsSync(fileName)) {
+            // Special case for ts dev versions
+            if (path.basename(modulePath) === 'built') {
+                fileName = path.join(modulePath, '..', 'package.json');
+            }
+        }
+        if (!fs.existsSync(fileName)) {
+            return undefined;
+        }
+
+        const contents = fs.readFileSync(fileName).toString();
+        let desc: any = null;
+        try {
+            desc = JSON.parse(contents);
+        } catch (err) {
+            return undefined;
+        }
+        if (!desc || !desc.version) {
+            return undefined;
+        }
+        return desc.version ? API.fromVersionString(desc.version) : undefined;
+    }
+
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
+        this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.documents,
@@ -128,6 +168,8 @@ export class LspServer {
         }
 
         const tsserverPath = this.findTsserverPath();
+        const typescriptVersion = this.getTypeScriptVersion(tsserverPath);
+        this.logger.info(`Using Typescript version ${typescriptVersion?.displayName} from path: ${tsserverPath}`);
         this.tspClient = new TspClient({
             tsserverPath,
             logFile,
@@ -218,11 +260,8 @@ export class LspServer {
         if (this.options.tsserverLogFile) {
             return this.options.tsserverLogFile;
         }
-        if (this.initializeParams.rootUri) {
-            return path.join(uriToPath(this.initializeParams.rootUri)!, '.log/tsserver.log');
-        }
-        if (this.initializeParams.rootPath) {
-            return path.join(this.initializeParams.rootPath, '.log/tsserver.log');
+        if (this.workspaceRoot) {
+            return path.join(this.workspaceRoot, '.log/tsserver.log');
         }
         return undefined;
     }
@@ -282,7 +321,7 @@ export class LspServer {
                 file,
                 fileContent: params.textDocument.text,
                 scriptKindName: this.getScriptKindName(params.textDocument.languageId),
-                projectRootPath: this.rootPath()
+                projectRootPath: this.workspaceRoot
             });
             this.requestDiagnostics();
         } else {
@@ -667,10 +706,12 @@ export class LspServer {
             opts.indentSize = requestOptions.tabSize;
         }
 
-        try {
-            opts = JSON.parse(fs.readFileSync(this.rootPath() + '/tsfmt.json', 'utf-8'));
-        } catch (err) {
-            this.logger.log(`No formatting options found ${err}`);
+        if (this.workspaceRoot) {
+            try {
+                opts = JSON.parse(fs.readFileSync(this.workspaceRoot + '/tsfmt.json', 'utf-8'));
+            } catch (err) {
+                this.logger.log(`No formatting options found ${err}`);
+            }
         }
 
         return opts;
@@ -894,12 +935,8 @@ export class LspServer {
         return result;
     }
 
-    private rootPath(): string {
-        return this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri)! : this.initializeParams.rootPath!;
-    }
-
-    private lastFileOrDummy(): string {
-        return this.documents.files[0] || this.rootPath();
+    private lastFileOrDummy(): string | undefined {
+        return this.documents.files[0] || this.workspaceRoot;
     }
 
     async workspaceSymbol(params: lsp.WorkspaceSymbolParams): Promise<lsp.SymbolInformation[]> {
