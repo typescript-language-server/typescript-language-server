@@ -2,6 +2,7 @@ import tsp from 'typescript/lib/protocol';
 import * as chai from 'chai';
 import { provideOrganizeImports } from './organize-imports';
 import { filePath, uri } from './test-utils';
+import { CodeActions } from './commands';
 
 describe('provideOrganizeImports', () => {
     it('converts tsserver response to lsp code actions', () => {
@@ -17,7 +18,7 @@ describe('provideOrganizeImports', () => {
         const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse, undefined);
         const expected = [{
             title: 'Organize imports',
-            kind: 'source.organizeImports',
+            kind: CodeActions.SourceOrganizeImportsTsLs,
             edit: {
                 documentChanges: [
                     {

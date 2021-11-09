@@ -11,13 +11,13 @@ Based on concepts and ideas from https://github.com/prabirshrestha/typescript-la
 
 Maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you
 
-# Installing
+## Installing
 
 ```sh
 npm install -g typescript-language-server
 ```
 
-# Running the language server
+## Running the language server
 
 ```
 typescript-language-server --stdio
@@ -161,58 +161,53 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 [language].inlayHints.includeInlayVariableTypeHints: boolean;
 ```
 
-# Supported Protocol features
+## Code actions on save
 
-- [x] textDocument/didChange (incremental)
-- [x] textDocument/didClose
-- [x] textDocument/didOpen
-- [x] textDocument/didSave
+Server announces support for the `source.organizeImports.ts-ls` code action which allows editors that support running code actions on save to automatically organize imports on saving. The user can enable it with a setting similar to (can vary per-editor):
 
-- [x] textDocument/codeAction
-- [x] textDocument/completion (incl. completion/resolve)
-- [x] textDocument/definition
-- [x] textDocument/documentHighlight
-- [x] textDocument/documentSymbol
-- [x] textDocument/executeCommand
-- [x] textDocument/formatting
-- [x] textDocument/rangeFormatting
-- [x] textDocument/hover
-- [x] textDocument/rename
-- [x] textDocument/references
-- [x] textDocument/signatureHelp
-- [x] workspace/symbol
-- [x] workspace/didChangeConfiguration
-- [x] [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#workspace_executeCommand)
+```js
+"codeActionsOnSave": {
+    "source.organizeImports": true,
+    // or
+    "source.organizeImports.ts-ls": true,
+}
+```
 
-    Most of the time, you'll execute commands with arguments retrieved from another request like `textDocument/codeAction`. There are some use cases for calling them manually.
+## Workspace commands (`workspace/executeCommand`)
 
-    Supported commands:
+See [LSP specification](https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#workspace_executeCommand).
 
-    `lsp` refers to the language server protocol, `tsp` refers to the typescript server protocol.
+Most of the time, you'll execute commands with arguments retrieved from another request like `textDocument/codeAction`. There are some use cases for calling them manually.
 
-    * `_typescript.applyWorkspaceEdit`
-        ```ts
-        type Arguments = [lsp.WorkspaceEdit]
-        ```
-    * `_typescript.applyCodeAction`
-        ```ts
-        type Arguments = [tsp.CodeAction]
-        ```
-    * `_typescript.applyRefactoring`
-        ```ts
-        type Arguments = [tsp.GetEditsForRefactorRequestArgs]
-        ```
-    * `_typescript.organizeImports`
-        ```ts
-        // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
-        type Arguments = [string] | [string, { skipDestructiveCodeActions?: boolean }]
-        ```
-    * `_typescript.applyRenameFile`
-        ```ts
-        type Arguments = [{ sourceUri: string; targetUri: string; }]
-        ```
+Supported commands:
 
-## `typescript/inlayHints` (experimental, supported from Typescript v4.4.2)
+`lsp` refers to the language server protocol, `tsp` refers to the typescript server protocol.
+
+* `_typescript.applyWorkspaceEdit`
+    ```ts
+    type Arguments = [lsp.WorkspaceEdit]
+    ```
+* `_typescript.applyCodeAction`
+    ```ts
+    type Arguments = [tsp.CodeAction]
+    ```
+* `_typescript.applyRefactoring`
+    ```ts
+    type Arguments = [tsp.GetEditsForRefactorRequestArgs]
+    ```
+* `_typescript.organizeImports`
+    ```ts
+    // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
+    type Arguments = [string] | [string, { skipDestructiveCodeActions?: boolean }]
+    ```
+* `_typescript.applyRenameFile`
+    ```ts
+    type Arguments = [{ sourceUri: string; targetUri: string; }]
+    ```
+
+## Inlay hints (`typescript/inlayHints`) (experimental)
+
+Supports experimental inline hints.
 
 ```ts
 type Request = {
@@ -248,7 +243,9 @@ export interface InlayHintsOptions extends UserPreferences {
 }
 ```
 
-## `textDocument/calls` (experimental)
+## Callers and callees (`textDocument/calls`) (experimental)
+
+Supports showing callers and calles for a given symbol. If the editor has support for appropriate UI, it can generate a tree of callers and calles for a document.
 
 ```ts
 type Request = {
@@ -330,7 +327,31 @@ interface DefinitionSymbol {
 }
 ```
 
-# Development
+## Supported Protocol features
+
+- [x] textDocument/didChange (incremental)
+- [x] textDocument/didClose
+- [x] textDocument/didOpen
+- [x] textDocument/didSave
+- [x] textDocument/codeAction
+- [x] textDocument/completion (incl. completion/resolve)
+- [x] textDocument/definition
+- [x] textDocument/documentHighlight
+- [x] textDocument/documentSymbol
+- [x] textDocument/executeCommand
+- [x] textDocument/formatting
+- [x] textDocument/rangeFormatting
+- [x] textDocument/hover
+- [x] textDocument/rename
+- [x] textDocument/references
+- [x] textDocument/signatureHelp
+- [x] textDocument/calls (experimental)
+- [x] typescript/inlayHints (experimental, supported from Typescript v4.4.2)
+- [x] workspace/symbol
+- [x] workspace/didChangeConfiguration
+- [x] workspace/executeCommand
+
+## Development
 
 ### Build
 
@@ -338,7 +359,7 @@ interface DefinitionSymbol {
 yarn
 ```
 
-## Test
+### Test
 
 ```sh
 yarn test

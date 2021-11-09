@@ -9,7 +9,7 @@ import * as lsp from 'vscode-languageserver/node';
 import tsp from 'typescript/lib/protocol';
 import { toTextDocumentEdit } from './protocol-translation';
 import { LspDocuments } from './document';
-import { CodeActionKind } from 'vscode-languageserver/node';
+import { CodeActions } from './commands';
 
 export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
     if (!response || response.body.length === 0) {
@@ -20,6 +20,6 @@ export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | u
         lsp.CodeAction.create(
             'Organize imports',
             { documentChanges: response.body.map(edit => toTextDocumentEdit(edit, documents)) },
-            CodeActionKind.SourceOrganizeImports
+            CodeActions.SourceOrganizeImportsTsLs
         )];
 }

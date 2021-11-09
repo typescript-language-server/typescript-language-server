@@ -15,3 +15,7 @@ export const Commands = {
     /** Commands below should be implemented by the client */
     SELECT_REFACTORING: '_typescript.selectRefactoring'
 };
+
+export const CodeActions = {
+    SourceOrganizeImportsTsLs: 'source.organizeImports.ts-ls'
+};

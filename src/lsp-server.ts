@@ -31,7 +31,7 @@ import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
 import { asCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
-import { Commands } from './commands';
+import { CodeActions, Commands } from './commands';
 import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
@@ -217,7 +217,9 @@ export class LspServer {
                     triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
                     resolveProvider: true
                 },
-                codeActionProvider: true,
+                codeActionProvider: {
+                    codeActionKinds: [CodeActions.SourceOrganizeImportsTsLs]
+                },
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
@@ -766,7 +768,7 @@ export class LspServer {
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only?.includes(CodeActionKind.SourceOrganizeImports)) {
+        if (params.context.only?.includes(CodeActions.SourceOrganizeImportsTsLs)) {
             // see this issue for more context about how this argument is used
             // https://github.com/microsoft/TypeScript/issues/43051
             const skipDestructiveCodeActions = params.context.diagnostics.some(
