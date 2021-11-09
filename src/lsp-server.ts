@@ -152,9 +152,15 @@ export class LspServer {
             plugins: userInitializationOptions.plugins || [],
             preferences: {
                 allowIncompleteCompletions: true,
+                allowRenameOfImportPath: true,
                 allowTextChangesInNewFiles: true,
+                displayPartsForJSDoc: true,
+                generateReturnInDocTemplate: true,
+                includeAutomaticOptionalChainCompletions: true,
+                includeCompletionsForImportStatements: true,
                 includeCompletionsForModuleExports: true,
                 includeCompletionsWithInsertText: true,
+                includeCompletionsWithSnippetText: true,
                 ...userInitializationOptions.preferences
             }
         };
