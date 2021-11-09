@@ -22,6 +22,7 @@ export interface TypeScriptPlugin {
 }
 
 export interface TypeScriptInitializationOptions {
+    disableAutomaticTypingAcquisition?: boolean;
     logVerbosity?: string;
     maxTsServerMemory?: number;
     plugins: TypeScriptPlugin[];
