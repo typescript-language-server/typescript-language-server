@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2021-11-10
+
+ - fix: add missing `semver` dependency (#288)
+
 ## [0.7.0] - 2021-11-09
 
 ### Breaking
