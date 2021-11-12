@@ -63,6 +63,7 @@ interface TypeScriptRequestTypes {
     'signatureHelp': [protocol.SignatureHelpRequestArgs, protocol.SignatureHelpResponse];
     'typeDefinition': [protocol.FileLocationRequestArgs, protocol.TypeDefinitionResponse];
     'provideInlayHints': [protocol.InlayHintsRequestArgs, protocol.InlayHintsResponse];
+    'encodedSemanticClassifications-full': [protocol.EncodedSemanticClassificationsRequestArgs, protocol.EncodedSemanticClassificationsResponse];
 }
 
 export class TspClient {

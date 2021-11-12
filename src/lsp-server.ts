@@ -10,6 +10,7 @@ import tempy from 'tempy';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
+import * as lspsemanticTokens from './semantic-tokens';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import * as commandExists from 'command-exists';
@@ -243,7 +244,38 @@ export class LspServer {
                 workspaceSymbolProvider: true,
                 implementationProvider: true,
                 typeDefinitionProvider: true,
-                foldingRangeProvider: true
+                foldingRangeProvider: true,
+                semanticTokensProvider: {
+                    documentSelector: null,
+                    legend: {
+                        // list taken from: https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts#L10
+                        tokenTypes: [
+                            'class',
+                            'enum',
+                            'interface',
+                            'namespace',
+                            'typeParameter',
+                            'type',
+                            'parameter',
+                            'variable',
+                            'enumMember',
+                            'property',
+                            'function',
+                            'member'
+                        ],
+                        // token from: https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts#L14
+                        tokenModifiers: [
+                            'declaration',
+                            'static',
+                            'async',
+                            'readonly',
+                            'defaultLibrary',
+                            'local'
+                        ]
+                    },
+                    full: true,
+                    range: true
+                }
             },
             logFileUri
         };
@@ -1122,5 +1154,50 @@ export class LspServer {
             ...userPreferences,
             ...workspacePreference.inlayHints ?? {}
         };
+    }
+
+    async semanticTokens(params: lspsemanticTokens.SemanticTokensParams): Promise<lspsemanticTokens.SemanticTokensResult> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('semanticTokens', params, file);
+        if (!file) {
+            return { data: [], resultId: '' };
+        }
+
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return { data: [], resultId: '' };
+        }
+
+        const start = doc.offsetAt(params.range?.start ?? {
+            line: 0,
+            character: 0
+        });
+        const end = doc.offsetAt(params.range?.end ?? {
+            line: doc.lineCount,
+            character: 0
+        });
+
+        try {
+            const result = await this.tspClient.request(
+                CommandTypes.EncodedSemanticClassificationsFull,
+                {
+                    file,
+                    start,
+                    length: end - start,
+                    format: '2020'
+                }
+            );
+
+            const spans = result.body?.spans ?? [];
+            return {
+                data: lspsemanticTokens.transformSpans(doc, spans),
+                resultId: result.request_seq.toString()
+            };
+        } catch {
+            return {
+                data: [],
+                resultId: ''
+            };
+        }
     }
 }
