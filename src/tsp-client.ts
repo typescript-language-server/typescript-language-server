@@ -6,7 +6,6 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
 import * as cp from 'child_process';
 import * as readline from 'readline';
 import * as decoder from 'string_decoder';
@@ -108,16 +107,13 @@ export class TspClient {
         this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
         args.push('--cancellationPipeName', `${this.cancellationPipeName}*`);
         this.logger.log(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
-        const tsserverPathIsModule = path.extname(tsserverPath) === '.js';
         const options = {
             silent: true,
             execArgv: [
                 ...maxTsServerMemory ? [`--max-old-space-size=${maxTsServerMemory}`] : []
             ]
         };
-        this.tsserverProc = tsserverPathIsModule
-            ? cp.fork(tsserverPath, args, options)
-            : cp.spawn(tsserverPath, args);
+        this.tsserverProc = cp.fork(tsserverPath, args, options);
         process.on('exit', () => {
             this.readlineInterface?.close();
             this.tsserverProc.stdin?.destroy();

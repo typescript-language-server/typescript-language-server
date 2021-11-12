@@ -36,9 +36,11 @@ typescript-language-server --stdio
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
     --tsserver-log-file <tsServerLogFile>  Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt
     --tsserver-log-verbosity <verbosity>   Specify tsserver log verbosity (off, terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
-    --tsserver-path <path>                 Specify path to tsserver. example: --tsserver-path=tsserver
+    --tsserver-path <path>                 Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/
     -h, --help                             output usage information
 ```
+
+> Note: when using `--tsserver-path`, it must be a path to the `.../typescript/lib/` directory and not to a shell script `../node_modules/.bin/tsserver` or `tsserver`.
 
 ## initializationOptions
 
