@@ -333,6 +333,38 @@ describe('diagnostics', () => {
         assert.equal(diagnosticsForDoc!.diagnostics.length, 1, JSON.stringify(diagnostics));
         assert.equal(diagnosticsForDoc2!.diagnostics.length, 1, JSON.stringify(diagnostics));
     }).timeout(10000);
+
+    it('code 6133 (ununsed variable) is ignored', async () => {
+        server.didChangeConfiguration({
+            settings: {
+                diagnostics: {
+                    ignoredCodes: [6133]
+                }
+            }
+        });
+
+        const doc = {
+            uri: uri('diagnosticsBar2.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                export function foo() {
+                    const x = 42;
+                    return 1;
+                }
+          `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const diagnosticsForThisFile = diagnostics.get(doc.uri);
+        assert.isDefined(diagnosticsForThisFile);
+        const fileDiagnostics = diagnosticsForThisFile!.diagnostics;
+        assert.equal(fileDiagnostics.length, 0, JSON.stringify(fileDiagnostics));
+    }).timeout(10000);
 });
 
 describe('document symbol', () => {

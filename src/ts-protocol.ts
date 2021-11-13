@@ -43,7 +43,12 @@ export interface TypeScriptWorkspaceSettingsLanguageSettings {
     inlayHints?: InlayHintsOptions;
 }
 
+interface TypeScriptWorkspaceSettingsDiagnostics {
+    ignoredCodes?: number[];
+}
+
 export interface TypeScriptWorkspaceSettings {
     javascript?: TypeScriptWorkspaceSettingsLanguageSettings;
     typescript?: TypeScriptWorkspaceSettingsLanguageSettings;
+    diagnostics?: TypeScriptWorkspaceSettingsDiagnostics;
 }

@@ -159,6 +159,10 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 [language].inlayHints.includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
 [language].inlayHints.includeInlayPropertyDeclarationTypeHints: boolean;
 [language].inlayHints.includeInlayVariableTypeHints: boolean;
+// Diagnostics code to be omitted when reporting diagnostics.
+// See https://github.com/microsoft/TypeScript/blob/master/src/compiler/diagnosticMessages.json for a full list of valid codes.
+diagnostics.ignoredCodes: number[];
+
 ```
 
 ## Code actions on save
