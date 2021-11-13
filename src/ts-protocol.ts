@@ -25,6 +25,7 @@ export interface TypeScriptInitializationOptions {
     disableAutomaticTypingAcquisition?: boolean;
     logVerbosity?: string;
     maxTsServerMemory?: number;
+    npmLocation?: string;
     plugins: TypeScriptPlugin[];
     preferences?: UserPreferences;
     hostInfo?: string;
