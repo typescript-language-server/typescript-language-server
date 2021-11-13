@@ -1156,9 +1156,9 @@ export class LspServer {
         };
     }
 
-    async semanticTokens(params: lspsemanticTokens.SemanticTokensParams): Promise<lspsemanticTokens.SemanticTokensResult> {
+    async semanticTokensFull(params: lsp.SemanticTokensParams): Promise<lsp.SemanticTokens> {
         const file = uriToPath(params.textDocument.uri);
-        this.logger.log('semanticTokens', params, file);
+        this.logger.log('semanticTokensFull', params, file);
         if (!file) {
             return { data: [], resultId: '' };
         }
@@ -1168,22 +1168,44 @@ export class LspServer {
             return { data: [], resultId: '' };
         }
 
-        const start = doc.offsetAt(params.range?.start ?? {
+        const start = doc.offsetAt({
             line: 0,
             character: 0
         });
-        const end = doc.offsetAt(params.range?.end ?? {
+        const end = doc.offsetAt({
             line: doc.lineCount,
             character: 0
         });
 
+        return this.getSemanticTokens(doc, file, start, end);
+    }
+
+    async semanticTokensRange(params: lsp.SemanticTokensRangeParams): Promise<lsp.SemanticTokens> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('semanticTokensRange', params, file);
+        if (!file) {
+            return { data: [], resultId: '' };
+        }
+
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return { data: [], resultId: '' };
+        }
+
+        const start = doc.offsetAt(params.range.start);
+        const end = doc.offsetAt(params.range.end);
+
+        return this.getSemanticTokens(doc, file, start, end);
+    }
+
+    async getSemanticTokens(doc: LspDocument, file: string, startOffset: number, endOffset: number) : Promise<lsp.SemanticTokens> {
         try {
             const result = await this.tspClient.request(
                 CommandTypes.EncodedSemanticClassificationsFull,
                 {
                     file,
-                    start,
-                    length: end - start,
+                    start: startOffset,
+                    length: endOffset - startOffset,
                     format: '2020'
                 }
             );

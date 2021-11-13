@@ -1,5 +1,3 @@
-import * as lsp from 'vscode-languageserver/node';
-import { RequestHandler } from 'vscode-jsonrpc';
 import { LspDocument } from './document';
 
 // copied from https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts
@@ -7,27 +5,6 @@ enum TokenEncodingConsts {
     typeOffset = 8,
     modifierMask = (1 << typeOffset) - 1
 }
-
-export type SemanticTokensParams = {
-    /**
-     * The document to format.
-     */
-    textDocument: lsp.TextDocumentIdentifier;
-    /**
-     * The range to format
-     */
-    range?: lsp.Range;
-};
-
-export type SemanticTokensResult = {
-    data: number[];
-    resultId: string;
-};
-
-export const full = new lsp.RequestType<SemanticTokensParams, SemanticTokensResult, lsp.TextDocumentRegistrationOptions>('textDocument/semanticTokens/full');
-export const range = new lsp.RequestType<SemanticTokensParams, SemanticTokensResult, lsp.TextDocumentRegistrationOptions>('textDocument/semanticTokens/full');
-
-export type HandlerSignature = RequestHandler<SemanticTokensParams, SemanticTokensResult | null, void>;
 
 /**
  * Transforms the semantic token spans given by the ts-server into lsp compatible

@@ -8,7 +8,6 @@
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
-import * as lspsemanticTokens from './semantic-tokens';
 
 import { LspClientLogger } from './logger';
 import { LspServer } from './lsp-server';
@@ -64,8 +63,8 @@ export function createLspConnection(options: IServerOptions): lsp.Connection {
 
     connection.onRequest(lspinlayHints.type, server.inlayHints.bind(server));
 
-    connection.onRequest(lspsemanticTokens.full, server.semanticTokens.bind(server));
-    connection.onRequest(lspsemanticTokens.range, server.semanticTokens.bind(server));
+    connection.onRequest(lsp.SemanticTokensRequest.type, server.semanticTokensFull.bind(server));
+    connection.onRequest(lsp.SemanticTokensRangeRequest.type, server.semanticTokensRange.bind(server));
 
     return connection;
 }
