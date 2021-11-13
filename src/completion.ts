@@ -48,7 +48,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
         item.detail = asPlainText(sourceDisplay);
     }
 
-    if (item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method) {
+    if (entry.isImportStatementCompletion || item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method) {
         item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     }
 
