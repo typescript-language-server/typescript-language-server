@@ -25,19 +25,20 @@ import { findPathToModule, findPathToYarnSdk } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText
+    pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText, normalizePath
 } from './protocol-translation';
 import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
 import { asCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
-import { Commands } from './commands';
+import { CodeActions, Commands } from './commands';
 import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
+import API from './utils/api';
 
 export interface IServerOptions {
     logger: Logger;
@@ -54,6 +55,7 @@ export class LspServer {
     private diagnosticQueue?: DiagnosticEventQueue;
     private logger: Logger;
     private workspaceConfiguration: TypeScriptWorkspaceSettings;
+    private workspaceRoot: string | undefined;
 
     private readonly documents = new LspDocuments();
 
@@ -73,15 +75,17 @@ export class LspServer {
             return this.options.tsserverPath;
         }
         const tsServerPath = path.join('typescript', 'lib', 'tsserver.js');
-        // 1) look into .yarn/sdks of workspace root
-        const sdk = findPathToYarnSdk(this.rootPath(), tsServerPath);
-        if (sdk) {
-            return sdk;
-        }
-        // 2) look into node_modules of workspace root
-        const executable = findPathToModule(this.rootPath(), tsServerPath);
-        if (executable) {
-            return executable;
+        if (this.workspaceRoot) {
+            // 1) look into .yarn/sdks of workspace root
+            const sdk = findPathToYarnSdk(this.workspaceRoot, tsServerPath);
+            if (sdk) {
+                return sdk;
+            }
+            // 2) look into node_modules of workspace root
+            const executable = findPathToModule(this.workspaceRoot, tsServerPath);
+            if (executable) {
+                return executable;
+            }
         }
         // 3) use globally installed tsserver
         if (commandExists.sync(getTsserverExecutable())) {
@@ -95,9 +99,45 @@ export class LspServer {
         return bundled;
     }
 
+    private getTypeScriptVersion(serverPath: string): API | undefined {
+        if (!fs.existsSync(serverPath)) {
+            return undefined;
+        }
+
+        const p = serverPath.split(path.sep);
+        if (p.length <= 2) {
+            return undefined;
+        }
+        const p2 = p.slice(0, -2);
+        const modulePath = p2.join(path.sep);
+        let fileName = path.join(modulePath, 'package.json');
+        if (!fs.existsSync(fileName)) {
+            // Special case for ts dev versions
+            if (path.basename(modulePath) === 'built') {
+                fileName = path.join(modulePath, '..', 'package.json');
+            }
+        }
+        if (!fs.existsSync(fileName)) {
+            return undefined;
+        }
+
+        const contents = fs.readFileSync(fileName).toString();
+        let desc: any = null;
+        try {
+            desc = JSON.parse(contents);
+        } catch (err) {
+            return undefined;
+        }
+        if (!desc || !desc.version) {
+            return undefined;
+        }
+        return desc.version ? API.fromVersionString(desc.version) : undefined;
+    }
+
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
+        this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.documents,
@@ -106,13 +146,21 @@ export class LspServer {
         );
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
-        const { hostInfo, maxTsServerMemory } = userInitializationOptions;
+        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory } = userInitializationOptions;
         const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
             preferences: {
+                allowIncompleteCompletions: true,
+                allowRenameOfImportPath: true,
+                allowTextChangesInNewFiles: true,
+                displayPartsForJSDoc: true,
+                generateReturnInDocTemplate: true,
+                includeAutomaticOptionalChainCompletions: true,
+                includeCompletionsForImportStatements: true,
                 includeCompletionsForModuleExports: true,
                 includeCompletionsWithInsertText: true,
+                includeCompletionsWithSnippetText: true,
                 ...userInitializationOptions.preferences
             }
         };
@@ -126,10 +174,13 @@ export class LspServer {
         }
 
         const tsserverPath = this.findTsserverPath();
+        const typescriptVersion = this.getTypeScriptVersion(tsserverPath);
+        this.logger.info(`Using Typescript version ${typescriptVersion?.displayName} from path: ${tsserverPath}`);
         this.tspClient = new TspClient({
             tsserverPath,
             logFile,
             logVerbosity,
+            disableAutomaticTypingAcquisition,
             maxTsServerMemory,
             globalPlugins,
             pluginProbeLocations,
@@ -140,10 +191,11 @@ export class LspServer {
         this.tspClient.start();
         this.tspClient.request(CommandTypes.Configure, {
             ...hostInfo ? { hostInfo } : {},
-            preferences: {
-                allowTextChangesInNewFiles: true,
-                ...preferences
-            }
+            formatOptions: {
+                // We can use \n here since the editor should normalize later on to its line endings.
+                newLineCharacter: '\n'
+            },
+            preferences
         });
 
         this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
@@ -215,11 +267,8 @@ export class LspServer {
         if (this.options.tsserverLogFile) {
             return this.options.tsserverLogFile;
         }
-        if (this.initializeParams.rootUri) {
-            return path.join(uriToPath(this.initializeParams.rootUri)!, '.log/tsserver.log');
-        }
-        if (this.initializeParams.rootPath) {
-            return path.join(this.initializeParams.rootPath, '.log/tsserver.log');
+        if (this.workspaceRoot) {
+            return path.join(this.workspaceRoot, '.log/tsserver.log');
         }
         return undefined;
     }
@@ -281,7 +330,7 @@ export class LspServer {
                 file,
                 fileContent: params.textDocument.text,
                 scriptKindName: this.getScriptKindName(params.textDocument.languageId),
-                projectRootPath: this.rootPath()
+                projectRootPath: this.workspaceRoot
             });
             this.requestDiagnostics();
         } else {
@@ -513,9 +562,10 @@ export class LspServer {
             return { contents: [] };
         }
         const range = asRange(result.body);
-        const contents: lsp.MarkedString[] = [
-            { language: 'typescript', value: result.body.displayString }
-        ];
+        const contents: lsp.MarkedString[] = [];
+        if (result.body.displayString) {
+            contents.push({ language: 'typescript', value: result.body.displayString });
+        }
         const tags = asTagsDocumentation(result.body.tags);
         const documentation = asPlainText(result.body.documentation);
         contents.push(documentation + (tags ? '\n\n' + tags : ''));
@@ -665,10 +715,12 @@ export class LspServer {
             opts.indentSize = requestOptions.tabSize;
         }
 
-        try {
-            opts = JSON.parse(fs.readFileSync(this.rootPath() + '/tsfmt.json', 'utf-8'));
-        } catch (err) {
-            this.logger.log(`No formatting options found ${err}`);
+        if (this.workspaceRoot) {
+            try {
+                opts = JSON.parse(fs.readFileSync(this.workspaceRoot + '/tsfmt.json', 'utf-8'));
+            } catch (err) {
+                this.logger.log(`No formatting options found ${err}`);
+            }
         }
 
         return opts;
@@ -716,10 +768,18 @@ export class LspServer {
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only && params.context.only.includes(CodeActionKind.SourceOrganizeImports)) {
-            actions.push(...provideOrganizeImports(
-                await this.getOrganizeImports({ scope: { type: 'file', args } })
-            ));
+        if (params.context.only?.includes(CodeActions.SourceOrganizeImportsTsLs)) {
+            // see this issue for more context about how this argument is used
+            // https://github.com/microsoft/TypeScript/issues/43051
+            const skipDestructiveCodeActions = params.context.diagnostics.some(
+                // assume no severity is an error
+                d => (d.severity ?? 0) <= 2
+            );
+            const response = await this.getOrganizeImports({
+                scope: { type: 'file', args },
+                skipDestructiveCodeActions
+            });
+            actions.push(...provideOrganizeImports(response, this.documents));
         }
 
         return actions;
@@ -786,11 +846,13 @@ export class LspServer {
             }
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
             const file = arg.arguments[0] as string;
+            const additionalArguments: { skipDestructiveCodeActions?: boolean; } = arg.arguments[1] || {};
             const { body } = await this.tspClient.request(CommandTypes.OrganizeImports, {
                 scope: {
                     type: 'file',
                     args: { file }
-                }
+                },
+                skipDestructiveCodeActions: additionalArguments.skipDestructiveCodeActions
             });
             await this.applyFileCodeEdits(body);
         } else if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {
@@ -799,6 +861,18 @@ export class LspServer {
                 targetUri: string;
             };
             this.applyRenameFile(sourceUri, targetUri);
+        } else if (arg.command === Commands.APPLY_COMPLETION_CODE_ACTION && arg.arguments) {
+            const [_, codeActions] = arg.arguments as [string, tsp.CodeAction[]];
+            for (const codeAction of codeActions) {
+                await this.applyFileCodeEdits(codeAction.changes);
+                if (codeAction.commands && codeAction.commands.length) {
+                    for (const command of codeAction.commands) {
+                        await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command });
+                    }
+                }
+                // Execute only the first code action.
+                break;
+            }
         } else {
             this.logger.error(`Unknown command ${arg.command}.`);
         }
@@ -862,7 +936,7 @@ export class LspServer {
         for (const item of response.body) {
             // tsp returns item.file with POSIX path delimiters, whereas file is platform specific.
             // Converting to a URI and back to a path ensures consistency.
-            if (uriToPath(pathToUri(item.file, this.documents)) === file) {
+            if (normalizePath(item.file) === file) {
                 const highlights = toDocumentHighlight(item);
                 result.push(...highlights);
             }
@@ -870,12 +944,8 @@ export class LspServer {
         return result;
     }
 
-    private rootPath(): string {
-        return this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri)! : this.initializeParams.rootPath!;
-    }
-
-    private lastFileOrDummy(): string {
-        return this.documents.files[0] || this.rootPath();
+    private lastFileOrDummy(): string | undefined {
+        return this.documents.files[0] || this.workspaceRoot;
     }
 
     async workspaceSymbol(params: lsp.WorkspaceSymbolParams): Promise<lsp.SymbolInformation[]> {

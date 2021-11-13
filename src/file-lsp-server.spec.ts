@@ -7,7 +7,7 @@
 
 import chai from 'chai';
 import { LspServer } from './lsp-server';
-import { uri, createServer, lastPosition, filePath, readContents } from './test-utils';
+import { uri, createServer, lastPosition, filePath, readContents, positionAfter } from './test-utils';
 
 const assert = chai.assert;
 
@@ -40,5 +40,28 @@ describe('documentHighlight', () => {
             position: lastPosition(doc, 'doStuff')
         });
         assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
+    }).timeout(10000);
+});
+
+describe('completions', () => {
+    it('receives completion that auto-imports from another module', async () => {
+        const doc = {
+            uri: uri('completion.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: readContents(filePath('completion.ts'))
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({
+            textDocument: doc,
+            position: positionAfter(doc, 'doStuff')
+        });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(item => item.label === 'doStuff');
+        assert.isDefined(completion);
+        const resolvedCompletion = await server.completionResolve(completion!);
+        assert.isDefined(resolvedCompletion.additionalTextEdits);
+        assert.isUndefined(resolvedCompletion.command);
+        server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 });

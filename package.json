@@ -1,6 +1,6 @@
 {
   "name": "typescript-language-server",
-  "version": "0.6.4",
+  "version": "0.7.1",
   "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
   "author": "TypeFox and others",
   "license": "Apache-2.0",
@@ -22,6 +22,7 @@
     "commander": "^7.2.0",
     "fs-extra": "^10.0.0",
     "p-debounce": "^2.1.0",
+    "semver": "^7.3.5",
     "tempy": "^1.0.1",
     "vscode-languageserver": "^7.0.0",
     "vscode-languageserver-protocol": "^3.16.0",
@@ -37,10 +38,10 @@
     "watch": "tsc -b --watch --verbose"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.11",
     "@types/chai": "^4.2.19",
-    "@types/mocha": "^8.2.2",
-    "@types/node": "^8.0.31",
+    "@types/fs-extra": "^9.0.11",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.6",
     "@typescript-eslint/eslint-plugin": "^4.28.0",
     "@typescript-eslint/parser": "^4.28.0",
     "chai": "^4.3.4",

@@ -10,12 +10,14 @@ import tsp from 'typescript/lib/protocol';
 import URI from 'vscode-uri';
 import { LspDocuments } from './document';
 
+const RE_PATHSEP_WINDOWS = /\\/g;
+
 export function uriToPath(stringUri: string): string | undefined {
     const uri = URI.parse(stringUri);
     if (uri.scheme !== 'file') {
         return undefined;
     }
-    return uri.fsPath;
+    return normalizeFsPath(uri.fsPath);
 }
 
 function parsePathOrUri(filepath: string): URI {
@@ -30,7 +32,8 @@ function parsePathOrUri(filepath: string): URI {
 
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
     const fileUri = parsePathOrUri(filepath);
-    const document = documents && documents.get(fileUri.fsPath);
+    const normalizedFilepath = normalizePath(fileUri.fsPath);
+    const document = documents && documents.get(normalizedFilepath);
     return document ? document.uri : fileUri.toString();
 }
 
@@ -39,17 +42,26 @@ export function pathToUri(filepath: string, documents: LspDocuments | undefined)
  *
  * On systems other than Windows it should be an no-op.
  *
- * On Windows, an input path in a format like "c:/path/file.ts"
- * will be normalized to "c:\path\file.ts" (same as returned through URI.fsPath).
+ * On Windows, an input path in a format like "C:/path/file.ts"
+ * will be normalized to "c:/path/file.ts".
  */
-export function normalizeFileNameToFsPath(fileName: string): string {
-    return URI.file(fileName).fsPath;
+export function normalizePath(filePath: string): string {
+    const fsPath = URI.file(filePath).fsPath;
+    return normalizeFsPath(fsPath);
 }
 
-function currentVersion(filepath: string, documents: LspDocuments | undefined): number {
+/**
+ * Normalizes the path obtained through the "fsPath" property of the URI module.
+ */
+export function normalizeFsPath(fsPath: string): string {
+    return fsPath.replace(RE_PATHSEP_WINDOWS, '/');
+}
+
+function currentVersion(filepath: string, documents: LspDocuments | undefined): number | null {
     const fileUri = URI.file(filepath);
-    const document = documents && documents.get(fileUri.fsPath);
-    return document ? document.version : 0;
+    const normalizedFilepath = normalizePath(fileUri.fsPath);
+    const document = documents && documents.get(normalizedFilepath);
+    return document ? document.version : null;
 }
 
 export function toPosition(location: tsp.Location): lsp.Position {

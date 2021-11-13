@@ -7,17 +7,19 @@
 
 import * as lsp from 'vscode-languageserver/node';
 import tsp from 'typescript/lib/protocol';
-import { Commands } from './commands';
-import { normalizeFileNameToFsPath } from './protocol-translation';
-import { CodeActionKind } from 'vscode-languageserver/node';
+import { toTextDocumentEdit } from './protocol-translation';
+import { LspDocuments } from './document';
+import { CodeActions } from './commands';
 
-export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined): Array<lsp.CodeAction> {
-    if (!response) {
+export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
+    if (!response || response.body.length === 0) {
         return [];
     }
-    return response.body.map(edit => lsp.CodeAction.create(
-        'Organize imports',
-        lsp.Command.create('', Commands.ORGANIZE_IMPORTS, normalizeFileNameToFsPath(edit.fileName)),
-        CodeActionKind.SourceOrganizeImports
-    ));
+    // Return a single code action with potentially multiple edits.
+    return [
+        lsp.CodeAction.create(
+            'Organize imports',
+            { documentChanges: response.body.map(edit => toTextDocumentEdit(edit, documents)) },
+            CodeActions.SourceOrganizeImportsTsLs
+        )];
 }

@@ -8,8 +8,8 @@
 import * as lsp from 'vscode-languageserver/node';
 import type tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
-import { ScriptElementKind } from './tsp-command-types';
-import { asRange, toTextEdit, asPlainText, asDocumentation } from './protocol-translation';
+import { KindModifiers, ScriptElementKind } from './tsp-command-types';
+import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation';
 import { Commands } from './commands';
 
 interface TSCompletionItem extends lsp.CompletionItem {
@@ -22,24 +22,32 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
         kind: asCompletionItemKind(entry.kind),
         sortText: entry.sortText,
         commitCharacters: asCommitCharacters(entry.kind),
+        preselect: entry.isRecommended,
         data: {
             file,
             line: position.line + 1,
             offset: position.character + 1,
             entryNames: [
-                entry.source ? { name: entry.name, source: entry.source } : entry.name
+                entry.source || entry.data ? {
+                    name: entry.name,
+                    source: entry.source,
+                    data: entry.data
+                } : entry.name
             ]
         }
     };
-    if (entry.isRecommended) {
-        // Make sure isRecommended property always comes first
-        // https://github.com/Microsoft/vscode/issues/40325
-        item.preselect = true;
-    } else if (entry.source) {
+
+    if (entry.source && entry.hasAction) {
         // De-prioritze auto-imports
         // https://github.com/Microsoft/vscode/issues/40311
         item.sortText = '\uffff' + entry.sortText;
     }
+
+    const { sourceDisplay } = entry;
+    if (sourceDisplay) {
+        item.detail = asPlainText(sourceDisplay);
+    }
+
     if (item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method) {
         item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     }
@@ -55,7 +63,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
     }
     if (entry.kindModifiers) {
         const kindModifiers = new Set(entry.kindModifiers.split(/,|\s+/g));
-        if (kindModifiers.has('optional')) {
+        if (kindModifiers.has(KindModifiers.optional)) {
             if (!insertText) {
                 insertText = item.label;
             }
@@ -65,8 +73,25 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
             item.label += '?';
         }
 
-        if (kindModifiers.has('deprecated')) {
+        if (kindModifiers.has(KindModifiers.deprecated)) {
             item.tags = [lsp.CompletionItemTag.Deprecated];
+        }
+
+        if (kindModifiers.has(KindModifiers.color)) {
+            item.kind = lsp.CompletionItemKind.Color;
+        }
+
+        if (entry.kind === ScriptElementKind.scriptElement) {
+            for (const extModifier of KindModifiers.fileExtensionKindModifiers) {
+                if (kindModifiers.has(extModifier)) {
+                    if (entry.name.toLowerCase().endsWith(extModifier)) {
+                        item.detail = entry.name;
+                    } else {
+                        item.detail = entry.name + extModifier;
+                    }
+                    break;
+                }
+            }
         }
     }
     if (insertText && replacementRange) {
@@ -155,27 +180,18 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 export function asResolvedCompletionItem(item: lsp.CompletionItem, details: tsp.CompletionEntryDetails): lsp.CompletionItem {
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);
-    Object.assign(item, asCodeActions(details, item.data.file));
+    if (details.codeActions?.length) {
+        const filepath = normalizePath(item.data.file);
+        item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
+        item.command = asCommand(details.codeActions, item.data.file);
+    }
     return item;
 }
 
-function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
-    command?: lsp.Command; additionalTextEdits?: lsp.TextEdit[];
-} {
-    if (!details.codeActions || !details.codeActions.length) {
-        return {};
-    }
-
+function asAdditionalTextEdits(codeActions: tsp.CodeAction[], filepath: string): lsp.TextEdit[] | undefined {
     // Try to extract out the additionalTextEdits for the current file.
-    // Also check if we still have to apply other workspace edits and commands
-    // using a vscode command
     const additionalTextEdits: lsp.TextEdit[] = [];
-    let hasRemainingCommandsOrEdits = false;
-    for (const tsAction of details.codeActions) {
-        if (tsAction.commands) {
-            hasRemainingCommandsOrEdits = true;
-        }
-
+    for (const tsAction of codeActions) {
         // Apply all edits in the current file using `additionalTextEdits`
         if (tsAction.changes) {
             for (const change of tsAction.changes) {
@@ -183,31 +199,43 @@ function asCodeActions(details: tsp.CompletionEntryDetails, filepath: string): {
                     for (const textChange of change.textChanges) {
                         additionalTextEdits.push(toTextEdit(textChange));
                     }
-                } else {
+                }
+            }
+        }
+    }
+    return additionalTextEdits.length ? additionalTextEdits : undefined;
+}
+
+function asCommand(codeActions: tsp.CodeAction[], filepath: string): lsp.Command | undefined {
+    let hasRemainingCommandsOrEdits = false;
+    for (const tsAction of codeActions) {
+        if (tsAction.commands) {
+            hasRemainingCommandsOrEdits = true;
+            break;
+        }
+
+        if (tsAction.changes) {
+            for (const change of tsAction.changes) {
+                if (change.fileName !== filepath) {
                     hasRemainingCommandsOrEdits = true;
+                    break;
                 }
             }
         }
     }
 
-    let command: lsp.Command | undefined = undefined;
     if (hasRemainingCommandsOrEdits) {
         // Create command that applies all edits not in the current file.
-        command = {
+        return {
             title: '',
             command: Commands.APPLY_COMPLETION_CODE_ACTION,
-            arguments: [filepath, details.codeActions.map(codeAction => ({
+            arguments: [filepath, codeActions.map(codeAction => ({
                 commands: codeAction.commands,
                 description: codeAction.description,
                 changes: codeAction.changes.filter(x => x.fileName !== filepath)
             }))]
         };
     }
-
-    return {
-        command,
-        additionalTextEdits: additionalTextEdits.length ? additionalTextEdits : undefined
-    };
 }
 
 function asDetail({ displayParts, sourceDisplay, source: deprecatedSource }: tsp.CompletionEntryDetails): string | undefined {

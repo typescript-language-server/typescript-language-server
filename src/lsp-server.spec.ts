@@ -11,6 +11,7 @@ import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter } from './test-utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { CodeActions } from './commands';
 
 const assert = chai.assert;
 
@@ -186,6 +187,54 @@ describe('completion', () => {
         assert.isDefined(completion);
         assert.isDefined(completion!.textEdit);
         assert.equal(completion!.textEdit!.newText, '["invalid-identifier-name"]');
+        server.didCloseTextDocument({ textDocument: doc });
+    }).timeout(10000);
+
+    it('includes detail field with package name for auto-imports', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'readFile'
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        assert.isDefined(completion);
+        assert.strictEqual(completion!.detail, 'fs');
+        assert.strictEqual(completion!.insertTextFormat, /* snippet */2);
+        server.didCloseTextDocument({ textDocument: doc });
+    }).timeout(10000);
+
+    it('resolves text edit for auto-import completion', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'readFile'
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        assert.isDefined(completion);
+        const resolvedItem = await server.completionResolve(completion!);
+        assert.deepEqual(resolvedItem.additionalTextEdits, [
+            {
+                newText: 'import { readFile } from "fs";\n\n',
+                range: {
+                    end: {
+                        character: 0,
+                        line: 0
+                    },
+                    start: {
+                        character: 0,
+                        line: 0
+                    }
+                }
+            }
+        ]);
         server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 });
@@ -794,7 +843,7 @@ describe('code actions', () => {
         ]);
     }).timeout(10000);
 
-    it('can provide organize imports when explicitly requested in only', async () => {
+    it('does not provide organize imports when there are errors', async () => {
         server.didOpenTextDocument({
             textDocument: doc
         });
@@ -813,19 +862,86 @@ describe('code actions', () => {
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: ['source.organizeImports']
+                only: [CodeActions.SourceOrganizeImportsTsLs]
+            }
+        }))!;
+
+        assert.deepEqual(result, []);
+    }).timeout(10000);
+
+    it('can provide organize imports when explicitly requested in only', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `import { existsSync } from 'fs';
+import { accessSync } from 'fs';
+existsSync('t');`
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 29 },
+                end: { line: 1, character: 53 }
+            },
+            context: {
+                diagnostics: [{
+                    range: {
+                        start: { line: 1, character: 25 },
+                        end: { line: 1, character: 49 }
+                    },
+                    code: 6133,
+                    message: 'unused arg'
+                }],
+                only: [CodeActions.SourceOrganizeImportsTsLs]
             }
         }))!;
 
         assert.deepEqual(result, [
             {
-                command: {
-                    arguments: [filePath('bar.ts')],
-                    command: '_typescript.organizeImports',
-                    title: ''
-                },
-                kind: 'source.organizeImports',
-                title: 'Organize imports'
+                kind: CodeActions.SourceOrganizeImportsTsLs,
+                title: 'Organize imports',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: "import { accessSync, existsSync } from 'fs';\n",
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 1
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 0
+                                        }
+                                    }
+                                },
+                                {
+                                    newText: '',
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 2
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 1
+                                        }
+                                    }
+                                }
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1
+                            }
+                        }
+                    ]
+                }
             }
         ]);
     }).timeout(10000);

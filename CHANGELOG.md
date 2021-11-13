@@ -1,6 +1,76 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2021-11-10
+
+ - fix: add missing `semver` dependency (#288)
+
+## [0.7.0] - 2021-11-09
+
+### Breaking
+
+Changes to default options sent to tsserver could affect behavior (hopefully for the better). Read changes below for more details.
+
+### Changes
+
+- **feat**: include import specifier for import completions (#281)
+   For completions that import from another package, the completions will include a "detail" field with the name of the module.
+
+   Also aligned some other logic with the typescript language services used in VSCode:
+    * annotate the completions with the local name of the import when completing a path in import foo from '...'
+    * update completion "sortText" regardless if the completion "isRecommended"
+
+- **feat**: allow skip destructive actions on running OrganizeImports (#228)
+   Add support for the new skipDestructiveCodeActions argument to TypeScript's organize imports feature - [1] to support [2].
+
+   Support is added in two places:
+     * Automatically inferring the proper value based on diagnostics for the file when returning code actions.
+     * Supporting sending it when manually executing the organize imports action.
+
+   Also added documentation to the readme about the supported commands that can be manually executed.
+
+   [1] https://github.com/microsoft/TypeScript/issues/43051
+   [2] https://github.com/apexskier/nova-typescript/issues/273
+
+- **feat**: support running server on files without root workspace (#286)
+   The tsserver seems to be good at inferring the project configuration when opening single files without a workspace so don't crash on missing `rootPath`.
+
+- **feat**: add `disableAutomaticTypingAcquisition` option to disable automatic type acquisition (#285)
+- **feat**: update default tsserver options (#284)
+  Set the following additional options by default:
+    ```
+    allowRenameOfImportPath: true,
+    displayPartsForJSDoc: true,
+    generateReturnInDocTemplate: true,
+    includeAutomaticOptionalChainCompletions: true,
+    includeCompletionsForImportStatements: true,
+    includeCompletionsWithSnippetText: true,
+    ```
+    This aligns more with the default options of the typescript language services in VSCode.
+- **feat**: announce support for "source.organizeImports.ts-ls" action (#283)
+    Announcing support for that code action allows editors that support
+    running code actions on save to automatically run the code action if
+    the user has configured the editor with settings like
+
+    ```js
+      "codeActionsOnSave": {
+        "source.organizeImports": true,
+        // or
+        "source.organizeImports.ts-ls": true,
+      },
+    ```
+ - **chore**: change default log level from "warn" to "info" (#287)
+
+## [0.6.5] - 2021-11-03
+
+ - fix: normalize client and tsserver paths (#275)
+   This should ensure consistent behavior regradless of the platform. Previously some functionality could be malfunctioning on Windows depending on the LSP client used due to using non-normalized file paths.
+ - Handle the `APPLY_COMPLETION_CODE_ACTION` command internally (#270)
+   This means that the clients that have implemented a custom handling for the `_typescript.applyCompletionCodeAction` command can remove that code.
+   Without removing the custom handling everything should work as before but some edge cases might work better when custom handling is removed.
+ - fix: ignore empty code blocks in content returned from `textDocument/hover` (#276)
+ - fix: remove unsupported --node-ipc and --socket options (#278)
+
 ## [0.6.4] - 2021-10-12
 
  - Fix broken logging (#267)
