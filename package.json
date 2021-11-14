@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "command-exists": "^1.2.6",
-    "commander": "^7.2.0",
+    "commander": "^8.3.0",
     "fs-extra": "^10.0.0",
     "p-debounce": "^2.1.0",
     "semver": "^7.3.5",
