@@ -37,7 +37,7 @@
     "fs-extra": "^10.0.0",
     "p-debounce": "^2.1.0",
     "semver": "^7.3.5",
-    "tempy": "^1.0.1",
+    "tempy": "^2.0.0",
     "vscode-languageserver": "^7.0.0",
     "vscode-languageserver-protocol": "^3.16.0",
     "vscode-languageserver-textdocument": "^1.0.1",
