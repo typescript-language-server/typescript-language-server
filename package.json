@@ -26,12 +26,13 @@
     "lint": "eslint --ext \".js,.ts\" src",
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
     "compile": "tsc -b",
-    "watch": "tsc -b --watch --verbose"
+    "watch": "tsc -b --watch --verbose",
+    "postversion": "git push --follow-tags"
   },
   "husky": {
     "hooks": {
       "pre-commit": "yarn lint && yarn build && yarn test",
-      "post-merge": "npm i"
+      "post-merge": "yarn"
     }
   },
   "dependencies": {
