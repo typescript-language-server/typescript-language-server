@@ -4,6 +4,9 @@
   "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
   "author": "TypeFox and others",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=12"
+  },
   "eslintIgnore": [
     "!.eslintrc.js"
   ],
