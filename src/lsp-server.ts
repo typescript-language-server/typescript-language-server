@@ -502,7 +502,7 @@ export class LspServer {
         if (!details) {
             return item;
         }
-        return asResolvedCompletionItem(item, details);
+        return asResolvedCompletionItem(item, details, this.tspClient, this.workspaceConfiguration.completions || {});
     }
 
     async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {
