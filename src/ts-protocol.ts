@@ -25,6 +25,7 @@ export interface TypeScriptInitializationOptions {
     disableAutomaticTypingAcquisition?: boolean;
     logVerbosity?: string;
     maxTsServerMemory?: number;
+    npmLocation?: string;
     plugins: TypeScriptPlugin[];
     preferences?: UserPreferences;
     hostInfo?: string;
@@ -43,7 +44,12 @@ export interface TypeScriptWorkspaceSettingsLanguageSettings {
     inlayHints?: InlayHintsOptions;
 }
 
+interface TypeScriptWorkspaceSettingsDiagnostics {
+    ignoredCodes?: number[];
+}
+
 export interface TypeScriptWorkspaceSettings {
     javascript?: TypeScriptWorkspaceSettingsLanguageSettings;
     typescript?: TypeScriptWorkspaceSettingsLanguageSettings;
+    diagnostics?: TypeScriptWorkspaceSettingsDiagnostics;
 }

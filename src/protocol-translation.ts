@@ -7,7 +7,7 @@
 
 import * as lsp from 'vscode-languageserver/node';
 import tsp from 'typescript/lib/protocol';
-import URI from 'vscode-uri';
+import { URI } from 'vscode-uri';
 import { LspDocuments } from './document';
 
 const RE_PATHSEP_WINDOWS = /\\/g;

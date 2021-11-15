@@ -71,7 +71,7 @@ export class LspServer {
         );
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
-        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory } = userInitializationOptions;
+        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation } = userInitializationOptions;
         const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
@@ -134,6 +134,7 @@ export class LspServer {
             logVerbosity,
             disableAutomaticTypingAcquisition,
             maxTsServerMemory,
+            npmLocation,
             globalPlugins,
             pluginProbeLocations,
             logger: this.options.logger,
@@ -227,6 +228,8 @@ export class LspServer {
 
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
         this.workspaceConfiguration = params.settings || {};
+        const ignoredDiagnosticCodes = this.workspaceConfiguration.diagnostics?.ignoredCodes || [];
+        this.diagnosticQueue?.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes);
     }
 
     getWorkspacePreferencesForDocument(file: string): TypeScriptWorkspaceSettingsLanguageSettings {
