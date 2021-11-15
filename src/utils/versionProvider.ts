@@ -4,6 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 import fs from 'fs';
 import path from 'path';
+import which from 'which';
+import pkgUp from 'pkg-up';
 import API from './api';
 import { IServerOptions } from './configuration';
 
@@ -95,14 +97,40 @@ export class TypeScriptVersionProvider {
 
     public getUserSettingVersion(): TypeScriptVersion | null {
         const { tsserverPath } = this.configuration || {};
-        if (tsserverPath) {
-            const isFile = fs.lstatSync(tsserverPath).isFile();
-            return new TypeScriptVersion(
-                TypeScriptVersionSource.UserSetting,
-                isFile ? path.dirname(tsserverPath) : tsserverPath
-            );
+        if (!tsserverPath) {
+            return null;
         }
-        return null;
+        let resolvedPath = tsserverPath;
+        // Resolve full path to the binary if path is not absolute.
+        if (!path.isAbsolute(resolvedPath)) {
+            const binaryPath = which.sync(tsserverPath, { nothrow:true });
+            if (binaryPath) {
+                resolvedPath = binaryPath;
+            }
+        }
+        // Resolve symbolic link.
+        let stat = fs.lstatSync(resolvedPath, { throwIfNoEntry: false });
+        if (stat?.isSymbolicLink()) {
+            resolvedPath = fs.realpathSync(resolvedPath);
+        }
+        // Get directory path
+        stat = fs.lstatSync(resolvedPath, { throwIfNoEntry: false });
+        if (stat?.isFile()) {
+            resolvedPath = path.dirname(resolvedPath);
+        }
+        // Resolve path to the "lib" dir.
+        try {
+            const packageJsonPath = pkgUp.sync({ cwd: resolvedPath });
+            if (packageJsonPath) {
+                resolvedPath = path.join(path.dirname(packageJsonPath), 'lib');
+            }
+        } catch {
+            // ignore
+        }
+        return new TypeScriptVersion(
+            TypeScriptVersionSource.UserSetting,
+            resolvedPath
+        );
     }
 
     public getWorkspaceVersion(workspaceFolders: string[]): TypeScriptVersion | null {

@@ -59,6 +59,31 @@ export class LspServer {
         }
     }
 
+    private findTypescriptVersion(): TypeScriptVersion | null {
+        const typescriptVersionProvider = new TypeScriptVersionProvider(this.options);
+        // User-provided tsserver path.
+        const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
+        if (userSettingVersion) {
+            if (userSettingVersion.isValid) {
+                return userSettingVersion;
+            }
+            this.logger.warn(`Typescript specified through --tsserver-path ignored due to invalid path "${userSettingVersion.path}"`);
+        }
+        // Workspace version.
+        if (this.workspaceRoot) {
+            const workspaceVersion = typescriptVersionProvider.getWorkspaceVersion([this.workspaceRoot]);
+            if (workspaceVersion) {
+                return workspaceVersion;
+            }
+        }
+        // Bundled version
+        const bundledVersion = typescriptVersionProvider.bundledVersion();
+        if (bundledVersion && bundledVersion.isValid) {
+            return bundledVersion;
+        }
+        return null;
+    }
+
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
@@ -98,32 +123,9 @@ export class LspServer {
             pluginProbeLocations.push(plugin.location);
         }
 
-        // Lookup tsserver version.
-        const typescriptVersionProvider = new TypeScriptVersionProvider(this.options);
-        let typescriptVersion: TypeScriptVersion | null = null;
-        // User-provided tsserver path.
-        const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
-        if (userSettingVersion) {
-            if (userSettingVersion.isValid) {
-                typescriptVersion = userSettingVersion;
-            } else {
-                this.logger.warn(`Ignoring invalid --tsserver-path: ${userSettingVersion.path}`);
-            }
-        }
-        // Workspace version.
-        if (this.workspaceRoot) {
-            const workspaceVersion = typescriptVersionProvider.getWorkspaceVersion([this.workspaceRoot]);
-            if (workspaceVersion) {
-                typescriptVersion = workspaceVersion;
-            }
-        }
-        // Bundled version
-        const bundledVersion = typescriptVersionProvider.bundledVersion();
-        if (bundledVersion && bundledVersion.isValid) {
-            typescriptVersion = bundledVersion;
-        }
+        const typescriptVersion = this.findTypescriptVersion();
         if (typescriptVersion) {
-            this.logger.info(`Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path: ${typescriptVersion.tsServerPath}`);
+            this.logger.info(`Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
         } else {
             throw Error('Could not find a valid tsserver version. Exiting.');
         }

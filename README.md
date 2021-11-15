@@ -40,7 +40,7 @@ typescript-language-server --stdio
     -h, --help                             output usage information
 ```
 
-> Note: when using `--tsserver-path`, it must be a path to the `.../typescript/lib/` directory and not to a shell script `../node_modules/.bin/tsserver` or `tsserver`.
+> Note: The path passed to `--tsserver-path` should ideally be a path to the `/.../typescript/lib/` directory and not to the shell script `/.../node_modules/.bin/tsserver` or `tsserver`. Though for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script.
 
 ## initializationOptions
 

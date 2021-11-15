@@ -31,7 +31,7 @@ module.exports = {
         'linebreak-style': 'error',
         'no-console': [
             'error', {
-                allow: ['assert', 'warn', 'error', 'info']
+                allow: ['assert', 'warn', 'error']
             }
         ],
         'no-constructor-return': 'error',
