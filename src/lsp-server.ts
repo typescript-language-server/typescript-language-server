@@ -1115,12 +1115,12 @@ export class LspServer {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('semanticTokensFull', params, file);
         if (!file) {
-            return { data: [], resultId: '' };
+            return { data: [] };
         }
 
         const doc = this.documents.get(file);
         if (!doc) {
-            return { data: [], resultId: '' };
+            return { data: [] };
         }
 
         const start = doc.offsetAt({
@@ -1139,12 +1139,12 @@ export class LspServer {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('semanticTokensRange', params, file);
         if (!file) {
-            return { data: [], resultId: '' };
+            return { data: [] };
         }
 
         const doc = this.documents.get(file);
         if (!doc) {
-            return { data: [], resultId: '' };
+            return { data: [] };
         }
 
         const start = doc.offsetAt(params.range.start);
@@ -1166,15 +1166,9 @@ export class LspServer {
             );
 
             const spans = result.body?.spans ?? [];
-            return {
-                data: lspsemanticTokens.transformSpans(doc, spans),
-                resultId: result.request_seq.toString()
-            };
+            return { data: lspsemanticTokens.transformSpans(doc, spans) };
         } catch {
-            return {
-                data: [],
-                resultId: ''
-            };
+            return { data: [] };
         }
     }
 }
