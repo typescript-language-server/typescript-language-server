@@ -45,6 +45,7 @@ class FileDiagnostics {
 
 export class DiagnosticEventQueue {
     protected readonly diagnostics = new Map<string, FileDiagnostics>();
+    private ignoredDiagnosticCodes: Set<number> = new Set();
 
     constructor(
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
@@ -59,10 +60,23 @@ export class DiagnosticEventQueue {
             return;
         }
         const { file } = event.body;
+        let { diagnostics } = event.body;
+
+        if (this.ignoredDiagnosticCodes.size) {
+            diagnostics = diagnostics.filter(diagnostic => !this.isDiagnosticIgnored(diagnostic));
+        }
         const uri = pathToUri(file, this.documents);
-        const diagnostics = this.diagnostics.get(uri) || new FileDiagnostics(
+        const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(
             uri, this.publishDiagnostics, this.documents, this.publishDiagnosticsCapabilities);
-        diagnostics.update(kind, event.body.diagnostics);
-        this.diagnostics.set(uri, diagnostics);
+        diagnosticsForFile.update(kind, diagnostics);
+        this.diagnostics.set(uri, diagnosticsForFile);
+    }
+
+    updateIgnoredDiagnosticCodes(ignoredCodes: readonly number[]): void {
+        this.ignoredDiagnosticCodes = new Set(ignoredCodes);
+    }
+
+    private isDiagnosticIgnored(diagnostic: tsp.Diagnostic) : boolean {
+        return diagnostic.code !== undefined && this.ignoredDiagnosticCodes.has(diagnostic.code);
     }
 }

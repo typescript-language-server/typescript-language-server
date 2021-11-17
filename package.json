@@ -4,6 +4,9 @@
   "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
   "author": "TypeFox and others",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=12"
+  },
   "eslintIgnore": [
     "!.eslintrc.js"
   ],
@@ -17,40 +20,50 @@
   "bin": {
     "typescript-language-server": "./lib/cli.js"
   },
-  "dependencies": {
-    "command-exists": "^1.2.6",
-    "commander": "^7.2.0",
-    "fs-extra": "^10.0.0",
-    "p-debounce": "^2.1.0",
-    "semver": "^7.3.5",
-    "tempy": "^1.0.1",
-    "vscode-languageserver": "^7.0.0",
-    "vscode-languageserver-protocol": "^3.16.0",
-    "vscode-languageserver-textdocument": "^1.0.1",
-    "vscode-uri": "^1.0.5"
-  },
   "scripts": {
     "clean": "rimraf lib *.tsbuildinfo",
     "test": "mocha --exit --reporter spec \"./lib/**/*.spec.js\"",
     "lint": "eslint --ext \".js,.ts\" src",
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
     "compile": "tsc -b",
-    "watch": "tsc -b --watch --verbose"
+    "watch": "tsc -b --watch --verbose",
+    "postversion": "git push --follow-tags"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn lint && yarn build && yarn test",
+      "post-merge": "yarn"
+    }
+  },
+  "dependencies": {
+    "commander": "^8.3.0",
+    "fs-extra": "^10.0.0",
+    "p-debounce": "^2.1.0",
+    "pkg-up": "^3.1.0",
+    "semver": "^7.3.5",
+    "tempy": "^1.0.1",
+    "vscode-languageserver": "^7.0.0",
+    "vscode-languageserver-protocol": "^3.16.0",
+    "vscode-languageserver-textdocument": "^1.0.1",
+    "vscode-uri": "^3.0.2",
+    "which": "^2.0.2"
   },
   "devDependencies": {
     "@types/chai": "^4.2.19",
     "@types/fs-extra": "^9.0.11",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.11.6",
-    "@typescript-eslint/eslint-plugin": "^4.28.0",
-    "@typescript-eslint/parser": "^4.28.0",
+    "@types/which": "^2.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.3.1",
+    "@typescript-eslint/parser": "^5.3.1",
     "chai": "^4.3.4",
-    "concurrently": "^6.2.0",
-    "eslint": "^7.29.0",
+    "concurrently": "^6.4.0",
+    "eslint": "^8.2.0",
+    "husky": "4.x.x",
     "mocha": "^9.0.1",
     "rimraf": "^3.0.2",
     "source-map-support": "^0.5.19",
-    "ts-node": "7.0.1",
+    "ts-node": "^10.4.0",
     "typescript": "^4.4.3"
   }
 }

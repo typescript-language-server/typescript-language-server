@@ -6,7 +6,6 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
 import * as cp from 'child_process';
 import * as readline from 'readline';
 import * as decoder from 'string_decoder';
@@ -25,6 +24,7 @@ export interface TspClientOptions {
     logVerbosity?: string;
     disableAutomaticTypingAcquisition?: boolean;
     maxTsServerMemory?: number;
+    npmLocation?: string;
     globalPlugins?: string[];
     pluginProbeLocations?: string[];
     onEvent?: (event: protocol.Event) => void;
@@ -89,7 +89,16 @@ export class TspClient {
         if (this.readlineInterface) {
             return;
         }
-        const { tsserverPath, logFile, logVerbosity, disableAutomaticTypingAcquisition, maxTsServerMemory, globalPlugins, pluginProbeLocations } = this.options;
+        const {
+            tsserverPath,
+            logFile,
+            logVerbosity,
+            disableAutomaticTypingAcquisition,
+            maxTsServerMemory,
+            npmLocation,
+            globalPlugins,
+            pluginProbeLocations
+        } = this.options;
         const args: string[] = [];
         if (logFile) {
             args.push('--logFile', logFile);
@@ -106,19 +115,21 @@ export class TspClient {
         if (disableAutomaticTypingAcquisition) {
             args.push('--disableAutomaticTypingAcquisition');
         }
+        if (npmLocation) {
+            this.logger.info(`using npm from ${npmLocation}`);
+            args.push('--npmLocation', npmLocation);
+        }
+
         this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
         args.push('--cancellationPipeName', `${this.cancellationPipeName}*`);
         this.logger.log(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
-        const tsserverPathIsModule = path.extname(tsserverPath) === '.js';
         const options = {
             silent: true,
             execArgv: [
                 ...maxTsServerMemory ? [`--max-old-space-size=${maxTsServerMemory}`] : []
             ]
         };
-        this.tsserverProc = tsserverPathIsModule
-            ? cp.fork(tsserverPath, args, options)
-            : cp.spawn(tsserverPath, args);
+        this.tsserverProc = cp.fork(tsserverPath, args, options);
         process.on('exit', () => {
             this.readlineInterface?.close();
             this.tsserverProc.stdin?.destroy();

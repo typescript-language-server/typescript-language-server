@@ -13,22 +13,18 @@ import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
 import * as lspsemanticTokens from './semantic-tokens';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
-import * as commandExists from 'command-exists';
 import { CodeActionKind, FormattingOptions } from 'vscode-languageserver/node';
 import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
 import { Logger, PrefixingLogger } from './logger';
 import { TspClient } from './tsp-client';
-import { LspClient } from './lsp-client';
 import { DiagnosticEventQueue } from './diagnostic-queue';
-import { findPathToModule, findPathToYarnSdk } from './modules-resolver';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
     pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText, normalizePath
 } from './protocol-translation';
-import { getTsserverExecutable } from './utils';
 import { LspDocuments, LspDocument } from './document';
 import { asCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
@@ -39,15 +35,8 @@ import { provideOrganizeImports } from './organize-imports';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
-import API from './utils/api';
-
-export interface IServerOptions {
-    logger: Logger;
-    tsserverPath?: string;
-    tsserverLogFile?: string;
-    tsserverLogVerbosity?: string;
-    lspClient: LspClient;
-}
+import { IServerOptions } from './utils/configuration';
+import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider';
 
 export class LspServer {
     private initializeParams: TypeScriptInitializeParams;
@@ -71,68 +60,29 @@ export class LspServer {
         }
     }
 
-    protected findTsserverPath(): string {
-        if (this.options.tsserverPath) {
-            return this.options.tsserverPath;
+    private findTypescriptVersion(): TypeScriptVersion | null {
+        const typescriptVersionProvider = new TypeScriptVersionProvider(this.options);
+        // User-provided tsserver path.
+        const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
+        if (userSettingVersion) {
+            if (userSettingVersion.isValid) {
+                return userSettingVersion;
+            }
+            this.logger.warn(`Typescript specified through --tsserver-path ignored due to invalid path "${userSettingVersion.path}"`);
         }
-        const tsServerPath = path.join('typescript', 'lib', 'tsserver.js');
+        // Workspace version.
         if (this.workspaceRoot) {
-            // 1) look into .yarn/sdks of workspace root
-            const sdk = findPathToYarnSdk(this.workspaceRoot, tsServerPath);
-            if (sdk) {
-                return sdk;
-            }
-            // 2) look into node_modules of workspace root
-            const executable = findPathToModule(this.workspaceRoot, tsServerPath);
-            if (executable) {
-                return executable;
+            const workspaceVersion = typescriptVersionProvider.getWorkspaceVersion([this.workspaceRoot]);
+            if (workspaceVersion) {
+                return workspaceVersion;
             }
         }
-        // 3) use globally installed tsserver
-        if (commandExists.sync(getTsserverExecutable())) {
-            return getTsserverExecutable();
+        // Bundled version
+        const bundledVersion = typescriptVersionProvider.bundledVersion();
+        if (bundledVersion && bundledVersion.isValid) {
+            return bundledVersion;
         }
-        // 4) look into node_modules of typescript-language-server
-        const bundled = findPathToModule(__dirname, tsServerPath);
-        if (!bundled) {
-            throw Error(`Couldn't find '${getTsserverExecutable()}' executable or 'tsserver.js' module`);
-        }
-        return bundled;
-    }
-
-    private getTypeScriptVersion(serverPath: string): API | undefined {
-        if (!fs.existsSync(serverPath)) {
-            return undefined;
-        }
-
-        const p = serverPath.split(path.sep);
-        if (p.length <= 2) {
-            return undefined;
-        }
-        const p2 = p.slice(0, -2);
-        const modulePath = p2.join(path.sep);
-        let fileName = path.join(modulePath, 'package.json');
-        if (!fs.existsSync(fileName)) {
-            // Special case for ts dev versions
-            if (path.basename(modulePath) === 'built') {
-                fileName = path.join(modulePath, '..', 'package.json');
-            }
-        }
-        if (!fs.existsSync(fileName)) {
-            return undefined;
-        }
-
-        const contents = fs.readFileSync(fileName).toString();
-        let desc: any = null;
-        try {
-            desc = JSON.parse(contents);
-        } catch (err) {
-            return undefined;
-        }
-        if (!desc || !desc.version) {
-            return undefined;
-        }
-        return desc.version ? API.fromVersionString(desc.version) : undefined;
+        return null;
     }
 
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
@@ -147,7 +97,7 @@ export class LspServer {
         );
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
-        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory } = userInitializationOptions;
+        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation } = userInitializationOptions;
         const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
@@ -174,15 +124,20 @@ export class LspServer {
             pluginProbeLocations.push(plugin.location);
         }
 
-        const tsserverPath = this.findTsserverPath();
-        const typescriptVersion = this.getTypeScriptVersion(tsserverPath);
-        this.logger.info(`Using Typescript version ${typescriptVersion?.displayName} from path: ${tsserverPath}`);
+        const typescriptVersion = this.findTypescriptVersion();
+        if (typescriptVersion) {
+            this.logger.info(`Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
+        } else {
+            throw Error('Could not find a valid tsserver version. Exiting.');
+        }
+
         this.tspClient = new TspClient({
-            tsserverPath,
+            tsserverPath: typescriptVersion.tsServerPath,
             logFile,
             logVerbosity,
             disableAutomaticTypingAcquisition,
             maxTsServerMemory,
+            npmLocation,
             globalPlugins,
             pluginProbeLocations,
             logger: this.options.logger,
@@ -218,9 +173,7 @@ export class LspServer {
                     triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
                     resolveProvider: true
                 },
-                codeActionProvider: {
-                    codeActionKinds: [CodeActions.SourceOrganizeImportsTsLs]
-                },
+                codeActionProvider: true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
@@ -309,6 +262,8 @@ export class LspServer {
 
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
         this.workspaceConfiguration = params.settings || {};
+        const ignoredDiagnosticCodes = this.workspaceConfiguration.diagnostics?.ignoredCodes || [];
+        this.diagnosticQueue?.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes);
     }
 
     getWorkspacePreferencesForDocument(file: string): TypeScriptWorkspaceSettingsLanguageSettings {

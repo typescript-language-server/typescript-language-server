@@ -7,7 +7,6 @@
  */
 
 import { Command } from 'commander';
-import { getTsserverExecutable } from './utils';
 import { createLspConnection } from './lsp-connection';
 import * as lsp from 'vscode-languageserver/node';
 
@@ -21,7 +20,7 @@ const program = new Command('typescript-language-server')
     .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')
     .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
       ' example: --tsserver-log-verbosity verbose')
-    .option('--tsserver-path <path>', `Specify path to tsserver. example: --tsserver-path=${getTsserverExecutable()}`)
+    .option('--tsserver-path <path>', 'Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/')
     .parse(process.argv);
 
 const options = program.opts();

@@ -14,11 +14,3 @@ export class Deferred<T> {
         this.reject = reject;
     });
 }
-
-export function getTsserverExecutable(): string {
-    return isWindows() ? 'tsserver.cmd' : 'tsserver';
-}
-
-function isWindows(): boolean {
-    return /^win/.test(process.platform);
-}

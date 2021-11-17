@@ -36,9 +36,11 @@ typescript-language-server --stdio
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
     --tsserver-log-file <tsServerLogFile>  Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt
     --tsserver-log-verbosity <verbosity>   Specify tsserver log verbosity (off, terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
-    --tsserver-path <path>                 Specify path to tsserver. example: --tsserver-path=tsserver
+    --tsserver-path <path>                 Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/
     -h, --help                             output usage information
 ```
+
+> Note: The path passed to `--tsserver-path` should ideally be a path to the `/.../typescript/lib/` directory and not to the shell script `/.../node_modules/.bin/tsserver` or `tsserver`. Though for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script.
 
 ## initializationOptions
 
@@ -50,6 +52,7 @@ The language server accepts various settings through the `initializationOptions`
 | disableAutomaticTypingAcquisition | boolean | Disables tsserver from automatically fetching missing type definitions (`@types` packages) for external modules. |
 | logVerbosity      | string   | The verbosity level of the information printed in the log by `tsserver`. Accepts values: `"off"`, `"terse"`, `"normal"`, `"requesttime"`, `"verbose"`. **Default**: `undefined` (`"off"`).                                                                                         |
 | maxTsServerMemory | number   | The maximum size of the V8's old memory section in megabytes (for example `4096` means 4GB). The default value is dynamically configured by Node so can differ per system. Increase for very big projects that exceed allowed memory usage. **Default**: `undefined` |
+| npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
 | plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: []                                                                                                                                                         |
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more info.                                                                                                                              |
 
@@ -159,6 +162,10 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 [language].inlayHints.includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
 [language].inlayHints.includeInlayPropertyDeclarationTypeHints: boolean;
 [language].inlayHints.includeInlayVariableTypeHints: boolean;
+// Diagnostics code to be omitted when reporting diagnostics.
+// See https://github.com/microsoft/TypeScript/blob/master/src/compiler/diagnosticMessages.json for a full list of valid codes.
+diagnostics.ignoredCodes: number[];
+
 ```
 
 ## Code actions on save

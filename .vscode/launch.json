@@ -5,7 +5,7 @@
                 "type": "node",
                 "request": "launch",
                 "name": "Mocha Tests",
-                "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+                "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
                 "args": [
                     "--reporter",
                     "spec",
@@ -17,7 +17,7 @@
                     "${file}"
                 ],
                 "env": {
-                    "TS_NODE_PROJECT": "${workspaceRoot}/server/tsconfig.json",
+                    "TS_NODE_PROJECT": "${workspaceRoot}/tsconfig.json",
                     "PATH": "${workspaceRoot}/node_modules/.bin/:${env:PATH}"
                 },
                 "internalConsoleOptions": "openOnSessionStart"
