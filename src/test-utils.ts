@@ -11,8 +11,8 @@ import * as lsp from 'vscode-languageserver/node';
 import { normalizePath, pathToUri } from './protocol-translation';
 import { LspServer } from './lsp-server';
 import { ConsoleLogger } from './logger';
-import { getTsserverExecutable } from './utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { TypeScriptVersionProvider } from './utils/versionProvider';
 
 export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
     return {
@@ -73,10 +73,12 @@ export async function createServer(options: {
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
     clientCapabilitiesOverride?: lsp.ClientCapabilities;
 }): Promise<LspServer> {
+    const typescriptVersionProvider = new TypeScriptVersionProvider();
+    const bundled = typescriptVersionProvider.bundledVersion();
     const logger = new ConsoleLogger(false);
     const server = new LspServer({
         logger,
-        tsserverPath: getTsserverExecutable(),
+        tsserverPath: bundled!.tsServerPath,
         tsserverLogVerbosity: options.tsserverLogVerbosity,
         tsserverLogFile: path.resolve(__dirname, '../tsserver.log'),
         lspClient: {

@@ -69,6 +69,7 @@ export class ConsoleLogger implements Logger {
         console.warn(...this.toStrings(arg));
     }
     info(...arg: any[]): void {
+        // eslint-disable-next-line no-console
         console.info(...this.toStrings(arg));
     }
     log(...arg: any[]): void {
