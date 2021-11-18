@@ -109,8 +109,10 @@ export class LspServer {
                 includeAutomaticOptionalChainCompletions: true,
                 includeCompletionsForImportStatements: true,
                 includeCompletionsForModuleExports: true,
+                includeCompletionsWithClassMemberSnippets: true,
                 includeCompletionsWithInsertText: true,
                 includeCompletionsWithSnippetText: true,
+                jsxAttributeCompletionStyle: 'auto',
                 ...userInitializationOptions.preferences
             }
         };

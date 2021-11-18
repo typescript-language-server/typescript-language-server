@@ -148,7 +148,7 @@ async function findEnclosingSymbol(tspClient: TspClient, args: tsp.FileSpan): Pr
     return lspcalls.DefinitionSymbol.create(uri, symbol);
 }
 
-async function findEnclosingSymbolInTree(parent: tsp.NavigationTree, range: lsp.Range): Promise<lsp.DocumentSymbol | undefined> {
+function findEnclosingSymbolInTree(parent: tsp.NavigationTree, range: lsp.Range): lsp.DocumentSymbol | undefined {
     const inSpan = (span: tsp.TextSpan) => !!Range.intersection(asRange(span), range);
     const inTree = (tree: tsp.NavigationTree) => tree.spans.some(span => inSpan(span));
 
