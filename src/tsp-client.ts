@@ -128,15 +128,14 @@ export class TspClient {
             ]
         };
         this.tsserverProc = cp.fork(tsserverPath, args, options);
-        const { onExit } = startOptions;
-        if (onExit) {
-            this.tsserverProc.on('exit', exitCode => {
-                this.readlineInterface?.close();
-                this.tsserverProc.stdin?.destroy();
-                this.tsserverProc.kill();
-                onExit(exitCode);
-            });
-        }
+        this.tsserverProc.on('exit', exitCode => {
+            this.readlineInterface?.close();
+            this.tsserverProc.stdin?.destroy();
+            this.tsserverProc.kill();
+            if (startOptions.onExit) {
+                startOptions.onExit(exitCode);
+            }
+        });
         const { stdout, stdin, stderr } = this.tsserverProc;
         if (!stdout || !stdin || !stderr) {
             this.logger.error(`Failed initializing input/output of tsserver (stdin: ${!!stdin}, stdout: ${!!stdout}, stderr: ${!!stderr})`);
