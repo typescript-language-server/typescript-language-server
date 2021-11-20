@@ -8,12 +8,21 @@
 import * as lsp from 'vscode-languageserver/node';
 import type tsp from 'typescript/lib/protocol';
 import { LspDocument } from './document';
-import { KindModifiers, ScriptElementKind } from './tsp-command-types';
+import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-types';
 import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation';
 import { Commands } from './commands';
+import { TspClient } from './tsp-client';
+import { CompletionOptions, DisplayPartKind } from './ts-protocol';
+import SnippetString from './utils/SnippetString';
+import * as typeConverters from './utils/typeConverters';
 
 interface TSCompletionItem extends lsp.CompletionItem {
     data: tsp.CompletionDetailsRequestArgs;
+}
+
+interface ParameterListParts {
+    readonly parts: ReadonlyArray<tsp.SymbolDisplayPart>;
+    readonly hasOptionalParameters: boolean;
 }
 
 export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument): TSCompletionItem {
@@ -177,15 +186,133 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
     return commitCharacters.length === 0 ? undefined : commitCharacters;
 }
 
-export function asResolvedCompletionItem(item: lsp.CompletionItem, details: tsp.CompletionEntryDetails): lsp.CompletionItem {
+export async function asResolvedCompletionItem(
+    item: lsp.CompletionItem, details: tsp.CompletionEntryDetails, client: TspClient, options: CompletionOptions
+): Promise<lsp.CompletionItem> {
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);
+    const filepath = normalizePath(item.data.file);
     if (details.codeActions?.length) {
-        const filepath = normalizePath(item.data.file);
         item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
         item.command = asCommand(details.codeActions, item.data.file);
     }
+    if (options.completeFunctionCalls && item.insertTextFormat === lsp.InsertTextFormat.Snippet
+        && (item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
+        const { line, offset } = item.data;
+        const position = typeConverters.Position.fromLocation({ line, offset });
+        const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client);
+        if (shouldCompleteFunction) {
+            createSnippetOfFunctionCall(item, details);
+        }
+    }
+
     return item;
+}
+
+export async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TspClient): Promise<boolean> {
+    // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
+    // Don't complete function calls inside of destructive assigments or imports
+    try {
+        const args: tsp.FileLocationRequestArgs = typeConverters.Position.toFileLocationRequestArgs(filepath, position);
+        const response = await client.request(CommandTypes.Quickinfo, args);
+        if (response.type !== 'response') {
+            return true;
+        }
+
+        const { body } = response;
+        switch (body?.kind) {
+            case 'var':
+            case 'let':
+            case 'const':
+            case 'alias':
+                return false;
+            default:
+                return true;
+        }
+    } catch {
+        return true;
+    }
+}
+
+function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: tsp.CompletionEntryDetails): void {
+    const { displayParts } = detail;
+    const parameterListParts = getParameterListParts(displayParts);
+    const snippet = new SnippetString();
+    snippet.appendText(`${item.insertText || item.label}(`);
+    appendJoinedPlaceholders(snippet, parameterListParts.parts, ', ');
+    if (parameterListParts.hasOptionalParameters) {
+        snippet.appendTabstop();
+    }
+    snippet.appendText(')');
+    snippet.appendTabstop(0);
+    item.insertText = snippet.value;
+}
+
+function getParameterListParts(displayParts: ReadonlyArray<tsp.SymbolDisplayPart>): ParameterListParts {
+    const parts: tsp.SymbolDisplayPart[] = [];
+    let isInMethod = false;
+    let hasOptionalParameters = false;
+    let parenCount = 0;
+    let braceCount = 0;
+
+    outer: for (let i = 0; i < displayParts.length; ++i) {
+        const part = displayParts[i];
+        switch (part.kind) {
+            case DisplayPartKind.methodName:
+            case DisplayPartKind.functionName:
+            case DisplayPartKind.text:
+            case DisplayPartKind.propertyName:
+                if (parenCount === 0 && braceCount === 0) {
+                    isInMethod = true;
+                }
+                break;
+
+            case DisplayPartKind.parameterName:
+                if (parenCount === 1 && braceCount === 0 && isInMethod) {
+                    // Only take top level paren names
+                    const next = displayParts[i + 1];
+                    // Skip optional parameters
+                    const nameIsFollowedByOptionalIndicator = next && next.text === '?';
+                    // Skip this parameter
+                    const nameIsThis = part.text === 'this';
+                    if (!nameIsFollowedByOptionalIndicator && !nameIsThis) {
+                        parts.push(part);
+                    }
+                    hasOptionalParameters = hasOptionalParameters || nameIsFollowedByOptionalIndicator;
+                }
+                break;
+
+            case DisplayPartKind.punctuation:
+                if (part.text === '(') {
+                    ++parenCount;
+                } else if (part.text === ')') {
+                    --parenCount;
+                    if (parenCount <= 0 && isInMethod) {
+                        break outer;
+                    }
+                } else if (part.text === '...' && parenCount === 1) {
+                    // Found rest parmeter. Do not fill in any further arguments
+                    hasOptionalParameters = true;
+                    break outer;
+                } else if (part.text === '{') {
+                    ++braceCount;
+                } else if (part.text === '}') {
+                    --braceCount;
+                }
+                break;
+        }
+    }
+    return { hasOptionalParameters, parts };
+}
+
+function appendJoinedPlaceholders(snippet: SnippetString, parts: ReadonlyArray<tsp.SymbolDisplayPart>, joiner: string): void {
+    for (let i = 0; i < parts.length; ++i) {
+        const paramterPart = parts[i];
+        snippet.appendPlaceholder(paramterPart.text);
+        if (i !== parts.length - 1) {
+            snippet.appendText(joiner);
+        }
+    }
 }
 
 function asAdditionalTextEdits(codeActions: tsp.CodeAction[], filepath: string): lsp.TextEdit[] | undefined {
