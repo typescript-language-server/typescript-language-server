@@ -554,6 +554,40 @@ describe('editing', () => {
     }).timeout(10000);
 });
 
+describe('references', () => {
+    it('respects "includeDeclaration" in the request', async () => {
+        const doc = {
+            uri: uri('foo.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                export let foo = 1;
+                foo++;
+                foo = 1;
+            `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        // Without declaration/definition.
+        let references = await server.references({
+            context: { includeDeclaration: false },
+            textDocument: doc,
+            position: lastPosition(doc, 'foo')
+        });
+        assert.strictEqual(references.length, 2);
+        assert.strictEqual(references[0].range.start.line, 2);
+        assert.strictEqual(references[1].range.start.line, 3);
+        // With declaration/definition.
+        references = await server.references({
+            context: { includeDeclaration: true },
+            textDocument: doc,
+            position: lastPosition(doc, 'foo')
+        });
+        assert.strictEqual(references.length, 3);
+    }).timeout(10000);
+});
+
 describe('workspace configuration', () => {
     it('receives workspace configuration notification', async ()=>{
         const doc = {
