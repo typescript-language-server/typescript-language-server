@@ -87,6 +87,7 @@ export const enum CommandTypes {
     ProvideCallHierarchyIncomingCalls = 'provideCallHierarchyIncomingCalls',
     ProvideCallHierarchyOutgoingCalls = 'provideCallHierarchyOutgoingCalls',
     ProvideInlayHints = 'provideInlayHints',
+    EncodedSemanticClassificationsFull = 'encodedSemanticClassifications-full',
 }
 
 export const enum EventTypes {

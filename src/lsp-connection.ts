@@ -63,5 +63,8 @@ export function createLspConnection(options: IServerOptions): lsp.Connection {
 
     connection.onRequest(lspinlayHints.type, server.inlayHints.bind(server));
 
+    connection.onRequest(lsp.SemanticTokensRequest.type, server.semanticTokensFull.bind(server));
+    connection.onRequest(lsp.SemanticTokensRangeRequest.type, server.semanticTokensRange.bind(server));
+
     return connection;
 }
