@@ -10,6 +10,7 @@ import tempy from 'tempy';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
+import * as lspsemanticTokens from './semantic-tokens';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import { CodeActionKind, FormattingOptions } from 'vscode-languageserver/node';
@@ -196,7 +197,38 @@ export class LspServer {
                 workspaceSymbolProvider: true,
                 implementationProvider: true,
                 typeDefinitionProvider: true,
-                foldingRangeProvider: true
+                foldingRangeProvider: true,
+                semanticTokensProvider: {
+                    documentSelector: null,
+                    legend: {
+                        // list taken from: https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts#L10
+                        tokenTypes: [
+                            'class',
+                            'enum',
+                            'interface',
+                            'namespace',
+                            'typeParameter',
+                            'type',
+                            'parameter',
+                            'variable',
+                            'enumMember',
+                            'property',
+                            'function',
+                            'member'
+                        ],
+                        // token from: https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts#L14
+                        tokenModifiers: [
+                            'declaration',
+                            'static',
+                            'async',
+                            'readonly',
+                            'defaultLibrary',
+                            'local'
+                        ]
+                    },
+                    full: true,
+                    range: true
+                }
             },
             logFileUri
         };
@@ -1077,5 +1109,66 @@ export class LspServer {
             ...userPreferences,
             ...workspacePreference.inlayHints ?? {}
         };
+    }
+
+    async semanticTokensFull(params: lsp.SemanticTokensParams): Promise<lsp.SemanticTokens> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('semanticTokensFull', params, file);
+        if (!file) {
+            return { data: [] };
+        }
+
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return { data: [] };
+        }
+
+        const start = doc.offsetAt({
+            line: 0,
+            character: 0
+        });
+        const end = doc.offsetAt({
+            line: doc.lineCount,
+            character: 0
+        });
+
+        return this.getSemanticTokens(doc, file, start, end);
+    }
+
+    async semanticTokensRange(params: lsp.SemanticTokensRangeParams): Promise<lsp.SemanticTokens> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('semanticTokensRange', params, file);
+        if (!file) {
+            return { data: [] };
+        }
+
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return { data: [] };
+        }
+
+        const start = doc.offsetAt(params.range.start);
+        const end = doc.offsetAt(params.range.end);
+
+        return this.getSemanticTokens(doc, file, start, end);
+    }
+
+    async getSemanticTokens(doc: LspDocument, file: string, startOffset: number, endOffset: number) : Promise<lsp.SemanticTokens> {
+        try {
+            const result = await this.tspClient.request(
+                CommandTypes.EncodedSemanticClassificationsFull,
+                {
+                    file,
+                    start: startOffset,
+                    length: endOffset - startOffset,
+                    format: '2020'
+                }
+            );
+
+            const spans = result.body?.spans ?? [];
+            return { data: lspsemanticTokens.transformSpans(doc, spans) };
+        } catch {
+            return { data: [] };
+        }
     }
 }
