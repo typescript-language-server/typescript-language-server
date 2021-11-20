@@ -129,9 +129,7 @@ export class TspClient {
         };
         this.tsserverProc = cp.fork(tsserverPath, args, options);
         this.tsserverProc.on('exit', exitCode => {
-            this.readlineInterface?.close();
-            this.tsserverProc.stdin?.destroy();
-            this.tsserverProc.kill();
+            this.shutdown();
             if (startOptions.onExit) {
                 startOptions.onExit(exitCode);
             }

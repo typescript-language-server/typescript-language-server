@@ -153,6 +153,9 @@ export class LspServer {
         if (!started) {
             throw new Error('tsserver process has failed to start.');
         }
+        process.on('exit', () => {
+            this.tspClient.shutdown();
+        });
         this.tspClient.request(CommandTypes.Configure, {
             ...hostInfo ? { hostInfo } : {},
             formatOptions: {
