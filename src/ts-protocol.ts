@@ -16,6 +16,15 @@ export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
 }
 
+export class DisplayPartKind {
+    public static readonly functionName = 'functionName';
+    public static readonly methodName = 'methodName';
+    public static readonly parameterName = 'parameterName';
+    public static readonly propertyName = 'propertyName';
+    public static readonly punctuation = 'punctuation';
+    public static readonly text = 'text';
+}
+
 export interface TypeScriptPlugin {
     name: string;
     location: string;
@@ -51,5 +60,10 @@ interface TypeScriptWorkspaceSettingsDiagnostics {
 export interface TypeScriptWorkspaceSettings {
     javascript?: TypeScriptWorkspaceSettingsLanguageSettings;
     typescript?: TypeScriptWorkspaceSettingsLanguageSettings;
+    completions?: CompletionOptions;
     diagnostics?: TypeScriptWorkspaceSettingsDiagnostics;
+}
+
+export interface CompletionOptions {
+    completeFunctionCalls?: boolean;
 }
