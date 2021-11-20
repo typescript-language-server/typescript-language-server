@@ -31,7 +31,7 @@ export interface TspClientOptions {
 }
 
 interface StartOptions {
-    onExit?: (exitCode: number | null) => void;
+    onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
 }
 
 interface TypeScriptRequestTypes {
@@ -129,10 +129,10 @@ export class TspClient {
             ]
         };
         this.tsserverProc = cp.fork(tsserverPath, args, options);
-        this.tsserverProc.on('exit', exitCode => {
+        this.tsserverProc.on('exit', (exitCode, signal) => {
             this.shutdown();
             if (startOptions.onExit) {
-                startOptions.onExit(exitCode);
+                startOptions.onExit(exitCode, signal);
             }
         });
         const { stdout, stdin, stderr } = this.tsserverProc;

@@ -145,8 +145,8 @@ export class LspServer {
         });
 
         const started = this.tspClient.start({
-            onExit: (exitCode) => {
-                this.logger.error(`tsserver process has exited with status code "${exitCode}". Stopping the server.`);
+            onExit: (exitCode, signal) => {
+                this.logger.error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
                 // Allow the log to be dispatched to the client.
                 setTimeout(() => process.exit(1));
             }
