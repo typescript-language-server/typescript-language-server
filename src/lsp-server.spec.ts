@@ -1162,7 +1162,7 @@ describe('inlayHints', () => {
         }
       `
         };
-        server.initialize({
+        await server.initialize({
             initializationOptions: {
                 preferences: {
                     includeInlayFunctionLikeReturnTypeHints: true
@@ -1199,7 +1199,7 @@ describe('inlayHints', () => {
         }
       `
         };
-        server.initialize({
+        await server.initialize({
             processId: null,
             capabilities: getDefaultClientCapabilities(),
             workspaceFolders: [],

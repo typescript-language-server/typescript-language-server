@@ -30,6 +30,10 @@ export interface TspClientOptions {
     onEvent?: (event: protocol.Event) => void;
 }
 
+interface StartOptions {
+    onExit?: (exitCode: number | null) => void;
+}
+
 interface TypeScriptRequestTypes {
     'geterr': [protocol.GeterrRequestArgs, any];
     'compilerOptionsForInferredProjects': [protocol.SetCompilerOptionsForInferredProjectsArgs, protocol.SetCompilerOptionsForInferredProjectsResponse];
@@ -69,14 +73,9 @@ export class TspClient {
     private readlineInterface: readline.ReadLine;
     private tsserverProc: cp.ChildProcess;
     private seq = 0;
-
-    private readonly deferreds: {
-        [seq: number]: Deferred<any>;
-    } = {};
-
+    private readonly deferreds: { [seq: number]: Deferred<any>; } = {};
     private logger: Logger;
     private tsserverLogger: Logger;
-
     private cancellationPipeName: string | undefined;
 
     constructor(private options: TspClientOptions) {
@@ -84,9 +83,9 @@ export class TspClient {
         this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]');
     }
 
-    start(): void {
+    start(startOptions: StartOptions = {}): boolean {
         if (this.readlineInterface) {
-            return;
+            return false;
         }
         const {
             tsserverPath,
@@ -129,15 +128,19 @@ export class TspClient {
             ]
         };
         this.tsserverProc = cp.fork(tsserverPath, args, options);
-        process.on('exit', () => {
-            this.readlineInterface?.close();
-            this.tsserverProc.stdin?.destroy();
-            this.tsserverProc.kill();
-        });
+        const { onExit } = startOptions;
+        if (onExit) {
+            this.tsserverProc.on('exit', exitCode => {
+                this.readlineInterface?.close();
+                this.tsserverProc.stdin?.destroy();
+                this.tsserverProc.kill();
+                onExit(exitCode);
+            });
+        }
         const { stdout, stdin, stderr } = this.tsserverProc;
         if (!stdout || !stdin || !stderr) {
             this.logger.error(`Failed initializing input/output of tsserver (stdin: ${!!stdin}, stdout: ${!!stdout}, stderr: ${!!stderr})`);
-            process.exit(1);
+            return false;
         }
         this.readlineInterface = readline.createInterface(stdout, stdin, undefined);
         this.readlineInterface.on('line', line => this.processMessage(line));
@@ -147,6 +150,13 @@ export class TspClient {
             const stringMsg = typeof data === 'string' ? data : dec.write(data);
             this.tsserverLogger.error(stringMsg);
         });
+        return true;
+    }
+
+    shutdown(): void {
+        this.readlineInterface?.close();
+        this.tsserverProc.stdin?.destroy();
+        this.tsserverProc.kill();
     }
 
     notify(command: CommandTypes.Open, args: protocol.OpenRequestArgs): void
