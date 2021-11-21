@@ -141,16 +141,15 @@ export class LspServer {
             globalPlugins,
             pluginProbeLocations,
             logger: this.options.logger,
-            onEvent: this.onTsEvent.bind(this)
-        });
-
-        const started = this.tspClient.start({
+            onEvent: this.onTsEvent.bind(this),
             onExit: (exitCode, signal) => {
                 this.logger.error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
                 // Allow the log to be dispatched to the client.
                 setTimeout(() => process.exit(1));
             }
         });
+
+        const started = this.tspClient.start();
         if (!started) {
             throw new Error('tsserver process has failed to start.');
         }

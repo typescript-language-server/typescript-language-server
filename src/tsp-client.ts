@@ -28,9 +28,6 @@ export interface TspClientOptions {
     globalPlugins?: string[];
     pluginProbeLocations?: string[];
     onEvent?: (event: protocol.Event) => void;
-}
-
-interface StartOptions {
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
 }
 
@@ -84,7 +81,7 @@ export class TspClient {
         this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]');
     }
 
-    start(startOptions: StartOptions = {}): boolean {
+    start(): boolean {
         if (this.readlineInterface) {
             return false;
         }
@@ -131,8 +128,8 @@ export class TspClient {
         this.tsserverProc = cp.fork(tsserverPath, args, options);
         this.tsserverProc.on('exit', (exitCode, signal) => {
             this.shutdown();
-            if (startOptions.onExit) {
-                startOptions.onExit(exitCode, signal);
+            if (this.options.onExit) {
+                this.options.onExit(exitCode, signal);
             }
         });
         const { stdout, stdin, stderr } = this.tsserverProc;
