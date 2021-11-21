@@ -625,7 +625,7 @@ export class LspServer {
         return workspaceEdit;
     }
 
-    async references(params: lsp.TextDocumentPositionParams): Promise<lsp.Location[]> {
+    async references(params: lsp.ReferenceParams): Promise<lsp.Location[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('onReferences', params, file);
         if (!file) {
@@ -641,6 +641,7 @@ export class LspServer {
             return [];
         }
         return result.body.refs
+            .filter(fileSpan => params.context.includeDeclaration || !fileSpan.isDefinition)
             .map(fileSpan => toLocation(fileSpan, this.documents));
     }
 
