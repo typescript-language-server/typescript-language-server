@@ -157,6 +157,9 @@ export class LspServer {
         process.on('exit', () => {
             this.tspClient.shutdown();
         });
+        process.on('SIGINT', () => {
+            process.exit();
+        });
         this.tspClient.request(CommandTypes.Configure, {
             ...hostInfo ? { hostInfo } : {},
             formatOptions: {
