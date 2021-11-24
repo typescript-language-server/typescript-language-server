@@ -1,6 +1,30 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2021-11-21
+
+ - **feat**: implement semantic tokens support (#290)
+
+ - **feat**: add support for snippet completions for methods/functions (#303)
+
+ - **feat**: ability to ignore diagnostics by code (#272)
+   Adds new `diagnostics.ignoredCodes` workspace setting to ignore specific diagnostics.
+
+ - **feat**: add `npmLocation` option to specify NPM location (#293)
+
+ - **fix**: don't announce support for codeActionKinds (#289)
+
+ - **fix**: mark import completions as snippets (#291)
+
+ - **fix**: specify minimum node version to be v12 (#301)
+
+ - **fix**: ensure that the `tsserver` subprocess uses forked node instance (#292)
+   Potentially **BREAKING**. The lookup of `tsserver` was refactored to never use `spawn` logic but instead always `fork` the current node instance. See more info in the PR.
+
+ - **fix**: exit the server if tsserver process crashes (#305)
+
+ - **fix**: respect "includeDeclaration" for references request (#306)
+
 ## [0.7.1] - 2021-11-10
 
  - fix: add missing `semver` dependency (#288)

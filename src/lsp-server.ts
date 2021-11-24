@@ -10,6 +10,7 @@ import tempy from 'tempy';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
+import * as lspsemanticTokens from './semantic-tokens';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import { CodeActionKind, FormattingOptions } from 'vscode-languageserver/node';
@@ -142,10 +143,24 @@ export class LspServer {
             globalPlugins,
             pluginProbeLocations,
             logger: this.options.logger,
-            onEvent: this.onTsEvent.bind(this)
+            onEvent: this.onTsEvent.bind(this),
+            onExit: (exitCode, signal) => {
+                this.logger.error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
+                // Allow the log to be dispatched to the client.
+                setTimeout(() => process.exit(1));
+            }
         });
 
-        this.tspClient.start();
+        const started = this.tspClient.start();
+        if (!started) {
+            throw new Error('tsserver process has failed to start.');
+        }
+        process.on('exit', () => {
+            this.tspClient.shutdown();
+        });
+        process.on('SIGINT', () => {
+            process.exit();
+        });
         this.tspClient.request(CommandTypes.Configure, {
             ...hostInfo ? { hostInfo } : {},
             formatOptions: {
@@ -198,7 +213,38 @@ export class LspServer {
                 workspaceSymbolProvider: true,
                 implementationProvider: true,
                 typeDefinitionProvider: true,
-                foldingRangeProvider: true
+                foldingRangeProvider: true,
+                semanticTokensProvider: {
+                    documentSelector: null,
+                    legend: {
+                        // list taken from: https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts#L10
+                        tokenTypes: [
+                            'class',
+                            'enum',
+                            'interface',
+                            'namespace',
+                            'typeParameter',
+                            'type',
+                            'parameter',
+                            'variable',
+                            'enumMember',
+                            'property',
+                            'function',
+                            'member'
+                        ],
+                        // token from: https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts#L14
+                        tokenModifiers: [
+                            'declaration',
+                            'static',
+                            'async',
+                            'readonly',
+                            'defaultLibrary',
+                            'local'
+                        ]
+                    },
+                    full: true,
+                    range: true
+                }
             },
             logFileUri
         };
@@ -504,7 +550,7 @@ export class LspServer {
         if (!details) {
             return item;
         }
-        return asResolvedCompletionItem(item, details);
+        return asResolvedCompletionItem(item, details, this.tspClient, this.workspaceConfiguration.completions || {});
     }
 
     async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {
@@ -581,7 +627,7 @@ export class LspServer {
         return workspaceEdit;
     }
 
-    async references(params: lsp.TextDocumentPositionParams): Promise<lsp.Location[]> {
+    async references(params: lsp.ReferenceParams): Promise<lsp.Location[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('onReferences', params, file);
         if (!file) {
@@ -597,6 +643,7 @@ export class LspServer {
             return [];
         }
         return result.body.refs
+            .filter(fileSpan => params.context.includeDeclaration || !fileSpan.isDefinition)
             .map(fileSpan => toLocation(fileSpan, this.documents));
     }
 
@@ -1079,5 +1126,66 @@ export class LspServer {
             ...userPreferences,
             ...workspacePreference.inlayHints ?? {}
         };
+    }
+
+    async semanticTokensFull(params: lsp.SemanticTokensParams): Promise<lsp.SemanticTokens> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('semanticTokensFull', params, file);
+        if (!file) {
+            return { data: [] };
+        }
+
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return { data: [] };
+        }
+
+        const start = doc.offsetAt({
+            line: 0,
+            character: 0
+        });
+        const end = doc.offsetAt({
+            line: doc.lineCount,
+            character: 0
+        });
+
+        return this.getSemanticTokens(doc, file, start, end);
+    }
+
+    async semanticTokensRange(params: lsp.SemanticTokensRangeParams): Promise<lsp.SemanticTokens> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log('semanticTokensRange', params, file);
+        if (!file) {
+            return { data: [] };
+        }
+
+        const doc = this.documents.get(file);
+        if (!doc) {
+            return { data: [] };
+        }
+
+        const start = doc.offsetAt(params.range.start);
+        const end = doc.offsetAt(params.range.end);
+
+        return this.getSemanticTokens(doc, file, start, end);
+    }
+
+    async getSemanticTokens(doc: LspDocument, file: string, startOffset: number, endOffset: number) : Promise<lsp.SemanticTokens> {
+        try {
+            const result = await this.tspClient.request(
+                CommandTypes.EncodedSemanticClassificationsFull,
+                {
+                    file,
+                    start: startOffset,
+                    length: endOffset - startOffset,
+                    format: '2020'
+                }
+            );
+
+            const spans = result.body?.spans ?? [];
+            return { data: lspsemanticTokens.transformSpans(doc, spans) };
+        } catch {
+            return { data: [] };
+        }
     }
 }

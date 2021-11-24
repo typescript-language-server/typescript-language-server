@@ -12,6 +12,7 @@ import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter } from './test-utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CodeActions } from './commands';
+import { TypeScriptWorkspaceSettings } from './ts-protocol';
 
 const assert = chai.assert;
 
@@ -23,6 +24,13 @@ before(async () => {
     server = await createServer({
         rootUri: null,
         publishDiagnostics: args => diagnostics.set(args.uri, args)
+    });
+    server.didChangeConfiguration({
+        settings: {
+            completions: {
+                completeFunctionCalls: true
+            }
+        } as TypeScriptWorkspaceSettings
     });
 });
 beforeEach(() => {
@@ -235,6 +243,29 @@ describe('completion', () => {
                 }
             }
         ]);
+        server.didCloseTextDocument({ textDocument: doc });
+    }).timeout(10000);
+
+    it('resolves a snippet for method completion', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                import fs from 'fs'
+                fs.readFile
+            `
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        assert.strictEqual(completion!.insertTextFormat, lsp.InsertTextFormat.Snippet);
+        assert.strictEqual(completion!.label, 'readFile');
+        const resolvedItem = await server.completionResolve(completion!);
+        assert.strictEqual(resolvedItem.insertTextFormat, lsp.InsertTextFormat.Snippet);
+        // eslint-disable-next-line no-template-curly-in-string
+        assert.strictEqual(resolvedItem.insertText, 'readFile(${1:path}, ${2:options}, ${3:callback})$0');
         server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 });
@@ -520,6 +551,40 @@ describe('editing', () => {
         const fileDiagnostics = resultsForFile!.diagnostics;
         assert.isTrue(fileDiagnostics.length >= 1, fileDiagnostics.map(d => d.message).join(','));
         assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
+    }).timeout(10000);
+});
+
+describe('references', () => {
+    it('respects "includeDeclaration" in the request', async () => {
+        const doc = {
+            uri: uri('foo.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                export let foo = 1;
+                foo++;
+                foo = 1;
+            `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        // Without declaration/definition.
+        let references = await server.references({
+            context: { includeDeclaration: false },
+            textDocument: doc,
+            position: lastPosition(doc, 'foo')
+        });
+        assert.strictEqual(references.length, 2);
+        assert.strictEqual(references[0].range.start.line, 2);
+        assert.strictEqual(references[1].range.start.line, 3);
+        // With declaration/definition.
+        references = await server.references({
+            context: { includeDeclaration: true },
+            textDocument: doc,
+            position: lastPosition(doc, 'foo')
+        });
+        assert.strictEqual(references.length, 3);
     }).timeout(10000);
 });
 
@@ -1162,7 +1227,7 @@ describe('inlayHints', () => {
         }
       `
         };
-        server.initialize({
+        await server.initialize({
             initializationOptions: {
                 preferences: {
                     includeInlayFunctionLikeReturnTypeHints: true
@@ -1199,7 +1264,7 @@ describe('inlayHints', () => {
         }
       `
         };
-        server.initialize({
+        await server.initialize({
             processId: null,
             capabilities: getDefaultClientCapabilities(),
             workspaceFolders: [],
