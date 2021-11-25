@@ -8,6 +8,7 @@ import which from 'which';
 import pkgUp from 'pkg-up';
 import API from './api';
 import { IServerOptions } from './configuration';
+import { findPathToModule } from './modules-resolver';
 
 export const enum TypeScriptVersionSource {
     Bundled = 'bundled',
@@ -90,7 +91,7 @@ export class TypeScriptVersion {
     }
 }
 
-const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib'];
+export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib'];
 
 export class TypeScriptVersionProvider {
     public constructor(private configuration?: IServerOptions) {}
@@ -135,13 +136,11 @@ export class TypeScriptVersionProvider {
 
     public getWorkspaceVersion(workspaceFolders: string[]): TypeScriptVersion | null {
         for (const p of workspaceFolders) {
-            for (const folder of MODULE_FOLDERS) {
-                const libFolder = path.join(p, folder);
-                if (fs.existsSync(libFolder)) {
-                    const version = new TypeScriptVersion(TypeScriptVersionSource.Workspace, libFolder);
-                    if (version.isValid) {
-                        return version;
-                    }
+            const libFolder = findPathToModule(p, MODULE_FOLDERS);
+            if (libFolder) {
+                const version = new TypeScriptVersion(TypeScriptVersionSource.Workspace, libFolder);
+                if (version.isValid) {
+                    return version;
                 }
             }
         }
