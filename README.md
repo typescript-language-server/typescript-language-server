@@ -178,7 +178,7 @@ diagnostics.ignoredCodes: number[];
 Server announces support for the following code action kinds:
 
  - `source.addMissingImports.ts` - adds imports for used but not imported symbols
- - `source.fixAll.ts` - despite the name, fixing a couple of specific issues: unreachable code, await in non-async functions, incorrectly implemented interface
+ - `source.fixAll.ts` - despite the name, fixes a couple of specific issues: unreachable code, await in non-async functions, incorrectly implemented interface
  - `source.removeUnused.ts` - removes declared but unused variables
  - `source.organizeImports.ts` - organizes and removes unused imports
 
