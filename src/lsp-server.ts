@@ -37,6 +37,7 @@ import { collectDocumentSymbols, collectSymbolInformation } from './document-sym
 import { computeCallers, computeCallees } from './calls';
 import { IServerOptions } from './utils/configuration';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider';
+import { TypeScriptAutoFixProvider } from './features/fix-all';
 
 export class LspServer {
     private initializeParams: TypeScriptInitializeParams;
@@ -46,6 +47,7 @@ export class LspServer {
     private logger: Logger;
     private workspaceConfiguration: TypeScriptWorkspaceSettings;
     private workspaceRoot: string | undefined;
+    private typeScriptAutoFixProvider: TypeScriptAutoFixProvider;
 
     private readonly documents = new LspDocuments();
 
@@ -88,11 +90,12 @@ export class LspServer {
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
+        const clientCapabilities = this.initializeParams.capabilities;
         this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.documents,
-            this.initializeParams.capabilities.textDocument?.publishDiagnostics,
+            clientCapabilities.textDocument?.publishDiagnostics,
             this.logger
         );
 
@@ -159,6 +162,9 @@ export class LspServer {
         process.on('SIGINT', () => {
             process.exit();
         });
+
+        this.typeScriptAutoFixProvider = new TypeScriptAutoFixProvider(this.tspClient);
+
         this.tspClient.request(CommandTypes.Configure, {
             ...hostInfo ? { hostInfo } : {},
             formatOptions: {
@@ -187,7 +193,8 @@ export class LspServer {
                     triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
                     resolveProvider: true
                 },
-                codeActionProvider: true,
+                codeActionProvider: clientCapabilities.textDocument?.codeAction?.codeActionLiteralSupport
+                    ? { codeActionKinds: Object.values(CodeActions) } : true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
@@ -299,7 +306,14 @@ export class LspServer {
         this.requestDiagnostics();
         return result;
     }
-    readonly requestDiagnostics = debounce(() => this.doRequestDiagnostics(), 200);
+    // True if diagnostic request is currently debouncing or the request is in progress. False only if there are
+    // no pending requests.
+    pendingDebouncedRequest = false;
+    async requestDiagnostics(): Promise<void> {
+        this.pendingDebouncedRequest = true;
+        await this.doRequestDiagnosticsDebounced();
+    }
+    readonly doRequestDiagnosticsDebounced = debounce(() => this.doRequestDiagnostics(), 200);
     protected async doRequestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
         this.cancelDiagnostics();
         const geterrTokenSource = new lsp.CancellationTokenSource();
@@ -311,6 +325,7 @@ export class LspServer {
         } finally {
             if (this.diagnosticsTokenSource === geterrTokenSource) {
                 this.diagnosticsTokenSource = undefined;
+                this.pendingDebouncedRequest = false;
             }
         }
     }
@@ -761,16 +776,17 @@ export class LspServer {
         }
         const args = toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
-        if (!params.context.only || params.context.only.includes(CodeActionKind.QuickFix)) {
+        const { only } = params.context;
+        if (!only || only.includes(CodeActionKind.QuickFix)) {
             const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
             actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
         }
-        if (!params.context.only || params.context.only.includes(CodeActionKind.Refactor)) {
+        if (!only || only.includes(CodeActionKind.Refactor)) {
             actions.push(...provideRefactors(await this.getRefactors(args), args));
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only?.includes(CodeActions.SourceOrganizeImportsTsLs)) {
+        if (only?.includes(CodeActions.SourceOrganizeImportsTs)) {
             // see this issue for more context about how this argument is used
             // https://github.com/microsoft/TypeScript/issues/43051
             const skipDestructiveCodeActions = params.context.diagnostics.some(
@@ -782,6 +798,18 @@ export class LspServer {
                 skipDestructiveCodeActions
             });
             actions.push(...provideOrganizeImports(response, this.documents));
+        }
+
+        // TODO: Since we rely on diagnostics pointing at errors in the correct places, we can't proceed if we are not
+        // sure that diagnostics are up-to-date. Thus we check `pendingDebouncedRequest` to see if there are *any*
+        // pending diagnostic requests (regardless of for which file).
+        // In general would be better to replace the whole diagnostics handling logic with the one from
+        // bufferSyncSupport.ts' in VSCode's typescript language features.
+        if (!this.pendingDebouncedRequest && only?.some(kind => kind === CodeActionKind.Source || kind.startsWith(CodeActionKind.Source + '.'))) {
+            const diagnostics = this.diagnosticQueue?.getDiagnosticsForFile(file) || [];
+            if (diagnostics.length) {
+                actions.push(...await this.typeScriptAutoFixProvider.provideCodeActions(file, diagnostics, this.documents));
+            }
         }
 
         return actions;

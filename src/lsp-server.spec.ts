@@ -927,7 +927,7 @@ describe('code actions', () => {
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: [CodeActions.SourceOrganizeImportsTsLs]
+                only: [CodeActions.SourceOrganizeImportsTs]
             }
         }))!;
 
@@ -961,13 +961,13 @@ existsSync('t');`
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: [CodeActions.SourceOrganizeImportsTsLs]
+                only: [CodeActions.SourceOrganizeImportsTs]
             }
         }))!;
 
         assert.deepEqual(result, [
             {
-                kind: CodeActions.SourceOrganizeImportsTsLs,
+                kind: CodeActions.SourceOrganizeImportsTs,
                 title: 'Organize imports',
                 edit: {
                     documentChanges: [

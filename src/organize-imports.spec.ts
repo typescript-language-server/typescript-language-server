@@ -18,7 +18,7 @@ describe('provideOrganizeImports', () => {
         const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse, undefined);
         const expected = [{
             title: 'Organize imports',
-            kind: CodeActions.SourceOrganizeImportsTsLs,
+            kind: CodeActions.SourceOrganizeImportsTs,
             edit: {
                 documentChanges: [
                     {
