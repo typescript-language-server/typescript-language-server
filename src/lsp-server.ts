@@ -804,7 +804,7 @@ export class LspServer {
         // sure that diagnostics are up-to-date. Thus we check `pendingDebouncedRequest` to see if there are *any*
         // pending diagnostic requests (regardless of for which file).
         // In general would be better to replace the whole diagnostics handling logic with the one from
-        // bufferSyncSupport.ts' in VSCode's typescript language features.
+        // bufferSyncSupport.ts in VSCode's typescript language features.
         if (!this.pendingDebouncedRequest && only?.some(kind => kind === CodeActionKind.Source || kind.startsWith(CodeActionKind.Source + '.'))) {
             const diagnostics = this.diagnosticQueue?.getDiagnosticsForFile(file) || [];
             if (diagnostics.length) {
