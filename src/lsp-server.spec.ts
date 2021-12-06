@@ -991,7 +991,7 @@ describe('code actions', () => {
         ]);
     }).timeout(10000);
 
-    it.only('provides "fix all" when explicitly requested in only', async () => {
+    it('provides "fix all" when explicitly requested in only', async () => {
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
