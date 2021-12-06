@@ -1066,8 +1066,8 @@ existsSync('t');`
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
-                start: { line: 1, character: 29 },
-                end: { line: 1, character: 53 }
+                start: { line: 0, character: 0 },
+                end: { line: 3, character: 0 }
             },
             context: {
                 diagnostics: [{
