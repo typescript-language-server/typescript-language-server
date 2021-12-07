@@ -96,7 +96,9 @@ export const enum EventTypes {
     SyntaxDiag = 'syntaxDiag',
     SementicDiag = 'semanticDiag',
     SuggestionDiag = 'suggestionDiag',
-    Telemetry = 'telemetry'
+    Telemetry = 'telemetry',
+    ProjectLoadingStart = 'projectLoadingStart',
+    ProjectLoadingFinish = 'projectLoadingFinish',
 }
 
 export enum ScriptElementKind {
