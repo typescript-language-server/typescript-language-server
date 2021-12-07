@@ -41,15 +41,14 @@ import { TypeScriptAutoFixProvider } from './features/fix-all';
 import { LspClient, ProgressReporter } from './lsp-client';
 
 class ServerInitializingIndicator {
-    private _loadingProject?: { project: string | undefined; resolve: () => void; reject: () => void; };
+    private _loadingProjectName?: string | undefined;
     private _progressReporter?: ProgressReporter;
 
     constructor(private lspClient: LspClient) {}
 
     public reset(): void {
-        if (this._loadingProject) {
-            this._loadingProject.reject();
-            this._loadingProject = undefined;
+        if (this._loadingProjectName) {
+            this._loadingProjectName = undefined;
             if (this._progressReporter) {
                 this._progressReporter.end();
                 this._progressReporter = undefined;
@@ -65,18 +64,14 @@ class ServerInitializingIndicator {
         // the incoming project loading task is.
         this.reset();
 
+        this._loadingProjectName = projectName;
         this._progressReporter = this.lspClient.createProgressReporter();
         this._progressReporter.begin('Initializing JS/TS language features');
-
-        new Promise<void>((resolve, reject) => {
-            this._loadingProject = { project: projectName, resolve, reject };
-        });
     }
 
     public finishedLoadingProject(projectName: string | undefined): void {
-        if (this._loadingProject && this._loadingProject.project === projectName) {
-            this._loadingProject.resolve();
-            this._loadingProject = undefined;
+        if (this._loadingProjectName && this._loadingProjectName === projectName) {
+            this._loadingProjectName = undefined;
             if (this._progressReporter) {
                 this._progressReporter.end();
                 this._progressReporter = undefined;
