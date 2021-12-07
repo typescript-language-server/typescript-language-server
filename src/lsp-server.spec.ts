@@ -927,14 +927,131 @@ describe('code actions', () => {
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: [CodeActions.SourceOrganizeImportsTsLs]
+                only: [CodeActions.SourceOrganizeImportsTs]
             }
         }))!;
 
         assert.deepEqual(result, []);
     }).timeout(10000);
 
-    it('can provide organize imports when explicitly requested in only', async () => {
+    it('provides "add missing imports" when explicitly requested in only', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'existsSync(\'t\');'
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 1, character: 29 },
+                end: { line: 1, character: 53 }
+            },
+            context: {
+                diagnostics: [],
+                only: [CodeActions.SourceAddMissingImportsTs]
+            }
+        }))!;
+
+        assert.deepEqual(result, [
+            {
+                kind: CodeActions.SourceAddMissingImportsTs,
+                title: 'Add all missing imports',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: 'import { existsSync } from "fs";\n\n',
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 0
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 0
+                                        }
+                                    }
+                                }
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+    }).timeout(10000);
+
+    it('provides "fix all" when explicitly requested in only', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `function foo() {
+  return
+  setTimeout(() => {})
+}`
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 0, character: 0 },
+                end: { line: 4, character: 0 }
+            },
+            context: {
+                diagnostics: [],
+                only: [CodeActions.SourceFixAllTs]
+            }
+        }))!;
+
+        assert.deepEqual(result, [
+            {
+                kind: CodeActions.SourceFixAllTs,
+                title: 'Fix all',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: '',
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 3
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 2
+                                        }
+                                    }
+                                }
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+    }).timeout(10000);
+
+    it('provides organize imports when explicitly requested in only', async () => {
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -949,8 +1066,8 @@ existsSync('t');`
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
-                start: { line: 1, character: 29 },
-                end: { line: 1, character: 53 }
+                start: { line: 0, character: 0 },
+                end: { line: 3, character: 0 }
             },
             context: {
                 diagnostics: [{
@@ -961,13 +1078,13 @@ existsSync('t');`
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: [CodeActions.SourceOrganizeImportsTsLs]
+                only: [CodeActions.SourceOrganizeImportsTs]
             }
         }))!;
 
         assert.deepEqual(result, [
             {
-                kind: CodeActions.SourceOrganizeImportsTsLs,
+                kind: CodeActions.SourceOrganizeImportsTs,
                 title: 'Organize imports',
                 edit: {
                     documentChanges: [
@@ -996,6 +1113,63 @@ existsSync('t');`
                                         start: {
                                             character: 0,
                                             line: 1
+                                        }
+                                    }
+                                }
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+    }).timeout(10000);
+
+    it('provides "remove unused" when explicitly requested in only', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'import { existsSync } from \'fs\';'
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: position(doc, 'existsSync'),
+                end: positionAfter(doc, 'existsSync')
+            },
+            context: {
+                diagnostics: [],
+                only: [CodeActions.SourceRemoveUnusedTs]
+            }
+        }))!;
+
+        assert.deepEqual(result, [
+            {
+                kind: CodeActions.SourceRemoveUnusedTs,
+                title: 'Remove all unused code',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: '',
+                                    range: {
+                                        end: {
+                                            character: 32,
+                                            line: 0
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 0
                                         }
                                     }
                                 }

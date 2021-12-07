@@ -20,6 +20,6 @@ export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | u
         lsp.CodeAction.create(
             'Organize imports',
             { documentChanges: response.body.map(edit => toTextDocumentEdit(edit, documents)) },
-            CodeActions.SourceOrganizeImportsTsLs
+            CodeActions.SourceOrganizeImportsTs
         )];
 }

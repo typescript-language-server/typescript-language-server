@@ -17,5 +17,8 @@ export const Commands = {
 };
 
 export const CodeActions = {
-    SourceOrganizeImportsTsLs: 'source.organizeImports.ts-ls'
+    SourceAddMissingImportsTs: 'source.addMissingImports.ts',
+    SourceFixAllTs: 'source.fixAll.ts',
+    SourceRemoveUnusedTs: 'source.removeUnused.ts',
+    SourceOrganizeImportsTs: 'source.organizeImports.ts'
 };
