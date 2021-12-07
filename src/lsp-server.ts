@@ -59,7 +59,7 @@ class ServerInitializingIndicator {
     /**
      * Signal that a project has started loading.
      */
-    public startedLoadingProject(projectName: string | undefined): void {
+    public startedLoadingProject(projectName: string): void {
         // TS projects are loaded sequentially. Cancel existing task because it should always be resolved before
         // the incoming project loading task is.
         this.reset();
@@ -69,8 +69,8 @@ class ServerInitializingIndicator {
         this._progressReporter.begin('Initializing JS/TS language features');
     }
 
-    public finishedLoadingProject(projectName: string | undefined): void {
-        if (this._loadingProjectName && this._loadingProjectName === projectName) {
+    public finishedLoadingProject(projectName: string): void {
+        if (this._loadingProjectName === projectName) {
             this._loadingProjectName = undefined;
             if (this._progressReporter) {
                 this._progressReporter.end();
