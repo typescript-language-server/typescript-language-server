@@ -56,9 +56,6 @@ class ServerInitializingIndicator {
         }
     }
 
-    /**
-     * Signal that a project has started loading.
-     */
     public startedLoadingProject(projectName: string): void {
         // TS projects are loaded sequentially. Cancel existing task because it should always be resolved before
         // the incoming project loading task is.
