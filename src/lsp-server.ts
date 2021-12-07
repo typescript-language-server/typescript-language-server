@@ -41,7 +41,7 @@ import { TypeScriptAutoFixProvider } from './features/fix-all';
 import { LspClient, ProgressReporter } from './lsp-client';
 
 class ServerInitializingIndicator {
-    private _loadingProjectName?: string | undefined;
+    private _loadingProjectName?: string;
     private _progressReporter?: ProgressReporter;
 
     constructor(private lspClient: LspClient) {}
