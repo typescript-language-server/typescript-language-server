@@ -6,7 +6,6 @@
  */
 
 import * as lsp from 'vscode-languageserver/node';
-import { WorkDoneProgressServerReporter } from 'vscode-languageserver/node';
 import { TypeScriptRenameRequest } from './ts-protocol';
 
 export interface ProgressReporter {
@@ -36,7 +35,7 @@ export class LspClientImpl implements LspClient {
     }
 
     createProgressReporter(): ProgressReporter {
-        let workDoneProgress: Promise<WorkDoneProgressServerReporter> | undefined;
+        let workDoneProgress: Promise<lsp.WorkDoneProgressServerReporter> | undefined;
         return {
             begin: (message = '') => {
                 if (this.clientCapabilities?.window?.workDoneProgress) {
