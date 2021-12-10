@@ -82,6 +82,14 @@ export async function createServer(options: {
         tsserverLogVerbosity: options.tsserverLogVerbosity,
         tsserverLogFile: path.resolve(__dirname, '../tsserver.log'),
         lspClient: {
+            setClientCapabilites() {},
+            createProgressReporter() {
+                return {
+                    begin() {},
+                    report() {},
+                    end() {}
+                };
+            },
             publishDiagnostics: options.publishDiagnostics,
             showMessage(args: lsp.ShowMessageParams): void {
                 throw args; // should not be called.
