@@ -63,7 +63,7 @@ class ServerInitializingIndicator {
 
         this._loadingProjectName = projectName;
         this._progressReporter = this.lspClient.createProgressReporter();
-        this._progressReporter.begin('Initializing JS/TS language features');
+        this._progressReporter.begin('Initializing JS/TS language features…');
     }
 
     public finishedLoadingProject(projectName: string): void {
