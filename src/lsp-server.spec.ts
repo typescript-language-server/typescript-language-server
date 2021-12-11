@@ -1297,6 +1297,7 @@ export function factory() {
             resultToString(callsResult, lspcalls.CallDirection.Incoming),
             `
 ↘ doStuff (do.ts#1)
+  ↘ doStuff (foo.ts#0) - foo.ts#0
   ↘ doSomething (foo.ts#2) - foo.ts#3
   ↘ x (foo.ts#4) - foo.ts#4
             `.trim()
