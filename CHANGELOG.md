@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.8.1] - 2021-11-25
+
+ - **fix**: lookup workspace typescript in dirs higher up the tree also (#314)
+
 ## [0.8.0] - 2021-11-21
 
  - **feat**: implement semantic tokens support (#290)

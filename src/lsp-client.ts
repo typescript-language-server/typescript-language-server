@@ -8,7 +8,15 @@
 import * as lsp from 'vscode-languageserver/node';
 import { TypeScriptRenameRequest } from './ts-protocol';
 
+export interface ProgressReporter {
+    begin(message?: string): void;
+    report(message: string): void;
+    end(): void;
+}
+
 export interface LspClient {
+    setClientCapabilites(capabilites: lsp.ClientCapabilities): void;
+    createProgressReporter(): ProgressReporter;
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
     showMessage(args: lsp.ShowMessageParams): void;
     logMessage(args: lsp.LogMessageParams): void;
@@ -18,7 +26,47 @@ export interface LspClient {
 }
 
 export class LspClientImpl implements LspClient {
-    constructor(protected connection: lsp.Connection) {
+    private clientCapabilities?: lsp.ClientCapabilities;
+
+    constructor(protected connection: lsp.Connection) {}
+
+    setClientCapabilites(capabilites: lsp.ClientCapabilities): void {
+        this.clientCapabilities = capabilites;
+    }
+
+    createProgressReporter(): ProgressReporter {
+        let workDoneProgress: Promise<lsp.WorkDoneProgressServerReporter> | undefined;
+        return {
+            begin: (message = '') => {
+                if (this.clientCapabilities?.window?.workDoneProgress) {
+                    workDoneProgress = this.connection.window.createWorkDoneProgress();
+                    workDoneProgress
+                        .then((progress) => {
+                            progress.begin(message);
+                        })
+                        .catch(() => {});
+                }
+            },
+            report: (message: string) => {
+                if (workDoneProgress) {
+                    workDoneProgress
+                        .then((progress) => {
+                            progress.report(message);
+                        })
+                        .catch(() => {});
+                }
+            },
+            end: () => {
+                if (workDoneProgress) {
+                    workDoneProgress
+                        .then((progress) => {
+                            progress.done();
+                        })
+                        .catch(() => {});
+                    workDoneProgress = undefined;
+                }
+            }
+        };
     }
 
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void {

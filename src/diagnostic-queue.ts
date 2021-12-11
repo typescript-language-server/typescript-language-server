@@ -32,7 +32,7 @@ class FileDiagnostics {
         this.publishDiagnostics({ uri: this.uri, diagnostics });
     }, 50);
 
-    protected getDiagnostics(): lsp.Diagnostic[] {
+    public getDiagnostics(): lsp.Diagnostic[] {
         const result: lsp.Diagnostic[] = [];
         for (const diagnostics of this.diagnosticsPerKind.values()) {
             for (const diagnostic of diagnostics) {
@@ -74,6 +74,11 @@ export class DiagnosticEventQueue {
 
     updateIgnoredDiagnosticCodes(ignoredCodes: readonly number[]): void {
         this.ignoredDiagnosticCodes = new Set(ignoredCodes);
+    }
+
+    public getDiagnosticsForFile(file: string): lsp.Diagnostic[] {
+        const uri = pathToUri(file, this.documents);
+        return this.diagnostics.get(uri)?.getDiagnostics() || [];
     }
 
     private isDiagnosticIgnored(diagnostic: tsp.Diagnostic) : boolean {

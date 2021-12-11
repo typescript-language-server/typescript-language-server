@@ -45,7 +45,7 @@ interface TypeScriptRequestTypes {
     'format': [protocol.FormatRequestArgs, protocol.FormatResponse];
     'formatonkey': [protocol.FormatOnKeyRequestArgs, protocol.FormatResponse];
     'getApplicableRefactors': [protocol.GetApplicableRefactorsRequestArgs, protocol.GetApplicableRefactorsResponse];
-    'getCodeFixes': [protocol.CodeFixRequestArgs, protocol.GetCodeFixesResponse];
+    'getCodeFixes': [protocol.CodeFixRequestArgs, protocol.CodeFixResponse];
     'getCombinedCodeFix': [protocol.GetCombinedCodeFixRequestArgs, protocol.GetCombinedCodeFixResponse];
     'getEditsForFileRename': [protocol.GetEditsForFileRenameRequestArgs, protocol.GetEditsForFileRenameResponse];
     'getEditsForRefactor': [protocol.GetEditsForRefactorRequestArgs, protocol.GetEditsForRefactorResponse];

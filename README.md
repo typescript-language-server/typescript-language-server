@@ -193,13 +193,24 @@ diagnostics.ignoredCodes: number[];
 
 ## Code actions on save
 
-Server announces support for the `source.organizeImports.ts-ls` code action which allows editors that support running code actions on save to automatically organize imports on saving. The user can enable it with a setting similar to (can vary per-editor):
+Server announces support for the following code action kinds:
+
+ - `source.addMissingImports.ts` - adds imports for used but not imported symbols
+ - `source.fixAll.ts` - despite the name, fixes a couple of specific issues: unreachable code, await in non-async functions, incorrectly implemented interface
+ - `source.removeUnused.ts` - removes declared but unused variables
+ - `source.organizeImports.ts` - organizes and removes unused imports
+
+This allows editors that support running code actions on save to automatically run fixes associated with those kinds.
+
+Those code actions, if they apply in the current code, should also be presented in the list of "Source Actions" if the editor exposes those.
+
+The user can enable it with a setting similar to (can vary per-editor):
 
 ```js
 "codeActionsOnSave": {
+    "source.organizeImports.ts": true,
+    // or just
     "source.organizeImports": true,
-    // or
-    "source.organizeImports.ts-ls": true,
 }
 ```
 

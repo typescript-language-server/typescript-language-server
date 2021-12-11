@@ -37,6 +37,45 @@ import { collectDocumentSymbols, collectSymbolInformation } from './document-sym
 import { computeCallers, computeCallees } from './calls';
 import { IServerOptions } from './utils/configuration';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider';
+import { TypeScriptAutoFixProvider } from './features/fix-all';
+import { LspClient, ProgressReporter } from './lsp-client';
+
+class ServerInitializingIndicator {
+    private _loadingProjectName?: string;
+    private _progressReporter?: ProgressReporter;
+
+    constructor(private lspClient: LspClient) {}
+
+    public reset(): void {
+        if (this._loadingProjectName) {
+            this._loadingProjectName = undefined;
+            if (this._progressReporter) {
+                this._progressReporter.end();
+                this._progressReporter = undefined;
+            }
+        }
+    }
+
+    public startedLoadingProject(projectName: string): void {
+        // TS projects are loaded sequentially. Cancel existing task because it should always be resolved before
+        // the incoming project loading task is.
+        this.reset();
+
+        this._loadingProjectName = projectName;
+        this._progressReporter = this.lspClient.createProgressReporter();
+        this._progressReporter.begin('Initializing JS/TS language features…');
+    }
+
+    public finishedLoadingProject(projectName: string): void {
+        if (this._loadingProjectName === projectName) {
+            this._loadingProjectName = undefined;
+            if (this._progressReporter) {
+                this._progressReporter.end();
+                this._progressReporter = undefined;
+            }
+        }
+    }
+}
 
 export class LspServer {
     private initializeParams: TypeScriptInitializeParams;
@@ -46,6 +85,8 @@ export class LspServer {
     private logger: Logger;
     private workspaceConfiguration: TypeScriptWorkspaceSettings;
     private workspaceRoot: string | undefined;
+    private typeScriptAutoFixProvider: TypeScriptAutoFixProvider;
+    private loadingIndicator: ServerInitializingIndicator;
 
     private readonly documents = new LspDocuments();
 
@@ -88,11 +129,14 @@ export class LspServer {
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
         this.initializeParams = params;
+        const clientCapabilities = this.initializeParams.capabilities;
+        this.options.lspClient.setClientCapabilites(clientCapabilities);
+        this.loadingIndicator = new ServerInitializingIndicator(this.options.lspClient);
         this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.documents,
-            this.initializeParams.capabilities.textDocument?.publishDiagnostics,
+            clientCapabilities.textDocument?.publishDiagnostics,
             this.logger
         );
 
@@ -157,10 +201,16 @@ export class LspServer {
         }
         process.on('exit', () => {
             this.tspClient.shutdown();
+            if (this.loadingIndicator) {
+                this.loadingIndicator.reset();
+            }
         });
         process.on('SIGINT', () => {
             process.exit();
         });
+
+        this.typeScriptAutoFixProvider = new TypeScriptAutoFixProvider(this.tspClient);
+
         this.tspClient.request(CommandTypes.Configure, {
             ...hostInfo ? { hostInfo } : {},
             formatOptions: {
@@ -189,7 +239,8 @@ export class LspServer {
                     triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
                     resolveProvider: true
                 },
-                codeActionProvider: true,
+                codeActionProvider: clientCapabilities.textDocument?.codeAction?.codeActionLiteralSupport
+                    ? { codeActionKinds: Object.values(CodeActions) } : true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
@@ -301,7 +352,14 @@ export class LspServer {
         this.requestDiagnostics();
         return result;
     }
-    readonly requestDiagnostics = debounce(() => this.doRequestDiagnostics(), 200);
+    // True if diagnostic request is currently debouncing or the request is in progress. False only if there are
+    // no pending requests.
+    pendingDebouncedRequest = false;
+    async requestDiagnostics(): Promise<void> {
+        this.pendingDebouncedRequest = true;
+        await this.doRequestDiagnosticsDebounced();
+    }
+    readonly doRequestDiagnosticsDebounced = debounce(() => this.doRequestDiagnostics(), 200);
     protected async doRequestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
         this.cancelDiagnostics();
         const geterrTokenSource = new lsp.CancellationTokenSource();
@@ -313,6 +371,7 @@ export class LspServer {
         } finally {
             if (this.diagnosticsTokenSource === geterrTokenSource) {
                 this.diagnosticsTokenSource = undefined;
+                this.pendingDebouncedRequest = false;
             }
         }
     }
@@ -763,16 +822,17 @@ export class LspServer {
         }
         const args = toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
-        if (!params.context.only || params.context.only.includes(CodeActionKind.QuickFix)) {
+        const { only } = params.context;
+        if (!only || only.includes(CodeActionKind.QuickFix)) {
             const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
             actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
         }
-        if (!params.context.only || params.context.only.includes(CodeActionKind.Refactor)) {
+        if (!only || only.includes(CodeActionKind.Refactor)) {
             actions.push(...provideRefactors(await this.getRefactors(args), args));
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (params.context.only?.includes(CodeActions.SourceOrganizeImportsTsLs)) {
+        if (only?.includes(CodeActions.SourceOrganizeImportsTs)) {
             // see this issue for more context about how this argument is used
             // https://github.com/microsoft/TypeScript/issues/43051
             const skipDestructiveCodeActions = params.context.diagnostics.some(
@@ -784,6 +844,18 @@ export class LspServer {
                 skipDestructiveCodeActions
             });
             actions.push(...provideOrganizeImports(response, this.documents));
+        }
+
+        // TODO: Since we rely on diagnostics pointing at errors in the correct places, we can't proceed if we are not
+        // sure that diagnostics are up-to-date. Thus we check `pendingDebouncedRequest` to see if there are *any*
+        // pending diagnostic requests (regardless of for which file).
+        // In general would be better to replace the whole diagnostics handling logic with the one from
+        // bufferSyncSupport.ts in VSCode's typescript language features.
+        if (!this.pendingDebouncedRequest && only?.some(kind => kind === CodeActionKind.Source || kind.startsWith(CodeActionKind.Source + '.'))) {
+            const diagnostics = this.diagnosticQueue?.getDiagnosticsForFile(file) || [];
+            if (diagnostics.length) {
+                actions.push(...await this.typeScriptAutoFixProvider.provideCodeActions(file, diagnostics, this.documents));
+            }
         }
 
         return actions;
@@ -1043,6 +1115,10 @@ export class LspServer {
             event.event === EventTypes.SyntaxDiag ||
             event.event === EventTypes.SuggestionDiag) {
             this.diagnosticQueue?.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
+        } else if (event.event === EventTypes.ProjectLoadingStart) {
+            this.loadingIndicator.startedLoadingProject((event as tsp.ProjectLoadingStartEvent).body.projectName);
+        } else if (event.event === EventTypes.ProjectLoadingFinish) {
+            this.loadingIndicator.finishedLoadingProject((event as tsp.ProjectLoadingFinishEvent).body.projectName);
         } else {
             this.logger.log('Ignored event', {
                 event: event.event
