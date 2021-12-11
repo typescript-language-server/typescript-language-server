@@ -967,7 +967,8 @@ describe('code actions', () => {
                         {
                             edits: [
                                 {
-                                    newText: 'import { existsSync } from "fs";\n\n',
+                                    // Prefers import that is declared in package.json.
+                                    newText: 'import { existsSync } from "fs-extra";\n\n',
                                     range: {
                                         end: {
                                             character: 0,
