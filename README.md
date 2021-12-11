@@ -87,13 +87,14 @@ interface UserPreferences {
      * values, with insertion text to replace preceding `.` tokens with `?.`.
      */
     includeAutomaticOptionalChainCompletions: boolean;
-     /**
-      * If enabled, completions for class members (e.g. methods and properties) will include
-      * a whole declaration for the member.
-      * E.g., `class A { f| }` could be completed to `class A { foo(): number {} }`, instead of
-      * `class A { foo }`.
-      * @default true
-      */
+    /**
+     * If enabled, completions for class members (e.g. methods and properties) will include
+     * a whole declaration for the member.
+     * E.g., `class A { f| }` could be completed to `class A { foo(): number {} }`, instead of
+     * `class A { foo }`.
+     * @since 4.5.2
+     * @default true
+     */
     includeCompletionsWithClassMemberSnippets: boolean;
     /**
      * Allows import module names to be resolved in the initial completions request.
@@ -115,6 +116,7 @@ interface UserPreferences {
      * - `"braces"` - Insert `={}` after attribute names.
      * - `"none"` - Only insert attribute names.
      * @since 4.5.2
+     * @default 'auto'
      */
     jsxAttributeCompletionStyle: "auto" | "braces" | "none";
     displayPartsForJSDoc: boolean;
