@@ -851,10 +851,10 @@ export class LspServer {
         // pending diagnostic requests (regardless of for which file).
         // In general would be better to replace the whole diagnostics handling logic with the one from
         // bufferSyncSupport.ts in VSCode's typescript language features.
-        if (!this.pendingDebouncedRequest && kinds?.some(kind => TypeScriptAutoFixProvider.kinds.some(k => k.contains(kind)))) {
+        if (kinds && !this.pendingDebouncedRequest) {
             const diagnostics = this.diagnosticQueue?.getDiagnosticsForFile(file) || [];
             if (diagnostics.length) {
-                actions.push(...await this.typeScriptAutoFixProvider.provideCodeActions(file, diagnostics, this.documents));
+                actions.push(...await this.typeScriptAutoFixProvider.provideCodeActions(kinds, file, diagnostics, this.documents));
             }
         }
 

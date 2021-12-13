@@ -1187,6 +1187,69 @@ existsSync('t');`
             }
         ]);
     }).timeout(10000);
+
+    it('only provides the "source.fixAll" kind if requested in only', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                existsSync('x');
+                export function foo() {
+                    return
+                    setTimeout(() => {})
+                }
+            `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 0, character: 0 },
+                end: lastPosition(doc, '}')
+            },
+            context: {
+                diagnostics: [],
+                only: [CodeActionKind.SourceFixAllTs.value]
+            }
+        }))!;
+        assert.strictEqual(result.length, 1, JSON.stringify(result, null, 2));
+        assert.deepEqual(result, [
+            {
+                kind: CodeActionKind.SourceFixAllTs.value,
+                title: 'Fix all',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: '',
+                                    range: {
+                                        start: {
+                                            line: 4,
+                                            character: 0
+                                        },
+                                        end: {
+                                            line: 5,
+                                            character: 0
+                                        }
+                                    }
+                                }
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+    }).timeout(10000);
 });
 
 describe('documentHighlight', () => {

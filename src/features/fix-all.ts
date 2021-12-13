@@ -189,18 +189,20 @@ export class TypeScriptAutoFixProvider {
         SourceRemoveUnused,
         SourceAddMissingImports
     ];
-    private providers: SourceAction[];
-
-    constructor(private readonly client: TspClient) {
-        this.providers = TypeScriptAutoFixProvider.kindProviders.map(provider => new provider());
-    }
 
     public static get kinds(): CodeActionKind[] {
         return TypeScriptAutoFixProvider.kindProviders.map(provider => provider.kind);
     }
 
-    public async provideCodeActions(file: string, diagnostics: lsp.Diagnostic[], documents: LspDocuments): Promise<lsp.CodeAction[]> {
-        const results = await Promise.all(this.providers.map(action => action.build(this.client, file, documents, diagnostics)));
-        return results.flatMap(result => result || []);
+    constructor(private readonly client: TspClient) {}
+
+    public async provideCodeActions(kinds: CodeActionKind[], file: string, diagnostics: lsp.Diagnostic[], documents: LspDocuments): Promise<lsp.CodeAction[]> {
+        const results: Promise<lsp.CodeAction | null>[] = [];
+        for (const provider of TypeScriptAutoFixProvider.kindProviders) {
+            if (kinds.some(kind => kind.contains(provider.kind))) {
+                results.push((new provider).build(this.client, file, documents, diagnostics));
+            }
+        }
+        return (await Promise.all(results)).flatMap(result => result || []);
     }
 }
