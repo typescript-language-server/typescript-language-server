@@ -967,7 +967,8 @@ describe('code actions', () => {
                         {
                             edits: [
                                 {
-                                    newText: 'import { existsSync } from "fs";\n\n',
+                                    // Prefers import that is declared in package.json.
+                                    newText: 'import { existsSync } from "fs-extra";\n\n',
                                     range: {
                                         end: {
                                             character: 0,
@@ -1297,6 +1298,7 @@ export function factory() {
             resultToString(callsResult, lspcalls.CallDirection.Incoming),
             `
 ↘ doStuff (do.ts#1)
+  ↘ doStuff (foo.ts#0) - foo.ts#0
   ↘ doSomething (foo.ts#2) - foo.ts#3
   ↘ x (foo.ts#4) - foo.ts#4
             `.trim()
