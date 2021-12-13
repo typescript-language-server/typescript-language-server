@@ -15,10 +15,3 @@ export const Commands = {
     /** Commands below should be implemented by the client */
     SELECT_REFACTORING: '_typescript.selectRefactoring'
 };
-
-export const CodeActions = {
-    SourceAddMissingImportsTs: 'source.addMissingImports.ts',
-    SourceFixAllTs: 'source.fixAll.ts',
-    SourceRemoveUnusedTs: 'source.removeUnused.ts',
-    SourceOrganizeImportsTs: 'source.organizeImports.ts'
-};

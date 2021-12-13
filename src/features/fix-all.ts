@@ -5,12 +5,12 @@
 
 import tsp, { CommandTypes } from 'typescript/lib/protocol';
 import * as lsp from 'vscode-languageserver/node';
-import { CodeActions } from '../commands';
 import { LspDocuments } from '../document';
 import { toFileRangeRequestArgs, toTextDocumentEdit } from '../protocol-translation';
 import { TspClient } from '../tsp-client';
 import * as errorCodes from '../utils/errorCodes';
 import * as fixNames from '../utils/fixNames';
+import { CodeActionKind } from '../utils/types';
 
 interface AutoFix {
     readonly codes: Set<number>;
@@ -118,7 +118,7 @@ abstract class SourceAction {
 
 class SourceFixAll extends SourceAction {
     private readonly title = 'Fix all';
-    static readonly kind = CodeActions.SourceFixAllTs;
+    static readonly kind = CodeActionKind.SourceFixAllTs;
 
     async build(
         client: TspClient,
@@ -137,13 +137,13 @@ class SourceFixAll extends SourceAction {
         if (!edits.length) {
             return null;
         }
-        return lsp.CodeAction.create(this.title, { documentChanges: edits }, SourceFixAll.kind);
+        return lsp.CodeAction.create(this.title, { documentChanges: edits }, SourceFixAll.kind.value);
     }
 }
 
 class SourceRemoveUnused extends SourceAction {
     private readonly title = 'Remove all unused code';
-    static readonly kind = CodeActions.SourceRemoveUnusedTs;
+    static readonly kind = CodeActionKind.SourceRemoveUnusedTs;
 
     async build(
         client: TspClient,
@@ -157,13 +157,13 @@ class SourceRemoveUnused extends SourceAction {
         if (!edits.length) {
             return null;
         }
-        return lsp.CodeAction.create(this.title, { documentChanges: edits }, SourceRemoveUnused.kind);
+        return lsp.CodeAction.create(this.title, { documentChanges: edits }, SourceRemoveUnused.kind.value);
     }
 }
 
 class SourceAddMissingImports extends SourceAction {
     private readonly title = 'Add all missing imports';
-    static readonly kind = CodeActions.SourceAddMissingImportsTs;
+    static readonly kind = CodeActionKind.SourceAddMissingImportsTs;
 
     async build(
         client: TspClient,
@@ -177,7 +177,7 @@ class SourceAddMissingImports extends SourceAction {
         if (!edits.length) {
             return null;
         }
-        return lsp.CodeAction.create(this.title, { documentChanges: edits }, SourceAddMissingImports.kind);
+        return lsp.CodeAction.create(this.title, { documentChanges: edits }, SourceAddMissingImports.kind.value);
     }
 }
 
@@ -195,7 +195,7 @@ export class TypeScriptAutoFixProvider {
         this.providers = TypeScriptAutoFixProvider.kindProviders.map(provider => new provider());
     }
 
-    public static get kinds(): lsp.CodeActionKind[] {
+    public static get kinds(): CodeActionKind[] {
         return TypeScriptAutoFixProvider.kindProviders.map(provider => provider.kind);
     }
 

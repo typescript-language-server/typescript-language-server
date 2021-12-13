@@ -13,7 +13,6 @@ import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
 import * as lspsemanticTokens from './semantic-tokens';
 import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
-import { CodeActionKind, FormattingOptions } from 'vscode-languageserver/node';
 import debounce from 'p-debounce';
 
 import { CommandTypes, EventTypes } from './tsp-command-types';
@@ -28,7 +27,7 @@ import {
 import { LspDocuments, LspDocument } from './document';
 import { asCompletionItem, asResolvedCompletionItem } from './completion';
 import { asSignatureHelp } from './hover';
-import { CodeActions, Commands } from './commands';
+import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
@@ -39,6 +38,7 @@ import { IServerOptions } from './utils/configuration';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider';
 import { TypeScriptAutoFixProvider } from './features/fix-all';
 import { LspClient, ProgressReporter } from './lsp-client';
+import { CodeActionKind } from './utils/types';
 
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;
@@ -240,7 +240,7 @@ export class LspServer {
                     resolveProvider: true
                 },
                 codeActionProvider: clientCapabilities.textDocument?.codeAction?.codeActionLiteralSupport
-                    ? { codeActionKinds: Object.values(CodeActions) } : true,
+                    ? { codeActionKinds: [...TypeScriptAutoFixProvider.kinds.map(kind => kind.value), CodeActionKind.SourceOrganizeImportsTs.value] } : true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
@@ -762,7 +762,7 @@ export class LspServer {
         return [];
     }
 
-    private getFormattingOptions(file: string, requestOptions: FormattingOptions): tsp.FormatCodeSettings {
+    private getFormattingOptions(file: string, requestOptions: lsp.FormattingOptions): tsp.FormatCodeSettings {
         const workspacePreference = this.getWorkspacePreferencesForDocument(file);
 
         let opts = <tsp.FormatCodeSettings>{
@@ -822,17 +822,17 @@ export class LspServer {
         }
         const args = toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
-        const { only } = params.context;
-        if (!only || only.includes(CodeActionKind.QuickFix)) {
+        const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
+        if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.QuickFix))) {
             const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
             actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
         }
-        if (!only || only.includes(CodeActionKind.Refactor)) {
+        if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.Refactor))) {
             actions.push(...provideRefactors(await this.getRefactors(args), args));
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (only?.includes(CodeActions.SourceOrganizeImportsTs)) {
+        if (kinds?.some(kind => kind.contains(CodeActionKind.SourceOrganizeImportsTs))) {
             // see this issue for more context about how this argument is used
             // https://github.com/microsoft/TypeScript/issues/43051
             const skipDestructiveCodeActions = params.context.diagnostics.some(
@@ -851,7 +851,7 @@ export class LspServer {
         // pending diagnostic requests (regardless of for which file).
         // In general would be better to replace the whole diagnostics handling logic with the one from
         // bufferSyncSupport.ts in VSCode's typescript language features.
-        if (!this.pendingDebouncedRequest && only?.some(kind => kind === CodeActionKind.Source || kind.startsWith(CodeActionKind.Source + '.'))) {
+        if (!this.pendingDebouncedRequest && kinds?.some(kind => TypeScriptAutoFixProvider.kinds.some(k => k.contains(kind)))) {
             const diagnostics = this.diagnosticQueue?.getDiagnosticsForFile(file) || [];
             if (diagnostics.length) {
                 actions.push(...await this.typeScriptAutoFixProvider.provideCodeActions(file, diagnostics, this.documents));
