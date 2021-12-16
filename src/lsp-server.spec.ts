@@ -11,8 +11,8 @@ import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
 import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter } from './test-utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { CodeActions } from './commands';
 import { TypeScriptWorkspaceSettings } from './ts-protocol';
+import { CodeActionKind } from './utils/types';
 
 const assert = chai.assert;
 
@@ -912,6 +912,8 @@ describe('code actions', () => {
         server.didOpenTextDocument({
             textDocument: doc
         });
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -927,7 +929,7 @@ describe('code actions', () => {
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: [CodeActions.SourceOrganizeImportsTs]
+                only: [CodeActionKind.SourceOrganizeImportsTs.value]
             }
         }))!;
 
@@ -954,13 +956,13 @@ describe('code actions', () => {
             },
             context: {
                 diagnostics: [],
-                only: [CodeActions.SourceAddMissingImportsTs]
+                only: [CodeActionKind.SourceAddMissingImportsTs.value]
             }
         }))!;
 
         assert.deepEqual(result, [
             {
-                kind: CodeActions.SourceAddMissingImportsTs,
+                kind: CodeActionKind.SourceAddMissingImportsTs.value,
                 title: 'Add all missing imports',
                 edit: {
                     documentChanges: [
@@ -1015,13 +1017,13 @@ describe('code actions', () => {
             },
             context: {
                 diagnostics: [],
-                only: [CodeActions.SourceFixAllTs]
+                only: [CodeActionKind.SourceFixAllTs.value]
             }
         }))!;
 
         assert.deepEqual(result, [
             {
-                kind: CodeActions.SourceFixAllTs,
+                kind: CodeActionKind.SourceFixAllTs.value,
                 title: 'Fix all',
                 edit: {
                     documentChanges: [
@@ -1079,13 +1081,13 @@ existsSync('t');`
                     code: 6133,
                     message: 'unused arg'
                 }],
-                only: [CodeActions.SourceOrganizeImportsTs]
+                only: [CodeActionKind.SourceOrganizeImportsTs.value]
             }
         }))!;
 
         assert.deepEqual(result, [
             {
-                kind: CodeActions.SourceOrganizeImportsTs,
+                kind: CodeActionKind.SourceOrganizeImportsTs.value,
                 title: 'Organize imports',
                 edit: {
                     documentChanges: [
@@ -1149,13 +1151,13 @@ existsSync('t');`
             },
             context: {
                 diagnostics: [],
-                only: [CodeActions.SourceRemoveUnusedTs]
+                only: [CodeActionKind.SourceRemoveUnusedTs.value]
             }
         }))!;
 
         assert.deepEqual(result, [
             {
-                kind: CodeActions.SourceRemoveUnusedTs,
+                kind: CodeActionKind.SourceRemoveUnusedTs.value,
                 title: 'Remove all unused code',
                 edit: {
                     documentChanges: [
@@ -1171,6 +1173,69 @@ existsSync('t');`
                                         start: {
                                             character: 0,
                                             line: 0
+                                        }
+                                    }
+                                }
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+    }).timeout(10000);
+
+    it('only provides the "source.fixAll" kind if requested in only', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                existsSync('x');
+                export function foo() {
+                    return
+                    setTimeout(() => {})
+                }
+            `
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        await server.requestDiagnostics();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 0, character: 0 },
+                end: lastPosition(doc, '}')
+            },
+            context: {
+                diagnostics: [],
+                only: [CodeActionKind.SourceFixAllTs.value]
+            }
+        }))!;
+        assert.strictEqual(result.length, 1, JSON.stringify(result, null, 2));
+        assert.deepEqual(result, [
+            {
+                kind: CodeActionKind.SourceFixAllTs.value,
+                title: 'Fix all',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: '',
+                                    range: {
+                                        start: {
+                                            line: 4,
+                                            character: 0
+                                        },
+                                        end: {
+                                            line: 5,
+                                            character: 0
                                         }
                                     }
                                 }
