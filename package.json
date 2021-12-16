@@ -24,6 +24,7 @@
     "clean": "rimraf lib *.tsbuildinfo",
     "test": "TS_NODE_PROJECT=./tsconfig.json mocha --exit --watch-files \"./src/**/*.ts\" --reporter spec \"./src/**/*.spec.ts\" --require source-map-support/register --require ts-node/register",
     "test:watch": "TS_NODE_PROJECT=./tsconfig.json mocha --exit --watch-files \"./src/**/*.ts\" --reporter spec \"./src/**/*.spec.ts\" --require source-map-support/register --require ts-node/register --watch",
+    "test:compiled": "mocha --exit --reporter spec \"./lib/**/*.spec.js\"",
     "lint": "eslint --ext \".js,.ts\" src",
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
     "compile": "tsc -b",
@@ -32,7 +33,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn lint && yarn build && yarn test",
+      "pre-commit": "yarn lint && yarn build && yarn test:compiled",
       "post-merge": "yarn"
     }
   },
