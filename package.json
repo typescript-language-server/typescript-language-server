@@ -22,7 +22,8 @@
   },
   "scripts": {
     "clean": "rimraf lib *.tsbuildinfo",
-    "test": "mocha --exit --reporter spec \"./lib/**/*.spec.js\"",
+    "test": "TS_NODE_PROJECT=./tsconfig.json mocha --exit --watch-files \"./src/**/*.ts\" --reporter spec \"./src/**/*.spec.ts\" --require source-map-support/register --require ts-node/register",
+    "test:watch": "TS_NODE_PROJECT=./tsconfig.json mocha --exit --watch-files \"./src/**/*.ts\" --reporter spec \"./src/**/*.spec.ts\" --require source-map-support/register --require ts-node/register --watch",
     "lint": "eslint --ext \".js,.ts\" src",
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
     "compile": "tsc -b",
