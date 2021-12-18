@@ -14,7 +14,7 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
 ## Installing
 
 ```sh
-npm install -g typescript-language-server
+npm install -g typescript-language-server typescript
 ```
 
 ## Running the language server
