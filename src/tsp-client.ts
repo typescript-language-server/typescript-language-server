@@ -154,10 +154,10 @@ export class TspClient {
         this.tsserverProc.kill();
     }
 
-    notify(command: CommandTypes.Open, args: protocol.OpenRequestArgs): void
-    notify(command: CommandTypes.Close, args: protocol.FileRequestArgs): void
-    notify(command: CommandTypes.Saveto, args: protocol.SavetoRequestArgs): void
-    notify(command: CommandTypes.Change, args: protocol.ChangeRequestArgs): void
+    notify(command: CommandTypes.Open, args: protocol.OpenRequestArgs): void;
+    notify(command: CommandTypes.Close, args: protocol.FileRequestArgs): void;
+    notify(command: CommandTypes.Saveto, args: protocol.SavetoRequestArgs): void;
+    notify(command: CommandTypes.Change, args: protocol.ChangeRequestArgs): void;
     notify(command: string, args: any): void {
         this.sendMessage(command, true, args);
     }
