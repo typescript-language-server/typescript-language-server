@@ -876,6 +876,10 @@ export class LspServer {
     }
     protected async getOrganizeImports(args: tsp.OrganizeImportsRequestArgs): Promise<tsp.OrganizeImportsResponse | undefined> {
         try {
+            // Pass format options to organize imports
+            await this.tspClient.request(CommandTypes.Configure, {
+                formatOptions: this.getWorkspacePreferencesForDocument(args.scope.args.file).format
+            });
             return await this.tspClient.request(CommandTypes.OrganizeImports, args);
         } catch (err) {
             return undefined;
@@ -923,6 +927,9 @@ export class LspServer {
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
             const file = arg.arguments[0] as string;
             const additionalArguments: { skipDestructiveCodeActions?: boolean; } = arg.arguments[1] || {};
+            await this.tspClient.request(CommandTypes.Configure, {
+                formatOptions: this.getWorkspacePreferencesForDocument(file).format
+            });
             const { body } = await this.tspClient.request(CommandTypes.OrganizeImports, {
                 scope: {
                     type: 'file',
