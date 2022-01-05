@@ -365,13 +365,25 @@ export class LspServer {
         const geterrTokenSource = new lsp.CancellationTokenSource();
         this.diagnosticsTokenSource = geterrTokenSource;
 
-        const { files } = this.documents;
-        try {
-            return await this.tspClient.request(CommandTypes.Geterr, { delay: 0, files }, this.diagnosticsTokenSource.token);
-        } finally {
-            if (this.diagnosticsTokenSource === geterrTokenSource) {
-                this.diagnosticsTokenSource = undefined;
-                this.pendingDebouncedRequest = false;
+        if (this.workspaceConfiguration.diagnostics?.workspaceDiagnostics ?? false) {
+            const { files } = this.documents;
+            try {
+                return await this.tspClient.request(CommandTypes.GeterrForProject, { delay: 0, file: files[0] }, this.diagnosticsTokenSource.token);
+            } finally {
+                if (this.diagnosticsTokenSource === geterrTokenSource) {
+                    this.diagnosticsTokenSource = undefined;
+                    this.pendingDebouncedRequest = false;
+                }
+            }
+        } else {
+            const { files } = this.documents;
+            try {
+                return await this.tspClient.request(CommandTypes.Geterr, { delay: 0, files }, this.diagnosticsTokenSource.token);
+            } finally {
+                if (this.diagnosticsTokenSource === geterrTokenSource) {
+                    this.diagnosticsTokenSource = undefined;
+                    this.pendingDebouncedRequest = false;
+                }
             }
         }
     }

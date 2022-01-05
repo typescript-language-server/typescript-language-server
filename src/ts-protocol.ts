@@ -55,6 +55,7 @@ export interface TypeScriptWorkspaceSettingsLanguageSettings {
 
 interface TypeScriptWorkspaceSettingsDiagnostics {
     ignoredCodes?: number[];
+    workspaceDiagnostics?: boolean;
 }
 
 export interface TypeScriptWorkspaceSettings {

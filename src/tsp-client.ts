@@ -33,6 +33,7 @@ export interface TspClientOptions {
 
 interface TypeScriptRequestTypes {
     'geterr': [protocol.GeterrRequestArgs, any];
+    [CommandTypes.GeterrForProject]: [protocol.GeterrForProjectRequestArgs, any];
     'compilerOptionsForInferredProjects': [protocol.SetCompilerOptionsForInferredProjectsArgs, protocol.SetCompilerOptionsForInferredProjectsResponse];
     'documentHighlights': [protocol.DocumentHighlightsRequestArgs, protocol.DocumentHighlightsResponse];
     'applyCodeActionCommand': [protocol.ApplyCodeActionCommandRequestArgs, protocol.ApplyCodeActionCommandResponse];
