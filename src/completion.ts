@@ -52,12 +52,12 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
         item.sortText = '\uffff' + entry.sortText;
     }
 
-    const { sourceDisplay } = entry;
+    const { sourceDisplay, isSnippet } = entry;
     if (sourceDisplay) {
         item.detail = asPlainText(sourceDisplay);
     }
 
-    if (entry.isImportStatementCompletion || item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method) {
+    if (entry.isImportStatementCompletion || isSnippet || item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method) {
         item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     }
 

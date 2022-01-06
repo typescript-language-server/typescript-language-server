@@ -9,7 +9,7 @@ import * as chai from 'chai';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
 import { LspServer } from './lsp-server';
-import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter } from './test-utils';
+import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter, readContents } from './test-utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { TypeScriptWorkspaceSettings } from './ts-protocol';
 import { CodeActionKind } from './utils/types';
@@ -1453,6 +1453,33 @@ describe('diagnostics (no client support)', () => {
         const resultsForFile = diagnostics.get(doc.uri);
         assert.isDefined(resultsForFile);
         assert.strictEqual(resultsForFile?.diagnostics.length, 1);
+    }).timeout(10000);
+});
+
+describe('jsx/tsx project', () => {
+    before(async () => {
+        server = await createServer({
+            rootUri: uri('jsx'),
+            publishDiagnostics: args => diagnostics.set(args.uri, args)
+        });
+    });
+
+    it('includes snippet completion for element prop', async () => {
+        const doc = {
+            uri: uri('jsx', 'app.tsx'),
+            languageId: 'typescriptreact',
+            version: 1,
+            text: readContents(filePath('jsx', 'app.tsx'))
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+
+        const completion = await server.completion({ textDocument: doc, position: position(doc, 'title') });
+        assert.isNotNull(completion);
+        const item = completion!.items.find(i => i.label === 'title');
+        assert.isDefined(item);
+        assert.strictEqual(item?.insertTextFormat, 2);
     }).timeout(10000);
 });
 
