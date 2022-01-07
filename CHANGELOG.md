@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2022-01-07
+
+ - **feat**: implement additional code actions for handling auto-fixing (#318)
+
+ - **feat**: report progress when loading the project (#326)
+
+ - **feat**: add new preferences from typescript 4.5.3 (#304)
+
+ - **fix**: correct matching of "only" kinds provided by the client (#334)
+
+ - **fix**: pass format options for organizing import (#348)
+
+ - **fix**: use snippet type for jsx attribute completions (#362)
+
 ## [0.8.1] - 2021-11-25
 
  - **fix**: lookup workspace typescript in dirs higher up the tree also (#314)
