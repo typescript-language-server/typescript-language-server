@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.1] - 2022-01-07
+
+ - **fix**: don't use the postinstall script
+
 ## [0.9.0] - 2022-01-07
 
  - **feat**: implement additional code actions for handling auto-fixing (#318)
