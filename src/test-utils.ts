@@ -33,13 +33,13 @@ export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
     };
 }
 
-export function uri(suffix = ''): string {
-    const resolved = filePath(suffix);
+export function uri(...components: string[]): string {
+    const resolved = filePath(...components);
     return pathToUri(resolved, undefined);
 }
 
-export function filePath(suffix = ''): string {
-    return normalizePath(path.resolve(__dirname, '..', 'test-data', suffix));
+export function filePath(...components: string[]): string {
+    return normalizePath(path.resolve(__dirname, '..', 'test-data', ...components));
 }
 
 export function readContents(path: string): string {

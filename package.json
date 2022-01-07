@@ -29,7 +29,8 @@
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
     "compile": "tsc -b",
     "watch": "tsc -b --watch --verbose",
-    "postversion": "git push --follow-tags"
+    "postversion": "git push --follow-tags",
+    "postinstall": "cd test-data/jsx && yarn"
   },
   "husky": {
     "hooks": {
