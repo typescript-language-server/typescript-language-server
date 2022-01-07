@@ -30,7 +30,7 @@
     "compile": "tsc -b",
     "watch": "tsc -b --watch --verbose",
     "postversion": "git push --follow-tags",
-    "postinstall": "cd test-data/jsx && yarn"
+    "prepare": "cd test-data/jsx && yarn"
   },
   "husky": {
     "hooks": {
