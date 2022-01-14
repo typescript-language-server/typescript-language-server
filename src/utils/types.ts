@@ -12,7 +12,7 @@ export class CodeActionKind {
     public static readonly QuickFix = new CodeActionKind(lsp.CodeActionKind.QuickFix);
     public static readonly Refactor = new CodeActionKind(lsp.CodeActionKind.Refactor);
     public static readonly Source = new CodeActionKind(lsp.CodeActionKind.Source);
-    public static readonly SourceAddMissingImportsTs = CodeActionKind.Source.append('SourceAddMissingImportsTs').append('ts');
+    public static readonly SourceAddMissingImportsTs = CodeActionKind.Source.append('addMissingImports').append('ts');
     public static readonly SourceRemoveUnusedTs = CodeActionKind.Source.append('removeUnused').append('ts');
     public static readonly SourceOrganizeImports = new CodeActionKind(lsp.CodeActionKind.SourceOrganizeImports);
     public static readonly SourceOrganizeImportsTs = CodeActionKind.SourceOrganizeImports.append('ts');
