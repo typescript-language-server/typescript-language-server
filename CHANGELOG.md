@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.1] - 2022-01-14
+
+ - **fix**: use correct name for the addMissingImports code action (#371)
+
 ## [0.9.1] - 2022-01-07
 
  - **fix**: don't use the postinstall script
