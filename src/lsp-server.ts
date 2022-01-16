@@ -1157,9 +1157,8 @@ export class LspServer {
             return { inlayHints: [] };
         }
 
-        const inlayHintsOptions = this.getInlayHintsOptions(file);
-        this.tspClient.request(CommandTypes.Configure, {
-            preferences: inlayHintsOptions
+        await this.tspClient.request(CommandTypes.Configure, {
+            preferences: this.getInlayHintsOptions(file)
         });
 
         const doc = this.documents.get(file);
