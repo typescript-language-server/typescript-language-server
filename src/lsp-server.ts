@@ -211,25 +211,26 @@ export class LspServer {
 
         this.typeScriptAutoFixProvider = new TypeScriptAutoFixProvider(this.tspClient);
 
-        this.tspClient.request(CommandTypes.Configure, {
-            ...hostInfo ? { hostInfo } : {},
-            formatOptions: {
-                // We can use \n here since the editor should normalize later on to its line endings.
-                newLineCharacter: '\n'
-            },
-            preferences
-        });
-
-        this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
-            options: {
-                module: tsp.ModuleKind.CommonJS,
-                target: tsp.ScriptTarget.ES2016,
-                jsx: tsp.JsxEmit.Preserve,
-                allowJs: true,
-                allowSyntheticDefaultImports: true,
-                allowNonTsExtensions: true
-            }
-        });
+        await Promise.all([
+            this.tspClient.request(CommandTypes.Configure, {
+                ...hostInfo ? { hostInfo } : {},
+                formatOptions: {
+                    // We can use \n here since the editor should normalize later on to its line endings.
+                    newLineCharacter: '\n'
+                },
+                preferences
+            }),
+            this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
+                options: {
+                    module: tsp.ModuleKind.CommonJS,
+                    target: tsp.ScriptTarget.ES2016,
+                    jsx: tsp.JsxEmit.Preserve,
+                    allowJs: true,
+                    allowSyntheticDefaultImports: true,
+                    allowNonTsExtensions: true
+                }
+            })
+        ]);
 
         const logFileUri = logFile && pathToUri(logFile, undefined);
         this.initializeResult = {
