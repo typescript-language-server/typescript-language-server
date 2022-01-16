@@ -1,7 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.9.1] - 2022-01-14
+## [0.9.3] - 2022-01-16
+
+ - **fix**: wait for tsserver configuration requests to finish (#372)
+
+## [0.9.2] - 2022-01-14
 
  - **fix**: use correct name for the addMissingImports code action (#371)
 
