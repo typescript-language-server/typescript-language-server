@@ -582,6 +582,10 @@ export class LspServer {
             throw new Error('The document should be opened for completion, file: ' + file);
         }
 
+        await this.tspClient.request(CommandTypes.Configure, {
+            formatOptions: this.getWorkspacePreferencesForDocument(file).format
+        });
+
         try {
             const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionInfo, {
                 file,
