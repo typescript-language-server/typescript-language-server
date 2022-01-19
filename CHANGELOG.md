@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.4] - 2022-01-19
+
+ - **fix**: call configure before completion resolve (#377)
+
 ## [0.9.3] - 2022-01-16
 
  - **fix**: wait for tsserver configuration requests to finish (#372)
