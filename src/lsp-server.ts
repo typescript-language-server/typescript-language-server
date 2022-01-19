@@ -605,6 +605,9 @@ export class LspServer {
 
     async completionResolve(item: lsp.CompletionItem): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
+        await this.tspClient.request(CommandTypes.Configure, {
+            formatOptions: this.getWorkspacePreferencesForDocument(item.data.file).format
+        });
         const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
         const details = body && body.length && body[0];
         if (!details) {

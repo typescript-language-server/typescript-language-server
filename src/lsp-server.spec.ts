@@ -246,6 +246,61 @@ describe('completion', () => {
         server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
 
+    it('resolves text edit for auto-import completion in right format', async () => {
+        server.didChangeConfiguration({
+            settings: {
+                typescript: {
+                    format: {
+                        semicolons: 'remove',
+                        insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false
+                    }
+                }
+            }
+        });
+
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'readFile'
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        assert.isDefined(completion);
+        const resolvedItem = await server.completionResolve(completion!);
+        assert.deepEqual(resolvedItem.additionalTextEdits, [
+            {
+                newText: 'import {readFile} from "fs"\n\n',
+                range: {
+                    end: {
+                        character: 0,
+                        line: 0
+                    },
+                    start: {
+                        character: 0,
+                        line: 0
+                    }
+                }
+            }
+        ]);
+        server.didCloseTextDocument({ textDocument: doc });
+        server.didChangeConfiguration({
+            settings: {
+                completions: {
+                    completeFunctionCalls: true
+                },
+                typescript: {
+                    format: {
+                        semicolons: 'ignore',
+                        insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true
+                    }
+                }
+            }
+        });
+    }).timeout(10000);
+
     it('resolves a snippet for method completion', async () => {
         const doc = {
             uri: uri('bar.ts'),
