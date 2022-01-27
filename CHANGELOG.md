@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.5] - 2022-01-27
+
+ - **fix**: don't transform Yarn zipfile URIs (#384)
+
 ## [0.9.4] - 2022-01-19
 
  - **fix**: call configure before completion resolve (#377)
