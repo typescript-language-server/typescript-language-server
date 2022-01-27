@@ -20,18 +20,13 @@ export function uriToPath(stringUri: string): string | undefined {
     return normalizeFsPath(uri.fsPath);
 }
 
-function parsePathOrUri(filepath: string): URI {
+export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
     // handles valid URIs from yarn pnp, will error if doesn't have scheme
     // zipfile:/foo/bar/baz.zip::path/to/module
     if (filepath.startsWith('zipfile:')) {
-        return URI.parse(filepath);
+        return filepath;
     }
-    // handles valid filepaths from everything else /path/to/module
-    return URI.file(filepath);
-}
-
-export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
-    const fileUri = parsePathOrUri(filepath);
+    const fileUri = URI.file(filepath);
     const normalizedFilepath = normalizePath(fileUri.fsPath);
     const document = documents && documents.get(normalizedFilepath);
     return document ? document.uri : fileUri.toString();
