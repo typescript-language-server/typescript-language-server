@@ -13,6 +13,11 @@ import { LspDocuments } from './document';
 const RE_PATHSEP_WINDOWS = /\\/g;
 
 export function uriToPath(stringUri: string): string | undefined {
+    // Vim may send `zipfile:` URIs which tsserver with Yarn v2+ hook can handle. Keep as-is.
+    // Example: zipfile:///foo/bar/baz.zip::path/to/module
+    if (stringUri.startsWith('zipfile:')) {
+        return stringUri;
+    }
     const uri = URI.parse(stringUri);
     if (uri.scheme !== 'file') {
         return undefined;
@@ -21,8 +26,8 @@ export function uriToPath(stringUri: string): string | undefined {
 }
 
 export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
-    // handles valid URIs from yarn pnp, will error if doesn't have scheme
-    // zipfile:/foo/bar/baz.zip::path/to/module
+    // Yarn v2+ hooks tsserver and sends `zipfile:` URIs for Vim. Keep as-is.
+    // Example: zipfile:///foo/bar/baz.zip::path/to/module
     if (filepath.startsWith('zipfile:')) {
         return filepath;
     }
