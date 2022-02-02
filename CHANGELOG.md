@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.9.6] - 2022-02-02
+
+ - **fix**: don't transform zipfile URIs from Vim (#386)
+
 ## [0.9.5] - 2022-01-27
 
  - **fix**: don't transform Yarn zipfile URIs (#384)
