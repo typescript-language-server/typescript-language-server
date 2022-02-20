@@ -174,7 +174,7 @@ export class LspServer {
         if (typescriptVersion) {
             this.logger.info(`Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
         } else {
-            throw Error('Could not find a valid tsserver version on $PATH. Please install tsserver with `npm install -g typescript`. Exiting.');
+            throw Error('Could not find a valid tsserver executable in the workspace or in the $PATH. Please ensure that the "typescript" dependency is installed in either location. Exiting.');
         }
 
         this.tspClient = new TspClient({
