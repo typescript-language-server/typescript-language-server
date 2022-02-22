@@ -1,0 +1,30 @@
+name: Release New Version
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          release-type: node
+          package-name: typescript-language-server
+      - uses: actions/checkout@v2
+        if: ${{ steps.release.outputs.release_created }}
+      - uses: actions/setup-node@v2
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          node-version: 16
+          registry-url: https://registry.npmjs.org
+      - name: Lint and Test
+        if: ${{ steps.release.outputs.release_created }}
+        run: yarn && yarn build && yarn lint
+      - name: Publish to NPM
+        if: ${{ steps.release.outputs.release_created }}
+        run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
