@@ -102,7 +102,7 @@ export class LspServer {
     }
 
     private findTypescriptVersion(): TypeScriptVersion | null {
-        const typescriptVersionProvider = new TypeScriptVersionProvider(this.options);
+        const typescriptVersionProvider = new TypeScriptVersionProvider(this.options, this.logger);
         // User-provided tsserver path.
         const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
         if (userSettingVersion) {
