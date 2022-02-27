@@ -9,6 +9,7 @@ import pkgUp from 'pkg-up';
 import API from './api';
 import { IServerOptions } from './configuration';
 import { findPathToModule } from './modules-resolver';
+import type { Logger } from '../logger';
 
 export const enum TypeScriptVersionSource {
     Bundled = 'bundled',
@@ -94,13 +95,14 @@ export class TypeScriptVersion {
 export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib'];
 
 export class TypeScriptVersionProvider {
-    public constructor(private configuration?: IServerOptions) {}
+    public constructor(private configuration?: IServerOptions, private logger?: Logger) {}
 
     public getUserSettingVersion(): TypeScriptVersion | null {
         const { tsserverPath } = this.configuration || {};
         if (!tsserverPath) {
             return null;
         }
+        this.logger?.info(`Resolving user-provided tsserver path "${tsserverPath}"...`);
         let resolvedPath = tsserverPath;
         // Resolve full path to the binary if path is not absolute.
         if (!path.isAbsolute(resolvedPath)) {
@@ -108,22 +110,27 @@ export class TypeScriptVersionProvider {
             if (binaryPath) {
                 resolvedPath = binaryPath;
             }
+            this.logger?.info(`Non-absolute tsserver path resolved to "${binaryPath ? resolvedPath : '<failed>'}"`);
         }
         // Resolve symbolic link.
         let stat = fs.lstatSync(resolvedPath, { throwIfNoEntry: false });
         if (stat?.isSymbolicLink()) {
             resolvedPath = fs.realpathSync(resolvedPath);
+            this.logger?.info(`Symbolic link tsserver path resolved to "${resolvedPath}"`);
         }
         // Get directory path
         stat = fs.lstatSync(resolvedPath, { throwIfNoEntry: false });
         if (stat?.isFile()) {
             resolvedPath = path.dirname(resolvedPath);
+            this.logger?.info(`Resolved directory path from a file path: ${resolvedPath}`);
         }
         // Resolve path to the "lib" dir.
         try {
+            this.logger?.info('Looking for parent package.json...');
             const packageJsonPath = pkgUp.sync({ cwd: resolvedPath });
             if (packageJsonPath) {
                 resolvedPath = path.join(path.dirname(packageJsonPath), 'lib');
+                this.logger?.info(`Resolved tsserver path from package.json location: "${resolvedPath}"`);
             }
         } catch {
             // ignore
