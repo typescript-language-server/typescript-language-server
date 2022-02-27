@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [0.9.7](https://github.com/typescript-language-server/typescript-language-server/compare/v0.9.6...v0.9.7) (2022-02-27)
+
+
+### Bug Fixes
+
+* add more logging for resolving user-specified tsserver ([#412](https://github.com/typescript-language-server/typescript-language-server/issues/412)) ([7139a32](https://github.com/typescript-language-server/typescript-language-server/commit/7139a32da05b6e3dfcd3252bde934dc499412d3d))
+* help users resolve no valid tsserver version error ([#337](https://github.com/typescript-language-server/typescript-language-server/issues/337)) ([d835543](https://github.com/typescript-language-server/typescript-language-server/commit/d835543e455a51ec159457a1479a550712574099))
+
 ## [0.9.6] - 2022-02-02
 
  - **fix**: don't transform zipfile URIs from Vim (#386)
