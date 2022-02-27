@@ -22,7 +22,8 @@ export class TypeScriptVersion {
     constructor(
         public readonly source: TypeScriptVersionSource,
         public readonly path: string,
-        private readonly _pathLabel?: string
+        private readonly _pathLabel?: string,
+        private readonly logger?: Logger
     ) {
         this._api = null;
     }
@@ -57,12 +58,15 @@ export class TypeScriptVersion {
     }
 
     private getTypeScriptVersion(serverPath: string): API | null {
+        this.logger?.info(`Resolving TypeScript version from path "${serverPath}"...`);
         if (!fs.existsSync(serverPath)) {
+            this.logger?.info('Server path does not exist on disk');
             return null;
         }
 
         const p = serverPath.split(path.sep);
         if (p.length <= 2) {
+            this.logger?.info('Server path is invalid (has less than two path components).');
             return null;
         }
         const p2 = p.slice(0, -2);
@@ -75,20 +79,25 @@ export class TypeScriptVersion {
             }
         }
         if (!fs.existsSync(fileName)) {
+            this.logger?.info(`Failed to find package.json at path "${fileName}"`);
             return null;
         }
 
+        this.logger?.info(`Reading version from package.json at "${fileName}"`);
         const contents = fs.readFileSync(fileName).toString();
         let desc: any = null;
         try {
             desc = JSON.parse(contents);
         } catch (err) {
+            this.logger?.info('Failed parsing contents of package.json.');
             return null;
         }
         if (!desc || !desc.version) {
+            this.logger?.info('Failed reading version number from package.json.');
             return null;
         }
-        return desc.version ? API.fromVersionString(desc.version) : null;
+        this.logger?.info(`Resolved TypeScript version to "${desc.version}"`);
+        return API.fromVersionString(desc.version);
     }
 }
 
@@ -126,18 +135,20 @@ export class TypeScriptVersionProvider {
         }
         // Resolve path to the "lib" dir.
         try {
-            this.logger?.info('Looking for parent package.json...');
             const packageJsonPath = pkgUp.sync({ cwd: resolvedPath });
+            this.logger?.info(`Resolved package.json location: "${packageJsonPath}"`);
             if (packageJsonPath) {
                 resolvedPath = path.join(path.dirname(packageJsonPath), 'lib');
-                this.logger?.info(`Resolved tsserver path from package.json location: "${resolvedPath}"`);
+                this.logger?.info(`Assumed tsserver lib location: "${resolvedPath}"`);
             }
         } catch {
             // ignore
         }
         return new TypeScriptVersion(
             TypeScriptVersionSource.UserSetting,
-            resolvedPath
+            resolvedPath,
+            undefined,
+            this.logger
         );
     }
 
