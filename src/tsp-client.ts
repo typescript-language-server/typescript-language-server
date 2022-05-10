@@ -25,6 +25,7 @@ export interface TspClientOptions {
     disableAutomaticTypingAcquisition?: boolean;
     maxTsServerMemory?: number;
     npmLocation?: string;
+    locale?: string;
     globalPlugins?: string[];
     pluginProbeLocations?: string[];
     onEvent?: (event: protocol.Event) => void;
@@ -92,6 +93,7 @@ export class TspClient {
             disableAutomaticTypingAcquisition,
             maxTsServerMemory,
             npmLocation,
+            locale,
             globalPlugins,
             pluginProbeLocations
         } = this.options;
@@ -114,6 +116,9 @@ export class TspClient {
         if (npmLocation) {
             this.logger.info(`using npm from ${npmLocation}`);
             args.push('--npmLocation', npmLocation);
+        }
+        if (locale) {
+            args.push('--locale', locale);
         }
 
         this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
