@@ -35,6 +35,7 @@ export interface TypeScriptInitializationOptions {
     logVerbosity?: string;
     maxTsServerMemory?: number;
     npmLocation?: string;
+    locale?: string;
     plugins: TypeScriptPlugin[];
     preferences?: UserPreferences;
     hostInfo?: string;
