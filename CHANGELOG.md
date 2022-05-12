@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.10.0](https://github.com/typescript-language-server/typescript-language-server/compare/v0.9.7...v0.10.0) (2022-05-11)
+
+
+### Features
+
+* add support for locale option ([#461](https://github.com/typescript-language-server/typescript-language-server/issues/461)) ([be6a95d](https://github.com/typescript-language-server/typescript-language-server/commit/be6a95ddf6abf8cb68689a6995e3e55858eacb23))
+
 ### [0.9.7](https://github.com/typescript-language-server/typescript-language-server/compare/v0.9.6...v0.9.7) (2022-02-27)
 
 
