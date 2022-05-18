@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [0.10.1](https://github.com/typescript-language-server/typescript-language-server/compare/v0.10.0...v0.10.1) (2022-05-18)
+
+
+### Bug Fixes
+
+* pin old version of LSP libraries for node <14 compatibility ([#467](https://github.com/typescript-language-server/typescript-language-server/issues/467)) ([55600e1](https://github.com/typescript-language-server/typescript-language-server/commit/55600e12635c01d5a531b776b33d10f9e622a7a6))
+
 ## [0.10.0](https://github.com/typescript-language-server/typescript-language-server/compare/v0.9.7...v0.10.0) (2022-05-11)
 
 
