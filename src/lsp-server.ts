@@ -679,7 +679,7 @@ export class LspServer {
 
                 spanGroup.locs.forEach((textSpan) => {
                     textEdits.push({
-                        newText: params.newName,
+                        newText: `${textSpan.prefixText || ''}${params.newName}${textSpan.suffixText || ''}`,
                         range: {
                             start: toPosition(textSpan.start),
                             end: toPosition(textSpan.end)
