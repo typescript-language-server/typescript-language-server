@@ -141,6 +141,7 @@ From the `preferences` options listed above, this server explicilty sets the fol
     includeCompletionsWithInsertText: true,
     includeCompletionsWithSnippetText: true,
     jsxAttributeCompletionStyle: "auto",
+    providePrefixAndSuffixTextForRename: true,
 }
 ```
 

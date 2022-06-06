@@ -158,6 +158,7 @@ export class LspServer {
                 includeCompletionsWithInsertText: true,
                 includeCompletionsWithSnippetText: true,
                 jsxAttributeCompletionStyle: 'auto',
+                providePrefixAndSuffixTextForRename: true,
                 ...userInitializationOptions.preferences
             }
         };
