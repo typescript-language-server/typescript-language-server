@@ -65,7 +65,6 @@ describe('ts server client', () => {
         });
         await server.request(CommandTypes.Configure, {
             preferences: {
-                // @ts-expect-error preference exist
                 includeInlayFunctionLikeReturnTypeHints: true
             }
         });

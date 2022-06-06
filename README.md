@@ -98,6 +98,22 @@ interface UserPreferences {
      */
     includeCompletionsWithClassMemberSnippets: boolean;
     /**
+     * If enabled, object literal methods will have a method declaration completion entry in addition
+     * to the regular completion entry containing just the method name.
+     * E.g., `const objectLiteral: T = { f| }` could be completed to `const objectLiteral: T = { foo(): void {} }`,
+     * in addition to `const objectLiteral: T = { foo }`.
+     * @since 4.7.2
+     * @default true
+     */
+    includeCompletionsWithObjectLiteralMethodSnippets: boolean;
+    /**
+     * Indicates whether {@link CompletionEntry.labelDetails completion entry label details} are supported.
+     * If not, contents of `labelDetails` may be included in the {@link CompletionEntry.name} property.
+     * @since 4.7.2
+     * @default false
+     */
+    useLabelDetailsInCompletionEntries: boolean;
+    /**
      * Allows import module names to be resolved in the initial completions request.
      * @default false
      */
@@ -122,6 +138,14 @@ interface UserPreferences {
     jsxAttributeCompletionStyle: "auto" | "braces" | "none";
     displayPartsForJSDoc: boolean;
     generateReturnInDocTemplate: boolean;
+
+    includeInlayParameterNameHints: "none" | "literals" | "all";
+    includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
+    includeInlayFunctionParameterTypeHints: boolean,
+    includeInlayVariableTypeHints: boolean;
+    includeInlayPropertyDeclarationTypeHints: boolean;
+    includeInlayFunctionLikeReturnTypeHints: boolean;
+    includeInlayEnumMemberValueHints: boolean;
 }
 ```
 
@@ -138,6 +162,7 @@ From the `preferences` options listed above, this server explicilty sets the fol
     includeCompletionsForImportStatements: true,
     includeCompletionsForModuleExports: true,
     includeCompletionsWithClassMemberSnippets: true,
+    includeCompletionsWithObjectLiteralMethodSnippets: true,
     includeCompletionsWithInsertText: true,
     includeCompletionsWithSnippetText: true,
     jsxAttributeCompletionStyle: "auto",

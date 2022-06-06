@@ -155,6 +155,7 @@ export class LspServer {
                 includeCompletionsForImportStatements: true,
                 includeCompletionsForModuleExports: true,
                 includeCompletionsWithClassMemberSnippets: true,
+                includeCompletionsWithObjectLiteralMethodSnippets: true,
                 includeCompletionsWithInsertText: true,
                 includeCompletionsWithSnippetText: true,
                 jsxAttributeCompletionStyle: 'auto',
