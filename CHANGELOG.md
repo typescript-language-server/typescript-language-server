@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.11.0](https://github.com/typescript-language-server/typescript-language-server/compare/v0.10.1...v0.11.0) (2022-06-06)
+
+
+### Features
+
+* add support for rename prefixText and suffixText on rename ([#478](https://github.com/typescript-language-server/typescript-language-server/issues/478)) ([b3c8535](https://github.com/typescript-language-server/typescript-language-server/commit/b3c85354c71dc36e1d4775bf61d7064a6b85e958))
+
 ### [0.10.1](https://github.com/typescript-language-server/typescript-language-server/compare/v0.10.0...v0.10.1) (2022-05-18)
 
 
