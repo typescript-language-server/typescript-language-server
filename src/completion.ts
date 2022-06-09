@@ -377,3 +377,20 @@ function asDetail({ displayParts, sourceDisplay, source: deprecatedSource }: tsp
     }
     return result.join('\n');
 }
+
+export function getCompletionTriggerCharacter(character: string | undefined): tsp.CompletionsTriggerCharacter | undefined {
+    switch (character) {
+        case '@':
+        case '#':
+        case ' ':
+        case '.':
+        case '"':
+        case '\'':
+        case '`':
+        case '/':
+        case '<':
+            return character;
+        default:
+            return undefined;
+    }
+}
