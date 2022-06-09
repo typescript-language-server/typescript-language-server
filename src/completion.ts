@@ -103,7 +103,11 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
             }
         }
     }
-    if (insertText && replacementRange) {
+    if (replacementRange) {
+        if (!insertText) {
+            insertText = item.label;
+        }
+
         item.textEdit = lsp.TextEdit.replace(replacementRange, insertText);
     } else {
         item.insertText = insertText;
