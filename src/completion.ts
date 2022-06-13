@@ -103,7 +103,11 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
             }
         }
     }
-    if (insertText && replacementRange) {
+    if (replacementRange) {
+        if (!insertText) {
+            insertText = item.label;
+        }
+
         item.textEdit = lsp.TextEdit.replace(replacementRange, insertText);
     } else {
         item.insertText = insertText;
@@ -376,4 +380,21 @@ function asDetail({ displayParts, sourceDisplay, source: deprecatedSource }: tsp
         result.push(detail);
     }
     return result.join('\n');
+}
+
+export function getCompletionTriggerCharacter(character: string | undefined): tsp.CompletionsTriggerCharacter | undefined {
+    switch (character) {
+        case '@':
+        case '#':
+        case ' ':
+        case '.':
+        case '"':
+        case '\'':
+        case '`':
+        case '/':
+        case '<':
+            return character;
+        default:
+            return undefined;
+    }
 }

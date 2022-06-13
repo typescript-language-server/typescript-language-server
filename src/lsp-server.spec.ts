@@ -323,6 +323,40 @@ describe('completion', () => {
         assert.strictEqual(resolvedItem.insertText, 'readFile(${1:path}, ${2:options}, ${3:callback})$0');
         server.didCloseTextDocument({ textDocument: doc });
     }).timeout(10000);
+
+    it('includes textEdit for string completion', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+              function test(value: "fs/read" | "hello/world") {
+                return true;
+              }
+              
+              test("fs/")
+            `
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({
+            textDocument: doc,
+            position: positionAfter(doc, 'test("fs/'),
+            context: {
+                triggerCharacter: '/',
+                triggerKind: 2
+            }
+        });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'fs/read');
+        assert.strictEqual(completion!.label, 'fs/read');
+        assert.deepStrictEqual(completion!.textEdit, {
+            range: {
+                start: { line: 5, character: 20 },
+                end: { line: 5, character: 23 }
+            },
+            newText: 'fs/read'
+        });
+    }).timeout(10000);
 });
 
 describe('diagnostics', () => {

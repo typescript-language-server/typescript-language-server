@@ -25,7 +25,7 @@ import {
     pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText, normalizePath
 } from './protocol-translation';
 import { LspDocuments, LspDocument } from './document';
-import { asCompletionItem, asResolvedCompletionItem } from './completion';
+import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion';
 import { asSignatureHelp } from './hover';
 import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
@@ -588,7 +588,9 @@ export class LspServer {
             const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionInfo, {
                 file,
                 line: params.position.line + 1,
-                offset: params.position.character + 1
+                offset: params.position.character + 1,
+                triggerCharacter: getCompletionTriggerCharacter(params.context?.triggerCharacter),
+                triggerKind: params.context?.triggerKind
             }));
             const { body } = result;
             const completions = (body ? body.entries : [])
