@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.11.1](https://github.com/typescript-language-server/typescript-language-server/compare/v0.11.0...v0.11.1) (2022-06-13)
+
+
+### Bug Fixes
+
+* completion for strings with trigger character ([#492](https://github.com/typescript-language-server/typescript-language-server/issues/492)) ([76bf9a4](https://github.com/typescript-language-server/typescript-language-server/commit/76bf9a4817ffa1e340422cfd5177dbcb96528ddb))
+
 ## [0.11.0](https://github.com/typescript-language-server/typescript-language-server/compare/v0.10.1...v0.11.0) (2022-06-06)
 
 
