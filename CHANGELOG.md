@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.11.2](https://github.com/typescript-language-server/typescript-language-server/compare/v0.11.1...v0.11.2) (2022-06-24)
+
+
+### Bug Fixes
+
+* apply refactoring returns -1 positions in ranges ([#502](https://github.com/typescript-language-server/typescript-language-server/issues/502)) ([5f52db0](https://github.com/typescript-language-server/typescript-language-server/commit/5f52db0383d6c326cd321c13fc969ab9d3958011))
+
 ## [0.11.1](https://github.com/typescript-language-server/typescript-language-server/compare/v0.11.0...v0.11.1) (2022-06-13)
 
 
