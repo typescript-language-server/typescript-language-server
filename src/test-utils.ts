@@ -67,16 +67,20 @@ export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp
     return positionAt(document, document.text.lastIndexOf(match));
 }
 
+export class TestLspServer extends LspServer {
+    workspaceEdits: lsp.ApplyWorkspaceEditParams[] = [];
+}
+
 export async function createServer(options: {
     rootUri: string | null;
     tsserverLogVerbosity?: string;
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
     clientCapabilitiesOverride?: lsp.ClientCapabilities;
-}): Promise<LspServer> {
+}): Promise<TestLspServer> {
     const typescriptVersionProvider = new TypeScriptVersionProvider();
     const bundled = typescriptVersionProvider.bundledVersion();
     const logger = new ConsoleLogger(false);
-    const server = new LspServer({
+    const server = new TestLspServer({
         logger,
         tsserverPath: bundled!.tsServerPath,
         tsserverLogVerbosity: options.tsserverLogVerbosity,
@@ -100,7 +104,10 @@ export async function createServer(options: {
             telemetry(args): void {
                 logger.log('telemetry', JSON.stringify(args));
             },
-            applyWorkspaceEdit: () => Promise.reject(new Error('unsupported')),
+            async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse> {
+                server.workspaceEdits.push(args);
+                return { applied: true };
+            },
             rename: () => Promise.reject(new Error('unsupported'))
         }
     });

@@ -6,11 +6,12 @@
  */
 
 import * as chai from 'chai';
+import * as fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
-import { LspServer } from './lsp-server';
-import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter, readContents } from './test-utils';
+import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter, readContents, TestLspServer } from './test-utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { Commands } from './commands';
 import { TypeScriptWorkspaceSettings } from './ts-protocol';
 import { CodeActionKind } from './utils/types';
 
@@ -18,7 +19,7 @@ const assert = chai.assert;
 
 const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 
-let server: LspServer;
+let server: TestLspServer;
 
 before(async () => {
     server = await createServer({
@@ -37,6 +38,7 @@ beforeEach(() => {
     server.closeAll();
     // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
     diagnostics.clear();
+    server.workspaceEdits = [];
 });
 
 after(() => {
@@ -1338,6 +1340,85 @@ existsSync('t');`
                 }
             }
         ]);
+    }).timeout(10000);
+});
+
+describe('executeCommand', () => {
+    it('apply refactoring (move to new file)', async () => {
+        const fooUri = uri('foo.ts');
+        const doc = {
+            uri: fooUri,
+            languageId: 'typescript',
+            version: 1,
+            text: 'export function fn(): void {}\nexport function newFn(): void {}'
+        };
+        server.didOpenTextDocument({
+            textDocument: doc
+        });
+        const codeActions = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: position(doc, 'newFn'),
+                end: position(doc, 'newFn')
+            },
+            context: {
+                diagnostics: []
+            }
+        }))!;
+        // Find refactoring code action.
+        const applyRefactoringAction = codeActions.find(action => action.command?.command === Commands.APPLY_REFACTORING);
+        assert.isDefined(applyRefactoringAction);
+        // Execute refactoring action.
+        await server.executeCommand({
+            command: applyRefactoringAction!.command!.command,
+            arguments: applyRefactoringAction!.command!.arguments
+        });
+        assert.equal(1, server.workspaceEdits.length);
+        const { changes } = server.workspaceEdits[0].edit;
+        assert.isDefined(changes);
+        assert.equal(2, Object.keys(changes!).length);
+        const change1 = changes![fooUri];
+        assert.isDefined(change1);
+        const change2 = changes![uri('newFn.ts')];
+        assert.isDefined(change2);
+        // Clean up file that is created on applying edit.
+        fs.unlink(filePath('newFn.ts'));
+        assert.deepEqual(
+            change1,
+            [
+                {
+                    range: {
+                        start: {
+                            line: 1,
+                            character: 0
+                        },
+                        end: {
+                            line: 1,
+                            character: 32
+                        }
+                    },
+                    newText: ''
+                }
+            ]
+        );
+        assert.deepEqual(
+            change2,
+            [
+                {
+                    range: {
+                        start: {
+                            line: 0,
+                            character: 0
+                        },
+                        end: {
+                            line: 0,
+                            character: 0
+                        }
+                    },
+                    newText: 'export function newFn(): void { }\n'
+                }
+            ]
+        );
     }).timeout(10000);
 });
 
