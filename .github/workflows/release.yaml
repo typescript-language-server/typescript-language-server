@@ -15,7 +15,7 @@ jobs:
           package-name: typescript-language-server
       - uses: actions/checkout@v2
         if: ${{ steps.release.outputs.release_created }}
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         if: ${{ steps.release.outputs.release_created }}
         with:
           node-version: 16
