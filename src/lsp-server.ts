@@ -40,6 +40,38 @@ import { TypeScriptAutoFixProvider } from './features/fix-all';
 import { LspClient, ProgressReporter } from './lsp-client';
 import { CodeActionKind } from './utils/types';
 
+const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
+    allowIncompleteCompletions: true,
+    allowRenameOfImportPath: true,
+    allowTextChangesInNewFiles: true,
+    disableSuggestions: false,
+    displayPartsForJSDoc: true,
+    generateReturnInDocTemplate: true,
+    importModuleSpecifierEnding: 'auto',
+    importModuleSpecifierPreference: 'shortest',
+    includeAutomaticOptionalChainCompletions: true,
+    includeCompletionsForImportStatements: true,
+    includeCompletionsForModuleExports: true,
+    includeCompletionsWithClassMemberSnippets: true,
+    includeCompletionsWithInsertText: true,
+    includeCompletionsWithObjectLiteralMethodSnippets: true,
+    includeCompletionsWithSnippetText: true,
+    includeInlayEnumMemberValueHints: false,
+    includeInlayFunctionLikeReturnTypeHints: false,
+    includeInlayFunctionParameterTypeHints: false,
+    includeInlayParameterNameHints: 'none',
+    includeInlayParameterNameHintsWhenArgumentMatchesName: false,
+    includeInlayPropertyDeclarationTypeHints: false,
+    includeInlayVariableTypeHints: false,
+    includePackageJsonAutoImports: 'auto',
+    jsxAttributeCompletionStyle: 'auto',
+    lazyConfiguredProjectsFromExternalProject: false,
+    providePrefixAndSuffixTextForRename: true,
+    provideRefactorNotApplicableReason: false,
+    quotePreference: 'auto',
+    useLabelDetailsInCompletionEntries: false
+};
+
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;
     private _progressReporter?: ProgressReporter;
@@ -146,19 +178,7 @@ export class LspServer {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
             preferences: {
-                allowIncompleteCompletions: true,
-                allowRenameOfImportPath: true,
-                allowTextChangesInNewFiles: true,
-                displayPartsForJSDoc: true,
-                generateReturnInDocTemplate: true,
-                includeAutomaticOptionalChainCompletions: true,
-                includeCompletionsForImportStatements: true,
-                includeCompletionsForModuleExports: true,
-                includeCompletionsWithClassMemberSnippets: true,
-                includeCompletionsWithInsertText: true,
-                includeCompletionsWithSnippetText: true,
-                jsxAttributeCompletionStyle: 'auto',
-                providePrefixAndSuffixTextForRename: true,
+                ...DEFAULT_TSSERVER_PREFERENCES,
                 ...userInitializationOptions.preferences
             }
         };
