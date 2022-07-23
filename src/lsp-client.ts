@@ -20,7 +20,7 @@ export interface LspClient {
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
     showMessage(args: lsp.ShowMessageParams): void;
     logMessage(args: lsp.LogMessageParams): void;
-    applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse>;
+    applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult>;
     telemetry(args: any): void;
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
 }
@@ -85,7 +85,7 @@ export class LspClientImpl implements LspClient {
         this.connection.sendNotification(lsp.TelemetryEventNotification.type, args);
     }
 
-    async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse> {
+    async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {
         return this.connection.sendRequest(lsp.ApplyWorkspaceEditRequest.type, args);
     }
 

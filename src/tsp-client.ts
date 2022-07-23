@@ -41,7 +41,7 @@ interface TypeScriptRequestTypes {
     'completionInfo': [protocol.CompletionsRequestArgs, protocol.CompletionInfoResponse];
     'configure': [protocol.ConfigureRequestArguments, protocol.ConfigureResponse];
     'definition': [protocol.FileLocationRequestArgs, protocol.DefinitionResponse];
-    'definitionAndBoundSpan': [protocol.FileLocationRequestArgs, protocol.DefinitionInfoAndBoundSpanReponse];
+    'definitionAndBoundSpan': [protocol.FileLocationRequestArgs, protocol.DefinitionInfoAndBoundSpanResponse];
     'docCommentTemplate': [protocol.FileLocationRequestArgs, protocol.DocCommandTemplateResponse];
     'format': [protocol.FormatRequestArgs, protocol.FormatResponse];
     'formatonkey': [protocol.FormatOnKeyRequestArgs, protocol.FormatResponse];
@@ -56,7 +56,6 @@ interface TypeScriptRequestTypes {
     'jsxClosingTag': [protocol.JsxClosingTagRequestArgs, protocol.JsxClosingTagResponse];
     'navto': [protocol.NavtoRequestArgs, protocol.NavtoResponse];
     'navtree': [protocol.FileRequestArgs, protocol.NavTreeResponse];
-    'occurrences': [protocol.FileLocationRequestArgs, protocol.OccurrencesResponse];
     'organizeImports': [protocol.OrganizeImportsRequestArgs, protocol.OrganizeImportsResponse];
     'projectInfo': [protocol.ProjectInfoRequestArgs, protocol.ProjectInfoResponse];
     'quickinfo': [protocol.FileLocationRequestArgs, protocol.QuickInfoResponse];
