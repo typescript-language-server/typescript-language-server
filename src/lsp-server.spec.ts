@@ -1555,7 +1555,7 @@ export function factory() {
         );
     });
 
-    it('callees: first step', async () => {
+    it.skip('callees: first step', async () => {
         openDocuments();
         const direction = lspcalls.CallDirection.Outgoing;
         const callsResult = await server.calls({
@@ -1572,7 +1572,7 @@ export function factory() {
         );
     });
 
-    it('callees: second step', async () => {
+    it.skip('callees: second step', async () => {
         openDocuments();
         const direction = lspcalls.CallDirection.Outgoing;
         const callsResult = await server.calls({
