@@ -106,7 +106,7 @@ export async function createServer(options: {
             telemetry(args): void {
                 logger.log('telemetry', JSON.stringify(args));
             },
-            async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResponse> {
+            async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {
                 server.workspaceEdits.push(args);
                 return { applied: true };
             },
