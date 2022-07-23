@@ -1,0 +1,6 @@
+exit: true
+require:
+    - 'source-map-support/register'
+    - 'ts-node/register'
+spec: './src/**/*.spec.ts'
+watch-files: './src/**/*.ts'

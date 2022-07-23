@@ -14,6 +14,8 @@ import { ConsoleLogger } from './logger';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { TypeScriptVersionProvider } from './utils/versionProvider';
 
+const CONSOLE_LOG_LEVEL = ConsoleLogger.toMessageTypeLevel(process.env.CONSOLE_LOG_LEVEL);
+
 export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
     return {
         textDocument: {
@@ -79,7 +81,7 @@ export async function createServer(options: {
 }): Promise<TestLspServer> {
     const typescriptVersionProvider = new TypeScriptVersionProvider();
     const bundled = typescriptVersionProvider.bundledVersion();
-    const logger = new ConsoleLogger(false);
+    const logger = new ConsoleLogger(CONSOLE_LOG_LEVEL);
     const server = new TestLspServer({
         logger,
         tsserverPath: bundled!.tsServerPath,

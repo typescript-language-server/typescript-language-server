@@ -431,9 +431,10 @@ yarn
 
 ### Test
 
-```sh
-yarn test
-```
+ - `yarn test` - run all tests
+ - `yarn test:watch` - run all tests and enable watch mode for developing
+
+By default only console logs of level `warn` and higher are printed to the console. You can override the `CONSOLE_LOG_LEVEL` level in `package.json` to either `log`, `info`, `warn` or `error` to log other levels.
 
 ### Watch
 
@@ -443,6 +444,4 @@ yarn watch
 
 ### Publishing
 
-```sh
-yarn publish
-```
+New version of the package is published automatically on pushing new tag to the upstream repo.
