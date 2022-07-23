@@ -13,7 +13,7 @@ jobs:
         with:
           release-type: node
           package-name: typescript-language-server
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: ${{ steps.release.outputs.release_created }}
       - uses: actions/setup-node@v2
         if: ${{ steps.release.outputs.release_created }}
