@@ -65,9 +65,11 @@ function currentVersion(filepath: string, documents: LspDocuments | undefined): 
 }
 
 export function toPosition(location: tsp.Location): lsp.Position {
+    // Clamping on the low side to 0 since Typescript returns 0, 0 when creating new file
+    // even though position is suppoed to be 1-based.
     return {
-        line: location.line - 1,
-        character: location.offset - 1
+        line: Math.max(0, location.line - 1),
+        character: Math.max(0, location.offset - 1)
     };
 }
 

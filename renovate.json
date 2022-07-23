@@ -1,0 +1,40 @@
+{
+  "extends": [
+    "config:base",
+    ":prHourlyLimit4",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "schedule": [
+    "after 10am every monday"
+  ],
+  "meteor": {
+    "enabled": false
+  },
+  "rangeStrategy": "bump",
+  "npm": {
+    "commitMessageTopic": "{{prettyDepType}} {{depName}}"
+  },
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "node"
+      ],
+      "enabled": false
+    },
+    {
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch",
+      "matchFiles": ["package.json"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "lockFileMaintenance": {
+        "enabled": true,
+        "extends": [
+          "schedule:weekly"
+        ]
+      }
+    }
+  ]
+}

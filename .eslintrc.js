@@ -34,6 +34,7 @@ module.exports = {
                 allow: ['assert', 'warn', 'error']
             }
         ],
+        'no-constant-binary-expression': 'error',
         'no-constructor-return': 'error',
         'no-multi-spaces': ['error', { ignoreEOLComments: true }],
         'no-multiple-empty-lines': ['error', { max: 1 }],
