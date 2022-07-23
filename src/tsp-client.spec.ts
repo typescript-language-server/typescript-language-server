@@ -40,7 +40,7 @@ describe('ts server client', () => {
         });
         assert.isDefined(completions.body);
         assert.equal(completions.body!.entries[1].name, 'ImageBitmap');
-    }).timeout(10000);
+    });
 
     it('references', async () => {
         const f = filePath('module2.ts');
@@ -55,7 +55,7 @@ describe('ts server client', () => {
         });
         assert.isDefined(references.body);
         assert.equal(references.body!.symbolName, 'doStuff');
-    }).timeout(10000);
+    });
 
     it('inlayHints', async () => {
         const f = filePath('module2.ts');
@@ -78,7 +78,7 @@ describe('ts server client', () => {
         );
         assert.isDefined(inlayHints.body);
         assert.equal(inlayHints.body![0].text, ': boolean');
-    }).timeout(10000);
+    });
 
     it('documentHighlight', async () => {
         const f = filePath('module2.ts');
@@ -95,5 +95,5 @@ describe('ts server client', () => {
         assert.isDefined(response.body);
         assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')), JSON.stringify(response.body, undefined, 2));
         assert.isFalse(response.body!.some(({ file: file_1 }) => file_1.endsWith('module1.ts')), JSON.stringify(response.body, undefined, 2));
-    }).timeout(10000);
+    });
 });
