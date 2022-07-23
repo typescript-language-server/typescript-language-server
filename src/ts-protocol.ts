@@ -25,6 +25,10 @@ export class DisplayPartKind {
     public static readonly text = 'text';
 }
 
+export interface SupportedFeatures {
+    labelDetails?: boolean;
+}
+
 export interface TypeScriptPlugin {
     name: string;
     location: string;

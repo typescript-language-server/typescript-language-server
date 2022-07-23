@@ -335,7 +335,7 @@ describe('completion', () => {
               function test(value: "fs/read" | "hello/world") {
                 return true;
               }
-              
+
               test("fs/")
             `
         };
@@ -358,6 +358,49 @@ describe('completion', () => {
             },
             newText: 'fs/read'
         });
+    });
+
+    it('includes labelDetails with useLabelDetailsInCompletionEntries enabled', async () => {
+        const doc = {
+            uri: uri('foo.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+              interface IFoo {
+                bar(x: number): void;
+              }
+              const obj: IFoo = {
+                /*a*/
+              }
+            `
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({
+            textDocument: doc,
+            position: positionAfter(doc, '/*a*/')
+        });
+        assert.isNotNull(proposals);
+        assert.lengthOf(proposals!.items, 2);
+        assert.deepInclude(
+            proposals!.items[0],
+            {
+                label: 'bar',
+                kind: 2,
+                insertTextFormat: 2
+            }
+        );
+        assert.deepInclude(
+            proposals!.items[1],
+            {
+                label: 'bar',
+                labelDetails: {
+                    detail: '(x)'
+                },
+                kind: 2,
+                insertTextFormat: 2,
+                insertText: 'bar(x) {\n    $0\n},'
+            }
+        );
     });
 });
 
