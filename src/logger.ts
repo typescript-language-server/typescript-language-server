@@ -55,28 +55,52 @@ export class LspClientLogger implements Logger {
     }
 }
 
+export enum ConsoleLogLevel {
+    error = 'error',
+    warn = 'warn',
+    info = 'warn',
+    verbose = 'verbose',
+}
+
 export class ConsoleLogger implements Logger {
-    constructor(private isLogEnabled?: boolean) {}
+    constructor(private level: lsp.MessageType = lsp.MessageType.Info) {}
+
+    static toMessageTypeLevel(type?: string): lsp.MessageType {
+        switch (type) {
+            case 'error':
+                return lsp.MessageType.Error;
+            case 'warn':
+                return lsp.MessageType.Warning;
+            case 'log':
+                return lsp.MessageType.Log;
+            case 'info':
+            default:
+                return lsp.MessageType.Info;
+        }
+    }
+
+    private print(type: keyof Logger, level: lsp.MessageType, ...arg: any[]): void {
+        if (this.level >= level) {
+            // eslint-disable-next-line no-console
+            console[type](...this.toStrings(arg));
+        }
+    }
 
     private toStrings(...arg): string[] {
         return arg.map(a => JSON.stringify(a, null, 2));
     }
 
     error(...arg: any[]): void {
-        console.error(...this.toStrings(arg));
+        this.print('error', lsp.MessageType.Error, arg);
     }
     warn(...arg: any[]): void {
-        console.warn(...this.toStrings(arg));
+        this.print('error', lsp.MessageType.Warning, arg);
     }
     info(...arg: any[]): void {
-        // eslint-disable-next-line no-console
-        console.info(...this.toStrings(arg));
+        this.print('error', lsp.MessageType.Info, arg);
     }
     log(...arg: any[]): void {
-        if (this.isLogEnabled) {
-            // eslint-disable-next-line no-console
-            console.log(...this.toStrings(arg));
-        }
+        this.print('error', lsp.MessageType.Log, arg);
     }
 }
 

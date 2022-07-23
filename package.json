@@ -22,8 +22,8 @@
   },
   "scripts": {
     "clean": "rimraf lib *.tsbuildinfo",
-    "test": "cross-env TS_NODE_PROJECT=./tsconfig.json mocha",
-    "test:watch": "cross-env TS_NODE_PROJECT=./tsconfig.json mocha --watch",
+    "test": "cross-env CONSOLE_LOG_LEVEL=warn TS_NODE_PROJECT=./tsconfig.json mocha",
+    "test:watch": "cross-env CONSOLE_LOG_LEVEL=warn TS_NODE_PROJECT=./tsconfig.json mocha --watch",
     "test:compiled": "mocha \"./lib/**/*.spec.js\"",
     "lint": "eslint --ext \".js,.ts\" src",
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
