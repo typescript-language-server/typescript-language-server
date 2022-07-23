@@ -70,7 +70,7 @@ describe('completion', () => {
         assert.isNotTrue(resolvedItem.deprecated, 'resolved item is not deprecated');
         assert.isDefined(resolvedItem.detail);
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('simple JS test', async () => {
         const doc = {
@@ -107,7 +107,7 @@ describe('completion', () => {
 
         assert.isFalse(containsInvalidCompletions);
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('deprecated by JSDoc', async () => {
         const doc = {
@@ -139,7 +139,7 @@ describe('completion', () => {
         assert.isArray(resolvedItem.tags);
         assert.include(resolvedItem.tags!, lsp.CompletionItemTag.Deprecated, 'resolved item is deprecated');
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('incorrect source location', async () => {
         const doc = {
@@ -159,7 +159,7 @@ describe('completion', () => {
         const proposals = await server.completion({ textDocument: doc, position: pos });
         assert.isNull(proposals);
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('includes completions from global modules', async () => {
         const doc = {
@@ -174,7 +174,7 @@ describe('completion', () => {
         const pathExistsCompletion = proposals!.items.find(completion => completion.label === 'pathExists');
         assert.isDefined(pathExistsCompletion);
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('includes completions with invalid identifier names', async () => {
         const doc = {
@@ -198,7 +198,7 @@ describe('completion', () => {
         assert.isDefined(completion!.textEdit);
         assert.equal(completion!.textEdit!.newText, '["invalid-identifier-name"]');
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('includes detail field with package name for auto-imports', async () => {
         const doc = {
@@ -215,7 +215,7 @@ describe('completion', () => {
         assert.strictEqual(completion!.detail, 'fs');
         assert.strictEqual(completion!.insertTextFormat, /* snippet */2);
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('resolves text edit for auto-import completion', async () => {
         const doc = {
@@ -246,7 +246,7 @@ describe('completion', () => {
             }
         ]);
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('resolves text edit for auto-import completion in right format', async () => {
         server.didChangeConfiguration({
@@ -301,7 +301,7 @@ describe('completion', () => {
                 }
             }
         });
-    }).timeout(10000);
+    });
 
     it('resolves a snippet for method completion', async () => {
         const doc = {
@@ -324,7 +324,7 @@ describe('completion', () => {
         // eslint-disable-next-line no-template-curly-in-string
         assert.strictEqual(resolvedItem.insertText, 'readFile(${1:path}, ${2:options}, ${3:callback})$0');
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 
     it('includes textEdit for string completion', async () => {
         const doc = {
@@ -358,7 +358,7 @@ describe('completion', () => {
             },
             newText: 'fs/read'
         });
-    }).timeout(10000);
+    });
 });
 
 describe('diagnostics', () => {
@@ -384,7 +384,7 @@ describe('diagnostics', () => {
         const fileDiagnostics = resultsForFile!.diagnostics;
         assert.equal(fileDiagnostics.length, 1);
         assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
-    }).timeout(10000);
+    });
 
     it('supports diagnostic tags', async () => {
         const doc = {
@@ -415,7 +415,7 @@ describe('diagnostics', () => {
         const deprecatedDiagnostic = fileDiagnostics.find(d => d.code === 6387);
         assert.isDefined(deprecatedDiagnostic);
         assert.deepEqual(deprecatedDiagnostic!.tags, [lsp.DiagnosticTag.Deprecated]);
-    }).timeout(10000);
+    });
 
     it('multiple files test', async () => {
         const doc = {
@@ -454,7 +454,7 @@ describe('diagnostics', () => {
         assert.isDefined(diagnosticsForDoc2);
         assert.equal(diagnosticsForDoc!.diagnostics.length, 1, JSON.stringify(diagnostics));
         assert.equal(diagnosticsForDoc2!.diagnostics.length, 1, JSON.stringify(diagnostics));
-    }).timeout(10000);
+    });
 
     it('code 6133 (ununsed variable) is ignored', async () => {
         server.didChangeConfiguration({
@@ -486,7 +486,7 @@ describe('diagnostics', () => {
         assert.isDefined(diagnosticsForThisFile);
         const fileDiagnostics = diagnosticsForThisFile!.diagnostics;
         assert.equal(fileDiagnostics.length, 0, JSON.stringify(fileDiagnostics));
-    }).timeout(10000);
+    });
 });
 
 describe('document symbol', () => {
@@ -516,7 +516,7 @@ Foo
   foo
   myFunction
 `, symbolsAsString(symbols) + '\n');
-    }).timeout(10000);
+    });
 
     it('merges interfaces correctly', async () => {
         const doc = {
@@ -548,7 +548,7 @@ Box
 Box
   scale
 `, symbolsAsString(symbols) + '\n');
-    }).timeout(10000);
+    });
 
     it('duplication test', async () => {
         const doc = {
@@ -590,7 +590,7 @@ Foo
 
         assert.deepEqual(symbols[1].selectionRange, symbols[1].range);
         assert.deepEqual(symbols[1].range, { start: { line: 6, character: 8 }, end: { line: 10, character: 9 } });
-    }).timeout(10000);
+    });
 });
 
 function symbolsAsString(symbols: (lsp.DocumentSymbol | lsp.SymbolInformation)[], indentation = ''): string {
@@ -642,7 +642,7 @@ describe('editing', () => {
         const fileDiagnostics = resultsForFile!.diagnostics;
         assert.isTrue(fileDiagnostics.length >= 1, fileDiagnostics.map(d => d.message).join(','));
         assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
-    }).timeout(10000);
+    });
 });
 
 describe('references', () => {
@@ -676,7 +676,7 @@ describe('references', () => {
             position: lastPosition(doc, 'foo')
         });
         assert.strictEqual(references.length, 3);
-    }).timeout(10000);
+    });
 });
 
 describe('workspace configuration', () => {
@@ -736,7 +736,7 @@ describe('formatting', () => {
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('export function foo(): void { }', result);
-    }).timeout(10000);
+    });
 
     it('indent settings (3 spaces)', async () => {
         const text = 'function foo() {\n// some code\n}';
@@ -753,7 +753,7 @@ describe('formatting', () => {
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n   // some code\n}', result);
-    }).timeout(10000);
+    });
 
     it('indent settings (tabs)', async () => {
         const text = 'function foo() {\n// some code\n}';
@@ -770,7 +770,7 @@ describe('formatting', () => {
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n\t// some code\n}', result);
-    }).timeout(10000);
+    });
 
     it('formatting setting set through workspace configuration', async () => {
         const text = 'function foo() {\n// some code\n}';
@@ -799,7 +799,7 @@ describe('formatting', () => {
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo()\n{\n\t// some code\n}', result);
-    }).timeout(10000);
+    });
 
     it('selected range', async () => {
         const text = 'function foo() {\nconst first = 1;\nconst second = 2;\nconst val = foo( "something" );\n//const fourth = 4;\n}';
@@ -826,7 +826,7 @@ describe('formatting', () => {
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}', result);
-    }).timeout(10000);
+    });
 });
 
 describe('signatureHelp', () => {
@@ -856,7 +856,7 @@ describe('signatureHelp', () => {
         }))!;
 
         assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
-    }).timeout(10000);
+    });
 });
 
 describe('code actions', () => {
@@ -951,7 +951,7 @@ describe('code actions', () => {
             },
             kind: 'refactor'
         });
-    }).timeout(10000);
+    });
 
     it('can filter quickfix code actions filtered by only', async () => {
         server.didOpenTextDocument({
@@ -997,7 +997,7 @@ describe('code actions', () => {
                 title: 'Convert parameters to destructured object'
             }
         ]);
-    }).timeout(10000);
+    });
 
     it('does not provide organize imports when there are errors', async () => {
         server.didOpenTextDocument({
@@ -1025,7 +1025,7 @@ describe('code actions', () => {
         }))!;
 
         assert.deepEqual(result, []);
-    }).timeout(10000);
+    });
 
     it('provides "add missing imports" when explicitly requested in only', async () => {
         const doc = {
@@ -1083,7 +1083,7 @@ describe('code actions', () => {
                 }
             }
         ]);
-    }).timeout(10000);
+    });
 
     it('provides "fix all" when explicitly requested in only', async () => {
         const doc = {
@@ -1143,7 +1143,7 @@ describe('code actions', () => {
                 }
             }
         ]);
-    }).timeout(10000);
+    });
 
     it('provides organize imports when explicitly requested in only', async () => {
         const doc = {
@@ -1220,7 +1220,7 @@ existsSync('t');`
                 }
             }
         ]);
-    }).timeout(10000);
+    });
 
     it('provides "remove unused" when explicitly requested in only', async () => {
         const doc = {
@@ -1277,7 +1277,7 @@ existsSync('t');`
                 }
             }
         ]);
-    }).timeout(10000);
+    });
 
     it('only provides the "source.fixAll" kind if requested in only', async () => {
         const doc = {
@@ -1340,7 +1340,7 @@ existsSync('t');`
                 }
             }
         ]);
-    }).timeout(10000);
+    });
 });
 
 describe('executeCommand', () => {
@@ -1419,7 +1419,7 @@ describe('executeCommand', () => {
                 }
             ]
         );
-    }).timeout(10000);
+    });
 });
 
 describe('documentHighlight', () => {
@@ -1456,7 +1456,7 @@ describe('documentHighlight', () => {
             position: lastPosition(fooDoc, 'Bar')
         });
         assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
-    }).timeout(10000);
+    });
 });
 
 describe('calls', () => {
@@ -1538,7 +1538,7 @@ export function factory() {
   ↘ x (foo.ts#4) - foo.ts#4
             `.trim()
         );
-    }).timeout(10000);
+    });
 
     it('callers: second step', async () => {
         openDocuments();
@@ -1553,7 +1553,7 @@ export function factory() {
   ↘ factory (foo.ts#8) - foo.ts#9
             `.trim()
         );
-    }).timeout(10000);
+    });
 
     it('callees: first step', async () => {
         openDocuments();
@@ -1570,7 +1570,7 @@ export function factory() {
   ↖ two (do.ts#4) - do.ts#2
             `.trim()
         );
-    }).timeout(10000);
+    });
 
     it('callees: second step', async () => {
         openDocuments();
@@ -1588,7 +1588,7 @@ export function factory() {
   ↖ ttt (do.ts#6) - do.ts#7
             `.trim()
         );
-    }).timeout(10000);
+    });
 });
 
 describe('diagnostics (no client support)', () => {
@@ -1623,7 +1623,7 @@ describe('diagnostics (no client support)', () => {
         const resultsForFile = diagnostics.get(doc.uri);
         assert.isDefined(resultsForFile);
         assert.strictEqual(resultsForFile?.diagnostics.length, 1);
-    }).timeout(10000);
+    });
 });
 
 describe('jsx/tsx project', () => {
@@ -1650,7 +1650,7 @@ describe('jsx/tsx project', () => {
         const item = completion!.items.find(i => i.label === 'title');
         assert.isDefined(item);
         assert.strictEqual(item?.insertTextFormat, 2);
-    }).timeout(10000);
+    });
 });
 
 describe('inlayHints', () => {
@@ -1689,7 +1689,7 @@ describe('inlayHints', () => {
         assert.strictEqual(inlayHints[0].text, ': number');
         assert.strictEqual(inlayHints[0].kind, 'Type');
         assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 29 });
-    }).timeout(10000);
+    });
 
     it('inlayHints options set through workspace configuration ', async () => {
         const doc = {
@@ -1732,5 +1732,5 @@ describe('inlayHints', () => {
         assert.strictEqual(inlayHints[0].text, ': number');
         assert.strictEqual(inlayHints[0].kind, 'Type');
         assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 29 });
-    }).timeout(10000);
+    });
 });
