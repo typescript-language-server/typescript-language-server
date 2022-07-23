@@ -19,6 +19,11 @@ const CONSOLE_LOG_LEVEL = ConsoleLogger.toMessageTypeLevel(process.env.CONSOLE_L
 export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
     return {
         textDocument: {
+            completion: {
+                completionItem: {
+                    labelDetailsSupport: true
+                }
+            },
             documentSymbol: {
                 hierarchicalDocumentSymbolSupport: true
             },
