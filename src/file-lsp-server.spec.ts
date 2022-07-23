@@ -40,7 +40,7 @@ describe('documentHighlight', () => {
             position: lastPosition(doc, 'doStuff')
         });
         assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
-    }).timeout(10000);
+    });
 });
 
 describe('completions', () => {
@@ -63,5 +63,5 @@ describe('completions', () => {
         assert.isDefined(resolvedCompletion.additionalTextEdits);
         assert.isUndefined(resolvedCompletion.command);
         server.didCloseTextDocument({ textDocument: doc });
-    }).timeout(10000);
+    });
 });
