@@ -652,30 +652,29 @@ describe('references', () => {
             languageId: 'typescript',
             version: 1,
             text: `
-                export let foo = 1;
-                foo++;
-                foo = 1;
+                function foo() {};
+                foo();
             `
         };
         server.didOpenTextDocument({
             textDocument: doc
         });
         // Without declaration/definition.
+        const position = lastPosition(doc, 'function foo()');
         let references = await server.references({
             context: { includeDeclaration: false },
             textDocument: doc,
-            position: lastPosition(doc, 'foo')
+            position
         });
-        assert.strictEqual(references.length, 2);
+        assert.strictEqual(references.length, 1);
         assert.strictEqual(references[0].range.start.line, 2);
-        assert.strictEqual(references[1].range.start.line, 3);
         // With declaration/definition.
         references = await server.references({
             context: { includeDeclaration: true },
             textDocument: doc,
-            position: lastPosition(doc, 'foo')
+            position
         });
-        assert.strictEqual(references.length, 3);
+        assert.strictEqual(references.length, 2);
     });
 });
 
@@ -1515,19 +1514,15 @@ export function factory() {
     };
 
     function openDocuments() {
-        server.didOpenTextDocument({
-            textDocument: doDoc
-        });
-        server.didOpenTextDocument({
-            textDocument: fooDoc
-        });
+        server.didOpenTextDocument({ textDocument: doDoc });
+        server.didOpenTextDocument({ textDocument: fooDoc });
     }
 
     it('callers: first step', async () => {
         openDocuments();
         const callsResult = await server.calls({
             textDocument: fooDoc,
-            position: lsp.Position.create(3, 9)
+            position: position(fooDoc, 'doStuff();')
         });
         assert.equal(
             resultToString(callsResult, lspcalls.CallDirection.Incoming),
@@ -1544,7 +1539,7 @@ export function factory() {
         openDocuments();
         const callsResult = await server.calls({
             textDocument: fooDoc,
-            position: lsp.Position.create(2, 5)
+            position: position(fooDoc, 'doSomething() {')
         });
         assert.equal(
             resultToString(callsResult, lspcalls.CallDirection.Incoming),
@@ -1561,7 +1556,7 @@ export function factory() {
         const callsResult = await server.calls({
             direction,
             textDocument: fooDoc,
-            position: lsp.Position.create(3, 9)
+            position: position(fooDoc, 'doStuff()')
         });
         assert.equal(
             resultToString(callsResult, direction),
@@ -1578,7 +1573,7 @@ export function factory() {
         const callsResult = await server.calls({
             direction,
             textDocument: doDoc,
-            position: lsp.Position.create(4, 17)
+            position: position(doDoc, 'function two()')
         });
         assert.equal(
             resultToString(callsResult, direction),
