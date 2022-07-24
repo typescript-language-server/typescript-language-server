@@ -196,16 +196,20 @@ export class LspServer {
             throw Error('Could not find a valid tsserver executable in the workspace or in the $PATH. Please ensure that the "typescript" dependency is installed in either location. Exiting.');
         }
 
-        if (userInitializationOptions.preferences?.useLabelDetailsInCompletionEntries
+        const userPreferences: TypeScriptInitializationOptions['preferences'] = {
+            ...DEFAULT_TSSERVER_PREFERENCES,
+            ...userInitializationOptions.preferences
+        };
+
+        if (userPreferences.useLabelDetailsInCompletionEntries
             && clientCapabilities.textDocument?.completion?.completionItem?.labelDetailsSupport
             && typescriptVersion.version?.gte(API.v470)) {
             this.features.labelDetails = true;
         }
 
-        const preferences: TypeScriptInitializationOptions['preferences'] = {
-            ...DEFAULT_TSSERVER_PREFERENCES,
-            ...userInitializationOptions.preferences,
-            ...this.features.labelDetails ? { useLabelDetailsInCompletionEntries: true } : {}
+        const finalPreferences: TypeScriptInitializationOptions['preferences'] = {
+            ...userPreferences,
+            ...{ useLabelDetailsInCompletionEntries: this.features.labelDetails }
         };
 
         this.tspClient = new TspClient({
@@ -250,7 +254,7 @@ export class LspServer {
                     // We can use \n here since the editor should normalize later on to its line endings.
                     newLineCharacter: '\n'
                 },
-                preferences
+                preferences: finalPreferences
             }),
             this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
                 options: {
