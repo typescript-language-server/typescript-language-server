@@ -3,5 +3,5 @@ require:
     - 'ts-node/register'
 spec: './src/**/lsp-server.spec.ts'
 # Set to 0 to disable timeout when debugging.
-timeout: 10000
+timeout: 20000
 watch-files: './src/**/*.ts'
