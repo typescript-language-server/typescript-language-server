@@ -1,8 +1,7 @@
-exit: true
 require:
     - 'source-map-support/register'
     - 'ts-node/register'
-spec: './src/**/*.spec.ts'
+spec: './src/**/lsp-server.spec.ts'
 # Set to 0 to disable timeout when debugging.
 timeout: 10000
 watch-files: './src/**/*.ts'

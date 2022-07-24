@@ -34,6 +34,7 @@ before(async () => {
         } as TypeScriptWorkspaceSettings
     });
 });
+
 beforeEach(() => {
     server.closeAll();
     // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
@@ -43,6 +44,7 @@ beforeEach(() => {
 
 after(() => {
     server.closeAll();
+    server.shutdown();
 });
 
 describe('completion', () => {
@@ -1630,15 +1632,29 @@ export function factory() {
 });
 
 describe('diagnostics (no client support)', () => {
+    let localServer: TestLspServer;
+
     before(async () => {
         // Remove the "textDocument.publishDiagnostics" client capability.
         const clientCapabilitiesOverride = getDefaultClientCapabilities();
         delete clientCapabilitiesOverride.textDocument?.publishDiagnostics;
-        server = await createServer({
+        localServer = await createServer({
             rootUri: null,
             publishDiagnostics: args => diagnostics.set(args.uri, args),
             clientCapabilitiesOverride
         });
+    });
+
+    beforeEach(() => {
+        localServer.closeAll();
+        // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+        diagnostics.clear();
+        localServer.workspaceEdits = [];
+    });
+
+    after(() => {
+        localServer.closeAll();
+        localServer.shutdown();
     });
 
     it('diagnostics are published', async () => {
@@ -1652,11 +1668,11 @@ describe('diagnostics (no client support)', () => {
         }
       `
         };
-        server.didOpenTextDocument({
+        localServer.didOpenTextDocument({
             textDocument: doc
         });
 
-        await server.requestDiagnostics();
+        await localServer.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const resultsForFile = diagnostics.get(doc.uri);
         assert.isDefined(resultsForFile);
@@ -1665,11 +1681,25 @@ describe('diagnostics (no client support)', () => {
 });
 
 describe('jsx/tsx project', () => {
+    let localServer: TestLspServer;
+
     before(async () => {
-        server = await createServer({
+        localServer = await createServer({
             rootUri: uri('jsx'),
             publishDiagnostics: args => diagnostics.set(args.uri, args)
         });
+    });
+
+    beforeEach(() => {
+        localServer.closeAll();
+        // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+        diagnostics.clear();
+        localServer.workspaceEdits = [];
+    });
+
+    after(() => {
+        localServer.closeAll();
+        localServer.shutdown();
     });
 
     it('includes snippet completion for element prop', async () => {
@@ -1679,11 +1709,11 @@ describe('jsx/tsx project', () => {
             version: 1,
             text: readContents(filePath('jsx', 'app.tsx'))
         };
-        server.didOpenTextDocument({
+        localServer.didOpenTextDocument({
             textDocument: doc
         });
 
-        const completion = await server.completion({ textDocument: doc, position: position(doc, 'title') });
+        const completion = await localServer.completion({ textDocument: doc, position: position(doc, 'title') });
         assert.isNotNull(completion);
         const item = completion!.items.find(i => i.label === 'title');
         assert.isDefined(item);
@@ -1692,6 +1722,30 @@ describe('jsx/tsx project', () => {
 });
 
 describe('inlayHints', () => {
+    before(async () => {
+        server.didChangeConfiguration({
+            settings: {
+                typescript: {
+                    inlayHints: {
+                        includeInlayFunctionLikeReturnTypeHints: true
+                    }
+                }
+            }
+        });
+    });
+
+    after(() => {
+        server.didChangeConfiguration({
+            settings: {
+                typescript: {
+                    inlayHints: {
+                        includeInlayFunctionLikeReturnTypeHints: false
+                    }
+                }
+            }
+        });
+    });
+
     it('inlayHints', async () => {
         const doc = {
             uri: uri('module.ts'),
@@ -1703,68 +1757,8 @@ describe('inlayHints', () => {
         }
       `
         };
-        await server.initialize({
-            initializationOptions: {
-                preferences: {
-                    includeInlayFunctionLikeReturnTypeHints: true
-                }
-            },
-            processId: null,
-            capabilities: getDefaultClientCapabilities(),
-            workspaceFolders: [],
-            rootUri: ''
-        });
-        server.didOpenTextDocument({
-            textDocument: doc
-        });
-
-        const { inlayHints } = await server.inlayHints({
-            textDocument: doc
-        });
-
-        assert.isDefined(inlayHints);
-        assert.strictEqual(inlayHints.length, 1);
-        assert.strictEqual(inlayHints[0].text, ': number');
-        assert.strictEqual(inlayHints[0].kind, 'Type');
-        assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 29 });
-    });
-
-    it('inlayHints options set through workspace configuration ', async () => {
-        const doc = {
-            uri: uri('module.ts'),
-            languageId: 'typescript',
-            version: 1,
-            text: `
-        export function foo() {
-          return 3
-        }
-      `
-        };
-        await server.initialize({
-            processId: null,
-            capabilities: getDefaultClientCapabilities(),
-            workspaceFolders: [],
-            rootUri: ''
-        });
-
-        server.didChangeConfiguration({
-            settings: {
-                typescript: {
-                    inlayHints: {
-                        includeInlayFunctionLikeReturnTypeHints: true
-                    }
-                }
-            }
-        });
-
-        server.didOpenTextDocument({
-            textDocument: doc
-        });
-
-        const { inlayHints } = await server.inlayHints({
-            textDocument: doc
-        });
-
+        server.didOpenTextDocument({ textDocument: doc });
+        const { inlayHints } = await server.inlayHints({ textDocument: doc });
         assert.isDefined(inlayHints);
         assert.strictEqual(inlayHints.length, 1);
         assert.strictEqual(inlayHints[0].text, ': number');

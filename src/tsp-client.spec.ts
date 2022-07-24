@@ -15,10 +15,17 @@ import { TypeScriptVersionProvider } from './utils/versionProvider';
 const assert = chai.assert;
 const typescriptVersionProvider = new TypeScriptVersionProvider();
 const bundled = typescriptVersionProvider.bundledVersion();
+let server: TspClient;
 
-const server = new TspClient({
-    logger: new ConsoleLogger(),
-    tsserverPath: bundled!.tsServerPath
+before(() => {
+    server = new TspClient({
+        logger: new ConsoleLogger(),
+        tsserverPath: bundled!.tsServerPath
+    });
+});
+
+after(() => {
+    server.shutdown();
 });
 
 describe('ts server client', () => {
