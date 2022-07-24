@@ -77,7 +77,7 @@ export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp
 
 export function toPlatformEOL(text: string): string {
     if (platform() === 'win32') {
-        return text.replaceAll('\n', '\r\n');
+        return text.replace(/(?!\r)\n/g, '\r\n');
     }
     return text;
 }
