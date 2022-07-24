@@ -12,7 +12,7 @@ import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-ty
 import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation';
 import { Commands } from './commands';
 import { TspClient } from './tsp-client';
-import { CompletionOptions, DisplayPartKind } from './ts-protocol';
+import { CompletionOptions, DisplayPartKind, SupportedFeatures } from './ts-protocol';
 import SnippetString from './utils/SnippetString';
 import * as typeConverters from './utils/typeConverters';
 
@@ -25,9 +25,10 @@ interface ParameterListParts {
     readonly hasOptionalParameters: boolean;
 }
 
-export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument): TSCompletionItem {
+export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument, features: SupportedFeatures): TSCompletionItem {
     const item: TSCompletionItem = {
         label: entry.name,
+        ...features.labelDetails ? { labelDetails: entry.labelDetails } : {},
         kind: asCompletionItemKind(entry.kind),
         sortText: entry.sortText,
         commitCharacters: asCommitCharacters(entry.kind),

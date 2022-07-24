@@ -15,6 +15,7 @@ import tsp from 'typescript/lib/protocol';
 import * as fs from 'fs-extra';
 import debounce from 'p-debounce';
 
+import API from './utils/api';
 import { CommandTypes, EventTypes } from './tsp-command-types';
 import { Logger, PrefixingLogger } from './logger';
 import { TspClient } from './tsp-client';
@@ -31,7 +32,7 @@ import { Commands } from './commands';
 import { provideQuickFix } from './quickfix';
 import { provideRefactors } from './refactor';
 import { provideOrganizeImports } from './organize-imports';
-import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings } from './ts-protocol';
+import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings, SupportedFeatures } from './ts-protocol';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
 import { computeCallers, computeCallees } from './calls';
 import { IServerOptions } from './utils/configuration';
@@ -69,7 +70,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
     providePrefixAndSuffixTextForRename: true,
     provideRefactorNotApplicableReason: false,
     quotePreference: 'auto',
-    useLabelDetailsInCompletionEntries: false
+    useLabelDetailsInCompletionEntries: true
 };
 
 class ServerInitializingIndicator {
@@ -119,6 +120,7 @@ export class LspServer {
     private workspaceRoot: string | undefined;
     private typeScriptAutoFixProvider: TypeScriptAutoFixProvider;
     private loadingIndicator: ServerInitializingIndicator;
+    private features: SupportedFeatures = {};
 
     private readonly documents = new LspDocuments();
 
@@ -174,13 +176,9 @@ export class LspServer {
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
         const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale } = userInitializationOptions;
-        const { logVerbosity, plugins, preferences }: TypeScriptInitializationOptions = {
+        const { logVerbosity, plugins }: TypeScriptInitializationOptions = {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
-            plugins: userInitializationOptions.plugins || [],
-            preferences: {
-                ...DEFAULT_TSSERVER_PREFERENCES,
-                ...userInitializationOptions.preferences
-            }
+            plugins: userInitializationOptions.plugins || []
         };
 
         const logFile = this.getLogFile(logVerbosity);
@@ -197,6 +195,22 @@ export class LspServer {
         } else {
             throw Error('Could not find a valid tsserver executable in the workspace or in the $PATH. Please ensure that the "typescript" dependency is installed in either location. Exiting.');
         }
+
+        const userPreferences: TypeScriptInitializationOptions['preferences'] = {
+            ...DEFAULT_TSSERVER_PREFERENCES,
+            ...userInitializationOptions.preferences
+        };
+
+        if (userPreferences.useLabelDetailsInCompletionEntries
+            && clientCapabilities.textDocument?.completion?.completionItem?.labelDetailsSupport
+            && typescriptVersion.version?.gte(API.v470)) {
+            this.features.labelDetails = true;
+        }
+
+        const finalPreferences: TypeScriptInitializationOptions['preferences'] = {
+            ...userPreferences,
+            ...{ useLabelDetailsInCompletionEntries: this.features.labelDetails }
+        };
 
         this.tspClient = new TspClient({
             tsserverPath: typescriptVersion.tsServerPath,
@@ -240,7 +254,7 @@ export class LspServer {
                     // We can use \n here since the editor should normalize later on to its line endings.
                     newLineCharacter: '\n'
                 },
-                preferences
+                preferences: finalPreferences
             }),
             this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
                 options: {
@@ -615,7 +629,7 @@ export class LspServer {
             const { body } = result;
             const completions = (body ? body.entries : [])
                 .filter(entry => entry.kind !== 'warning')
-                .map(entry => asCompletionItem(entry, file, params.position, document));
+                .map(entry => asCompletionItem(entry, file, params.position, document, this.features));
             return lsp.CompletionList.create(completions, body?.isIncomplete);
         } catch (error) {
             if (error.message === 'No content available.') {

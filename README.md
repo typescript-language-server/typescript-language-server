@@ -109,8 +109,10 @@ interface UserPreferences {
     /**
      * Indicates whether {@link CompletionEntry.labelDetails completion entry label details} are supported.
      * If not, contents of `labelDetails` may be included in the {@link CompletionEntry.name} property.
+     * Only supported if the client supports `textDocument.completion.completionItem.labelDetailsSupport` capability
+     * and a compatible TypeScript version is used.
      * @since 4.7.2
-     * @default false
+     * @default true
      */
     useLabelDetailsInCompletionEntries: boolean;
     /**
