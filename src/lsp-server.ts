@@ -70,7 +70,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
     providePrefixAndSuffixTextForRename: true,
     provideRefactorNotApplicableReason: false,
     quotePreference: 'auto',
-    useLabelDetailsInCompletionEntries: false
+    useLabelDetailsInCompletionEntries: true
 };
 
 class ServerInitializingIndicator {
@@ -196,14 +196,16 @@ export class LspServer {
             throw Error('Could not find a valid tsserver executable in the workspace or in the $PATH. Please ensure that the "typescript" dependency is installed in either location. Exiting.');
         }
 
-        if (clientCapabilities.textDocument?.completion?.completionItem?.labelDetailsSupport && typescriptVersion.version?.gte(API.v470)) {
+        if (userInitializationOptions.preferences?.useLabelDetailsInCompletionEntries
+            && clientCapabilities.textDocument?.completion?.completionItem?.labelDetailsSupport
+            && typescriptVersion.version?.gte(API.v470)) {
             this.features.labelDetails = true;
         }
 
         const preferences: TypeScriptInitializationOptions['preferences'] = {
             ...DEFAULT_TSSERVER_PREFERENCES,
-            ...this.features.labelDetails ? { useLabelDetailsInCompletionEntries: true } : {},
-            ...userInitializationOptions.preferences
+            ...userInitializationOptions.preferences,
+            ...this.features.labelDetails ? { useLabelDetailsInCompletionEntries: true } : {}
         };
 
         this.tspClient = new TspClient({
