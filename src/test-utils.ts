@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { platform } from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as lsp from 'vscode-languageserver/node';
@@ -19,6 +20,11 @@ const CONSOLE_LOG_LEVEL = ConsoleLogger.toMessageTypeLevel(process.env.CONSOLE_L
 export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
     return {
         textDocument: {
+            completion: {
+                completionItem: {
+                    labelDetailsSupport: true
+                }
+            },
             documentSymbol: {
                 hierarchicalDocumentSymbolSupport: true
             },
@@ -67,6 +73,13 @@ export function positionAfter(document: lsp.TextDocumentItem, match: string): ls
 
 export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp.Position {
     return positionAt(document, document.text.lastIndexOf(match));
+}
+
+export function toPlatformEOL(text: string): string {
+    if (platform() === 'win32') {
+        return text.replace(/(?!\r)\n/g, '\r\n');
+    }
+    return text;
 }
 
 export class TestLspServer extends LspServer {
