@@ -24,7 +24,7 @@
     "clean": "rimraf lib *.tsbuildinfo",
     "test": "cross-env CONSOLE_LOG_LEVEL=warn TS_NODE_PROJECT=./tsconfig.json mocha",
     "test:watch": "cross-env CONSOLE_LOG_LEVEL=warn TS_NODE_PROJECT=./tsconfig.json mocha --watch",
-    "test:compiled": "CONSOLE_LOG_LEVEL=warn mocha \"./lib/**/*.spec.js\"",
+    "test:compiled": "cross-env CONSOLE_LOG_LEVEL=warn mocha \"./lib/**/*.spec.js\"",
     "lint": "eslint --ext \".js,.ts\" src",
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
     "compile": "tsc -b",
