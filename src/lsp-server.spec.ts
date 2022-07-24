@@ -9,7 +9,7 @@ import * as chai from 'chai';
 import * as fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver/node';
 import * as lspcalls from './lsp-protocol.calls.proposed';
-import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter, readContents, TestLspServer } from './test-utils';
+import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Commands } from './commands';
 import { TypeScriptWorkspaceSettings } from './ts-protocol';
@@ -398,7 +398,7 @@ describe('completion', () => {
                 },
                 kind: 2,
                 insertTextFormat: 2,
-                insertText: 'bar(x) {\n    $0\n},'
+                insertText: toPlatformEOL('bar(x) {\n    $0\n},')
             }
         );
     });
