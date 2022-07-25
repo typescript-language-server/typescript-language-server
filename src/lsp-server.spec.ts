@@ -6,7 +6,7 @@
  */
 
 import * as chai from 'chai';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
@@ -1426,7 +1426,7 @@ describe('executeCommand', () => {
         const change2 = changes![uri('newFn.ts')];
         assert.isDefined(change2);
         // Clean up file that is created on applying edit.
-        fs.unlink(filePath('newFn.ts'));
+        fs.unlinkSync(filePath('newFn.ts'));
         assert.deepEqual(
             change1,
             [

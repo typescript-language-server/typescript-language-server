@@ -8,6 +8,7 @@
 import { platform } from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import * as lsp from 'vscode-languageserver';
 import { normalizePath, pathToUri } from './protocol-translation.js';
 import { LspServer } from './lsp-server.js';
@@ -16,6 +17,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { TypeScriptVersionProvider } from './utils/versionProvider.js';
 
 const CONSOLE_LOG_LEVEL = ConsoleLogger.toMessageTypeLevel(process.env.CONSOLE_LOG_LEVEL);
+export const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
     return {
@@ -47,7 +49,7 @@ export function uri(...components: string[]): string {
 }
 
 export function filePath(...components: string[]): string {
-    return normalizePath(path.resolve(__dirname, '..', 'test-data', ...components));
+    return normalizePath(path.resolve(PACKAGE_ROOT, 'test-data', ...components));
 }
 
 export function readContents(path: string): string {
@@ -99,7 +101,7 @@ export async function createServer(options: {
         logger,
         tsserverPath: bundled!.tsServerPath,
         tsserverLogVerbosity: options.tsserverLogVerbosity,
-        tsserverLogFile: path.resolve(__dirname, '../tsserver.log'),
+        tsserverLogFile: path.resolve(PACKAGE_ROOT, 'tsserver.log'),
         lspClient: {
             setClientCapabilites() {},
             createProgressReporter() {

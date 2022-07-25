@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import which from 'which';
 import { pkgUpSync } from 'pkg-up';
@@ -166,6 +167,7 @@ export class TypeScriptVersionProvider {
     }
 
     public bundledVersion(): TypeScriptVersion | null {
+        const require = createRequire(import.meta.url);
         try {
             const file = require.resolve('typescript');
             const bundledVersion = new TypeScriptVersion(
