@@ -6,11 +6,11 @@
  */
 
 import * as chai from 'chai';
-import { TspClient } from './tsp-client';
-import { ConsoleLogger } from './logger';
-import { filePath, readContents } from './test-utils';
-import { CommandTypes } from './tsp-command-types';
-import { TypeScriptVersionProvider } from './utils/versionProvider';
+import { TspClient } from './tsp-client.js';
+import { ConsoleLogger } from './logger.js';
+import { filePath, readContents } from './test-utils.js';
+import { CommandTypes } from './tsp-command-types.js';
+import { TypeScriptVersionProvider } from './utils/versionProvider.js';
 
 const assert = chai.assert;
 const typescriptVersionProvider = new TypeScriptVersionProvider();

@@ -6,7 +6,7 @@
 
 import { RequestHandler } from 'vscode-jsonrpc';
 import { Location, SymbolKind, Range, DocumentSymbol } from 'vscode-languageserver-types';
-import * as lsp from 'vscode-languageserver/node';
+import * as lsp from 'vscode-languageserver';
 
 export interface CallsClientCapabilities {
     /**

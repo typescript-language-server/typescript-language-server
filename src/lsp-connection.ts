@@ -5,13 +5,12 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver/node';
-import * as lspcalls from './lsp-protocol.calls.proposed';
-import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
-
-import { LspClientLogger } from './logger';
-import { LspServer } from './lsp-server';
-import { LspClientImpl } from './lsp-client';
+import * as lsp from 'vscode-languageserver/node.js';
+import * as lspcalls from './lsp-protocol.calls.proposed.js';
+import * as lspinlayHints from './lsp-protocol.inlayHints.proposed.js';
+import { LspClientLogger } from './logger.js';
+import { LspServer } from './lsp-server.js';
+import { LspClientImpl } from './lsp-client.js';
 
 export interface IServerOptions {
     tsserverPath: string;

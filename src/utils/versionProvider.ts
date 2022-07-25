@@ -2,14 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import which from 'which';
-import pkgUp from 'pkg-up';
-import API from './api';
-import { IServerOptions } from './configuration';
-import { findPathToModule } from './modules-resolver';
-import type { Logger } from '../logger';
+import { pkgUpSync } from 'pkg-up';
+import API from './api.js';
+import { IServerOptions } from './configuration.js';
+import { findPathToModule } from './modules-resolver.js';
+import type { Logger } from '../logger.js';
 
 export const enum TypeScriptVersionSource {
     Bundled = 'bundled',
@@ -135,7 +135,7 @@ export class TypeScriptVersionProvider {
         }
         // Resolve path to the "lib" dir.
         try {
-            const packageJsonPath = pkgUp.sync({ cwd: resolvedPath });
+            const packageJsonPath = pkgUpSync({ cwd: resolvedPath });
             this.logger?.info(`Resolved package.json location: "${packageJsonPath}"`);
             if (packageJsonPath) {
                 resolvedPath = path.join(path.dirname(packageJsonPath), 'lib');

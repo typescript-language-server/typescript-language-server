@@ -5,9 +5,9 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver/node';
-import tsp from 'typescript/lib/protocol';
-import { asDocumentation, asPlainText } from './protocol-translation';
+import * as lsp from 'vscode-languageserver';
+import type tsp from 'typescript/lib/protocol.d.js';
+import { asDocumentation, asPlainText } from './protocol-translation.js';
 
 export function asSignatureHelp(info: tsp.SignatureHelpItems): lsp.SignatureHelp {
     return {

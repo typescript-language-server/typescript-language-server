@@ -5,10 +5,10 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver/node';
-import tsp from 'typescript/lib/protocol';
-import { asRange, toSymbolKind, Range } from './protocol-translation';
-import { ScriptElementKind } from './tsp-command-types';
+import * as lsp from 'vscode-languageserver';
+import type tsp from 'typescript/lib/protocol.d.js';
+import { asRange, toSymbolKind, Range } from './protocol-translation.js';
+import { ScriptElementKind } from './tsp-command-types.js';
 
 export function collectDocumentSymbols(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[]): boolean {
     return collectDocumentSymbolsInRange(parent, symbols, { start: asRange(parent.spans[0]).start, end: asRange(parent.spans[parent.spans.length - 1]).end });

@@ -5,41 +5,40 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as path from 'path';
-import tempy from 'tempy';
-import * as lsp from 'vscode-languageserver/node';
-import * as lspcalls from './lsp-protocol.calls.proposed';
-import * as lspinlayHints from './lsp-protocol.inlayHints.proposed';
-import * as lspsemanticTokens from './semantic-tokens';
-import tsp from 'typescript/lib/protocol';
+import * as path from 'node:path';
 import * as fs from 'fs-extra';
 import debounce from 'p-debounce';
-
-import API from './utils/api';
-import { CommandTypes, EventTypes } from './tsp-command-types';
-import { Logger, PrefixingLogger } from './logger';
-import { TspClient } from './tsp-client';
-import { DiagnosticEventQueue } from './diagnostic-queue';
+import { temporaryFile } from 'tempy';
+import * as lsp from 'vscode-languageserver';
+import * as lspcalls from './lsp-protocol.calls.proposed.js';
+import * as lspinlayHints from './lsp-protocol.inlayHints.proposed.js';
+import * as lspsemanticTokens from './semantic-tokens.js';
+import tsp from 'typescript/lib/protocol.d.js';
+import API from './utils/api.js';
+import { CommandTypes, EventTypes } from './tsp-command-types.js';
+import { Logger, PrefixingLogger } from './logger.js';
+import { TspClient } from './tsp-client.js';
+import { DiagnosticEventQueue } from './diagnostic-queue.js';
 import {
     toDocumentHighlight, asRange, asTagsDocumentation,
     uriToPath, toSymbolKind, toLocation, toPosition,
     pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText, normalizePath
-} from './protocol-translation';
-import { LspDocuments, LspDocument } from './document';
-import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion';
-import { asSignatureHelp } from './hover';
-import { Commands } from './commands';
-import { provideQuickFix } from './quickfix';
-import { provideRefactors } from './refactor';
-import { provideOrganizeImports } from './organize-imports';
-import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings, SupportedFeatures } from './ts-protocol';
-import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol';
-import { computeCallers, computeCallees } from './calls';
-import { IServerOptions } from './utils/configuration';
-import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider';
-import { TypeScriptAutoFixProvider } from './features/fix-all';
-import { LspClient, ProgressReporter } from './lsp-client';
-import { CodeActionKind } from './utils/types';
+} from './protocol-translation.js';
+import { LspDocuments, LspDocument } from './document.js';
+import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion.js';
+import { asSignatureHelp } from './hover.js';
+import { Commands } from './commands.js';
+import { provideQuickFix } from './quickfix.js';
+import { provideRefactors } from './refactor.js';
+import { provideOrganizeImports } from './organize-imports.js';
+import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings, SupportedFeatures } from './ts-protocol.js';
+import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
+import { computeCallers, computeCallees } from './calls.js';
+import { IServerOptions } from './utils/configuration.js';
+import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider.js';
+import { TypeScriptAutoFixProvider } from './features/fix-all.js';
+import { LspClient, ProgressReporter } from './lsp-client.js';
+import { CodeActionKind } from './utils/types.js';
 
 const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
     allowIncompleteCompletions: true,
@@ -375,7 +374,7 @@ export class LspServer {
             fs.ensureFileSync(logFile);
             return logFile;
         }
-        return tempy.file(<any>{ name: 'tsserver.log' });
+        return temporaryFile({ name: 'tsserver.log' });
     }
     protected doGetLogFile(): string | undefined {
         if (process.env.TSSERVER_LOG_FILE) {

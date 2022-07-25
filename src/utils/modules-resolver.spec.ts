@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import * as path from 'path';
-import { findPathToModule } from './modules-resolver';
-import { MODULE_FOLDERS } from './versionProvider';
+import * as path from 'node:path';
+import { findPathToModule } from './modules-resolver.js';
+import { MODULE_FOLDERS } from './versionProvider.js';
 
 describe('findPathToModule', () => {
     it('resolves tsserver in own directory', () => {

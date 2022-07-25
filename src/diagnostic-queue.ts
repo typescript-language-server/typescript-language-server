@@ -5,13 +5,13 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import tsp from 'typescript/lib/protocol';
-import * as lsp from 'vscode-languageserver/node';
-import { Logger } from './logger';
-import { pathToUri, toDiagnostic } from './protocol-translation';
-import { EventTypes } from './tsp-command-types';
+import type tsp from 'typescript/lib/protocol.d.js';
+import * as lsp from 'vscode-languageserver';
 import debounce from 'p-debounce';
-import { LspDocuments } from './document';
+import { Logger } from './logger.js';
+import { pathToUri, toDiagnostic } from './protocol-translation.js';
+import { EventTypes } from './tsp-command-types.js';
+import { LspDocuments } from './document.js';
 
 class FileDiagnostics {
     private readonly diagnosticsPerKind = new Map<EventTypes, tsp.Diagnostic[]>();

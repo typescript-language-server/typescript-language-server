@@ -10,8 +10,8 @@
         "declarationMap": true,
         "sourceMap": true,
         "target": "es6",
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "Node16",
+        "moduleResolution": "Node16",
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "lib": [
