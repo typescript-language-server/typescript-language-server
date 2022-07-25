@@ -253,7 +253,9 @@ export class LspServer {
             logger: this.options.logger,
             onEvent: this.onTsEvent.bind(this),
             onExit: (exitCode, signal) => {
-                this.logger.error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
+                if (exitCode) {
+                    this.logger.error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
+                }
                 this.shutdown();
             }
         });
