@@ -68,8 +68,8 @@ interface TypeScriptRequestTypes {
 }
 
 export class TspClient {
+    private tsserverProc: cp.ChildProcess | null;
     private readlineInterface: readline.ReadLine;
-    private tsserverProc: cp.ChildProcess;
     private seq = 0;
     private readonly deferreds: { [seq: number]: Deferred<any>; } = {};
     private logger: Logger;
@@ -154,8 +154,10 @@ export class TspClient {
 
     shutdown(): void {
         this.readlineInterface?.close();
-        this.tsserverProc.stdin?.destroy();
-        this.tsserverProc.kill();
+        if (this.tsserverProc) {
+            this.tsserverProc.stdin?.destroy();
+            this.tsserverProc.kill('SIGTERM');
+        }
     }
 
     notify(command: CommandTypes.Open, args: protocol.OpenRequestArgs): void;
@@ -205,8 +207,12 @@ export class TspClient {
             request.arguments = args;
         }
         const serializedRequest = JSON.stringify(request) + '\n';
-        this.tsserverProc.stdin!.write(serializedRequest);
-        this.logger.log(notification ? 'notify' : 'request', request);
+        if (this.tsserverProc) {
+            this.tsserverProc.stdin!.write(serializedRequest);
+            this.logger.log(notification ? 'notify' : 'request', request);
+        } else {
+            this.logger.error(`Message "${command}" couldn't be sent. Tsserver process not started.`);
+        }
     }
 
     protected processMessage(untrimmedMessageString: string): void {
