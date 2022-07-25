@@ -111,15 +111,15 @@ class ServerInitializingIndicator {
 }
 
 export class LspServer {
+    private _tspClient: TspClient | null;
+    private _loadingIndicator: ServerInitializingIndicator | null;
     private initializeParams: TypeScriptInitializeParams;
     private initializeResult: TypeScriptInitializeResult;
-    private tspClient: TspClient;
     private diagnosticQueue?: DiagnosticEventQueue;
     private logger: Logger;
     private workspaceConfiguration: TypeScriptWorkspaceSettings;
     private workspaceRoot: string | undefined;
     private typeScriptAutoFixProvider: TypeScriptAutoFixProvider;
-    private loadingIndicator: ServerInitializingIndicator;
     private features: SupportedFeatures = {};
 
     private readonly documents = new LspDocuments();
@@ -133,6 +133,31 @@ export class LspServer {
         for (const file of [...this.documents.files]) {
             this.closeDocument(file);
         }
+    }
+
+    shutdown(): void {
+        if (this._tspClient) {
+            this._tspClient.shutdown();
+            this._tspClient = null;
+        }
+        if (this._loadingIndicator) {
+            this._loadingIndicator.reset();
+            this._loadingIndicator = null;
+        }
+    }
+
+    private get tspClient(): TspClient {
+        if (!this._tspClient) {
+            throw new Error('TS client not created. Did you forget to send the "initialize" request?');
+        }
+        return this._tspClient;
+    }
+
+    private get loadingIndicator(): ServerInitializingIndicator {
+        if (!this._loadingIndicator) {
+            throw new Error('Loading indicator not created. Did you forget to send the "initialize" request?');
+        }
+        return this._loadingIndicator;
     }
 
     private findTypescriptVersion(): TypeScriptVersion | null {
@@ -162,10 +187,13 @@ export class LspServer {
 
     async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
         this.logger.log('initialize', params);
+        if (this._tspClient) {
+            throw new Error('The "initialize" request has already called before.');
+        }
         this.initializeParams = params;
         const clientCapabilities = this.initializeParams.capabilities;
         this.options.lspClient.setClientCapabilites(clientCapabilities);
-        this.loadingIndicator = new ServerInitializingIndicator(this.options.lspClient);
+        this._loadingIndicator = new ServerInitializingIndicator(this.options.lspClient);
         this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
@@ -212,7 +240,7 @@ export class LspServer {
             ...{ useLabelDetailsInCompletionEntries: this.features.labelDetails }
         };
 
-        this.tspClient = new TspClient({
+        this._tspClient = new TspClient({
             tsserverPath: typescriptVersion.tsServerPath,
             logFile,
             logVerbosity,
@@ -226,8 +254,7 @@ export class LspServer {
             onEvent: this.onTsEvent.bind(this),
             onExit: (exitCode, signal) => {
                 this.logger.error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
-                // Allow the log to be dispatched to the client.
-                setTimeout(() => process.exit(1));
+                this.shutdown();
             }
         });
 
@@ -236,10 +263,7 @@ export class LspServer {
             throw new Error('tsserver process has failed to start.');
         }
         process.on('exit', () => {
-            this.tspClient.shutdown();
-            if (this.loadingIndicator) {
-                this.loadingIndicator.reset();
-            }
+            this.shutdown();
         });
         process.on('SIGINT', () => {
             process.exit();

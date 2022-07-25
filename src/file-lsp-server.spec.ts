@@ -19,8 +19,14 @@ before(async () => {
         publishDiagnostics: () => { }
     });
 });
+
 beforeEach(() => {
     server.closeAll();
+});
+
+after(() => {
+    server.closeAll();
+    server.shutdown();
 });
 
 describe('documentHighlight', () => {
