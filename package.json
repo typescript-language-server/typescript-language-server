@@ -42,7 +42,7 @@
     "commander": "^9.4.0",
     "fs-extra": "^10.1.0",
     "p-debounce": "^2.1.0",
-    "pkg-up": "^3.1.0",
+    "pkg-up": "^4.0.0",
     "semver": "^7.3.7",
     "tempy": "^1.0.1",
     "vscode-languageserver": "^8.0.2",
