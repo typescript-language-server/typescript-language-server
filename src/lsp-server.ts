@@ -303,7 +303,12 @@ export class LspServer {
                     resolveProvider: true
                 },
                 codeActionProvider: clientCapabilities.textDocument?.codeAction?.codeActionLiteralSupport
-                    ? { codeActionKinds: [...TypeScriptAutoFixProvider.kinds.map(kind => kind.value), CodeActionKind.SourceOrganizeImportsTs.value] } : true,
+                    ? { codeActionKinds: [
+                        ...TypeScriptAutoFixProvider.kinds.map(kind => kind.value),
+                        CodeActionKind.SourceOrganizeImportsTs.value,
+                        CodeActionKind.QuickFix.value,
+                        CodeActionKind.Refactor.value
+                    ] } : true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
