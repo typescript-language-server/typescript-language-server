@@ -5,11 +5,11 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver/node';
-import tsp from 'typescript/lib/protocol';
-import { toTextDocumentEdit } from './protocol-translation';
-import { LspDocuments } from './document';
-import { CodeActionKind } from './utils/types';
+import * as lsp from 'vscode-languageserver';
+import type tsp from 'typescript/lib/protocol.d.js';
+import { toTextDocumentEdit } from './protocol-translation.js';
+import { LspDocuments } from './document.js';
+import { CodeActionKind } from './utils/types.js';
 
 export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
     if (!response || response.body.length === 0) {

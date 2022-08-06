@@ -1,16 +1,16 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { statSync, existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 export function findPathToModule(dir: string, moduleNames: string[]): string | undefined {
-    const stat = fs.statSync(dir);
+    const stat = statSync(dir);
     if (stat.isDirectory()) {
-        const candidates = moduleNames.map(moduleName => path.resolve(dir, moduleName));
-        const modulePath = candidates.find(fs.existsSync);
+        const candidates = moduleNames.map(moduleName => resolve(dir, moduleName));
+        const modulePath = candidates.find(existsSync);
         if (modulePath) {
             return modulePath;
         }
     }
-    const parent = path.resolve(dir, '..');
+    const parent = resolve(dir, '..');
     if (parent !== dir) {
         return findPathToModule(parent, moduleNames);
     }

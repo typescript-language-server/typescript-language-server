@@ -1,8 +1,8 @@
-import tsp from 'typescript/lib/protocol';
+import type tsp from 'typescript/lib/protocol.d.js';
 import * as chai from 'chai';
-import { provideOrganizeImports } from './organize-imports';
-import { filePath, uri } from './test-utils';
-import { CodeActionKind } from './utils/types';
+import { provideOrganizeImports } from './organize-imports.js';
+import { filePath, uri } from './test-utils.js';
+import { CodeActionKind } from './utils/types.js';
 
 describe('provideOrganizeImports', () => {
     it('converts tsserver response to lsp code actions', () => {

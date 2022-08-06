@@ -1,10 +1,10 @@
 
-import tsp from 'typescript/lib/protocol';
-import * as lsp from 'vscode-languageserver/node';
-import * as lspcalls from './lsp-protocol.calls.proposed';
-import { TspClient } from './tsp-client';
-import { CommandTypes } from './tsp-command-types';
-import { uriToPath, toLocation, asRange, Range, toSymbolKind, pathToUri } from './protocol-translation';
+import type tsp from 'typescript/lib/protocol.d.js';
+import * as lsp from 'vscode-languageserver';
+import * as lspcalls from './lsp-protocol.calls.proposed.js';
+import { TspClient } from './tsp-client.js';
+import { CommandTypes } from './tsp-command-types.js';
+import { uriToPath, toLocation, asRange, Range, toSymbolKind, pathToUri } from './protocol-translation.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 export async function computeCallers(tspClient: TspClient, args: lsp.TextDocumentPositionParams): Promise<lspcalls.CallsResult> {

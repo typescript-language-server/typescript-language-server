@@ -4,15 +4,13 @@
   "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
   "author": "TypeFox and others",
   "license": "Apache-2.0",
-  "engines": {
-    "node": ">=12"
-  },
-  "eslintIgnore": [
-    "!.eslintrc.js"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/typescript-language-server/typescript-language-server.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=14.16"
   },
   "files": [
     "lib"
@@ -32,6 +30,9 @@
     "postversion": "git push --follow-tags",
     "prepare": "cd test-data/jsx && yarn"
   },
+  "eslintIgnore": [
+    "!.eslintrc.cjs"
+  ],
   "husky": {
     "hooks": {
       "pre-commit": "yarn lint && yarn build && yarn test:compiled",
@@ -41,10 +42,10 @@
   "dependencies": {
     "commander": "^9.4.0",
     "fs-extra": "^10.1.0",
-    "p-debounce": "^2.1.0",
-    "pkg-up": "^3.1.0",
+    "p-debounce": "^4.0.0",
+    "pkg-up": "^4.0.0",
     "semver": "^7.3.7",
-    "tempy": "^1.0.1",
+    "tempy": "^3.0.0",
     "vscode-languageserver": "^8.0.2",
     "vscode-languageserver-protocol": "^3.17.2",
     "vscode-languageserver-textdocument": "1.0.5",

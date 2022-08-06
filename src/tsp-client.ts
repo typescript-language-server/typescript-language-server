@@ -5,17 +5,16 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as fs from 'fs';
-import * as cp from 'child_process';
-import * as readline from 'readline';
-import * as decoder from 'string_decoder';
-import protocol from 'typescript/lib/protocol';
-import tempy from 'tempy';
-
-import { CommandTypes } from './tsp-command-types';
-import { Logger, PrefixingLogger } from './logger';
-import { Deferred } from './utils';
+import * as fs from 'node:fs';
+import * as cp from 'node:child_process';
+import * as readline from 'node:readline';
+import * as decoder from 'node:string_decoder';
+import type tsp from 'typescript/lib/protocol.d.js';
 import { CancellationToken } from 'vscode-jsonrpc';
+import { temporaryFile } from 'tempy';
+import { CommandTypes } from './tsp-command-types.js';
+import { Logger, PrefixingLogger } from './logger.js';
+import { Deferred } from './utils.js';
 
 export interface TspClientOptions {
     logger: Logger;
@@ -28,43 +27,43 @@ export interface TspClientOptions {
     locale?: string;
     globalPlugins?: string[];
     pluginProbeLocations?: string[];
-    onEvent?: (event: protocol.Event) => void;
+    onEvent?: (event: tsp.Event) => void;
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
 }
 
 interface TypeScriptRequestTypes {
-    'geterr': [protocol.GeterrRequestArgs, any];
-    'compilerOptionsForInferredProjects': [protocol.SetCompilerOptionsForInferredProjectsArgs, protocol.SetCompilerOptionsForInferredProjectsResponse];
-    'documentHighlights': [protocol.DocumentHighlightsRequestArgs, protocol.DocumentHighlightsResponse];
-    'applyCodeActionCommand': [protocol.ApplyCodeActionCommandRequestArgs, protocol.ApplyCodeActionCommandResponse];
-    'completionEntryDetails': [protocol.CompletionDetailsRequestArgs, protocol.CompletionDetailsResponse];
-    'completionInfo': [protocol.CompletionsRequestArgs, protocol.CompletionInfoResponse];
-    'configure': [protocol.ConfigureRequestArguments, protocol.ConfigureResponse];
-    'definition': [protocol.FileLocationRequestArgs, protocol.DefinitionResponse];
-    'definitionAndBoundSpan': [protocol.FileLocationRequestArgs, protocol.DefinitionInfoAndBoundSpanResponse];
-    'docCommentTemplate': [protocol.FileLocationRequestArgs, protocol.DocCommandTemplateResponse];
-    'format': [protocol.FormatRequestArgs, protocol.FormatResponse];
-    'formatonkey': [protocol.FormatOnKeyRequestArgs, protocol.FormatResponse];
-    'getApplicableRefactors': [protocol.GetApplicableRefactorsRequestArgs, protocol.GetApplicableRefactorsResponse];
-    'getCodeFixes': [protocol.CodeFixRequestArgs, protocol.CodeFixResponse];
-    'getCombinedCodeFix': [protocol.GetCombinedCodeFixRequestArgs, protocol.GetCombinedCodeFixResponse];
-    'getEditsForFileRename': [protocol.GetEditsForFileRenameRequestArgs, protocol.GetEditsForFileRenameResponse];
-    'getEditsForRefactor': [protocol.GetEditsForRefactorRequestArgs, protocol.GetEditsForRefactorResponse];
-    'getOutliningSpans': [protocol.FileRequestArgs, protocol.OutliningSpansResponse];
-    'getSupportedCodeFixes': [null, protocol.GetSupportedCodeFixesResponse];
-    'implementation': [protocol.FileLocationRequestArgs, protocol.ImplementationResponse];
-    'jsxClosingTag': [protocol.JsxClosingTagRequestArgs, protocol.JsxClosingTagResponse];
-    'navto': [protocol.NavtoRequestArgs, protocol.NavtoResponse];
-    'navtree': [protocol.FileRequestArgs, protocol.NavTreeResponse];
-    'organizeImports': [protocol.OrganizeImportsRequestArgs, protocol.OrganizeImportsResponse];
-    'projectInfo': [protocol.ProjectInfoRequestArgs, protocol.ProjectInfoResponse];
-    'quickinfo': [protocol.FileLocationRequestArgs, protocol.QuickInfoResponse];
-    'references': [protocol.FileLocationRequestArgs, protocol.ReferencesResponse];
-    'rename': [protocol.RenameRequestArgs, protocol.RenameResponse];
-    'signatureHelp': [protocol.SignatureHelpRequestArgs, protocol.SignatureHelpResponse];
-    'typeDefinition': [protocol.FileLocationRequestArgs, protocol.TypeDefinitionResponse];
-    'provideInlayHints': [protocol.InlayHintsRequestArgs, protocol.InlayHintsResponse];
-    'encodedSemanticClassifications-full': [protocol.EncodedSemanticClassificationsRequestArgs, protocol.EncodedSemanticClassificationsResponse];
+    'geterr': [tsp.GeterrRequestArgs, any];
+    'compilerOptionsForInferredProjects': [tsp.SetCompilerOptionsForInferredProjectsArgs, tsp.SetCompilerOptionsForInferredProjectsResponse];
+    'documentHighlights': [tsp.DocumentHighlightsRequestArgs, tsp.DocumentHighlightsResponse];
+    'applyCodeActionCommand': [tsp.ApplyCodeActionCommandRequestArgs, tsp.ApplyCodeActionCommandResponse];
+    'completionEntryDetails': [tsp.CompletionDetailsRequestArgs, tsp.CompletionDetailsResponse];
+    'completionInfo': [tsp.CompletionsRequestArgs, tsp.CompletionInfoResponse];
+    'configure': [tsp.ConfigureRequestArguments, tsp.ConfigureResponse];
+    'definition': [tsp.FileLocationRequestArgs, tsp.DefinitionResponse];
+    'definitionAndBoundSpan': [tsp.FileLocationRequestArgs, tsp.DefinitionInfoAndBoundSpanResponse];
+    'docCommentTemplate': [tsp.FileLocationRequestArgs, tsp.DocCommandTemplateResponse];
+    'format': [tsp.FormatRequestArgs, tsp.FormatResponse];
+    'formatonkey': [tsp.FormatOnKeyRequestArgs, tsp.FormatResponse];
+    'getApplicableRefactors': [tsp.GetApplicableRefactorsRequestArgs, tsp.GetApplicableRefactorsResponse];
+    'getCodeFixes': [tsp.CodeFixRequestArgs, tsp.CodeFixResponse];
+    'getCombinedCodeFix': [tsp.GetCombinedCodeFixRequestArgs, tsp.GetCombinedCodeFixResponse];
+    'getEditsForFileRename': [tsp.GetEditsForFileRenameRequestArgs, tsp.GetEditsForFileRenameResponse];
+    'getEditsForRefactor': [tsp.GetEditsForRefactorRequestArgs, tsp.GetEditsForRefactorResponse];
+    'getOutliningSpans': [tsp.FileRequestArgs, tsp.OutliningSpansResponse];
+    'getSupportedCodeFixes': [null, tsp.GetSupportedCodeFixesResponse];
+    'implementation': [tsp.FileLocationRequestArgs, tsp.ImplementationResponse];
+    'jsxClosingTag': [tsp.JsxClosingTagRequestArgs, tsp.JsxClosingTagResponse];
+    'navto': [tsp.NavtoRequestArgs, tsp.NavtoResponse];
+    'navtree': [tsp.FileRequestArgs, tsp.NavTreeResponse];
+    'organizeImports': [tsp.OrganizeImportsRequestArgs, tsp.OrganizeImportsResponse];
+    'projectInfo': [tsp.ProjectInfoRequestArgs, tsp.ProjectInfoResponse];
+    'quickinfo': [tsp.FileLocationRequestArgs, tsp.QuickInfoResponse];
+    'references': [tsp.FileLocationRequestArgs, tsp.ReferencesResponse];
+    'rename': [tsp.RenameRequestArgs, tsp.RenameResponse];
+    'signatureHelp': [tsp.SignatureHelpRequestArgs, tsp.SignatureHelpResponse];
+    'typeDefinition': [tsp.FileLocationRequestArgs, tsp.TypeDefinitionResponse];
+    'provideInlayHints': [tsp.InlayHintsRequestArgs, tsp.InlayHintsResponse];
+    'encodedSemanticClassifications-full': [tsp.EncodedSemanticClassificationsRequestArgs, tsp.EncodedSemanticClassificationsResponse];
 }
 
 export class TspClient {
@@ -120,7 +119,7 @@ export class TspClient {
             args.push('--locale', locale);
         }
 
-        this.cancellationPipeName = tempy.file({ name: 'tscancellation' });
+        this.cancellationPipeName = temporaryFile({ name: 'tscancellation' });
         args.push('--cancellationPipeName', `${this.cancellationPipeName}*`);
         this.logger.log(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
         const options = {
@@ -160,10 +159,10 @@ export class TspClient {
         }
     }
 
-    notify(command: CommandTypes.Open, args: protocol.OpenRequestArgs): void;
-    notify(command: CommandTypes.Close, args: protocol.FileRequestArgs): void;
-    notify(command: CommandTypes.Saveto, args: protocol.SavetoRequestArgs): void;
-    notify(command: CommandTypes.Change, args: protocol.ChangeRequestArgs): void;
+    notify(command: CommandTypes.Open, args: tsp.OpenRequestArgs): void;
+    notify(command: CommandTypes.Close, args: tsp.FileRequestArgs): void;
+    notify(command: CommandTypes.Saveto, args: tsp.SavetoRequestArgs): void;
+    notify(command: CommandTypes.Change, args: tsp.ChangeRequestArgs): void;
     notify(command: string, args: any): void {
         this.sendMessage(command, true, args);
     }
@@ -198,7 +197,7 @@ export class TspClient {
 
     protected sendMessage(command: string, notification: boolean, args?: any): void {
         this.seq = this.seq + 1;
-        const request: protocol.Request = {
+        const request: tsp.Request = {
             command,
             seq: this.seq,
             type: 'request'
@@ -220,7 +219,7 @@ export class TspClient {
         if (!messageString || messageString.startsWith('Content-Length:')) {
             return;
         }
-        const message: protocol.Message = JSON.parse(messageString);
+        const message: tsp.Message = JSON.parse(messageString);
         this.logger.log('processMessage', message);
         if (this.isResponse(message)) {
             this.resolveResponse(message, message.request_seq, message.success);
@@ -235,7 +234,7 @@ export class TspClient {
         }
     }
 
-    private resolveResponse(message: protocol.Message, request_seq: number, success: boolean) {
+    private resolveResponse(message: tsp.Message, request_seq: number, success: boolean) {
         const deferred = this.deferreds[request_seq];
         this.logger.log('request completed', { request_seq, success });
         if (deferred) {
@@ -248,15 +247,15 @@ export class TspClient {
         }
     }
 
-    private isEvent(message: protocol.Message): message is protocol.Event {
+    private isEvent(message: tsp.Message): message is tsp.Event {
         return message.type === 'event';
     }
 
-    private isResponse(message: protocol.Message): message is protocol.Response {
+    private isResponse(message: tsp.Message): message is tsp.Response {
         return message.type === 'response';
     }
 
-    private isRequestCompletedEvent(message: protocol.Message): message is protocol.RequestCompletedEvent {
+    private isRequestCompletedEvent(message: tsp.Message): message is tsp.RequestCompletedEvent {
         return this.isEvent(message) && message.event === 'requestCompleted';
     }
 }
