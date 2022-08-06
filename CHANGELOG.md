@@ -1,6 +1,34 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v0.11.2...v1.0.0) (2022-08-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Ship as an ES module. Might be breaking for programmatic users of this server. Read more about consuming ES module packages at gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+* **deps:** LSP libraries updated to match the 3.17 version of the LSP spec. Requires minimum Node 14.
+
+### Features
+
+* add support for CompletionItem.labelDetails ([#534](https://github.com/typescript-language-server/typescript-language-server/issues/534)) ([3c140d9](https://github.com/typescript-language-server/typescript-language-server/commit/3c140d958507300d7d186adb84f5b0baa549edb2))
+
+
+### Bug Fixes
+
+* declare quickfix/refactor CodeAction capabilities ([#553](https://github.com/typescript-language-server/typescript-language-server/issues/553)) ([e76fc64](https://github.com/typescript-language-server/typescript-language-server/commit/e76fc6493295649d6ada83c8a5f6d88abe2a6167))
+* handle shutdown lifecycle properly ([#536](https://github.com/typescript-language-server/typescript-language-server/issues/536)) ([ac8536b](https://github.com/typescript-language-server/typescript-language-server/commit/ac8536bf8eb805bfc28e484a8f4827b5375d6824))
+
+
+### Miscellaneous Chores
+
+* **deps:** update LSP libraries to match 3.17 spec ([#532](https://github.com/typescript-language-server/typescript-language-server/issues/532)) ([bdbdd83](https://github.com/typescript-language-server/typescript-language-server/commit/bdbdd8379815583aa28d2a770034253050ba24de))
+
+
+### Code Refactoring
+
+* ship as an ES module ([#547](https://github.com/typescript-language-server/typescript-language-server/issues/547)) ([0dfd411](https://github.com/typescript-language-server/typescript-language-server/commit/0dfd41125c04868b547a3893334bb0bb822e0517))
+
 ## [0.11.2](https://github.com/typescript-language-server/typescript-language-server/compare/v0.11.1...v0.11.2) (2022-06-24)
 
 
