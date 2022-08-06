@@ -6,8 +6,8 @@
  */
 
 import chai from 'chai';
-import { LspServer } from './lsp-server';
-import { uri, createServer, lastPosition, filePath, readContents, positionAfter } from './test-utils';
+import { LspServer } from './lsp-server.js';
+import { uri, createServer, lastPosition, filePath, readContents, positionAfter } from './test-utils.js';
 
 const assert = chai.assert;
 

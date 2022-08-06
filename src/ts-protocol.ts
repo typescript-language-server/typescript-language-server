@@ -9,8 +9,8 @@
  * **IMPORTANT** this module should not depend on `vscode-languageserver` only protocol and types
  */
 import * as lsp from 'vscode-languageserver-protocol';
-import { FormatCodeSettings, UserPreferences } from 'typescript/lib/protocol';
-import { InlayHintsOptions } from './lsp-protocol.inlayHints.proposed';
+import type tsp from 'typescript/lib/protocol.d.js';
+import { InlayHintsOptions } from './lsp-protocol.inlayHints.proposed.js';
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
@@ -41,7 +41,7 @@ export interface TypeScriptInitializationOptions {
     npmLocation?: string;
     locale?: string;
     plugins: TypeScriptPlugin[];
-    preferences?: UserPreferences;
+    preferences?: tsp.UserPreferences;
     hostInfo?: string;
 }
 
@@ -54,7 +54,7 @@ export interface TypeScriptInitializeResult extends lsp.InitializeResult {
 }
 
 export interface TypeScriptWorkspaceSettingsLanguageSettings {
-    format?: FormatCodeSettings;
+    format?: tsp.FormatCodeSettings;
     inlayHints?: InlayHintsOptions;
 }
 

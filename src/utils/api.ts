@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as semver from 'semver';
+import semver from 'semver';
 
 export default class API {
     public static fromSimpleString(value: string): API {

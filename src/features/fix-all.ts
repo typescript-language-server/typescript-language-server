@@ -3,14 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import tsp, { CommandTypes } from 'typescript/lib/protocol';
-import * as lsp from 'vscode-languageserver/node';
-import { LspDocuments } from '../document';
-import { toFileRangeRequestArgs, toTextDocumentEdit } from '../protocol-translation';
-import { TspClient } from '../tsp-client';
-import * as errorCodes from '../utils/errorCodes';
-import * as fixNames from '../utils/fixNames';
-import { CodeActionKind } from '../utils/types';
+import type tsp from 'typescript/lib/protocol.d.js';
+import * as lsp from 'vscode-languageserver';
+import { LspDocuments } from '../document.js';
+import { toFileRangeRequestArgs, toTextDocumentEdit } from '../protocol-translation.js';
+import { TspClient } from '../tsp-client.js';
+import { CommandTypes } from '../tsp-command-types.js';
+import * as errorCodes from '../utils/errorCodes.js';
+import * as fixNames from '../utils/fixNames.js';
+import { CodeActionKind } from '../utils/types.js';
 
 interface AutoFix {
     readonly codes: Set<number>;

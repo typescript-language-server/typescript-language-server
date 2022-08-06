@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as lsp from 'vscode-languageserver/node';
+import * as lsp from 'vscode-languageserver';
 
 export class CodeActionKind {
     private static readonly sep = '.';

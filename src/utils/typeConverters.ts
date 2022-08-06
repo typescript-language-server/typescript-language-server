@@ -6,7 +6,7 @@
  * Helpers for converting FROM LanguageServer types language-server ts types
  */
 import type * as lsp from 'vscode-languageserver-protocol';
-import type tsp from 'typescript/lib/protocol';
+import type tsp from 'typescript/lib/protocol.d.js';
 
 export namespace Position {
     export const fromLocation = (tslocation: tsp.Location): lsp.Position => {

@@ -6,15 +6,16 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
-import { createLspConnection } from './lsp-connection';
-import * as lsp from 'vscode-languageserver/node';
+import { createLspConnection } from './lsp-connection.js';
+import * as lsp from 'vscode-languageserver';
 
 const DEFAULT_LOG_LEVEL = lsp.MessageType.Info;
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' }));
 
 const program = new Command('typescript-language-server')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    .version(require('../package.json').version)
+    .version(version)
     .requiredOption('--stdio', 'use stdio')
     .option('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.')
     .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')

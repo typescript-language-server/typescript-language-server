@@ -5,16 +5,16 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver/node';
-import type tsp from 'typescript/lib/protocol';
-import { LspDocument } from './document';
-import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-types';
-import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation';
-import { Commands } from './commands';
-import { TspClient } from './tsp-client';
-import { CompletionOptions, DisplayPartKind, SupportedFeatures } from './ts-protocol';
-import SnippetString from './utils/SnippetString';
-import * as typeConverters from './utils/typeConverters';
+import * as lsp from 'vscode-languageserver';
+import type tsp from 'typescript/lib/protocol.js';
+import { LspDocument } from './document.js';
+import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-types.js';
+import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation.js';
+import { Commands } from './commands.js';
+import { TspClient } from './tsp-client.js';
+import { CompletionOptions, DisplayPartKind, SupportedFeatures } from './ts-protocol.js';
+import SnippetString from './utils/SnippetString.js';
+import * as typeConverters from './utils/typeConverters.js';
 
 interface TSCompletionItem extends lsp.CompletionItem {
     data: tsp.CompletionDetailsRequestArgs;

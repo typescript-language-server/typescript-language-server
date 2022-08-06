@@ -5,8 +5,8 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { LspClient } from './lsp-client';
-import * as lsp from 'vscode-languageserver/node';
+import { LspClient } from './lsp-client.js';
+import * as lsp from 'vscode-languageserver';
 
 /**
  * the logger type
