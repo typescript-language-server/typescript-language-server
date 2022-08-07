@@ -905,7 +905,7 @@ describe('signatureHelp', () => {
         assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
     });
 
-    it.only('retrigger with specific signature active', async () => {
+    it('retrigger with specific signature active', async () => {
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
