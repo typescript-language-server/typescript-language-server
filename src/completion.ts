@@ -16,10 +16,6 @@ import { CompletionOptions, DisplayPartKind, SupportedFeatures } from './ts-prot
 import SnippetString from './utils/SnippetString.js';
 import * as typeConverters from './utils/typeConverters.js';
 
-interface TSCompletionItem extends lsp.CompletionItem {
-    data: tsp.CompletionDetailsRequestArgs;
-}
-
 interface ParameterListParts {
     readonly parts: ReadonlyArray<tsp.SymbolDisplayPart>;
     readonly hasOptionalParameters: boolean;
