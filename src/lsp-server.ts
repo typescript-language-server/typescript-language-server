@@ -194,12 +194,6 @@ export class LspServer {
         this.options.lspClient.setClientCapabilites(clientCapabilities);
         this._loadingIndicator = new ServerInitializingIndicator(this.options.lspClient);
         this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
-        this.diagnosticQueue = new DiagnosticEventQueue(
-            diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
-            this.documents,
-            clientCapabilities.textDocument?.publishDiagnostics,
-            this.logger
-        );
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
         const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale } = userInitializationOptions;
@@ -228,17 +222,32 @@ export class LspServer {
             ...userInitializationOptions.preferences
         };
 
-        if (userPreferences.useLabelDetailsInCompletionEntries
-            && clientCapabilities.textDocument?.completion?.completionItem?.labelDetailsSupport
-            && typescriptVersion.version?.gte(API.v470)) {
-            this.features.labelDetails = true;
+        const { textDocument } = clientCapabilities;
+        const completionCapabilities = textDocument?.completion;
+        if (completionCapabilities?.completionItem) {
+            if (userPreferences.useLabelDetailsInCompletionEntries && completionCapabilities.completionItem.labelDetailsSupport
+                && typescriptVersion.version?.gte(API.v470)) {
+                this.features.completionLabelDetails = true;
+            }
+            if (completionCapabilities.completionItem.snippetSupport) {
+                this.features.completionSnippets = true;
+            }
+            if (textDocument?.publishDiagnostics?.tagSupport) {
+                this.features.diagnosticsTagSupport = true;
+            }
         }
 
         const finalPreferences: TypeScriptInitializationOptions['preferences'] = {
             ...userPreferences,
-            ...{ useLabelDetailsInCompletionEntries: this.features.labelDetails }
+            ...{ useLabelDetailsInCompletionEntries: this.features.completionLabelDetails }
         };
 
+        this.diagnosticQueue = new DiagnosticEventQueue(
+            diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
+            this.documents,
+            this.features,
+            this.logger
+        );
         this._tspClient = new TspClient({
             tsserverPath: typescriptVersion.tsServerPath,
             logFile,
@@ -657,9 +666,17 @@ export class LspServer {
                 triggerKind: params.context?.triggerKind
             }));
             const { body } = result;
-            const completions = (body ? body.entries : [])
-                .filter(entry => entry.kind !== 'warning')
-                .map(entry => asCompletionItem(entry, file, params.position, document, this.features));
+            const completions: lsp.CompletionItem[] = [];
+            for (const entry of body?.entries ?? []) {
+                if (entry.kind === 'warning') {
+                    continue;
+                }
+                const completion = asCompletionItem(entry, file, params.position, document, this.features);
+                if (!completion) {
+                    continue;
+                }
+                completions.push(completion);
+            }
             return lsp.CompletionList.create(completions, body?.isIncomplete);
         } catch (error) {
             if (error.message === 'No content available.') {
@@ -681,7 +698,7 @@ export class LspServer {
         if (!details) {
             return item;
         }
-        return asResolvedCompletionItem(item, details, this.tspClient, this.workspaceConfiguration.completions || {});
+        return asResolvedCompletionItem(item, details, this.tspClient, this.workspaceConfiguration.completions || {}, this.features);
     }
 
     async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {

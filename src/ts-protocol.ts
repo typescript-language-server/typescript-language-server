@@ -26,7 +26,9 @@ export class DisplayPartKind {
 }
 
 export interface SupportedFeatures {
-    labelDetails?: boolean;
+    completionLabelDetails?: boolean;
+    completionSnippets?: boolean;
+    diagnosticsTagSupport?: boolean;
 }
 
 export interface TypeScriptPlugin {

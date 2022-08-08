@@ -16,19 +16,15 @@ import { CompletionOptions, DisplayPartKind, SupportedFeatures } from './ts-prot
 import SnippetString from './utils/SnippetString.js';
 import * as typeConverters from './utils/typeConverters.js';
 
-interface TSCompletionItem extends lsp.CompletionItem {
-    data: tsp.CompletionDetailsRequestArgs;
-}
-
 interface ParameterListParts {
     readonly parts: ReadonlyArray<tsp.SymbolDisplayPart>;
     readonly hasOptionalParameters: boolean;
 }
 
-export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument, features: SupportedFeatures): TSCompletionItem {
-    const item: TSCompletionItem = {
+export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument, features: SupportedFeatures): lsp.CompletionItem | null {
+    const item: lsp.CompletionItem = {
         label: entry.name,
-        ...features.labelDetails ? { labelDetails: entry.labelDetails } : {},
+        ...features.completionLabelDetails ? { labelDetails: entry.labelDetails } : {},
         kind: asCompletionItemKind(entry.kind),
         sortText: entry.sortText,
         commitCharacters: asCommitCharacters(entry.kind),
@@ -53,13 +49,16 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
         item.sortText = '\uffff' + entry.sortText;
     }
 
-    const { sourceDisplay, isSnippet } = entry;
+    const { isSnippet, sourceDisplay } = entry;
+    if (isSnippet && !features.completionSnippets) {
+        return null;
+    }
+    if (features.completionSnippets && (isSnippet || entry.isImportStatementCompletion || item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
+        // Import statements, Functions and Methods can result in a snippet completion when resolved.
+        item.insertTextFormat = lsp.InsertTextFormat.Snippet;
+    }
     if (sourceDisplay) {
         item.detail = asPlainText(sourceDisplay);
-    }
-
-    if (entry.isImportStatementCompletion || isSnippet || item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method) {
-        item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     }
 
     let insertText = entry.insertText;
@@ -192,7 +191,7 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 }
 
 export async function asResolvedCompletionItem(
-    item: lsp.CompletionItem, details: tsp.CompletionEntryDetails, client: TspClient, options: CompletionOptions
+    item: lsp.CompletionItem, details: tsp.CompletionEntryDetails, client: TspClient, options: CompletionOptions, features: SupportedFeatures
 ): Promise<lsp.CompletionItem> {
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);
@@ -201,8 +200,7 @@ export async function asResolvedCompletionItem(
         item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
         item.command = asCommand(details.codeActions, item.data.file);
     }
-    if (options.completeFunctionCalls && item.insertTextFormat === lsp.InsertTextFormat.Snippet
-        && (item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
+    if (features.completionSnippets && options.completeFunctionCalls && (item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
         const { line, offset } = item.data;
         const position = typeConverters.Position.fromLocation({ line, offset });
         const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client);
@@ -251,6 +249,7 @@ function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: tsp.Compl
     snippet.appendText(')');
     snippet.appendTabstop(0);
     item.insertText = snippet.value;
+    item.insertTextFormat = lsp.InsertTextFormat.Snippet;
 }
 
 function getParameterListParts(displayParts: ReadonlyArray<tsp.SymbolDisplayPart>): ParameterListParts {

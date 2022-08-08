@@ -9,7 +9,7 @@ import * as chai from 'chai';
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
-import { uri, createServer, position, lastPosition, filePath, getDefaultClientCapabilities, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
+import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Commands } from './commands.js';
 import { TypeScriptWorkspaceSettings } from './ts-protocol.js';
@@ -1635,9 +1635,11 @@ describe('diagnostics (no client support)', () => {
     let localServer: TestLspServer;
 
     before(async () => {
-        // Remove the "textDocument.publishDiagnostics" client capability.
-        const clientCapabilitiesOverride = getDefaultClientCapabilities();
-        delete clientCapabilitiesOverride.textDocument?.publishDiagnostics;
+        const clientCapabilitiesOverride: lsp.ClientCapabilities = {
+            textDocument: {
+                publishDiagnostics: undefined
+            }
+        };
         localServer = await createServer({
             rootUri: null,
             publishDiagnostics: args => diagnostics.set(args.uri, args),
@@ -1657,7 +1659,7 @@ describe('diagnostics (no client support)', () => {
         localServer.shutdown();
     });
 
-    it('diagnostics are published', async () => {
+    it('diagnostic tags are not returned', async () => {
         const doc = {
             uri: uri('diagnosticsBar.ts'),
             languageId: 'typescript',
@@ -1676,7 +1678,8 @@ describe('diagnostics (no client support)', () => {
         await new Promise(resolve => setTimeout(resolve, 200));
         const resultsForFile = diagnostics.get(doc.uri);
         assert.isDefined(resultsForFile);
-        assert.strictEqual(resultsForFile?.diagnostics.length, 1);
+        assert.strictEqual(resultsForFile!.diagnostics.length, 1);
+        assert.notProperty(resultsForFile!.diagnostics[0], 'tags');
     });
 });
 
@@ -1764,5 +1767,108 @@ describe('inlayHints', () => {
         assert.strictEqual(inlayHints[0].text, ': number');
         assert.strictEqual(inlayHints[0].kind, 'Type');
         assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 29 });
+    });
+});
+
+describe('completions without client snippet support', () => {
+    let localServer: TestLspServer;
+
+    before(async () => {
+        const clientCapabilitiesOverride: lsp.ClientCapabilities = {
+            textDocument: {
+                completion: {
+                    completionItem: {
+                        snippetSupport: false
+                    }
+                }
+            }
+        };
+        localServer = await createServer({
+            rootUri: null,
+            publishDiagnostics: args => diagnostics.set(args.uri, args),
+            clientCapabilitiesOverride
+        });
+    });
+
+    beforeEach(() => {
+        localServer.closeAll();
+        // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+        diagnostics.clear();
+        localServer.workspaceEdits = [];
+    });
+
+    after(() => {
+        localServer.closeAll();
+        localServer.shutdown();
+    });
+
+    it('resolves completion for method completion does not contain snippet', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+            import fs from 'fs'
+            fs.readFile
+        `
+        };
+        localServer.didOpenTextDocument({ textDocument: doc });
+        const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        assert.notEqual(completion!.insertTextFormat, lsp.InsertTextFormat.Snippet);
+        assert.strictEqual(completion!.label, 'readFile');
+        const resolvedItem = await localServer.completionResolve(completion!);
+        assert.strictEqual(resolvedItem!.label, 'readFile');
+        assert.strictEqual(resolvedItem.insertText, undefined);
+        assert.strictEqual(resolvedItem.insertTextFormat, undefined);
+        localServer.didCloseTextDocument({ textDocument: doc });
+    });
+
+    it('does not include snippet completions for element prop', async () => {
+        const doc = {
+            uri: uri('jsx', 'app.tsx'),
+            languageId: 'typescriptreact',
+            version: 1,
+            text: readContents(filePath('jsx', 'app.tsx'))
+        };
+        localServer.didOpenTextDocument({
+            textDocument: doc
+        });
+
+        const completion = await localServer.completion({ textDocument: doc, position: position(doc, 'title') });
+        assert.isNotNull(completion);
+        const item = completion!.items.find(i => i.label === 'title');
+        assert.isUndefined(item);
+    });
+
+    it('does not include snippet completions for object methods', async () => {
+        const doc = {
+            uri: uri('foo.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+              interface IFoo {
+                bar(x: number): void;
+              }
+              const obj: IFoo = {
+                /*a*/
+              }
+            `
+        };
+        localServer.didOpenTextDocument({ textDocument: doc });
+        const proposals = await localServer.completion({
+            textDocument: doc,
+            position: positionAfter(doc, '/*a*/')
+        });
+        assert.isNotNull(proposals);
+        assert.lengthOf(proposals!.items, 1);
+        assert.deepInclude(
+            proposals!.items[0],
+            {
+                label: 'bar',
+                kind: 2
+            }
+        );
     });
 });

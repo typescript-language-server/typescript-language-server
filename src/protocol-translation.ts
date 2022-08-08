@@ -9,6 +9,7 @@ import * as lsp from 'vscode-languageserver';
 import type tsp from 'typescript/lib/protocol.d.js';
 import vscodeUri from 'vscode-uri';
 import { LspDocuments } from './document.js';
+import { SupportedFeatures } from './ts-protocol.js';
 
 const RE_PATHSEP_WINDOWS = /\\/g;
 
@@ -132,11 +133,7 @@ function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     }
 }
 
-export function toDiagnostic(
-    diagnostic: tsp.Diagnostic,
-    documents: LspDocuments | undefined,
-    publishDiagnosticsCapabilities: lsp.TextDocumentClientCapabilities['publishDiagnostics']
-): lsp.Diagnostic {
+export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments | undefined, features: SupportedFeatures): lsp.Diagnostic {
     const lspDiagnostic: lsp.Diagnostic = {
         range: {
             start: toPosition(diagnostic.start),
@@ -148,7 +145,7 @@ export function toDiagnostic(
         source: diagnostic.source || 'typescript',
         relatedInformation: asRelatedInformation(diagnostic.relatedInformation, documents)
     };
-    if (publishDiagnosticsCapabilities?.tagSupport) {
+    if (features.diagnosticsTagSupport) {
         lspDiagnostic.tags = getDiagnosticTags(diagnostic);
     }
     return lspDiagnostic;

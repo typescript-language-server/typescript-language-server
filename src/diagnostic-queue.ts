@@ -12,6 +12,7 @@ import { Logger } from './logger.js';
 import { pathToUri, toDiagnostic } from './protocol-translation.js';
 import { EventTypes } from './tsp-command-types.js';
 import { LspDocuments } from './document.js';
+import { SupportedFeatures } from './ts-protocol.js';
 
 class FileDiagnostics {
     private readonly diagnosticsPerKind = new Map<EventTypes, tsp.Diagnostic[]>();
@@ -20,7 +21,7 @@ class FileDiagnostics {
         protected readonly uri: string,
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly documents: LspDocuments,
-        protected readonly publishDiagnosticsCapabilities: lsp.TextDocumentClientCapabilities['publishDiagnostics']
+        protected readonly features: SupportedFeatures
     ) { }
 
     update(kind: EventTypes, diagnostics: tsp.Diagnostic[]): void {
@@ -36,7 +37,7 @@ class FileDiagnostics {
         const result: lsp.Diagnostic[] = [];
         for (const diagnostics of this.diagnosticsPerKind.values()) {
             for (const diagnostic of diagnostics) {
-                result.push(toDiagnostic(diagnostic, this.documents, this.publishDiagnosticsCapabilities));
+                result.push(toDiagnostic(diagnostic, this.documents, this.features));
             }
         }
         return result;
@@ -50,7 +51,7 @@ export class DiagnosticEventQueue {
     constructor(
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly documents: LspDocuments,
-        protected readonly publishDiagnosticsCapabilities: lsp.TextDocumentClientCapabilities['publishDiagnostics'],
+        protected readonly features: SupportedFeatures,
         protected readonly logger: Logger
     ) { }
 
@@ -67,7 +68,7 @@ export class DiagnosticEventQueue {
         }
         const uri = pathToUri(file, this.documents);
         const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(
-            uri, this.publishDiagnostics, this.documents, this.publishDiagnosticsCapabilities);
+            uri, this.publishDiagnostics, this.documents, this.features);
         diagnosticsForFile.update(kind, diagnostics);
         this.diagnostics.set(uri, diagnosticsForFile);
     }

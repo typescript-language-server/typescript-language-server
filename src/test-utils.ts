@@ -9,6 +9,7 @@ import { platform } from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import deepmerge from 'deepmerge';
 import * as lsp from 'vscode-languageserver';
 import { normalizePath, pathToUri } from './protocol-translation.js';
 import { LspServer } from './lsp-server.js';
@@ -19,29 +20,28 @@ import { TypeScriptVersionProvider } from './utils/versionProvider.js';
 const CONSOLE_LOG_LEVEL = ConsoleLogger.toMessageTypeLevel(process.env.CONSOLE_LOG_LEVEL);
 export const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
-export function getDefaultClientCapabilities(): lsp.ClientCapabilities {
-    return {
-        textDocument: {
-            completion: {
-                completionItem: {
-                    labelDetailsSupport: true
-                }
-            },
-            documentSymbol: {
-                hierarchicalDocumentSymbolSupport: true
-            },
-            publishDiagnostics: {
-                tagSupport: {
-                    valueSet: [
-                        lsp.DiagnosticTag.Unnecessary,
-                        lsp.DiagnosticTag.Deprecated
-                    ]
-                }
-            },
-            moniker: {}
-        }
-    };
-}
+const DEFAULT_TEST_CLIENT_CAPABILITIES: lsp.ClientCapabilities = {
+    textDocument: {
+        completion: {
+            completionItem: {
+                snippetSupport: true,
+                labelDetailsSupport: true
+            }
+        },
+        documentSymbol: {
+            hierarchicalDocumentSymbolSupport: true
+        },
+        publishDiagnostics: {
+            tagSupport: {
+                valueSet: [
+                    lsp.DiagnosticTag.Unnecessary,
+                    lsp.DiagnosticTag.Deprecated
+                ]
+            }
+        },
+        moniker: {}
+    }
+};
 
 export function uri(...components: string[]): string {
     const resolved = filePath(...components);
@@ -133,7 +133,7 @@ export async function createServer(options: {
         rootPath: undefined,
         rootUri: options.rootUri,
         processId: 42,
-        capabilities: options.clientCapabilitiesOverride || getDefaultClientCapabilities(),
+        capabilities: deepmerge(DEFAULT_TEST_CLIENT_CAPABILITIES, options.clientCapabilitiesOverride || {}),
         workspaceFolders: null
     });
     return server;
