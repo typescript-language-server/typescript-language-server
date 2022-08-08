@@ -26,7 +26,7 @@ import {
 } from './protocol-translation.js';
 import { LspDocuments, LspDocument } from './document.js';
 import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion.js';
-import { asSignatureHelp } from './hover.js';
+import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
@@ -335,7 +335,8 @@ export class LspServer {
                 renameProvider: true,
                 referencesProvider: true,
                 signatureHelpProvider: {
-                    triggerCharacters: ['(', ',', '<']
+                    triggerCharacters: ['(', ',', '<'],
+                    retriggerCharacters: [')']
                 },
                 workspaceSymbolProvider: true,
                 implementationProvider: true,
@@ -878,25 +879,27 @@ export class LspServer {
         return opts;
     }
 
-    async signatureHelp(params: lsp.TextDocumentPositionParams): Promise<lsp.SignatureHelp | undefined> {
+    async signatureHelp(params: lsp.SignatureHelpParams): Promise<lsp.SignatureHelp | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('signatureHelp', params, file);
         if (!file) {
             return undefined;
         }
 
-        const response = await this.interuptDiagnostics(() => this.getSignatureHelp(file, params.position));
+        const response = await this.interuptDiagnostics(() => this.getSignatureHelp(file, params));
         if (!response || !response.body) {
             return undefined;
         }
-        return asSignatureHelp(response.body);
+        return asSignatureHelp(response.body, params.context);
     }
-    protected async getSignatureHelp(file: string, position: lsp.Position): Promise<tsp.SignatureHelpResponse | undefined> {
+    protected async getSignatureHelp(file: string, params: lsp.SignatureHelpParams): Promise<tsp.SignatureHelpResponse | undefined> {
         try {
+            const { position, context } = params;
             return await this.tspClient.request(CommandTypes.SignatureHelp, {
                 file,
                 line: position.line + 1,
-                offset: position.character + 1
+                offset: position.character + 1,
+                triggerReason: context ? toTsTriggerReason(context) : undefined
             });
         } catch (err) {
             return undefined;

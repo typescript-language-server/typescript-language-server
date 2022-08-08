@@ -18,6 +18,7 @@
             "es6"
         ],
         "alwaysStrict": true,
+        "strictBindCallApply": true,
         "strictNullChecks": true,
         "skipLibCheck": true,
     }

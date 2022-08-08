@@ -881,6 +881,7 @@ describe('signatureHelp', () => {
             version: 1,
             text: `
         export function foo(bar: string, baz?:boolean): void {}
+        export function foo(n: number, baz?: boolean): void
         foo(param1, param2)
       `
         };
@@ -892,6 +893,8 @@ describe('signatureHelp', () => {
             position: position(doc, 'param1')
         }))!;
 
+        assert.equal(result.signatures.length, 2);
+
         assert.equal('bar: string', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
 
         result = (await server.signatureHelp({
@@ -900,6 +903,43 @@ describe('signatureHelp', () => {
         }))!;
 
         assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
+    });
+
+    it('retrigger with specific signature active', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+        export function foo(bar: string, baz?: boolean): void {}
+        export function foo(n: number, baz?: boolean): void
+        foo(param1, param2)
+      `
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        let result = await server.signatureHelp({
+            textDocument: doc,
+            position: position(doc, 'param1')
+        });
+        assert.equal(result!.signatures.length, 2);
+
+        result = (await server.signatureHelp({
+            textDocument: doc,
+            position: position(doc, 'param1'),
+            context: {
+                isRetrigger: true,
+                triggerKind: lsp.SignatureHelpTriggerKind.Invoked,
+                activeSignatureHelp: {
+                    signatures: result!.signatures,
+                    activeSignature: 1  // select second signature
+                }
+            }
+        }))!;
+        const { activeSignature, signatures } = result!;
+        assert.equal(activeSignature, 1);
+        assert.deepInclude(signatures[activeSignature!], {
+            label: 'foo(n: number, baz?: boolean): void'
+        });
     });
 });
 
