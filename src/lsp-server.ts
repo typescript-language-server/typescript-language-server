@@ -214,7 +214,7 @@ export class LspServer {
         if (typescriptVersion) {
             this.logger.info(`Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
         } else {
-            throw Error('Could not find a valid tsserver executable in the workspace or in the $PATH. Please ensure that the "typescript" dependency is installed in either location. Exiting.');
+            throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid --tsserver-path is specified. Exiting.');
         }
 
         const userPreferences: TypeScriptInitializationOptions['preferences'] = {
