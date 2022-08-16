@@ -37,7 +37,8 @@ import { computeCallers, computeCallees } from './calls.js';
 import { IServerOptions } from './utils/configuration.js';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
-import { LspClient, ProgressReporter } from './lsp-client.js';
+import { SourceDefinitionCommand } from './features/source-definition.js';
+import { LspClient } from './lsp-client.js';
 import { CodeActionKind } from './utils/types.js';
 
 const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
@@ -74,7 +75,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
 
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;
-    private _progressReporter?: ProgressReporter;
+    private _progressReporter?: lsp.WorkDoneProgressReporter;
 
     constructor(private lspClient: LspClient) {}
 
@@ -82,19 +83,19 @@ class ServerInitializingIndicator {
         if (this._loadingProjectName) {
             this._loadingProjectName = undefined;
             if (this._progressReporter) {
-                this._progressReporter.end();
+                this._progressReporter.done();
                 this._progressReporter = undefined;
             }
         }
     }
 
-    public startedLoadingProject(projectName: string): void {
+    public async startedLoadingProject(projectName: string): Promise<void> {
         // TS projects are loaded sequentially. Cancel existing task because it should always be resolved before
         // the incoming project loading task is.
         this.reset();
 
         this._loadingProjectName = projectName;
-        this._progressReporter = this.lspClient.createProgressReporter();
+        this._progressReporter = await this.lspClient.createProgressReporter();
         this._progressReporter.begin('Initializing JS/TS language features…');
     }
 
@@ -102,7 +103,7 @@ class ServerInitializingIndicator {
         if (this._loadingProjectName === projectName) {
             this._loadingProjectName = undefined;
             if (this._progressReporter) {
-                this._progressReporter.end();
+                this._progressReporter.done();
                 this._progressReporter = undefined;
             }
         }
@@ -191,7 +192,6 @@ export class LspServer {
         }
         this.initializeParams = params;
         const clientCapabilities = this.initializeParams.capabilities;
-        this.options.lspClient.setClientCapabilites(clientCapabilities);
         this._loadingIndicator = new ServerInitializingIndicator(this.options.lspClient);
         this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
 
@@ -249,6 +249,7 @@ export class LspServer {
             this.logger
         );
         this._tspClient = new TspClient({
+            apiVersion: typescriptVersion.version || API.defaultVersion,
             tsserverPath: typescriptVersion.tsServerPath,
             logFile,
             logVerbosity,
@@ -328,7 +329,8 @@ export class LspServer {
                         Commands.APPLY_CODE_ACTION,
                         Commands.APPLY_REFACTORING,
                         Commands.ORGANIZE_IMPORTS,
-                        Commands.APPLY_RENAME_FILE
+                        Commands.APPLY_RENAME_FILE,
+                        Commands.SOURCE_DEFINITION
                     ]
                 },
                 hoverProvider: true,
@@ -978,13 +980,11 @@ export class LspServer {
         }
     }
 
-    async executeCommand(arg: lsp.ExecuteCommandParams): Promise<void> {
+    async executeCommand(arg: lsp.ExecuteCommandParams, token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<any> {
         this.logger.log('executeCommand', arg);
         if (arg.command === Commands.APPLY_WORKSPACE_EDIT && arg.arguments) {
             const edit = arg.arguments[0] as lsp.WorkspaceEdit;
-            await this.options.lspClient.applyWorkspaceEdit({
-                edit
-            });
+            await this.options.lspClient.applyWorkspaceEdit({ edit });
         } else if (arg.command === Commands.APPLY_CODE_ACTION && arg.arguments) {
             const codeAction = arg.arguments[0] as tsp.CodeAction;
             if (!await this.applyFileCodeEdits(codeAction.changes)) {
@@ -1048,10 +1048,15 @@ export class LspServer {
                 // Execute only the first code action.
                 break;
             }
+        } else if (arg.command === Commands.SOURCE_DEFINITION) {
+            const [uri, position] = (arg.arguments || []) as [lsp.DocumentUri?, lsp.Position?];
+            const reporter = await this.options.lspClient.createProgressReporter(token, workDoneProgress);
+            return SourceDefinitionCommand.execute(uri, position, this.documents, this.tspClient, this.options.lspClient, reporter);
         } else {
             this.logger.error(`Unknown command ${arg.command}.`);
         }
     }
+
     protected async applyFileCodeEdits(edits: ReadonlyArray<tsp.FileCodeEdits>): Promise<boolean> {
         if (!edits.length) {
             return false;
@@ -1209,13 +1214,13 @@ export class LspServer {
         }
     }
 
-    protected onTsEvent(event: protocol.Event): void {
+    protected async onTsEvent(event: protocol.Event): Promise<void> {
         if (event.event === EventTypes.SementicDiag ||
             event.event === EventTypes.SyntaxDiag ||
             event.event === EventTypes.SuggestionDiag) {
             this.diagnosticQueue?.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
         } else if (event.event === EventTypes.ProjectLoadingStart) {
-            this.loadingIndicator.startedLoadingProject((event as tsp.ProjectLoadingStartEvent).body.projectName);
+            await this.loadingIndicator.startedLoadingProject((event as tsp.ProjectLoadingStartEvent).body.projectName);
         } else if (event.event === EventTypes.ProjectLoadingFinish) {
             this.loadingIndicator.finishedLoadingProject((event as tsp.ProjectLoadingFinishEvent).body.projectName);
         } else {

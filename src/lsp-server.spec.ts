@@ -23,7 +23,7 @@ let server: TestLspServer;
 
 before(async () => {
     server = await createServer({
-        rootUri: null,
+        rootUri: uri(),
         publishDiagnostics: args => diagnostics.set(args.uri, args)
     });
     server.didChangeConfiguration({
@@ -1503,6 +1503,40 @@ describe('executeCommand', () => {
                 }
             ]
         );
+    });
+
+    it('go to source definition', async () => {
+        // NOTE: This test needs to reference files that physically exist for the feature to work.
+        const indexUri = uri('source-definition', 'index.ts');
+        const indexDoc = {
+            uri: indexUri,
+            languageId: 'typescript',
+            version: 1,
+            text: readContents(filePath('source-definition', 'index.ts'))
+        };
+        server.didOpenTextDocument({ textDocument: indexDoc });
+        const result: lsp.Location[] | null = await server.executeCommand({
+            command: Commands.SOURCE_DEFINITION,
+            arguments: [
+                indexUri,
+                position(indexDoc, '/*identifier*/')
+            ]
+        });
+        assert.isNotNull(result);
+        assert.equal(result!.length, 1);
+        assert.deepEqual(result![0], {
+            uri: uri('source-definition', 'a.js'),
+            range: {
+                start: {
+                    line: 0,
+                    character: 13
+                },
+                end: {
+                    line: 0,
+                    character: 14
+                }
+            }
+        });
     });
 });
 

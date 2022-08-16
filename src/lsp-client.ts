@@ -6,67 +6,50 @@
  */
 
 import * as lsp from 'vscode-languageserver';
+import { MessageType } from 'vscode-languageserver';
+import { attachWorkDone } from 'vscode-languageserver/lib/common/progress.js';
 import { TypeScriptRenameRequest } from './ts-protocol.js';
 
-export interface ProgressReporter {
-    begin(message?: string): void;
-    report(message: string): void;
-    end(): void;
+export interface WithProgressOptions {
+    message: string;
+    reporter: lsp.WorkDoneProgressReporter;
 }
 
 export interface LspClient {
-    setClientCapabilites(capabilites: lsp.ClientCapabilities): void;
-    createProgressReporter(): ProgressReporter;
+    createProgressReporter(token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter>;
+    withProgress<R>(options: WithProgressOptions, task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>): Promise<R>;
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
     showMessage(args: lsp.ShowMessageParams): void;
+    showErrorMessage(message: string): void;
     logMessage(args: lsp.LogMessageParams): void;
     applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult>;
     telemetry(args: any): void;
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
 }
 
-export class LspClientImpl implements LspClient {
-    private clientCapabilities?: lsp.ClientCapabilities;
+// Hack around the LSP library that makes it otherwise impossible to differentiate between Null and Client-initiated reporter.
+const nullProgressReporter = attachWorkDone(undefined as any, /* params */ undefined);
 
+export class LspClientImpl implements LspClient {
     constructor(protected connection: lsp.Connection) {}
 
-    setClientCapabilites(capabilites: lsp.ClientCapabilities): void {
-        this.clientCapabilities = capabilites;
+    async createProgressReporter(_?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter> {
+        let reporter: lsp.WorkDoneProgressReporter;
+        if (workDoneProgress && workDoneProgress.constructor !== nullProgressReporter.constructor) {
+            reporter = workDoneProgress;
+        } else {
+            reporter = workDoneProgress || await this.connection.window.createWorkDoneProgress();
+        }
+        return reporter;
     }
 
-    createProgressReporter(): ProgressReporter {
-        let workDoneProgress: Promise<lsp.WorkDoneProgressServerReporter> | undefined;
-        return {
-            begin: (message = '') => {
-                if (this.clientCapabilities?.window?.workDoneProgress) {
-                    workDoneProgress = this.connection.window.createWorkDoneProgress();
-                    workDoneProgress
-                        .then((progress) => {
-                            progress.begin(message);
-                        })
-                        .catch(() => {});
-                }
-            },
-            report: (message: string) => {
-                if (workDoneProgress) {
-                    workDoneProgress
-                        .then((progress) => {
-                            progress.report(message);
-                        })
-                        .catch(() => {});
-                }
-            },
-            end: () => {
-                if (workDoneProgress) {
-                    workDoneProgress
-                        .then((progress) => {
-                            progress.done();
-                        })
-                        .catch(() => {});
-                    workDoneProgress = undefined;
-                }
-            }
-        };
+    async withProgress<R = unknown>(options: WithProgressOptions, task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>): Promise<R> {
+        const { message, reporter } = options;
+        reporter.begin(message);
+        return task(reporter).then(result => {
+            reporter.done();
+            return result;
+        });
     }
 
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void {
@@ -75,6 +58,10 @@ export class LspClientImpl implements LspClient {
 
     showMessage(args: lsp.ShowMessageParams): void {
         this.connection.sendNotification(lsp.ShowMessageNotification.type, args);
+    }
+
+    showErrorMessage(message: string): void {
+        this.connection.sendNotification(lsp.ShowMessageNotification.type, { type: MessageType.Error, message });
     }
 
     logMessage(args: lsp.LogMessageParams): void {

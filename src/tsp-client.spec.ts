@@ -10,6 +10,7 @@ import { TspClient } from './tsp-client.js';
 import { ConsoleLogger } from './logger.js';
 import { filePath, readContents } from './test-utils.js';
 import { CommandTypes } from './tsp-command-types.js';
+import API from './utils/api.js';
 import { TypeScriptVersionProvider } from './utils/versionProvider.js';
 
 const assert = chai.assert;
@@ -19,6 +20,7 @@ let server: TspClient;
 
 before(() => {
     server = new TspClient({
+        apiVersion: API.defaultVersion,
         logger: new ConsoleLogger(),
         tsserverPath: bundled!.tsServerPath
     });

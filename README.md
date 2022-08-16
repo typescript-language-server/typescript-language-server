@@ -247,35 +247,127 @@ The user can enable it with a setting similar to (can vary per-editor):
 
 ## Workspace commands (`workspace/executeCommand`)
 
-See [LSP specification](https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#workspace_executeCommand).
+See [LSP specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand).
 
 Most of the time, you'll execute commands with arguments retrieved from another request like `textDocument/codeAction`. There are some use cases for calling them manually.
 
-Supported commands:
+`lsp` refers to the language server protocol types, `tsp` refers to the typescript server protocol types.
 
-`lsp` refers to the language server protocol, `tsp` refers to the typescript server protocol.
+### Go to Source Definition
 
-* `_typescript.applyWorkspaceEdit`
-    ```ts
-    type Arguments = [lsp.WorkspaceEdit]
-    ```
-* `_typescript.applyCodeAction`
-    ```ts
-    type Arguments = [tsp.CodeAction]
-    ```
-* `_typescript.applyRefactoring`
-    ```ts
-    type Arguments = [tsp.GetEditsForRefactorRequestArgs]
-    ```
-* `_typescript.organizeImports`
-    ```ts
-    // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
-    type Arguments = [string] | [string, { skipDestructiveCodeActions?: boolean }]
-    ```
-* `_typescript.applyRenameFile`
-    ```ts
-    type Arguments = [{ sourceUri: string; targetUri: string; }]
-    ```
+Request:
+
+```ts
+{
+    command: `_typescript.goToSourceDefinition`
+    arguments: [
+        lsp.DocumentUri,  // String URI of the document
+        lsp.Position,     // Line and character position (zero-based)
+    ]
+}
+```
+
+Response:
+
+```ts
+lsp.Location[] | null
+```
+
+(This command is supported from Typescript 4.7.)
+
+### Apply Workspace Edits
+
+Request:
+
+```ts
+{
+    command: `_typescript.applyWorkspaceEdit`
+    arguments: [lsp.WorkspaceEdit]
+}
+```
+
+Response:
+
+```ts
+lsp.ApplyWorkspaceEditResult
+```
+
+### Apply Code Action
+
+Request:
+
+```ts
+{
+    command: `_typescript.applyCodeAction`
+    arguments: [
+        tsp.CodeAction,  // TypeScript Code Action object
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
+
+### Apply Refactoring
+
+Request:
+
+```ts
+{
+    command: `_typescript.applyRefactoring`
+    arguments: [
+        tsp.GetEditsForRefactorRequestArgs,
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
+
+### Organize Imports
+
+Request:
+
+```ts
+{
+    command: `_typescript.organizeImports`
+    arguments: [
+        // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
+        [string] | [string, { skipDestructiveCodeActions?: boolean }],
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
+
+### Rename File
+
+Request:
+
+```ts
+{
+    command: `_typescript.applyRenameFile`
+    arguments: [
+        { sourceUri: string; targetUri: string; },
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 ## Inlay hints (`typescript/inlayHints`) (experimental)
 
