@@ -11,6 +11,32 @@ Based on concepts and ideas from https://github.com/prabirshrestha/typescript-la
 
 Maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you
 
+<!-- MarkdownTOC -->
+
+- [Installing](#installing)
+- [Running the language server](#running-the-language-server)
+- [CLI Options](#cli-options)
+- [initializationOptions](#initializationoptions)
+- [workspace/didChangeConfiguration](#workspacedidchangeconfiguration)
+- [Code actions on save](#code-actions-on-save)
+- [Workspace commands \(`workspace/executeCommand`\)](#workspace-commands-workspaceexecutecommand)
+    - [Go to Source Definition](#go-to-source-definition)
+    - [Apply Workspace Edits](#apply-workspace-edits)
+    - [Apply Code Action](#apply-code-action)
+    - [Apply Refactoring](#apply-refactoring)
+    - [Organize Imports](#organize-imports)
+    - [Rename File](#rename-file)
+- [Inlay hints \(`typescript/inlayHints`\) \(experimental\)](#inlay-hints-typescriptinlayhints-experimental)
+- [Callers and callees \(`textDocument/calls`\) \(experimental\)](#callers-and-callees-textdocumentcalls-experimental)
+- [Supported Protocol features](#supported-protocol-features)
+- [Development](#development)
+    - [Build](#build)
+    - [Test](#test)
+    - [Watch](#watch)
+    - [Publishing](#publishing)
+
+<!-- /MarkdownTOC -->
+
 ## Installing
 
 ```sh
@@ -255,119 +281,101 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 
 ### Go to Source Definition
 
-Request:
-
-```ts
-{
-    command: `_typescript.goToSourceDefinition`
-    arguments: [
-        lsp.DocumentUri,  // String URI of the document
-        lsp.Position,     // Line and character position (zero-based)
-    ]
-}
-```
-
-Response:
-
-```ts
-lsp.Location[] | null
-```
+- Request:
+    ```ts
+    {
+        command: `_typescript.goToSourceDefinition`
+        arguments: [
+            lsp.DocumentUri,  // String URI of the document
+            lsp.Position,     // Line and character position (zero-based)
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    lsp.Location[] | null
+    ```
 
 (This command is supported from Typescript 4.7.)
 
 ### Apply Workspace Edits
 
-Request:
-
-```ts
-{
-    command: `_typescript.applyWorkspaceEdit`
-    arguments: [lsp.WorkspaceEdit]
-}
-```
-
-Response:
-
-```ts
-lsp.ApplyWorkspaceEditResult
-```
+- Request:
+    ```ts
+    {
+        command: `_typescript.applyWorkspaceEdit`
+        arguments: [lsp.WorkspaceEdit]
+    }
+    ```
+- Response:
+    ```ts
+    lsp.ApplyWorkspaceEditResult
+    ```
 
 ### Apply Code Action
 
-Request:
-
-```ts
-{
-    command: `_typescript.applyCodeAction`
-    arguments: [
-        tsp.CodeAction,  // TypeScript Code Action object
-    ]
-}
-```
-
-Response:
-
-```ts
-void
-```
+- Request:
+    ```ts
+    {
+        command: `_typescript.applyCodeAction`
+        arguments: [
+            tsp.CodeAction,  // TypeScript Code Action object
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    void
+    ```
 
 ### Apply Refactoring
 
-Request:
-
-```ts
-{
-    command: `_typescript.applyRefactoring`
-    arguments: [
-        tsp.GetEditsForRefactorRequestArgs,
-    ]
-}
-```
-
-Response:
-
-```ts
-void
-```
+- Request:
+    ```ts
+    {
+        command: `_typescript.applyRefactoring`
+        arguments: [
+            tsp.GetEditsForRefactorRequestArgs,
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    void
+    ```
 
 ### Organize Imports
 
-Request:
-
-```ts
-{
-    command: `_typescript.organizeImports`
-    arguments: [
-        // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
-        [string] | [string, { skipDestructiveCodeActions?: boolean }],
-    ]
-}
-```
-
-Response:
-
-```ts
-void
-```
+- Request:
+    ```ts
+    {
+        command: `_typescript.organizeImports`
+        arguments: [
+            // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
+            [string] | [string, { skipDestructiveCodeActions?: boolean }],
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    void
+    ```
 
 ### Rename File
 
-Request:
-
-```ts
-{
-    command: `_typescript.applyRenameFile`
-    arguments: [
-        { sourceUri: string; targetUri: string; },
-    ]
-}
-```
-
-Response:
-
-```ts
-void
-```
+- Request:
+    ```ts
+    {
+        command: `_typescript.applyRenameFile`
+        arguments: [
+            { sourceUri: string; targetUri: string; },
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    void
+    ```
 
 ## Inlay hints (`typescript/inlayHints`) (experimental)
 
