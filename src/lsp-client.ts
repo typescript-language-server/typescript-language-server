@@ -19,11 +19,9 @@ export interface LspClient {
     createProgressReporter(token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter>;
     withProgress<R>(options: WithProgressOptions, task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>): Promise<R>;
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
-    showMessage(args: lsp.ShowMessageParams): void;
     showErrorMessage(message: string): void;
     logMessage(args: lsp.LogMessageParams): void;
     applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult>;
-    telemetry(args: any): void;
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
 }
 
@@ -52,12 +50,8 @@ export class LspClientImpl implements LspClient {
         });
     }
 
-    publishDiagnostics(args: lsp.PublishDiagnosticsParams): void {
-        this.connection.sendNotification(lsp.PublishDiagnosticsNotification.type, args);
-    }
-
-    showMessage(args: lsp.ShowMessageParams): void {
-        this.connection.sendNotification(lsp.ShowMessageNotification.type, args);
+    publishDiagnostics(params: lsp.PublishDiagnosticsParams): void {
+        this.connection.sendDiagnostics(params);
     }
 
     showErrorMessage(message: string): void {
@@ -68,12 +62,8 @@ export class LspClientImpl implements LspClient {
         this.connection.sendNotification(lsp.LogMessageNotification.type, args);
     }
 
-    telemetry(args: any): void {
-        this.connection.sendNotification(lsp.TelemetryEventNotification.type, args);
-    }
-
-    async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {
-        return this.connection.sendRequest(lsp.ApplyWorkspaceEditRequest.type, args);
+    async applyWorkspaceEdit(params: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {
+        return this.connection.workspace.applyEdit(params);
     }
 
     async rename(args: lsp.TextDocumentPositionParams): Promise<any> {

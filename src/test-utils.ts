@@ -128,20 +128,12 @@ class TestLspClient implements LspClient {
         return this.options.publishDiagnostics(args);
     }
 
-    showMessage(args: lsp.ShowMessageParams): void {
-        throw args; // should not be called.
-    }
-
     showErrorMessage(message: string) {
         this.logger.error(`[showErrorMessage] ${message}`);
     }
 
     logMessage(args: lsp.LogMessageParams): void {
         this.logger.log('logMessage', JSON.stringify(args));
-    }
-
-    telemetry(args: any): void {
-        this.logger.log('telemetry', JSON.stringify(args));
     }
 
     addApplyWorkspaceEditListener(listener: (args: lsp.ApplyWorkspaceEditParams) => void): void {
