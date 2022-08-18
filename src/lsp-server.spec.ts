@@ -406,6 +406,121 @@ describe('completion', () => {
     });
 });
 
+describe('definition', () => {
+    it('goes to definition', async () => {
+        // NOTE: This test needs to reference files that physically exist for the feature to work.
+        const indexUri = uri('source-definition', 'index.ts');
+        const indexDoc = {
+            uri: indexUri,
+            languageId: 'typescript',
+            version: 1,
+            text: readContents(filePath('source-definition', 'index.ts'))
+        };
+        server.didOpenTextDocument({ textDocument: indexDoc });
+        const definitions = await server.definition({
+            textDocument: indexDoc,
+            position: position(indexDoc, 'a/*identifier*/')
+        }) as lsp.Location[];
+        assert.isArray(definitions);
+        assert.equal(definitions!.length, 1);
+        assert.deepEqual(definitions![0], {
+            uri: uri('source-definition', 'a.d.ts'),
+            range: {
+                start: {
+                    line: 0,
+                    character: 21
+                },
+                end: {
+                    line: 0,
+                    character: 22
+                }
+            }
+        });
+    });
+});
+
+describe('definition (definition link supported)', () => {
+    let localServer: TestLspServer;
+
+    before(async () => {
+        const clientCapabilitiesOverride: lsp.ClientCapabilities = {
+            textDocument: {
+                definition: {
+                    linkSupport: true
+                }
+            }
+        };
+        localServer = await createServer({
+            rootUri: uri('source-definition'),
+            publishDiagnostics: args => diagnostics.set(args.uri, args),
+            clientCapabilitiesOverride
+        });
+    });
+
+    beforeEach(() => {
+        localServer.closeAll();
+        // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+        diagnostics.clear();
+        localServer.workspaceEdits = [];
+    });
+
+    after(() => {
+        localServer.closeAll();
+        localServer.shutdown();
+    });
+
+    it('goes to definition', async () => {
+        // NOTE: This test needs to reference files that physically exist for the feature to work.
+        const indexUri = uri('source-definition', 'index.ts');
+        const indexDoc = {
+            uri: indexUri,
+            languageId: 'typescript',
+            version: 1,
+            text: readContents(filePath('source-definition', 'index.ts'))
+        };
+        localServer.didOpenTextDocument({ textDocument: indexDoc });
+        const definitions = await localServer.definition({
+            textDocument: indexDoc,
+            position: position(indexDoc, 'a/*identifier*/')
+        }) as lsp.DefinitionLink[];
+        assert.isArray(definitions);
+        assert.equal(definitions!.length, 1);
+        assert.deepEqual(definitions![0], {
+            originSelectionRange: {
+                start: {
+                    line: 1,
+                    character: 0
+                },
+                end: {
+                    line: 1,
+                    character: 1
+                }
+            },
+            targetRange: {
+                start: {
+                    line: 0,
+                    character: 0
+                },
+                end: {
+                    line: 0,
+                    character: 30
+                }
+            },
+            targetUri: uri('source-definition', 'a.d.ts'),
+            targetSelectionRange: {
+                start: {
+                    line: 0,
+                    character: 21
+                },
+                end: {
+                    line: 0,
+                    character: 22
+                }
+            }
+        });
+    });
+});
+
 describe('diagnostics', () => {
     it('simple test', async () => {
         const doc = {

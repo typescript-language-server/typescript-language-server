@@ -9,7 +9,7 @@ import * as lsp from 'vscode-languageserver';
 import type tsp from 'typescript/lib/protocol.js';
 import { LspDocument } from './document.js';
 import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-types.js';
-import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation.js';
+import { toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation.js';
 import { Commands } from './commands.js';
 import { TspClient } from './tsp-client.js';
 import { CompletionOptions, DisplayPartKind, SupportedFeatures } from './ts-protocol.js';
@@ -62,7 +62,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
     }
 
     let insertText = entry.insertText;
-    let replacementRange = entry.replacementSpan && asRange(entry.replacementSpan);
+    let replacementRange = entry.replacementSpan && typeConverters.Range.fromTextSpan(entry.replacementSpan);
     // Make sure we only replace a single line at most
     if (replacementRange && replacementRange.start.line !== replacementRange.end.line) {
         replacementRange = lsp.Range.create(replacementRange.start, document.getLineEnd(replacementRange.start.line));
