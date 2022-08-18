@@ -86,7 +86,7 @@ export class ConsoleLogger implements Logger {
         }
     }
 
-    private toStrings(...arg): string[] {
+    private toStrings(...arg: any[]): string[] {
         return arg.map(a => JSON.stringify(a, null, 2));
     }
 

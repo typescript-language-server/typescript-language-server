@@ -106,7 +106,7 @@ export function toPlatformEOL(text: string): string {
 }
 
 class TestLspClient implements LspClient {
-    private workspaceEditsListener: (args: lsp.ApplyWorkspaceEditParams) => void | undefined;
+    private workspaceEditsListener: ((args: lsp.ApplyWorkspaceEditParams) => void) | null = null;
 
     constructor(protected options: TestLspServerOptions, protected logger: ConsoleLogger) {}
 

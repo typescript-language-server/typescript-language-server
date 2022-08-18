@@ -111,15 +111,14 @@ class ServerInitializingIndicator {
 }
 
 export class LspServer {
-    private _tspClient: TspClient | null;
-    private _loadingIndicator: ServerInitializingIndicator | null;
-    private initializeParams: TypeScriptInitializeParams;
-    private initializeResult: TypeScriptInitializeResult;
+    private _tspClient: TspClient | null = null;
+    private _loadingIndicator: ServerInitializingIndicator | null = null;
+    private initializeParams: TypeScriptInitializeParams | null = null;
     private diagnosticQueue?: DiagnosticEventQueue;
     private logger: Logger;
     private workspaceConfiguration: TypeScriptWorkspaceSettings;
     private workspaceRoot: string | undefined;
-    private typeScriptAutoFixProvider: TypeScriptAutoFixProvider;
+    private typeScriptAutoFixProvider: TypeScriptAutoFixProvider | null = null;
     private features: SupportedFeatures = {};
 
     private readonly documents = new LspDocuments();
@@ -304,7 +303,7 @@ export class LspServer {
         ]);
 
         const logFileUri = logFile && pathToUri(logFile, undefined);
-        this.initializeResult = {
+        const initializeResult: TypeScriptInitializeResult = {
             capabilities: {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
                 completionProvider: {
@@ -378,9 +377,9 @@ export class LspServer {
             },
             logFileUri
         };
-        (this.initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
-        this.logger.log('onInitialize result', this.initializeResult);
-        return this.initializeResult;
+        (initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
+        this.logger.log('onInitialize result', initializeResult);
+        return initializeResult;
     }
     protected getLogFile(logVerbosity: string | undefined): string | undefined {
         if (logVerbosity === undefined || logVerbosity === 'off') {
@@ -567,7 +566,7 @@ export class LspServer {
         this.requestDiagnostics();
     }
 
-    didSaveTextDocument(_params: lsp.DidChangeTextDocumentParams): void {
+    didSaveTextDocument(_params: lsp.DidSaveTextDocumentParams): void {
         // do nothing
     }
 
@@ -611,7 +610,7 @@ export class LspServer {
         return result.body ? result.body.map(fileSpan => toLocation(fileSpan, this.documents)) : [];
     }
 
-    async documentSymbol(params: lsp.TextDocumentPositionParams): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
+    async documentSymbol(params: lsp.DocumentSymbolParams): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('symbol', params, file);
         if (!file) {
@@ -639,7 +638,7 @@ export class LspServer {
         return symbols;
     }
     protected get supportHierarchicalDocumentSymbol(): boolean {
-        const textDocument = this.initializeParams.capabilities.textDocument;
+        const textDocument = this.initializeParams?.capabilities.textDocument;
         const documentSymbol = textDocument && textDocument.documentSymbol;
         return !!documentSymbol && !!documentSymbol.hierarchicalDocumentSymbolSupport;
     }
@@ -682,7 +681,7 @@ export class LspServer {
             }
             return lsp.CompletionList.create(completions, body?.isIncomplete);
         } catch (error) {
-            if (error.message === 'No content available.') {
+            if ((error as Error).message === 'No content available.') {
                 this.logger.info('No content was available for completion request');
                 return null;
             } else {
@@ -756,13 +755,14 @@ export class LspServer {
         if (!result.body || !result.body.info.canRename || result.body.locs.length === 0) {
             return undefined;
         }
-        const workspaceEdit = {
-            changes: {}
-        };
+        const workspaceEdit: lsp.WorkspaceEdit = {};
         result.body.locs
             .forEach((spanGroup) => {
-                const uri = pathToUri(spanGroup.file, this.documents),
-                    textEdits = workspaceEdit.changes[uri] || (workspaceEdit.changes[uri] = []);
+                const uri = pathToUri(spanGroup.file, this.documents);
+                if (!workspaceEdit.changes) {
+                    workspaceEdit.changes = {};
+                }
+                const textEdits = workspaceEdit.changes[uri] || (workspaceEdit.changes[uri] = []);
 
                 spanGroup.locs.forEach((textSpan) => {
                     textEdits.push({
@@ -948,7 +948,7 @@ export class LspServer {
         if (kinds && !this.pendingDebouncedRequest) {
             const diagnostics = this.diagnosticQueue?.getDiagnosticsForFile(file) || [];
             if (diagnostics.length) {
-                actions.push(...await this.typeScriptAutoFixProvider.provideCodeActions(kinds, file, diagnostics, this.documents));
+                actions.push(...await this.typeScriptAutoFixProvider!.provideCodeActions(kinds, file, diagnostics, this.documents));
             }
         }
 
@@ -1300,7 +1300,7 @@ export class LspServer {
 
     private getInlayHintsOptions(file: string): lspinlayHints.InlayHintsOptions & tsp.UserPreferences {
         const workspacePreference = this.getWorkspacePreferencesForDocument(file);
-        const userPreferences = this.initializeParams.initializationOptions?.preferences || {};
+        const userPreferences = this.initializeParams?.initializationOptions?.preferences || {};
         return {
             ...userPreferences,
             ...workspacePreference.inlayHints ?? {}
