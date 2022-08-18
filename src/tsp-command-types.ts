@@ -34,6 +34,7 @@ export const enum CommandTypes {
     Implementation = 'implementation',
     Exit = 'exit',
     FileReferences = 'fileReferences',
+    FindSourceDefinition = 'findSourceDefinition',
     Format = 'format',
     Formatonkey = 'formatonkey',
     Geterr = 'geterr',

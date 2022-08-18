@@ -5,6 +5,8 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { SourceDefinitionCommand } from './features/source-definition.js';
+
 export const Commands = {
     APPLY_WORKSPACE_EDIT: '_typescript.applyWorkspaceEdit',
     APPLY_CODE_ACTION: '_typescript.applyCodeAction',
@@ -13,5 +15,6 @@ export const Commands = {
     APPLY_RENAME_FILE: '_typescript.applyRenameFile',
     APPLY_COMPLETION_CODE_ACTION: '_typescript.applyCompletionCodeAction',
     /** Commands below should be implemented by the client */
-    SELECT_REFACTORING: '_typescript.selectRefactoring'
+    SELECT_REFACTORING: '_typescript.selectRefactoring',
+    SOURCE_DEFINITION: SourceDefinitionCommand.id
 };

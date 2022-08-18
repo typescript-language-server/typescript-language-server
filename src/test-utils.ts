@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url';
 import deepmerge from 'deepmerge';
 import * as lsp from 'vscode-languageserver';
 import { normalizePath, pathToUri } from './protocol-translation.js';
+import { TypeScriptInitializationOptions } from './ts-protocol.js';
+import { LspClient, WithProgressOptions } from './lsp-client.js';
 import { LspServer } from './lsp-server.js';
 import { ConsoleLogger } from './logger.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -40,6 +42,25 @@ const DEFAULT_TEST_CLIENT_CAPABILITIES: lsp.ClientCapabilities = {
             }
         },
         moniker: {}
+    }
+};
+
+const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOptions = {
+    plugins: [],
+    preferences: {
+        allowIncompleteCompletions: true,
+        allowRenameOfImportPath: true,
+        allowTextChangesInNewFiles: true,
+        displayPartsForJSDoc: true,
+        generateReturnInDocTemplate: true,
+        includeAutomaticOptionalChainCompletions: true,
+        includeCompletionsForImportStatements: true,
+        includeCompletionsForModuleExports: true,
+        includeCompletionsWithClassMemberSnippets: true,
+        includeCompletionsWithInsertText: true,
+        includeCompletionsWithSnippetText: true,
+        jsxAttributeCompletionStyle: 'auto',
+        providePrefixAndSuffixTextForRename: true
     }
 };
 
@@ -84,49 +105,87 @@ export function toPlatformEOL(text: string): string {
     return text;
 }
 
+class TestLspClient implements LspClient {
+    private workspaceEditsListener: (args: lsp.ApplyWorkspaceEditParams) => void | undefined;
+
+    constructor(protected options: TestLspServerOptions, protected logger: ConsoleLogger) {}
+
+    async createProgressReporter(_token?: lsp.CancellationToken, _workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter> {
+        const reporter = new class implements lsp.WorkDoneProgressReporter {
+            begin(_title: string, _percentage?: number, _message?: string, _cancellable?: boolean): void {}
+            report(_message: any): void {}
+            done(): void {}
+        };
+        return reporter;
+    }
+
+    async withProgress<R = void>(_options: WithProgressOptions, task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>): Promise<R> {
+        const progress = await this.createProgressReporter();
+        return await task(progress);
+    }
+
+    publishDiagnostics(args: lsp.PublishDiagnosticsParams) {
+        return this.options.publishDiagnostics(args);
+    }
+
+    showMessage(args: lsp.ShowMessageParams): void {
+        throw args; // should not be called.
+    }
+
+    showErrorMessage(message: string) {
+        this.logger.error(`[showErrorMessage] ${message}`);
+    }
+
+    logMessage(args: lsp.LogMessageParams): void {
+        this.logger.log('logMessage', JSON.stringify(args));
+    }
+
+    telemetry(args: any): void {
+        this.logger.log('telemetry', JSON.stringify(args));
+    }
+
+    addApplyWorkspaceEditListener(listener: (args: lsp.ApplyWorkspaceEditParams) => void): void {
+        this.workspaceEditsListener = listener;
+    }
+
+    async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {
+        if (this.workspaceEditsListener) {
+            this.workspaceEditsListener(args);
+        }
+        return { applied: true };
+    }
+
+    async rename() {
+        throw new Error('unsupported');
+    }
+}
+
 export class TestLspServer extends LspServer {
     workspaceEdits: lsp.ApplyWorkspaceEditParams[] = [];
 }
 
-export async function createServer(options: {
+interface TestLspServerOptions {
     rootUri: string | null;
     tsserverLogVerbosity?: string;
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
     clientCapabilitiesOverride?: lsp.ClientCapabilities;
-}): Promise<TestLspServer> {
+}
+
+export async function createServer(options: TestLspServerOptions): Promise<TestLspServer> {
     const typescriptVersionProvider = new TypeScriptVersionProvider();
     const bundled = typescriptVersionProvider.bundledVersion();
     const logger = new ConsoleLogger(CONSOLE_LOG_LEVEL);
+    const lspClient = new TestLspClient(options, logger);
     const server = new TestLspServer({
         logger,
         tsserverPath: bundled!.tsServerPath,
         tsserverLogVerbosity: options.tsserverLogVerbosity,
         tsserverLogFile: path.resolve(PACKAGE_ROOT, 'tsserver.log'),
-        lspClient: {
-            setClientCapabilites() {},
-            createProgressReporter() {
-                return {
-                    begin() {},
-                    report() {},
-                    end() {}
-                };
-            },
-            publishDiagnostics: options.publishDiagnostics,
-            showMessage(args: lsp.ShowMessageParams): void {
-                throw args; // should not be called.
-            },
-            logMessage(args: lsp.LogMessageParams): void {
-                logger.log('logMessage', JSON.stringify(args));
-            },
-            telemetry(args): void {
-                logger.log('telemetry', JSON.stringify(args));
-            },
-            async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {
-                server.workspaceEdits.push(args);
-                return { applied: true };
-            },
-            rename: () => Promise.reject(new Error('unsupported'))
-        }
+        lspClient
+    });
+
+    lspClient.addApplyWorkspaceEditListener(args => {
+        server.workspaceEdits.push(args);
     });
 
     await server.initialize({
@@ -134,6 +193,7 @@ export async function createServer(options: {
         rootUri: options.rootUri,
         processId: 42,
         capabilities: deepmerge(DEFAULT_TEST_CLIENT_CAPABILITIES, options.clientCapabilitiesOverride || {}),
+        initializationOptions: DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS,
         workspaceFolders: null
     });
     return server;

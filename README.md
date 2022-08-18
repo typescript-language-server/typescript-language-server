@@ -11,6 +11,32 @@ Based on concepts and ideas from https://github.com/prabirshrestha/typescript-la
 
 Maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you
 
+<!-- MarkdownTOC -->
+
+- [Installing](#installing)
+- [Running the language server](#running-the-language-server)
+- [CLI Options](#cli-options)
+- [initializationOptions](#initializationoptions)
+- [workspace/didChangeConfiguration](#workspacedidchangeconfiguration)
+- [Code actions on save](#code-actions-on-save)
+- [Workspace commands \(`workspace/executeCommand`\)](#workspace-commands-workspaceexecutecommand)
+    - [Go to Source Definition](#go-to-source-definition)
+    - [Apply Workspace Edits](#apply-workspace-edits)
+    - [Apply Code Action](#apply-code-action)
+    - [Apply Refactoring](#apply-refactoring)
+    - [Organize Imports](#organize-imports)
+    - [Rename File](#rename-file)
+- [Inlay hints \(`typescript/inlayHints`\) \(experimental\)](#inlay-hints-typescriptinlayhints-experimental)
+- [Callers and callees \(`textDocument/calls`\) \(experimental\)](#callers-and-callees-textdocumentcalls-experimental)
+- [Supported Protocol features](#supported-protocol-features)
+- [Development](#development)
+    - [Build](#build)
+    - [Test](#test)
+    - [Watch](#watch)
+    - [Publishing](#publishing)
+
+<!-- /MarkdownTOC -->
+
 ## Installing
 
 ```sh
@@ -247,34 +273,108 @@ The user can enable it with a setting similar to (can vary per-editor):
 
 ## Workspace commands (`workspace/executeCommand`)
 
-See [LSP specification](https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#workspace_executeCommand).
+See [LSP specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand).
 
 Most of the time, you'll execute commands with arguments retrieved from another request like `textDocument/codeAction`. There are some use cases for calling them manually.
 
-Supported commands:
+`lsp` refers to the language server protocol types, `tsp` refers to the typescript server protocol types.
 
-`lsp` refers to the language server protocol, `tsp` refers to the typescript server protocol.
+### Go to Source Definition
 
-* `_typescript.applyWorkspaceEdit`
+- Request:
     ```ts
-    type Arguments = [lsp.WorkspaceEdit]
+    {
+        command: `_typescript.goToSourceDefinition`
+        arguments: [
+            lsp.DocumentUri,  // String URI of the document
+            lsp.Position,     // Line and character position (zero-based)
+        ]
+    }
     ```
-* `_typescript.applyCodeAction`
+- Response:
     ```ts
-    type Arguments = [tsp.CodeAction]
+    lsp.Location[] | null
     ```
-* `_typescript.applyRefactoring`
+
+(This command is supported from Typescript 4.7.)
+
+### Apply Workspace Edits
+
+- Request:
     ```ts
-    type Arguments = [tsp.GetEditsForRefactorRequestArgs]
+    {
+        command: `_typescript.applyWorkspaceEdit`
+        arguments: [lsp.WorkspaceEdit]
+    }
     ```
-* `_typescript.organizeImports`
+- Response:
     ```ts
-    // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
-    type Arguments = [string] | [string, { skipDestructiveCodeActions?: boolean }]
+    lsp.ApplyWorkspaceEditResult
     ```
-* `_typescript.applyRenameFile`
+
+### Apply Code Action
+
+- Request:
     ```ts
-    type Arguments = [{ sourceUri: string; targetUri: string; }]
+    {
+        command: `_typescript.applyCodeAction`
+        arguments: [
+            tsp.CodeAction,  // TypeScript Code Action object
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    void
+    ```
+
+### Apply Refactoring
+
+- Request:
+    ```ts
+    {
+        command: `_typescript.applyRefactoring`
+        arguments: [
+            tsp.GetEditsForRefactorRequestArgs,
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    void
+    ```
+
+### Organize Imports
+
+- Request:
+    ```ts
+    {
+        command: `_typescript.organizeImports`
+        arguments: [
+            // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
+            [string] | [string, { skipDestructiveCodeActions?: boolean }],
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    void
+    ```
+
+### Rename File
+
+- Request:
+    ```ts
+    {
+        command: `_typescript.applyRenameFile`
+        arguments: [
+            { sourceUri: string; targetUri: string; },
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    void
     ```
 
 ## Inlay hints (`typescript/inlayHints`) (experimental)

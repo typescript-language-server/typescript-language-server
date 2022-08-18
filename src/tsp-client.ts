@@ -15,8 +15,10 @@ import { temporaryFile } from 'tempy';
 import { CommandTypes } from './tsp-command-types.js';
 import { Logger, PrefixingLogger } from './logger.js';
 import { Deferred } from './utils.js';
+import API from './utils/api.js';
 
 export interface TspClientOptions {
+    apiVersion: API;
     logger: Logger;
     tsserverPath: string;
     logFile?: string;
@@ -42,6 +44,7 @@ interface TypeScriptRequestTypes {
     'definition': [tsp.FileLocationRequestArgs, tsp.DefinitionResponse];
     'definitionAndBoundSpan': [tsp.FileLocationRequestArgs, tsp.DefinitionInfoAndBoundSpanResponse];
     'docCommentTemplate': [tsp.FileLocationRequestArgs, tsp.DocCommandTemplateResponse];
+    'findSourceDefinition': [tsp.FileLocationRequestArgs, tsp.DefinitionResponse];
     'format': [tsp.FormatRequestArgs, tsp.FormatResponse];
     'formatonkey': [tsp.FormatOnKeyRequestArgs, tsp.FormatResponse];
     'getApplicableRefactors': [tsp.GetApplicableRefactorsRequestArgs, tsp.GetApplicableRefactorsResponse];
@@ -67,6 +70,7 @@ interface TypeScriptRequestTypes {
 }
 
 export class TspClient {
+    public apiVersion: API;
     private tsserverProc: cp.ChildProcess | null;
     private readlineInterface: readline.ReadLine;
     private seq = 0;
@@ -76,6 +80,7 @@ export class TspClient {
     private cancellationPipeName: string | undefined;
 
     constructor(private options: TspClientOptions) {
+        this.apiVersion = options.apiVersion;
         this.logger = new PrefixingLogger(options.logger, '[tsclient]');
         this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]');
     }
