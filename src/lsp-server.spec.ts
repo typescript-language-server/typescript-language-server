@@ -551,11 +551,7 @@ describe('document symbol', () => {
         server.didOpenTextDocument({
             textDocument: doc
         });
-        const symbols = await server.documentSymbol({
-            textDocument: doc,
-            position: lsp.Position.create(1, 1)
-        });
-
+        const symbols = await server.documentSymbol({ textDocument: doc });
         assert.equal(`
 Foo
   foo
@@ -581,11 +577,7 @@ interface Box {
         server.didOpenTextDocument({
             textDocument: doc
         });
-        const symbols = await server.documentSymbol({
-            textDocument: doc,
-            position: lsp.Position.create(1, 1)
-        });
-
+        const symbols = await server.documentSymbol({ textDocument: doc });
         assert.equal(`
 Box
   height
@@ -616,11 +608,7 @@ Box
         server.didOpenTextDocument({
             textDocument: doc
         });
-        const symbols = await server.documentSymbol({
-            textDocument: doc,
-            position: lsp.Position.create(1, 1)
-        }) as lsp.DocumentSymbol[];
-
+        const symbols = await server.documentSymbol({ textDocument: doc }) as lsp.DocumentSymbol[];
         const expectation = `
 Foo
   foo

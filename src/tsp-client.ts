@@ -71,8 +71,8 @@ interface TypeScriptRequestTypes {
 
 export class TspClient {
     public apiVersion: API;
-    private tsserverProc: cp.ChildProcess | null;
-    private readlineInterface: readline.ReadLine;
+    private tsserverProc: cp.ChildProcess | null = null;
+    private readlineInterface: readline.ReadLine | null = null;
     private seq = 0;
     private readonly deferreds: { [seq: number]: Deferred<any>; } = {};
     private logger: Logger;

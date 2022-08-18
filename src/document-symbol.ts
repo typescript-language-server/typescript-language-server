@@ -23,7 +23,7 @@ function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.
             continue;
         }
 
-        const children = [];
+        const children: lsp.DocumentSymbol[] = [];
         if (parent.childItems) {
             for (const child of parent.childItems) {
                 if (child.spans.some(childSpan => !!Range.intersection(spanRange, asRange(childSpan)))) {
@@ -60,7 +60,7 @@ export function collectSymbolInformation(uri: string, current: tsp.NavigationTre
     const name = current.text;
     for (const span of current.spans) {
         const range = asRange(span);
-        const children = [];
+        const children: lsp.SymbolInformation[] = [];
         if (current.childItems) {
             for (const child of current.childItems) {
                 if (child.spans.some(span => !!Range.intersection(range, asRange(span)))) {
