@@ -81,8 +81,8 @@ export class ConfigurationManager {
         this.tsPreferences = deepmerge(this.tsPreferences, preferences);
     }
 
-    public mergeWorkspaceConfiguration(configuration: WorkspaceConfiguration): void {
-        this.workspaceConfiguration = deepmerge(this.workspaceConfiguration, configuration);
+    public setWorkspaceConfiguration(configuration: WorkspaceConfiguration): void {
+        this.workspaceConfiguration = configuration;
     }
 
     public async setAndConfigureTspClient(client: TspClient, hostInfo?: TypeScriptInitializationOptions['hostInfo']): Promise<void> {

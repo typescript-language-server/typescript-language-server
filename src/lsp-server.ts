@@ -364,7 +364,7 @@ export class LspServer {
     }
 
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
-        this.configurationManager.mergeWorkspaceConfiguration(params.settings || {});
+        this.configurationManager.setWorkspaceConfiguration(params.settings || {});
         const ignoredDiagnosticCodes = this.configurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
         this.diagnosticQueue?.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes);
     }
