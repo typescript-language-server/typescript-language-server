@@ -10,7 +10,6 @@
  */
 import * as lsp from 'vscode-languageserver-protocol';
 import type tsp from 'typescript/lib/protocol.d.js';
-import { InlayHintsOptions } from './lsp-protocol.inlayHints.proposed.js';
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
@@ -54,24 +53,4 @@ export type TypeScriptInitializeParams = lsp.InitializeParams & {
 
 export interface TypeScriptInitializeResult extends lsp.InitializeResult {
     logFileUri?: string;
-}
-
-export interface TypeScriptWorkspaceSettingsLanguageSettings {
-    format?: tsp.FormatCodeSettings;
-    inlayHints?: InlayHintsOptions;
-}
-
-interface TypeScriptWorkspaceSettingsDiagnostics {
-    ignoredCodes?: number[];
-}
-
-export interface TypeScriptWorkspaceSettings {
-    javascript?: TypeScriptWorkspaceSettingsLanguageSettings;
-    typescript?: TypeScriptWorkspaceSettingsLanguageSettings;
-    completions?: CompletionOptions;
-    diagnostics?: TypeScriptWorkspaceSettingsDiagnostics;
-}
-
-export interface CompletionOptions {
-    completeFunctionCalls?: boolean;
 }

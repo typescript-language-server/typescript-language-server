@@ -12,9 +12,10 @@ import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-ty
 import { toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation.js';
 import { Commands } from './commands.js';
 import { TspClient } from './tsp-client.js';
-import { CompletionOptions, DisplayPartKind, SupportedFeatures } from './ts-protocol.js';
+import { DisplayPartKind, SupportedFeatures } from './ts-protocol.js';
 import SnippetString from './utils/SnippetString.js';
 import { Range, Position } from './utils/typeConverters.js';
+import type { WorkspaceConfigurationCompletionOptions } from './configuration-manager.js';
 
 interface ParameterListParts {
     readonly parts: ReadonlyArray<tsp.SymbolDisplayPart>;
@@ -191,7 +192,7 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 }
 
 export async function asResolvedCompletionItem(
-    item: lsp.CompletionItem, details: tsp.CompletionEntryDetails, client: TspClient, options: CompletionOptions, features: SupportedFeatures
+    item: lsp.CompletionItem, details: tsp.CompletionEntryDetails, client: TspClient, options: WorkspaceConfigurationCompletionOptions, features: SupportedFeatures
 ): Promise<lsp.CompletionItem> {
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);

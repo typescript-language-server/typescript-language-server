@@ -27,7 +27,7 @@ import { Commands } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
 import { provideOrganizeImports } from './organize-imports.js';
-import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, TypeScriptWorkspaceSettings, TypeScriptWorkspaceSettingsLanguageSettings, SupportedFeatures } from './ts-protocol.js';
+import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, SupportedFeatures } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { computeCallers, computeCallees } from './calls.js';
 import { IServerOptions } from './utils/configuration.js';
@@ -37,38 +37,7 @@ import { SourceDefinitionCommand } from './features/source-definition.js';
 import { LspClient } from './lsp-client.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
-
-const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
-    allowIncompleteCompletions: true,
-    allowRenameOfImportPath: true,
-    allowTextChangesInNewFiles: true,
-    disableSuggestions: false,
-    displayPartsForJSDoc: true,
-    generateReturnInDocTemplate: true,
-    importModuleSpecifierEnding: 'auto',
-    importModuleSpecifierPreference: 'shortest',
-    includeAutomaticOptionalChainCompletions: true,
-    includeCompletionsForImportStatements: true,
-    includeCompletionsForModuleExports: true,
-    includeCompletionsWithClassMemberSnippets: true,
-    includeCompletionsWithInsertText: true,
-    includeCompletionsWithObjectLiteralMethodSnippets: true,
-    includeCompletionsWithSnippetText: true,
-    includeInlayEnumMemberValueHints: false,
-    includeInlayFunctionLikeReturnTypeHints: false,
-    includeInlayFunctionParameterTypeHints: false,
-    includeInlayParameterNameHints: 'none',
-    includeInlayParameterNameHintsWhenArgumentMatchesName: false,
-    includeInlayPropertyDeclarationTypeHints: false,
-    includeInlayVariableTypeHints: false,
-    includePackageJsonAutoImports: 'auto',
-    jsxAttributeCompletionStyle: 'auto',
-    lazyConfiguredProjectsFromExternalProject: false,
-    providePrefixAndSuffixTextForRename: true,
-    provideRefactorNotApplicableReason: false,
-    quotePreference: 'auto',
-    useLabelDetailsInCompletionEntries: true
-};
+import { ConfigurationManager } from './configuration-manager.js';
 
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;
@@ -112,8 +81,8 @@ export class LspServer {
     private _loadingIndicator: ServerInitializingIndicator | null = null;
     private initializeParams: TypeScriptInitializeParams | null = null;
     private diagnosticQueue?: DiagnosticEventQueue;
+    private configurationManager: ConfigurationManager;
     private logger: Logger;
-    private workspaceConfiguration: TypeScriptWorkspaceSettings;
     private workspaceRoot: string | undefined;
     private typeScriptAutoFixProvider: TypeScriptAutoFixProvider | null = null;
     private features: SupportedFeatures = {};
@@ -121,8 +90,8 @@ export class LspServer {
     private readonly documents = new LspDocuments();
 
     constructor(private options: IServerOptions) {
+        this.configurationManager = new ConfigurationManager(this.documents);
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
-        this.workspaceConfiguration = {};
     }
 
     closeAll(): void {
@@ -213,16 +182,15 @@ export class LspServer {
             throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid --tsserver-path is specified. Exiting.');
         }
 
-        const userPreferences: TypeScriptInitializationOptions['preferences'] = {
-            ...DEFAULT_TSSERVER_PREFERENCES,
-            ...userInitializationOptions.preferences
-        };
+        this.configurationManager.mergeTsPreferences(userInitializationOptions.preferences || {});
 
         // Setup supported features.
         const { textDocument } = clientCapabilities;
+        this.features.definitionLinkSupport = textDocument?.definition?.linkSupport && typescriptVersion.version?.gte(API.v270);
         const completionCapabilities = textDocument?.completion;
         if (completionCapabilities?.completionItem) {
-            if (userPreferences.useLabelDetailsInCompletionEntries && completionCapabilities.completionItem.labelDetailsSupport
+            if (this.configurationManager.tsPreferences.useLabelDetailsInCompletionEntries
+                && completionCapabilities.completionItem.labelDetailsSupport
                 && typescriptVersion.version?.gte(API.v470)) {
                 this.features.completionLabelDetails = true;
             }
@@ -233,12 +201,10 @@ export class LspServer {
                 this.features.diagnosticsTagSupport = true;
             }
         }
-        this.features.definitionLinkSupport = textDocument?.definition?.linkSupport && typescriptVersion.version?.gte(API.v270);
 
-        const finalPreferences: TypeScriptInitializationOptions['preferences'] = {
-            ...userPreferences,
-            ...{ useLabelDetailsInCompletionEntries: this.features.completionLabelDetails }
-        };
+        this.configurationManager.mergeTsPreferences({
+            useLabelDetailsInCompletionEntries: this.features.completionLabelDetails
+        });
 
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
@@ -281,14 +247,7 @@ export class LspServer {
         this.typeScriptAutoFixProvider = new TypeScriptAutoFixProvider(this.tspClient);
 
         await Promise.all([
-            this.tspClient.request(CommandTypes.Configure, {
-                ...hostInfo ? { hostInfo } : {},
-                formatOptions: {
-                    // We can use \n here since the editor should normalize later on to its line endings.
-                    newLineCharacter: '\n'
-                },
-                preferences: finalPreferences
-            }),
+            this.configurationManager.setAndConfigureTspClient(this._tspClient, hostInfo),
             this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
                 options: {
                     module: tsp.ModuleKind.CommonJS,
@@ -405,18 +364,9 @@ export class LspServer {
     }
 
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
-        this.workspaceConfiguration = params.settings || {};
-        const ignoredDiagnosticCodes = this.workspaceConfiguration.diagnostics?.ignoredCodes || [];
+        this.configurationManager.mergeWorkspaceConfiguration(params.settings || {});
+        const ignoredDiagnosticCodes = this.configurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
         this.diagnosticQueue?.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes);
-    }
-
-    getWorkspacePreferencesForDocument(file: string): TypeScriptWorkspaceSettingsLanguageSettings {
-        const doc = this.documents.get(file);
-        if (!doc) {
-            return {};
-        }
-        const preferencesKey = doc.languageId.startsWith('typescript') ? 'typescript' : 'javascript';
-        return this.workspaceConfiguration[preferencesKey] ?? {};
     }
 
     protected diagnosticsTokenSource: lsp.CancellationTokenSource | undefined;
@@ -725,15 +675,13 @@ export class LspServer {
 
     async completionResolve(item: lsp.CompletionItem): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
-        await this.tspClient.request(CommandTypes.Configure, {
-            formatOptions: this.getWorkspacePreferencesForDocument(item.data.file).format
-        });
+        await this.configurationManager.configureGloballyFromDocument(item.data.file);
         const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
         const details = body && body.length && body[0];
         if (!details) {
             return item;
         }
-        return asResolvedCompletionItem(item, details, this.tspClient, this.workspaceConfiguration.completions || {}, this.features);
+        return asResolvedCompletionItem(item, details, this.tspClient, this.configurationManager.workspaceConfiguration.completions || {}, this.features);
     }
 
     async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {
@@ -838,12 +786,8 @@ export class LspServer {
             return [];
         }
 
-        const formatOptions = this.getFormattingOptions(file, params.options);
-
-        // options are not yet supported in tsserver, but we can send a configure request first
-        await this.tspClient.request(CommandTypes.Configure, {
-            formatOptions
-        });
+        const formatOptions = params.options;
+        await this.configurationManager.configureGloballyFromDocument(file, formatOptions);
 
         const response = await this.tspClient.request(CommandTypes.Format, {
             file,
@@ -866,12 +810,8 @@ export class LspServer {
             return [];
         }
 
-        const formatOptions = this.getFormattingOptions(file, params.options);
-
-        // options are not yet supported in tsserver, but we can send a configure request first
-        await this.tspClient.request(CommandTypes.Configure, {
-            formatOptions
-        });
+        const formatOptions = params.options;
+        await this.configurationManager.configureGloballyFromDocument(file, formatOptions);
 
         const response = await this.tspClient.request(CommandTypes.Format, {
             file,
@@ -885,33 +825,6 @@ export class LspServer {
             return response.body.map(e => toTextEdit(e));
         }
         return [];
-    }
-
-    private getFormattingOptions(file: string, requestOptions: lsp.FormattingOptions): tsp.FormatCodeSettings {
-        const workspacePreference = this.getWorkspacePreferencesForDocument(file);
-
-        let opts = <tsp.FormatCodeSettings>{
-            ...workspacePreference?.format || {},
-            ...requestOptions
-        };
-
-        // translate
-        if (opts.convertTabsToSpaces === undefined) {
-            opts.convertTabsToSpaces = requestOptions.insertSpaces;
-        }
-        if (opts.indentSize === undefined) {
-            opts.indentSize = requestOptions.tabSize;
-        }
-
-        if (this.workspaceRoot) {
-            try {
-                opts = JSON.parse(fs.readFileSync(this.workspaceRoot + '/tsfmt.json', 'utf-8'));
-            } catch (err) {
-                this.logger.log(`No formatting options found ${err}`);
-            }
-        }
-
-        return opts;
     }
 
     async signatureHelp(params: lsp.SignatureHelpParams): Promise<lsp.SignatureHelp | undefined> {
@@ -1003,10 +916,7 @@ export class LspServer {
     }
     protected async getOrganizeImports(args: tsp.OrganizeImportsRequestArgs): Promise<tsp.OrganizeImportsResponse | undefined> {
         try {
-            // Pass format options to organize imports
-            await this.tspClient.request(CommandTypes.Configure, {
-                formatOptions: this.getWorkspacePreferencesForDocument(args.scope.args.file).format
-            });
+            await this.configurationManager.configureGloballyFromDocument(args.scope.args.file);
             return await this.tspClient.request(CommandTypes.OrganizeImports, args);
         } catch (err) {
             return undefined;
@@ -1052,9 +962,7 @@ export class LspServer {
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
             const file = arg.arguments[0] as string;
             const additionalArguments: { skipDestructiveCodeActions?: boolean; } = arg.arguments[1] || {};
-            await this.tspClient.request(CommandTypes.Configure, {
-                formatOptions: this.getWorkspacePreferencesForDocument(file).format
-            });
+            await this.configurationManager.configureGloballyFromDocument(file);
             const { body } = await this.tspClient.request(CommandTypes.OrganizeImports, {
                 scope: {
                     type: 'file',
@@ -1286,9 +1194,7 @@ export class LspServer {
             return { inlayHints: [] };
         }
 
-        await this.tspClient.request(CommandTypes.Configure, {
-            preferences: this.getInlayHintsOptions(file)
-        });
+        await this.configurationManager.configureGloballyFromDocument(file);
 
         const doc = this.documents.get(file);
         if (!doc) {
@@ -1329,15 +1235,6 @@ export class LspServer {
                 inlayHints: []
             };
         }
-    }
-
-    private getInlayHintsOptions(file: string): lspinlayHints.InlayHintsOptions & tsp.UserPreferences {
-        const workspacePreference = this.getWorkspacePreferencesForDocument(file);
-        const userPreferences = this.initializeParams?.initializationOptions?.preferences || {};
-        return {
-            ...userPreferences,
-            ...workspacePreference.inlayHints ?? {}
-        };
     }
 
     async semanticTokensFull(params: lsp.SemanticTokensParams): Promise<lsp.SemanticTokens> {
