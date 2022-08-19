@@ -1,11 +1,12 @@
 
 import type tsp from 'typescript/lib/protocol.d.js';
 import * as lsp from 'vscode-languageserver';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import { TspClient } from './tsp-client.js';
 import { CommandTypes } from './tsp-command-types.js';
-import { uriToPath, toLocation, asRange, Range, toSymbolKind, pathToUri } from './protocol-translation.js';
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import { uriToPath, toLocation, toSymbolKind, pathToUri } from './protocol-translation.js';
+import { Range } from './utils/typeConverters.js';
 
 export async function computeCallers(tspClient: TspClient, args: lsp.TextDocumentPositionParams): Promise<lspcalls.CallsResult> {
     const nullResult = { calls: [] };
@@ -140,7 +141,7 @@ async function findEnclosingSymbol(tspClient: TspClient, args: tsp.FileSpan): Pr
         return undefined;
     }
     const pos = lsp.Position.create(args.start.line - 1, args.start.offset - 1);
-    const symbol = await findEnclosingSymbolInTree(tree, lsp.Range.create(pos, pos));
+    const symbol = findEnclosingSymbolInTree(tree, lsp.Range.create(pos, pos));
     if (!symbol) {
         return undefined;
     }
@@ -149,7 +150,7 @@ async function findEnclosingSymbol(tspClient: TspClient, args: tsp.FileSpan): Pr
 }
 
 function findEnclosingSymbolInTree(parent: tsp.NavigationTree, range: lsp.Range): lsp.DocumentSymbol | undefined {
-    const inSpan = (span: tsp.TextSpan) => !!Range.intersection(asRange(span), range);
+    const inSpan = (span: tsp.TextSpan) => !!Range.intersection(Range.fromTextSpan(span), range);
     const inTree = (tree: tsp.NavigationTree) => tree.spans.some(span => inSpan(span));
 
     let candidate = inTree(parent) ? parent : undefined;
@@ -167,10 +168,10 @@ function findEnclosingSymbolInTree(parent: tsp.NavigationTree, range: lsp.Range)
         return undefined;
     }
     const span = candidate.spans.find(span => inSpan(span))!;
-    const spanRange = asRange(span);
+    const spanRange = Range.fromTextSpan(span);
     let selectionRange = spanRange;
     if (candidate.nameSpan) {
-        const nameRange = asRange(candidate.nameSpan);
+        const nameRange = Range.fromTextSpan(candidate.nameSpan);
         if (Range.intersection(spanRange, nameRange)) {
             selectionRange = nameRange;
         }

@@ -29,6 +29,7 @@ export interface SupportedFeatures {
     completionLabelDetails?: boolean;
     completionSnippets?: boolean;
     diagnosticsTagSupport?: boolean;
+    definitionLinkSupport?: boolean;
 }
 
 export interface TypeScriptPlugin {

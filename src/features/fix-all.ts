@@ -6,12 +6,13 @@
 import type tsp from 'typescript/lib/protocol.d.js';
 import * as lsp from 'vscode-languageserver';
 import { LspDocuments } from '../document.js';
-import { toFileRangeRequestArgs, toTextDocumentEdit } from '../protocol-translation.js';
+import { toTextDocumentEdit } from '../protocol-translation.js';
 import { TspClient } from '../tsp-client.js';
 import { CommandTypes } from '../tsp-command-types.js';
 import * as errorCodes from '../utils/errorCodes.js';
 import * as fixNames from '../utils/fixNames.js';
 import { CodeActionKind } from '../utils/types.js';
+import { Range } from '../utils/typeConverters.js';
 
 interface AutoFix {
     readonly codes: Set<number>;
@@ -33,7 +34,7 @@ async function buildIndividualFixes(
             }
 
             const args: tsp.CodeFixRequestArgs = {
-                ...toFileRangeRequestArgs(file, diagnostic.range),
+                ...Range.toFileRangeRequestArgs(file, diagnostic.range),
                 errorCodes: [+diagnostic.code!]
             };
 
@@ -67,7 +68,7 @@ async function buildCombinedFix(
             }
 
             const args: tsp.CodeFixRequestArgs = {
-                ...toFileRangeRequestArgs(file, diagnostic.range),
+                ...Range.toFileRangeRequestArgs(file, diagnostic.range),
                 errorCodes: [+diagnostic.code!]
             };
 

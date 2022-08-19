@@ -19,11 +19,7 @@ import { CommandTypes, EventTypes } from './tsp-command-types.js';
 import { Logger, PrefixingLogger } from './logger.js';
 import { TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
-import {
-    toDocumentHighlight, asRange, asTagsDocumentation,
-    uriToPath, toSymbolKind, toLocation, toPosition,
-    pathToUri, toTextEdit, toFileRangeRequestArgs, asPlainText, normalizePath
-} from './protocol-translation.js';
+import { toDocumentHighlight, asTagsDocumentation, uriToPath, toSymbolKind, toLocation, pathToUri, toTextEdit, asPlainText, normalizePath } from './protocol-translation.js';
 import { LspDocuments, LspDocument } from './document.js';
 import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
@@ -39,6 +35,7 @@ import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionPro
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
 import { LspClient } from './lsp-client.js';
+import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 
 const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
@@ -221,6 +218,7 @@ export class LspServer {
             ...userInitializationOptions.preferences
         };
 
+        // Setup supported features.
         const { textDocument } = clientCapabilities;
         const completionCapabilities = textDocument?.completion;
         if (completionCapabilities?.completionItem) {
@@ -235,6 +233,7 @@ export class LspServer {
                 this.features.diagnosticsTagSupport = true;
             }
         }
+        this.features.definitionLinkSupport = textDocument?.definition?.linkSupport && typescriptVersion.version?.gte(API.v270);
 
         const finalPreferences: TypeScriptInitializationOptions['preferences'] = {
             ...userPreferences,
@@ -570,44 +569,78 @@ export class LspServer {
         // do nothing
     }
 
-    async definition(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition> {
-        // TODO: implement version checking and if semver.gte(version, 270) use `definitionAndBoundSpan` instead
+    async definition(params: lsp.DefinitionParams): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
         return this.getDefinition({
-            type: 'definition',
+            type: this.features.definitionLinkSupport ? CommandTypes.DefinitionAndBoundSpan : CommandTypes.Definition,
             params
         });
     }
 
-    async implementation(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition> {
-        return this.getDefinition({
-            type: 'implementation',
+    async implementation(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition | undefined> {
+        return this.getSymbolLocations({
+            type: CommandTypes.Implementation,
             params
         });
     }
 
-    async typeDefinition(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition> {
-        return this.getDefinition({
-            type: 'typeDefinition',
+    async typeDefinition(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition | undefined> {
+        return this.getSymbolLocations({
+            type: CommandTypes.TypeDefinition,
             params
         });
     }
 
-    protected async getDefinition({ type, params }: {
-        type: 'definition' | 'implementation' | 'typeDefinition';
+    private async getDefinition({ type, params }: {
+        type: CommandTypes.Definition | CommandTypes.DefinitionAndBoundSpan;
         params: lsp.TextDocumentPositionParams;
-    }): Promise<lsp.Definition> {
+    }): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
+        const file = uriToPath(params.textDocument.uri);
+        this.logger.log(type, params, file);
+        if (!file) {
+            return undefined;
+        }
+
+        if (type === CommandTypes.DefinitionAndBoundSpan) {
+            const args = Position.toFileLocationRequestArgs(file, params.position);
+            const response = await this.tspClient.request(type, args);
+            if (response.type !== 'response' || !response.body) {
+                return undefined;
+            }
+            const span = Range.fromTextSpan(response.body.textSpan);
+            return response.body.definitions
+                .map((location): lsp.DefinitionLink => {
+                    const target = toLocation(location, this.documents);
+                    const targetRange = location.contextStart && location.contextEnd
+                        ? Range.fromLocations(location.contextStart, location.contextEnd)
+                        : target.range;
+                    return {
+                        originSelectionRange: span,
+                        targetRange,
+                        targetUri: target.uri,
+                        targetSelectionRange: target.range
+                    };
+                });
+        }
+
+        return this.getSymbolLocations({ type: CommandTypes.Definition, params });
+    }
+
+    private async getSymbolLocations({ type, params }: {
+        type: CommandTypes.Definition | CommandTypes.Implementation | CommandTypes.TypeDefinition;
+        params: lsp.TextDocumentPositionParams;
+    }): Promise<lsp.Definition | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log(type, params, file);
         if (!file) {
             return [];
         }
 
-        const result = await this.tspClient.request(type as CommandTypes.Definition, {
-            file,
-            line: params.position.line + 1,
-            offset: params.position.character + 1
-        });
-        return result.body ? result.body.map(fileSpan => toLocation(fileSpan, this.documents)) : [];
+        const args = Position.toFileLocationRequestArgs(file, params.position);
+        const response = await this.tspClient.request(type, args);
+        if (response.type !== 'response' || !response.body) {
+            return undefined;
+        }
+        return response.body.map(fileSpan => toLocation(fileSpan, this.documents));
     }
 
     async documentSymbol(params: lsp.DocumentSymbolParams): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
@@ -714,7 +747,7 @@ export class LspServer {
         if (!result || !result.body) {
             return { contents: [] };
         }
-        const range = asRange(result.body);
+        const range = Range.fromTextSpan(result.body);
         const contents: lsp.MarkedString[] = [];
         if (result.body.displayString) {
             contents.push({ language: 'typescript', value: result.body.displayString });
@@ -768,8 +801,8 @@ export class LspServer {
                     textEdits.push({
                         newText: `${textSpan.prefixText || ''}${params.newName}${textSpan.suffixText || ''}`,
                         range: {
-                            start: toPosition(textSpan.start),
-                            end: toPosition(textSpan.end)
+                            start: Position.fromLocation(textSpan.start),
+                            end: Position.fromLocation(textSpan.end)
                         }
                     });
                 });
@@ -914,7 +947,7 @@ export class LspServer {
         if (!file) {
             return [];
         }
-        const args = toFileRangeRequestArgs(file, params.range);
+        const args = Range.toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
         const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
         if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.QuickFix))) {
@@ -1013,7 +1046,7 @@ export class LspServer {
                     textDocument: {
                         uri: pathToUri(args.file, this.documents)
                     },
-                    position: toPosition(renameLocation)
+                    position: Position.fromLocation(renameLocation)
                 });
             }
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
@@ -1141,8 +1174,8 @@ export class LspServer {
                 location: {
                     uri: pathToUri(item.file, this.documents),
                     range: {
-                        start: toPosition(item.start),
-                        end: toPosition(item.end)
+                        start: Position.fromLocation(item.start),
+                        end: Position.fromLocation(item.end)
                     }
                 },
                 kind: toSymbolKind(item.kind),
@@ -1179,7 +1212,7 @@ export class LspServer {
         return foldingRanges;
     }
     protected asFoldingRange(span: tsp.OutliningSpan, document: LspDocument): lsp.FoldingRange | undefined {
-        const range = asRange(span.textSpan);
+        const range = Range.fromTextSpan(span.textSpan);
         const kind = this.asFoldingRangeKind(span);
 
         // workaround for https://github.com/Microsoft/vscode/issues/49904
@@ -1285,7 +1318,7 @@ export class LspServer {
                 inlayHints:
                     result.body?.map((item) => ({
                         text: item.text,
-                        position: toPosition(item.position),
+                        position: Position.fromLocation(item.position),
                         whitespaceAfter: item.whitespaceAfter,
                         whitespaceBefore: item.whitespaceBefore,
                         kind: item.kind

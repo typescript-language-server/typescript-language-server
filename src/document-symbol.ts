@@ -7,18 +7,19 @@
 
 import * as lsp from 'vscode-languageserver';
 import type tsp from 'typescript/lib/protocol.d.js';
-import { asRange, toSymbolKind, Range } from './protocol-translation.js';
+import { toSymbolKind } from './protocol-translation.js';
 import { ScriptElementKind } from './tsp-command-types.js';
+import { Range } from './utils/typeConverters.js';
 
 export function collectDocumentSymbols(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[]): boolean {
-    return collectDocumentSymbolsInRange(parent, symbols, { start: asRange(parent.spans[0]).start, end: asRange(parent.spans[parent.spans.length - 1]).end });
+    return collectDocumentSymbolsInRange(parent, symbols, { start: Range.fromTextSpan(parent.spans[0]).start, end: Range.fromTextSpan(parent.spans[parent.spans.length - 1]).end });
 }
 
 function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[], range: lsp.Range): boolean {
     let shouldInclude = shouldIncludeEntry(parent);
 
     for (const span of parent.spans) {
-        const spanRange = asRange(span);
+        const spanRange = Range.fromTextSpan(span);
         if (!Range.intersection(range, spanRange)) {
             continue;
         }
@@ -26,7 +27,7 @@ function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.
         const children: lsp.DocumentSymbol[] = [];
         if (parent.childItems) {
             for (const child of parent.childItems) {
-                if (child.spans.some(childSpan => !!Range.intersection(spanRange, asRange(childSpan)))) {
+                if (child.spans.some(childSpan => !!Range.intersection(spanRange, Range.fromTextSpan(childSpan)))) {
                     const includedChild = collectDocumentSymbolsInRange(child, children, spanRange);
                     shouldInclude = shouldInclude || includedChild;
                 }
@@ -34,7 +35,7 @@ function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.
         }
         let selectionRange = spanRange;
         if (parent.nameSpan) {
-            const nameRange = asRange(parent.nameSpan);
+            const nameRange = Range.fromTextSpan(parent.nameSpan);
             // In the case of mergeable definitions, the nameSpan is only correct for the first definition.
             if (Range.intersection(spanRange, nameRange)) {
                 selectionRange = nameRange;
@@ -59,11 +60,11 @@ export function collectSymbolInformation(uri: string, current: tsp.NavigationTre
     let shouldInclude = shouldIncludeEntry(current);
     const name = current.text;
     for (const span of current.spans) {
-        const range = asRange(span);
+        const range = Range.fromTextSpan(span);
         const children: lsp.SymbolInformation[] = [];
         if (current.childItems) {
             for (const child of current.childItems) {
-                if (child.spans.some(span => !!Range.intersection(range, asRange(span)))) {
+                if (child.spans.some(span => !!Range.intersection(range, Range.fromTextSpan(span)))) {
                     const includedChild = collectSymbolInformation(uri, child, children, name);
                     shouldInclude = shouldInclude || includedChild;
                 }

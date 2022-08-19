@@ -9,12 +9,12 @@ import * as lsp from 'vscode-languageserver';
 import type tsp from 'typescript/lib/protocol.js';
 import { LspDocument } from './document.js';
 import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-types.js';
-import { asRange, toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation.js';
+import { toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation.js';
 import { Commands } from './commands.js';
 import { TspClient } from './tsp-client.js';
 import { CompletionOptions, DisplayPartKind, SupportedFeatures } from './ts-protocol.js';
 import SnippetString from './utils/SnippetString.js';
-import * as typeConverters from './utils/typeConverters.js';
+import { Range, Position } from './utils/typeConverters.js';
 
 interface ParameterListParts {
     readonly parts: ReadonlyArray<tsp.SymbolDisplayPart>;
@@ -62,7 +62,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
     }
 
     let insertText = entry.insertText;
-    let replacementRange = entry.replacementSpan && asRange(entry.replacementSpan);
+    let replacementRange = entry.replacementSpan && Range.fromTextSpan(entry.replacementSpan);
     // Make sure we only replace a single line at most
     if (replacementRange && replacementRange.start.line !== replacementRange.end.line) {
         replacementRange = lsp.Range.create(replacementRange.start, document.getLineEnd(replacementRange.start.line));
@@ -202,7 +202,7 @@ export async function asResolvedCompletionItem(
     }
     if (features.completionSnippets && options.completeFunctionCalls && (item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
         const { line, offset } = item.data;
-        const position = typeConverters.Position.fromLocation({ line, offset });
+        const position = Position.fromLocation({ line, offset });
         const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client);
         if (shouldCompleteFunction) {
             createSnippetOfFunctionCall(item, details);
@@ -216,7 +216,7 @@ export async function isValidFunctionCompletionContext(filepath: string, positio
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
-        const args: tsp.FileLocationRequestArgs = typeConverters.Position.toFileLocationRequestArgs(filepath, position);
+        const args: tsp.FileLocationRequestArgs = Position.toFileLocationRequestArgs(filepath, position);
         const response = await client.request(CommandTypes.Quickinfo, args);
         if (response.type !== 'response') {
             return true;

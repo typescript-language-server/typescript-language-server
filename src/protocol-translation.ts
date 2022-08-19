@@ -10,6 +10,7 @@ import type tsp from 'typescript/lib/protocol.d.js';
 import vscodeUri from 'vscode-uri';
 import { LspDocuments } from './document.js';
 import { SupportedFeatures } from './ts-protocol.js';
+import { Position } from './utils/typeConverters.js';
 
 const RE_PATHSEP_WINDOWS = /\\/g;
 
@@ -65,32 +66,13 @@ function currentVersion(filepath: string, documents: LspDocuments | undefined): 
     return document ? document.version : null;
 }
 
-export function toPosition(location: tsp.Location): lsp.Position {
-    // Clamping on the low side to 0 since Typescript returns 0, 0 when creating new file
-    // even though position is suppoed to be 1-based.
-    return {
-        line: Math.max(0, location.line - 1),
-        character: Math.max(0, location.offset - 1)
-    };
-}
-
 export function toLocation(fileSpan: tsp.FileSpan, documents: LspDocuments | undefined): lsp.Location {
     return {
         uri: pathToUri(fileSpan.file, documents),
         range: {
-            start: toPosition(fileSpan.start),
-            end: toPosition(fileSpan.end)
+            start: Position.fromLocation(fileSpan.start),
+            end: Position.fromLocation(fileSpan.end)
         }
-    };
-}
-
-export function toFileRangeRequestArgs(file: string, range: lsp.Range): tsp.FileRangeRequestArgs {
-    return {
-        file,
-        startLine: range.start.line + 1,
-        startOffset: range.start.character + 1,
-        endLine: range.end.line + 1,
-        endOffset: range.end.character + 1
     };
 }
 
@@ -136,8 +118,8 @@ function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
 export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments | undefined, features: SupportedFeatures): lsp.Diagnostic {
     const lspDiagnostic: lsp.Diagnostic = {
         range: {
-            start: toPosition(diagnostic.start),
-            end: toPosition(diagnostic.end)
+            start: Position.fromLocation(diagnostic.start),
+            end: Position.fromLocation(diagnostic.end)
         },
         message: diagnostic.text,
         severity: toDiagnosticSeverity(diagnostic.category),
@@ -182,8 +164,8 @@ function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefin
 export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
     return {
         range: {
-            start: toPosition(edit.start),
-            end: toPosition(edit.end)
+            start: Position.fromLocation(edit.start),
+            end: Position.fromLocation(edit.end)
         },
         newText: edit.newText
     };
@@ -204,8 +186,8 @@ export function toDocumentHighlight(item: tsp.DocumentHighlightsItem): lsp.Docum
         return <lsp.DocumentHighlight>{
             kind: toDocumentHighlightKind(i.kind),
             range: {
-                start: toPosition(i.start),
-                end: toPosition(i.end)
+                start: Position.fromLocation(i.start),
+                end: Position.fromLocation(i.end)
             }
         };
     });
@@ -226,13 +208,6 @@ function toDocumentHighlightKind(kind: tsp.HighlightSpanKind): lsp.DocumentHighl
         case HighlightSpanKind.writtenReference: return lsp.DocumentHighlightKind.Read;
         default: return lsp.DocumentHighlightKind.Text;
     }
-}
-
-export function asRange(span: tsp.TextSpan): lsp.Range {
-    return lsp.Range.create(
-        Math.max(0, span.start.line - 1), Math.max(0, span.start.offset - 1),
-        Math.max(0, span.end.line - 1), Math.max(0, span.end.offset - 1)
-    );
 }
 
 export function asDocumentation(data: {
@@ -314,70 +289,4 @@ export function asPlainText(parts: string | tsp.SymbolDisplayPart[]): string {
         return parts;
     }
     return parts.map(part => part.text).join('');
-}
-
-namespace Position {
-    export function Min(): undefined;
-    export function Min(...positions: lsp.Position[]): lsp.Position;
-    export function Min(...positions: lsp.Position[]): lsp.Position | undefined {
-        if (!positions.length) {
-            return undefined;
-        }
-        let result = positions.pop()!;
-        for (const p of positions) {
-            if (isBefore(p, result)) {
-                result = p;
-            }
-        }
-        return result;
-    }
-    export function isBefore(one: lsp.Position, other: lsp.Position): boolean {
-        if (one.line < other.line) {
-            return true;
-        }
-        if (other.line < one.line) {
-            return false;
-        }
-        return one.character < other.character;
-    }
-    export function Max(): undefined;
-    export function Max(...positions: lsp.Position[]): lsp.Position;
-    export function Max(...positions: lsp.Position[]): lsp.Position | undefined {
-        if (!positions.length) {
-            return undefined;
-        }
-        let result = positions.pop()!;
-        for (const p of positions) {
-            if (isAfter(p, result)) {
-                result = p;
-            }
-        }
-        return result;
-    }
-    export function isAfter(one: lsp.Position, other: lsp.Position): boolean {
-        return !isBeforeOrEqual(one, other);
-    }
-    export function isBeforeOrEqual(one: lsp.Position, other: lsp.Position): boolean {
-        if (one.line < other.line) {
-            return true;
-        }
-        if (other.line < one.line) {
-            return false;
-        }
-        return one.character <= other.character;
-    }
-}
-
-export namespace Range {
-    export function intersection(one: lsp.Range, other: lsp.Range): lsp.Range | undefined {
-        const start = Position.Max(other.start, one.start);
-        const end = Position.Min(other.end, one.end);
-        if (Position.isAfter(start, end)) {
-            // this happens when there is no overlap:
-            // |-----|
-            //          |----|
-            return undefined;
-        }
-        return lsp.Range.create(start, end);
-    }
 }
