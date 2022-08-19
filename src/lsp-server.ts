@@ -35,7 +35,7 @@ import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionPro
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
 import { LspClient } from './lsp-client.js';
-import * as typeConverters from './utils/typeConverters.js';
+import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 
 const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
@@ -601,17 +601,17 @@ export class LspServer {
         }
 
         if (type === CommandTypes.DefinitionAndBoundSpan) {
-            const args = typeConverters.Position.toFileLocationRequestArgs(file, params.position);
+            const args = Position.toFileLocationRequestArgs(file, params.position);
             const response = await this.tspClient.request(type, args);
             if (response.type !== 'response' || !response.body) {
                 return undefined;
             }
-            const span = typeConverters.Range.fromTextSpan(response.body.textSpan);
+            const span = Range.fromTextSpan(response.body.textSpan);
             return response.body.definitions
                 .map((location): lsp.DefinitionLink => {
                     const target = toLocation(location, this.documents);
                     const targetRange = location.contextStart && location.contextEnd
-                        ? typeConverters.Range.fromLocations(location.contextStart, location.contextEnd)
+                        ? Range.fromLocations(location.contextStart, location.contextEnd)
                         : target.range;
                     return {
                         originSelectionRange: span,
@@ -635,7 +635,7 @@ export class LspServer {
             return [];
         }
 
-        const args = typeConverters.Position.toFileLocationRequestArgs(file, params.position);
+        const args = Position.toFileLocationRequestArgs(file, params.position);
         const response = await this.tspClient.request(type, args);
         if (response.type !== 'response' || !response.body) {
             return undefined;
@@ -747,7 +747,7 @@ export class LspServer {
         if (!result || !result.body) {
             return { contents: [] };
         }
-        const range = typeConverters.Range.fromTextSpan(result.body);
+        const range = Range.fromTextSpan(result.body);
         const contents: lsp.MarkedString[] = [];
         if (result.body.displayString) {
             contents.push({ language: 'typescript', value: result.body.displayString });
@@ -801,8 +801,8 @@ export class LspServer {
                     textEdits.push({
                         newText: `${textSpan.prefixText || ''}${params.newName}${textSpan.suffixText || ''}`,
                         range: {
-                            start: typeConverters.Position.fromLocation(textSpan.start),
-                            end: typeConverters.Position.fromLocation(textSpan.end)
+                            start: Position.fromLocation(textSpan.start),
+                            end: Position.fromLocation(textSpan.end)
                         }
                     });
                 });
@@ -947,7 +947,7 @@ export class LspServer {
         if (!file) {
             return [];
         }
-        const args = typeConverters.Range.toFileRangeRequestArgs(file, params.range);
+        const args = Range.toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
         const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
         if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.QuickFix))) {
@@ -1046,7 +1046,7 @@ export class LspServer {
                     textDocument: {
                         uri: pathToUri(args.file, this.documents)
                     },
-                    position: typeConverters.Position.fromLocation(renameLocation)
+                    position: Position.fromLocation(renameLocation)
                 });
             }
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
@@ -1174,8 +1174,8 @@ export class LspServer {
                 location: {
                     uri: pathToUri(item.file, this.documents),
                     range: {
-                        start: typeConverters.Position.fromLocation(item.start),
-                        end: typeConverters.Position.fromLocation(item.end)
+                        start: Position.fromLocation(item.start),
+                        end: Position.fromLocation(item.end)
                     }
                 },
                 kind: toSymbolKind(item.kind),
@@ -1212,7 +1212,7 @@ export class LspServer {
         return foldingRanges;
     }
     protected asFoldingRange(span: tsp.OutliningSpan, document: LspDocument): lsp.FoldingRange | undefined {
-        const range = typeConverters.Range.fromTextSpan(span.textSpan);
+        const range = Range.fromTextSpan(span.textSpan);
         const kind = this.asFoldingRangeKind(span);
 
         // workaround for https://github.com/Microsoft/vscode/issues/49904
@@ -1318,7 +1318,7 @@ export class LspServer {
                 inlayHints:
                     result.body?.map((item) => ({
                         text: item.text,
-                        position: typeConverters.Position.fromLocation(item.position),
+                        position: Position.fromLocation(item.position),
                         whitespaceAfter: item.whitespaceAfter,
                         whitespaceBefore: item.whitespaceBefore,
                         kind: item.kind

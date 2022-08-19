@@ -11,7 +11,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import API from '../utils/api.js';
-import * as typeConverters from '../utils/typeConverters.js';
+import { Position } from '../utils/typeConverters.js';
 import { toLocation, uriToPath } from '../protocol-translation.js';
 import type { LspDocuments } from '../document.js';
 import type { TspClient } from '../tsp-client.js';
@@ -54,7 +54,7 @@ export class SourceDefinitionCommand {
             return;
         }
 
-        const args = typeConverters.Position.toFileLocationRequestArgs(file, position);
+        const args = Position.toFileLocationRequestArgs(file, position);
         return await lspClient.withProgress<lsp.Location[] | void>({
             message: 'Finding source definitions…',
             reporter

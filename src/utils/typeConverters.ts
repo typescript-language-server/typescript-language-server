@@ -36,6 +36,18 @@ export namespace Range {
         endLine: range.end.line + 1,
         endOffset: range.end.character + 1
     });
+
+    export function intersection(one: lsp.Range, other: lsp.Range): lsp.Range | undefined {
+        const start = Position.Max(other.start, one.start);
+        const end = Position.Min(other.end, one.end);
+        if (Position.isAfter(start, end)) {
+            // this happens when there is no overlap:
+            // |-----|
+            //          |----|
+            return undefined;
+        }
+        return lsp.Range.create(start, end);
+    }
 }
 
 export namespace Position {
@@ -58,6 +70,56 @@ export namespace Position {
         line: position.line + 1,
         offset: position.character + 1
     });
+
+    export function Min(): undefined;
+    export function Min(...positions: lsp.Position[]): lsp.Position;
+    export function Min(...positions: lsp.Position[]): lsp.Position | undefined {
+        if (!positions.length) {
+            return undefined;
+        }
+        let result = positions.pop()!;
+        for (const p of positions) {
+            if (isBefore(p, result)) {
+                result = p;
+            }
+        }
+        return result;
+    }
+    export function isBefore(one: lsp.Position, other: lsp.Position): boolean {
+        if (one.line < other.line) {
+            return true;
+        }
+        if (other.line < one.line) {
+            return false;
+        }
+        return one.character < other.character;
+    }
+    export function Max(): undefined;
+    export function Max(...positions: lsp.Position[]): lsp.Position;
+    export function Max(...positions: lsp.Position[]): lsp.Position | undefined {
+        if (!positions.length) {
+            return undefined;
+        }
+        let result = positions.pop()!;
+        for (const p of positions) {
+            if (isAfter(p, result)) {
+                result = p;
+            }
+        }
+        return result;
+    }
+    export function isAfter(one: lsp.Position, other: lsp.Position): boolean {
+        return !isBeforeOrEqual(one, other);
+    }
+    export function isBeforeOrEqual(one: lsp.Position, other: lsp.Position): boolean {
+        if (one.line < other.line) {
+            return true;
+        }
+        if (other.line < one.line) {
+            return false;
+        }
+        return one.character <= other.character;
+    }
 }
 
 export namespace Location {

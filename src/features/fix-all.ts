@@ -12,7 +12,7 @@ import { CommandTypes } from '../tsp-command-types.js';
 import * as errorCodes from '../utils/errorCodes.js';
 import * as fixNames from '../utils/fixNames.js';
 import { CodeActionKind } from '../utils/types.js';
-import * as typeConverters from '../utils/typeConverters.js';
+import { Range } from '../utils/typeConverters.js';
 
 interface AutoFix {
     readonly codes: Set<number>;
@@ -34,7 +34,7 @@ async function buildIndividualFixes(
             }
 
             const args: tsp.CodeFixRequestArgs = {
-                ...typeConverters.Range.toFileRangeRequestArgs(file, diagnostic.range),
+                ...Range.toFileRangeRequestArgs(file, diagnostic.range),
                 errorCodes: [+diagnostic.code!]
             };
 
@@ -68,7 +68,7 @@ async function buildCombinedFix(
             }
 
             const args: tsp.CodeFixRequestArgs = {
-                ...typeConverters.Range.toFileRangeRequestArgs(file, diagnostic.range),
+                ...Range.toFileRangeRequestArgs(file, diagnostic.range),
                 errorCodes: [+diagnostic.code!]
             };
 

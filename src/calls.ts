@@ -5,8 +5,8 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import { TspClient } from './tsp-client.js';
 import { CommandTypes } from './tsp-command-types.js';
-import { uriToPath, toLocation, Range, toSymbolKind, pathToUri } from './protocol-translation.js';
-import * as typeConverters from './utils/typeConverters.js';
+import { uriToPath, toLocation, toSymbolKind, pathToUri } from './protocol-translation.js';
+import { Range } from './utils/typeConverters.js';
 
 export async function computeCallers(tspClient: TspClient, args: lsp.TextDocumentPositionParams): Promise<lspcalls.CallsResult> {
     const nullResult = { calls: [] };
@@ -150,7 +150,7 @@ async function findEnclosingSymbol(tspClient: TspClient, args: tsp.FileSpan): Pr
 }
 
 function findEnclosingSymbolInTree(parent: tsp.NavigationTree, range: lsp.Range): lsp.DocumentSymbol | undefined {
-    const inSpan = (span: tsp.TextSpan) => !!Range.intersection(typeConverters.Range.fromTextSpan(span), range);
+    const inSpan = (span: tsp.TextSpan) => !!Range.intersection(Range.fromTextSpan(span), range);
     const inTree = (tree: tsp.NavigationTree) => tree.spans.some(span => inSpan(span));
 
     let candidate = inTree(parent) ? parent : undefined;
@@ -168,10 +168,10 @@ function findEnclosingSymbolInTree(parent: tsp.NavigationTree, range: lsp.Range)
         return undefined;
     }
     const span = candidate.spans.find(span => inSpan(span))!;
-    const spanRange = typeConverters.Range.fromTextSpan(span);
+    const spanRange = Range.fromTextSpan(span);
     let selectionRange = spanRange;
     if (candidate.nameSpan) {
-        const nameRange = typeConverters.Range.fromTextSpan(candidate.nameSpan);
+        const nameRange = Range.fromTextSpan(candidate.nameSpan);
         if (Range.intersection(spanRange, nameRange)) {
             selectionRange = nameRange;
         }
