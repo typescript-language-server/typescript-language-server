@@ -72,7 +72,6 @@ export interface WorkspaceConfigurationCompletionOptions {
 export class ConfigurationManager {
     public tsPreferences: Required<tsp.UserPreferences> = deepmerge({}, DEFAULT_TSSERVER_PREFERENCES);
     public workspaceConfiguration: WorkspaceConfiguration = {};
-
     private tspClient: TspClient | null = null;
 
     constructor(private readonly documents: LspDocuments) {}
