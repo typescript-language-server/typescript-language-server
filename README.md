@@ -29,6 +29,7 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
 - [Inlay hints \(`typescript/inlayHints`\) \(experimental\)](#inlay-hints-typescriptinlayhints-experimental)
 - [Callers and callees \(`textDocument/calls`\) \(experimental\)](#callers-and-callees-textdocumentcalls-experimental)
 - [Supported Protocol features](#supported-protocol-features)
+    - [Experimental](#experimental)
 - [Development](#development)
     - [Build](#build)
     - [Test](#test)
@@ -503,28 +504,31 @@ interface DefinitionSymbol {
 
 ## Supported Protocol features
 
+- [x] textDocument/codeAction
+- [x] textDocument/completion (incl. `completion/resolve`)
+- [x] textDocument/definition
 - [x] textDocument/didChange (incremental)
 - [x] textDocument/didClose
 - [x] textDocument/didOpen
 - [x] textDocument/didSave
-- [x] textDocument/codeAction
-- [x] textDocument/completion (incl. completion/resolve)
-- [x] textDocument/definition
 - [x] textDocument/documentHighlight
 - [x] textDocument/documentSymbol
 - [x] textDocument/executeCommand
-- [x] textDocument/inlayHint (no support for `inlayHint/resolve` or `workspace/inlayHint/refresh`)
 - [x] textDocument/formatting
-- [x] textDocument/rangeFormatting
 - [x] textDocument/hover
-- [x] textDocument/rename
+- [x] textDocument/inlayHint (no support for `inlayHint/resolve` or `workspace/inlayHint/refresh`)
+- [x] textDocument/rangeFormatting
 - [x] textDocument/references
+- [x] textDocument/rename
 - [x] textDocument/signatureHelp
-- [x] textDocument/calls (experimental)
-- [x] typescript/inlayHints (experimental, supported from Typescript v4.4.2) DEPRECATED (use  `textDocument/inlayHint` instead)
 - [x] workspace/symbol
 - [x] workspace/didChangeConfiguration
 - [x] workspace/executeCommand
+
+### Experimental
+
+- [x] textDocument/calls (experimental)
+- [x] typescript/inlayHints (experimental, supported from Typescript v4.4.2) DEPRECATED (use  `textDocument/inlayHint` instead)
 
 ## Development
 
