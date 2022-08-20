@@ -1944,8 +1944,7 @@ describe('inlayHints', () => {
             label: ': number',
             position: { line: 1, character: 29 },
             kind: lsp.InlayHintKind.Type,
-            paddingLeft: true,
-            paddingRight: false
+            paddingLeft: true
         });
     });
 

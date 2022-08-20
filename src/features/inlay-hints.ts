@@ -64,13 +64,15 @@ export class TypeScriptInlayHintsProvider {
             return [];
         }
 
-        return response.body.map<lsp.InlayHint>(hint => ({
-            kind:  fromProtocolInlayHintKind(hint.kind),
-            label: hint.text,
-            paddingLeft: hint.whitespaceBefore ?? false,
-            paddingRight: hint.whitespaceAfter ?? false,
-            position: Position.fromLocation(hint.position)
-        }));
+        return response.body.map<lsp.InlayHint>(hint => {
+            const inlayHint = lsp.InlayHint.create(
+                Position.fromLocation(hint.position),
+                hint.text,
+                fromProtocolInlayHintKind(hint.kind));
+            hint.whitespaceBefore && (inlayHint.paddingLeft = true);
+            hint.whitespaceAfter && (inlayHint.paddingRight = true);
+            return inlayHint;
+        });
     }
 }
 
