@@ -1195,6 +1195,10 @@ export class LspServer {
     }
 
     async inlayHintsLegacy(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
+        this.options.lspClient.logMessage({
+            message: 'Support for experimental "typescript/inlayHints" request is deprecated. Use spec-compliant "textDocument/inlayHint" instead.',
+            type: lsp.MessageType.Warning
+        });
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('inlayHints', params, file);
         if (!file) {
