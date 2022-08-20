@@ -56,11 +56,12 @@ export function createLspConnection(options: IServerOptions): lsp.Connection {
     connection.onSignatureHelp(server.signatureHelp.bind(server));
     connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
     connection.onFoldingRanges(server.foldingRanges.bind(server));
+    connection.languages.inlayHint.on(server.inlayHints.bind(server));
 
     // proposed `textDocument/calls` request
     connection.onRequest(lspcalls.CallsRequest.type, server.calls.bind(server));
 
-    connection.onRequest(lspinlayHints.type, server.inlayHints.bind(server));
+    connection.onRequest(lspinlayHints.type, server.inlayHintsLegacy.bind(server));
 
     connection.onRequest(lsp.SemanticTokensRequest.type, server.semanticTokensFull.bind(server));
     connection.onRequest(lsp.SemanticTokensRangeRequest.type, server.semanticTokensRange.bind(server));

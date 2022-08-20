@@ -33,6 +33,7 @@ import { computeCallers, computeCallees } from './calls.js';
 import { IServerOptions } from './utils/configuration.js';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
+import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
 import { LspClient } from './lsp-client.js';
 import { Position, Range } from './utils/typeConverters.js';
@@ -291,6 +292,7 @@ export class LspServer {
                     ]
                 },
                 hoverProvider: true,
+                inlayHintProvider: true,
                 renameProvider: true,
                 referencesProvider: true,
                 signatureHelpProvider: {
@@ -1187,7 +1189,12 @@ export class LspServer {
         return callsResult;
     }
 
-    async inlayHints(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
+    async inlayHints(params: lsp.InlayHintParams): Promise<lsp.InlayHint[] | undefined> {
+        return await TypeScriptInlayHintsProvider.provideInlayHints(
+            params.textDocument.uri, params.range, this.documents, this.tspClient, this.options.lspClient, this.configurationManager);
+    }
+
+    async inlayHintsLegacy(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('inlayHints', params, file);
         if (!file) {
