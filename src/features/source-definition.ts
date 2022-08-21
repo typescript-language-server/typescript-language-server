@@ -28,7 +28,7 @@ export class SourceDefinitionCommand {
         documents: LspDocuments,
         tspClient: TspClient,
         lspClient: LspClient,
-        reporter: lsp.WorkDoneProgressReporter
+        reporter: lsp.WorkDoneProgressReporter,
     ): Promise<lsp.Location[] | void> {
         if (tspClient.apiVersion.lt(SourceDefinitionCommand.minVersion)) {
             lspClient.showErrorMessage('Go to Source Definition failed. Requires TypeScript 4.7+.');
@@ -57,7 +57,7 @@ export class SourceDefinitionCommand {
         const args = Position.toFileLocationRequestArgs(file, position);
         return await lspClient.withProgress<lsp.Location[] | void>({
             message: 'Finding source definitions…',
-            reporter
+            reporter,
         }, async () => {
             const response = await tspClient.request(CommandTypes.FindSourceDefinition, args);
             if (response.type === 'response' && response.body?.length) {

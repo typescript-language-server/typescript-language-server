@@ -21,7 +21,7 @@ class FileDiagnostics {
         protected readonly uri: string,
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly documents: LspDocuments,
-        protected readonly features: SupportedFeatures
+        protected readonly features: SupportedFeatures,
     ) { }
 
     update(kind: EventTypes, diagnostics: tsp.Diagnostic[]): void {
@@ -52,7 +52,7 @@ export class DiagnosticEventQueue {
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly documents: LspDocuments,
         protected readonly features: SupportedFeatures,
-        protected readonly logger: Logger
+        protected readonly logger: Logger,
     ) { }
 
     updateDiagnostics(kind: EventTypes, event: tsp.DiagnosticEvent): void {

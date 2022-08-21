@@ -64,7 +64,7 @@ export default class API {
         /**
          * Full version string including pre-release tags, e.g. '3.9.0-beta'
          */
-        public readonly fullVersionString: string
+        public readonly fullVersionString: string,
     ) { }
 
     public eq(other: API): boolean {

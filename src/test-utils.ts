@@ -27,22 +27,22 @@ const DEFAULT_TEST_CLIENT_CAPABILITIES: lsp.ClientCapabilities = {
         completion: {
             completionItem: {
                 snippetSupport: true,
-                labelDetailsSupport: true
-            }
+                labelDetailsSupport: true,
+            },
         },
         documentSymbol: {
-            hierarchicalDocumentSymbolSupport: true
+            hierarchicalDocumentSymbolSupport: true,
         },
         publishDiagnostics: {
             tagSupport: {
                 valueSet: [
                     lsp.DiagnosticTag.Unnecessary,
-                    lsp.DiagnosticTag.Deprecated
-                ]
-            }
+                    lsp.DiagnosticTag.Deprecated,
+                ],
+            },
         },
-        moniker: {}
-    }
+        moniker: {},
+    },
 };
 
 const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOptions = {
@@ -60,8 +60,8 @@ const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOption
         includeCompletionsWithInsertText: true,
         includeCompletionsWithSnippetText: true,
         jsxAttributeCompletionStyle: 'auto',
-        providePrefixAndSuffixTextForRename: true
-    }
+        providePrefixAndSuffixTextForRename: true,
+    },
 };
 
 export function uri(...components: string[]): string {
@@ -82,7 +82,7 @@ export function positionAt(document: lsp.TextDocumentItem, idx: number): lsp.Pos
     const pos = doc.positionAt(idx);
     return {
         line: pos.line,
-        character: pos.character
+        character: pos.character,
     };
 }
 
@@ -173,7 +173,7 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         tsserverPath: bundled!.tsServerPath,
         tsserverLogVerbosity: options.tsserverLogVerbosity,
         tsserverLogFile: path.resolve(PACKAGE_ROOT, 'tsserver.log'),
-        lspClient
+        lspClient,
     });
 
     lspClient.addApplyWorkspaceEditListener(args => {
@@ -186,7 +186,7 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         processId: 42,
         capabilities: deepmerge(DEFAULT_TEST_CLIENT_CAPABILITIES, options.clientCapabilitiesOverride || {}),
         initializationOptions: DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS,
-        workspaceFolders: null
+        workspaceFolders: null,
     });
     return server;
 }

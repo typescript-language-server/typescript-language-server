@@ -20,7 +20,7 @@ export class CodeActionKind {
     public static readonly SourceFixAllTs = CodeActionKind.SourceFixAll.append('ts');
 
     constructor(
-        public readonly value: string
+        public readonly value: string,
     ) { }
 
     public equals(other: CodeActionKind): boolean {

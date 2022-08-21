@@ -16,7 +16,7 @@ let server: LspServer;
 before(async () => {
     server = await createServer({
         rootUri: uri(),
-        publishDiagnostics: () => { }
+        publishDiagnostics: () => { },
     });
 });
 
@@ -35,15 +35,15 @@ describe('documentHighlight', () => {
             uri: uri('module2.ts'),
             languageId: 'typescript',
             version: 1,
-            text: readContents(filePath('module2.ts'))
+            text: readContents(filePath('module2.ts')),
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
 
         const result = await server.documentHighlight({
             textDocument: doc,
-            position: lastPosition(doc, 'doStuff')
+            position: lastPosition(doc, 'doStuff'),
         });
         assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
     });
@@ -55,12 +55,12 @@ describe('completions', () => {
             uri: uri('completion.ts'),
             languageId: 'typescript',
             version: 1,
-            text: readContents(filePath('completion.ts'))
+            text: readContents(filePath('completion.ts')),
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({
             textDocument: doc,
-            position: positionAfter(doc, 'doStuff')
+            position: positionAfter(doc, 'doStuff'),
         });
         assert.isNotNull(proposals);
         const completion = proposals!.items.find(item => item.label === 'doStuff');

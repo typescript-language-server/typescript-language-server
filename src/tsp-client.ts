@@ -98,7 +98,7 @@ export class TspClient {
             npmLocation,
             locale,
             globalPlugins,
-            pluginProbeLocations
+            pluginProbeLocations,
         } = this.options;
         const args: string[] = [];
         if (logFile) {
@@ -130,8 +130,8 @@ export class TspClient {
         const options = {
             silent: true,
             execArgv: [
-                ...maxTsServerMemory ? [`--max-old-space-size=${maxTsServerMemory}`] : []
-            ]
+                ...maxTsServerMemory ? [`--max-old-space-size=${maxTsServerMemory}`] : [],
+            ],
         };
         this.tsserverProc = cp.fork(tsserverPath, args, options);
         this.tsserverProc.on('exit', (exitCode, signal) => {
@@ -175,7 +175,7 @@ export class TspClient {
     request<K extends keyof TypeScriptRequestTypes>(
         command: K,
         args: TypeScriptRequestTypes[K][0],
-        token?: CancellationToken
+        token?: CancellationToken,
     ): Promise<TypeScriptRequestTypes[K][1]> {
         this.sendMessage(command, false, args);
         const seq = this.seq;
@@ -190,7 +190,7 @@ export class TspClient {
                     fs.writeFile(requestCancellationPipeName, '', err => {
                         if (!err) {
                             request.then(() =>
-                                fs.unlink(requestCancellationPipeName, () => { /* no-op */ })
+                                fs.unlink(requestCancellationPipeName, () => { /* no-op */ }),
                             );
                         }
                     });
@@ -205,7 +205,7 @@ export class TspClient {
         const request: tsp.Request = {
             command,
             seq: this.seq,
-            type: 'request'
+            type: 'request',
         };
         if (args) {
             request.arguments = args;

@@ -38,10 +38,10 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
                 entry.source || entry.data ? {
                     name: entry.name,
                     source: entry.source,
-                    data: entry.data
-                } : entry.name
-            ]
-        }
+                    data: entry.data,
+                } : entry.name,
+            ],
+        },
     };
 
     if (entry.source && entry.hasAction) {
@@ -192,7 +192,7 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 }
 
 export async function asResolvedCompletionItem(
-    item: lsp.CompletionItem, details: tsp.CompletionEntryDetails, client: TspClient, options: WorkspaceConfigurationCompletionOptions, features: SupportedFeatures
+    item: lsp.CompletionItem, details: tsp.CompletionEntryDetails, client: TspClient, options: WorkspaceConfigurationCompletionOptions, features: SupportedFeatures,
 ): Promise<lsp.CompletionItem> {
     item.detail = asDetail(details);
     item.documentation = asDocumentation(details);
@@ -364,8 +364,8 @@ function asCommand(codeActions: tsp.CodeAction[], filepath: string): lsp.Command
             arguments: [filepath, codeActions.map(codeAction => ({
                 commands: codeAction.commands,
                 description: codeAction.description,
-                changes: codeAction.changes.filter(x => x.fileName !== filepath)
-            }))]
+                changes: codeAction.changes.filter(x => x.fileName !== filepath),
+            }))],
         };
     }
 }

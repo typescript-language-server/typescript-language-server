@@ -165,7 +165,7 @@ export class LspServer {
         const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale } = userInitializationOptions;
         const { logVerbosity, plugins }: TypeScriptInitializationOptions = {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
-            plugins: userInitializationOptions.plugins || []
+            plugins: userInitializationOptions.plugins || [],
         };
 
         const logFile = this.getLogFile(logVerbosity);
@@ -204,14 +204,14 @@ export class LspServer {
         }
 
         this.configurationManager.mergeTsPreferences({
-            useLabelDetailsInCompletionEntries: this.features.completionLabelDetails
+            useLabelDetailsInCompletionEntries: this.features.completionLabelDetails,
         });
 
         this.diagnosticQueue = new DiagnosticEventQueue(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.documents,
             this.features,
-            this.logger
+            this.logger,
         );
         this._tspClient = new TspClient({
             apiVersion: typescriptVersion.version || API.defaultVersion,
@@ -231,7 +231,7 @@ export class LspServer {
                     this.logger.error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
                 }
                 this.shutdown();
-            }
+            },
         });
 
         const started = this.tspClient.start();
@@ -256,9 +256,9 @@ export class LspServer {
                     jsx: tsp.JsxEmit.Preserve,
                     allowJs: true,
                     allowSyntheticDefaultImports: true,
-                    allowNonTsExtensions: true
-                }
-            })
+                    allowNonTsExtensions: true,
+                },
+            }),
         ]);
 
         const logFileUri = logFile && pathToUri(logFile, undefined);
@@ -267,14 +267,14 @@ export class LspServer {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
                 completionProvider: {
                     triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
-                    resolveProvider: true
+                    resolveProvider: true,
                 },
                 codeActionProvider: clientCapabilities.textDocument?.codeAction?.codeActionLiteralSupport
                     ? { codeActionKinds: [
                         ...TypeScriptAutoFixProvider.kinds.map(kind => kind.value),
                         CodeActionKind.SourceOrganizeImportsTs.value,
                         CodeActionKind.QuickFix.value,
-                        CodeActionKind.Refactor.value
+                        CodeActionKind.Refactor.value,
                     ] } : true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
@@ -288,8 +288,8 @@ export class LspServer {
                         Commands.APPLY_REFACTORING,
                         Commands.ORGANIZE_IMPORTS,
                         Commands.APPLY_RENAME_FILE,
-                        Commands.SOURCE_DEFINITION
-                    ]
+                        Commands.SOURCE_DEFINITION,
+                    ],
                 },
                 hoverProvider: true,
                 inlayHintProvider: true,
@@ -297,7 +297,7 @@ export class LspServer {
                 referencesProvider: true,
                 signatureHelpProvider: {
                     triggerCharacters: ['(', ',', '<'],
-                    retriggerCharacters: [')']
+                    retriggerCharacters: [')'],
                 },
                 workspaceSymbolProvider: true,
                 implementationProvider: true,
@@ -319,7 +319,7 @@ export class LspServer {
                             'enumMember',
                             'property',
                             'function',
-                            'member'
+                            'member',
                         ],
                         // token from: https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts#L14
                         tokenModifiers: [
@@ -328,14 +328,14 @@ export class LspServer {
                             'async',
                             'readonly',
                             'defaultLibrary',
-                            'local'
-                        ]
+                            'local',
+                        ],
                     },
                     full: true,
-                    range: true
-                }
+                    range: true,
+                },
             },
-            logFileUri
+            logFileUri,
         };
         (initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
         this.logger.log('onInitialize result', initializeResult);
@@ -421,7 +421,7 @@ export class LspServer {
                 file,
                 fileContent: params.textDocument.text,
                 scriptKindName: this.getScriptKindName(params.textDocument.languageId),
-                projectRootPath: this.workspaceRoot
+                projectRootPath: this.workspaceRoot,
             });
             this.requestDiagnostics();
         } else {
@@ -430,9 +430,9 @@ export class LspServer {
                 textDocument: params.textDocument,
                 contentChanges: [
                     {
-                        text: params.textDocument.text
-                    }
-                ]
+                        text: params.textDocument.text,
+                    },
+                ],
             });
         }
     }
@@ -466,7 +466,7 @@ export class LspServer {
         // so we don't leave stale ones.
         this.options.lspClient.publishDiagnostics({
             uri: document.uri,
-            diagnostics: []
+            diagnostics: [],
         });
     }
 
@@ -510,7 +510,7 @@ export class LspServer {
                 offset,
                 endLine,
                 endOffset,
-                insertString: change.text
+                insertString: change.text,
             });
             document.applyEdit(textDocument.version, change);
         }
@@ -524,21 +524,21 @@ export class LspServer {
     async definition(params: lsp.DefinitionParams): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
         return this.getDefinition({
             type: this.features.definitionLinkSupport ? CommandTypes.DefinitionAndBoundSpan : CommandTypes.Definition,
-            params
+            params,
         });
     }
 
     async implementation(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition | undefined> {
         return this.getSymbolLocations({
             type: CommandTypes.Implementation,
-            params
+            params,
         });
     }
 
     async typeDefinition(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition | undefined> {
         return this.getSymbolLocations({
             type: CommandTypes.TypeDefinition,
-            params
+            params,
         });
     }
 
@@ -569,7 +569,7 @@ export class LspServer {
                         originSelectionRange: span,
                         targetRange,
                         targetUri: target.uri,
-                        targetSelectionRange: target.range
+                        targetSelectionRange: target.range,
                     };
                 });
         }
@@ -603,7 +603,7 @@ export class LspServer {
         }
 
         const response = await this.tspClient.request(CommandTypes.NavTree, {
-            file
+            file,
         });
         const tree = response.body;
         if (!tree || !tree.childItems) {
@@ -650,7 +650,7 @@ export class LspServer {
                 line: params.position.line + 1,
                 offset: params.position.character + 1,
                 triggerCharacter: getCompletionTriggerCharacter(params.context?.triggerCharacter),
-                triggerKind: params.context?.triggerKind
+                triggerKind: params.context?.triggerKind,
             }));
             const { body } = result;
             const completions: lsp.CompletionItem[] = [];
@@ -707,7 +707,7 @@ export class LspServer {
         contents.push(documentation + (tags ? '\n\n' + tags : ''));
         return {
             contents,
-            range
+            range,
         };
     }
     protected async getQuickInfo(file: string, position: lsp.Position): Promise<tsp.QuickInfoResponse | undefined> {
@@ -715,7 +715,7 @@ export class LspServer {
             return await this.tspClient.request(CommandTypes.Quickinfo, {
                 file,
                 line: position.line + 1,
-                offset: position.character + 1
+                offset: position.character + 1,
             });
         } catch (err) {
             return undefined;
@@ -732,7 +732,7 @@ export class LspServer {
         const result = await this.tspClient.request(CommandTypes.Rename, {
             file,
             line: params.position.line + 1,
-            offset: params.position.character + 1
+            offset: params.position.character + 1,
         });
 
         if (!result.body || !result.body.info.canRename || result.body.locs.length === 0) {
@@ -752,8 +752,8 @@ export class LspServer {
                         newText: `${textSpan.prefixText || ''}${params.newName}${textSpan.suffixText || ''}`,
                         range: {
                             start: Position.fromLocation(textSpan.start),
-                            end: Position.fromLocation(textSpan.end)
-                        }
+                            end: Position.fromLocation(textSpan.end),
+                        },
                     });
                 });
             });
@@ -771,7 +771,7 @@ export class LspServer {
         const result = await this.tspClient.request(CommandTypes.References, {
             file,
             line: params.position.line + 1,
-            offset: params.position.character + 1
+            offset: params.position.character + 1,
         });
         if (!result.body) {
             return [];
@@ -797,7 +797,7 @@ export class LspServer {
             offset: 1,
             endLine: Number.MAX_SAFE_INTEGER,
             endOffset: Number.MAX_SAFE_INTEGER,
-            options: formatOptions
+            options: formatOptions,
         });
         if (response.body) {
             return response.body.map(e => toTextEdit(e));
@@ -821,7 +821,7 @@ export class LspServer {
             offset: params.range.start.character + 1,
             endLine: params.range.end.line + 1,
             endOffset: params.range.end.character + 1,
-            options: formatOptions
+            options: formatOptions,
         });
         if (response.body) {
             return response.body.map(e => toTextEdit(e));
@@ -849,7 +849,7 @@ export class LspServer {
                 file,
                 line: position.line + 1,
                 offset: position.character + 1,
-                triggerReason: context ? toTsTriggerReason(context) : undefined
+                triggerReason: context ? toTsTriggerReason(context) : undefined,
             });
         } catch (err) {
             return undefined;
@@ -879,11 +879,11 @@ export class LspServer {
             // https://github.com/microsoft/TypeScript/issues/43051
             const skipDestructiveCodeActions = params.context.diagnostics.some(
                 // assume no severity is an error
-                d => (d.severity ?? 0) <= 2
+                d => (d.severity ?? 0) <= 2,
             );
             const response = await this.getOrganizeImports({
                 scope: { type: 'file', args },
-                skipDestructiveCodeActions
+                skipDestructiveCodeActions,
             });
             actions.push(...provideOrganizeImports(response, this.documents));
         }
@@ -956,9 +956,9 @@ export class LspServer {
             if (renameLocation) {
                 await this.options.lspClient.rename({
                     textDocument: {
-                        uri: pathToUri(args.file, this.documents)
+                        uri: pathToUri(args.file, this.documents),
                     },
-                    position: Position.fromLocation(renameLocation)
+                    position: Position.fromLocation(renameLocation),
                 });
             }
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
@@ -968,9 +968,9 @@ export class LspServer {
             const { body } = await this.tspClient.request(CommandTypes.OrganizeImports, {
                 scope: {
                     type: 'file',
-                    args: { file }
+                    args: { file },
                 },
-                skipDestructiveCodeActions: additionalArguments.skipDestructiveCodeActions
+                skipDestructiveCodeActions: additionalArguments.skipDestructiveCodeActions,
             });
             await this.applyFileCodeEdits(body);
         } else if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {
@@ -1009,7 +1009,7 @@ export class LspServer {
             changes[pathToUri(edit.fileName, this.documents)] = edit.textChanges.map(toTextEdit);
         }
         const { applied } = await this.options.lspClient.applyWorkspaceEdit({
-            edit: { changes }
+            edit: { changes },
         });
         return applied;
     }
@@ -1027,7 +1027,7 @@ export class LspServer {
         try {
             const { body } = await this.tspClient.request(CommandTypes.GetEditsForFileRename, {
                 oldFilePath,
-                newFilePath
+                newFilePath,
             });
             return body;
         } catch (err) {
@@ -1047,7 +1047,7 @@ export class LspServer {
                 file,
                 line: arg.position.line + 1,
                 offset: arg.position.character + 1,
-                filesToSearch: [file]
+                filesToSearch: [file],
             });
         } catch (err) {
             return [];
@@ -1074,7 +1074,7 @@ export class LspServer {
     async workspaceSymbol(params: lsp.WorkspaceSymbolParams): Promise<lsp.SymbolInformation[]> {
         const result = await this.tspClient.request(CommandTypes.Navto, {
             file: this.lastFileOrDummy(),
-            searchValue: params.query
+            searchValue: params.query,
         });
         if (!result.body) {
             return [];
@@ -1085,11 +1085,11 @@ export class LspServer {
                     uri: pathToUri(item.file, this.documents),
                     range: {
                         start: Position.fromLocation(item.start),
-                        end: Position.fromLocation(item.end)
-                    }
+                        end: Position.fromLocation(item.end),
+                    },
                 },
                 kind: toSymbolKind(item.kind),
-                name: item.name
+                name: item.name,
             };
         });
     }
@@ -1138,13 +1138,13 @@ export class LspServer {
         // workaround for https://github.com/Microsoft/vscode/issues/47240
         const endLine = range.end.character > 0 && document.getText(lsp.Range.create(
             lsp.Position.create(range.end.line, range.end.character - 1),
-            range.end
+            range.end,
         )) === '}' ? Math.max(range.end.line - 1, range.start.line) : range.end.line;
 
         return {
             startLine,
             endLine,
-            kind
+            kind,
         };
     }
     protected asFoldingRangeKind(span: tsp.OutliningSpan): lsp.FoldingRangeKind | undefined {
@@ -1168,7 +1168,7 @@ export class LspServer {
             this.loadingIndicator.finishedLoadingProject((event as tsp.ProjectLoadingFinishEvent).body.projectName);
         } else {
             this.logger.log('Ignored event', {
-                event: event.event
+                event: event.event,
             });
         }
     }
@@ -1197,7 +1197,7 @@ export class LspServer {
     async inlayHintsLegacy(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
         this.options.lspClient.logMessage({
             message: 'Support for experimental "typescript/inlayHints" request is deprecated. Use spec-compliant "textDocument/inlayHint" instead.',
-            type: lsp.MessageType.Warning
+            type: lsp.MessageType.Warning,
         });
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('inlayHints', params, file);
@@ -1214,11 +1214,11 @@ export class LspServer {
 
         const start = doc.offsetAt(params.range?.start ?? {
             line: 0,
-            character: 0
+            character: 0,
         });
         const end = doc.offsetAt(params.range?.end ?? {
             line: doc.lineCount + 1,
-            character: 0
+            character: 0,
         });
 
         try {
@@ -1227,8 +1227,8 @@ export class LspServer {
                 {
                     file,
                     start: start,
-                    length: end - start
-                }
+                    length: end - start,
+                },
             );
 
             return {
@@ -1238,12 +1238,12 @@ export class LspServer {
                         position: Position.fromLocation(item.position),
                         whitespaceAfter: item.whitespaceAfter,
                         whitespaceBefore: item.whitespaceBefore,
-                        kind: item.kind
-                    })) ?? []
+                        kind: item.kind,
+                    })) ?? [],
             };
         } catch {
             return {
-                inlayHints: []
+                inlayHints: [],
             };
         }
     }
@@ -1262,11 +1262,11 @@ export class LspServer {
 
         const start = doc.offsetAt({
             line: 0,
-            character: 0
+            character: 0,
         });
         const end = doc.offsetAt({
             line: doc.lineCount,
-            character: 0
+            character: 0,
         });
 
         return this.getSemanticTokens(doc, file, start, end);
@@ -1298,8 +1298,8 @@ export class LspServer {
                     file,
                     start: startOffset,
                     length: endOffset - startOffset,
-                    format: '2020'
-                }
+                    format: '2020',
+                },
             );
 
             const spans = result.body?.spans ?? [];

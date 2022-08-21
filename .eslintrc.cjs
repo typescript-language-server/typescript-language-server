@@ -14,7 +14,7 @@ module.exports = {
     rules: {
         'array-bracket-spacing':  'error',
         'brace-style': 'error',
-        'comma-dangle': 'error',
+        'comma-dangle': ['error', 'always-multiline'],
         'comma-spacing': 'error',
         'computed-property-spacing': 'error',
         curly: 'error',

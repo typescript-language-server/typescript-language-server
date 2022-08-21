@@ -24,7 +24,7 @@ async function buildIndividualFixes(
     client: TspClient,
     file: string,
     documents: LspDocuments,
-    diagnostics: readonly lsp.Diagnostic[]
+    diagnostics: readonly lsp.Diagnostic[],
 ): Promise<lsp.TextDocumentEdit[]> {
     const edits: lsp.TextDocumentEdit[] = [];
     for (const diagnostic of diagnostics) {
@@ -35,7 +35,7 @@ async function buildIndividualFixes(
 
             const args: tsp.CodeFixRequestArgs = {
                 ...Range.toFileRangeRequestArgs(file, diagnostic.range),
-                errorCodes: [+diagnostic.code!]
+                errorCodes: [+diagnostic.code!],
             };
 
             const response = await client.request(CommandTypes.GetCodeFixes, args);
@@ -58,7 +58,7 @@ async function buildCombinedFix(
     client: TspClient,
     file: string,
     documents: LspDocuments,
-    diagnostics: readonly lsp.Diagnostic[]
+    diagnostics: readonly lsp.Diagnostic[],
 ): Promise<lsp.TextDocumentEdit[]> {
     const edits: lsp.TextDocumentEdit[] = [];
     for (const diagnostic of diagnostics) {
@@ -69,7 +69,7 @@ async function buildCombinedFix(
 
             const args: tsp.CodeFixRequestArgs = {
                 ...Range.toFileRangeRequestArgs(file, diagnostic.range),
-                errorCodes: [+diagnostic.code!]
+                errorCodes: [+diagnostic.code!],
             };
 
             const response = await client.request(CommandTypes.GetCodeFixes, args);
@@ -90,9 +90,9 @@ async function buildCombinedFix(
             const combinedArgs: tsp.GetCombinedCodeFixRequestArgs = {
                 scope: {
                     type: 'file',
-                    args: { file }
+                    args: { file },
                 },
-                fixId: fix.fixId
+                fixId: fix.fixId,
             };
 
             const combinedResponse = await client.request(CommandTypes.GetCombinedCodeFix, combinedArgs);
@@ -126,15 +126,15 @@ class SourceFixAll extends SourceAction {
         client: TspClient,
         file: string,
         documents: LspDocuments,
-        diagnostics: readonly lsp.Diagnostic[]
+        diagnostics: readonly lsp.Diagnostic[],
     ): Promise<lsp.CodeAction | null> {
         const edits: lsp.TextDocumentEdit[] = [];
         edits.push(...await buildIndividualFixes([
             { codes: errorCodes.incorrectlyImplementsInterface, fixName: fixNames.classIncorrectlyImplementsInterface },
-            { codes: errorCodes.asyncOnlyAllowedInAsyncFunctions, fixName: fixNames.awaitInSyncFunction }
+            { codes: errorCodes.asyncOnlyAllowedInAsyncFunctions, fixName: fixNames.awaitInSyncFunction },
         ], client, file, documents, diagnostics));
         edits.push(...await buildCombinedFix([
-            { codes: errorCodes.unreachableCode, fixName: fixNames.unreachableCode }
+            { codes: errorCodes.unreachableCode, fixName: fixNames.unreachableCode },
         ], client, file, documents, diagnostics));
         if (!edits.length) {
             return null;
@@ -151,10 +151,10 @@ class SourceRemoveUnused extends SourceAction {
         client: TspClient,
         file: string,
         documents: LspDocuments,
-        diagnostics: readonly lsp.Diagnostic[]
+        diagnostics: readonly lsp.Diagnostic[],
     ): Promise<lsp.CodeAction | null> {
         const edits = await buildCombinedFix([
-            { codes: errorCodes.variableDeclaredButNeverUsed, fixName: fixNames.unusedIdentifier }
+            { codes: errorCodes.variableDeclaredButNeverUsed, fixName: fixNames.unusedIdentifier },
         ], client, file, documents, diagnostics);
         if (!edits.length) {
             return null;
@@ -171,10 +171,10 @@ class SourceAddMissingImports extends SourceAction {
         client: TspClient,
         file: string,
         documents: LspDocuments,
-        diagnostics: readonly lsp.Diagnostic[]
+        diagnostics: readonly lsp.Diagnostic[],
     ): Promise<lsp.CodeAction | null> {
         const edits = await buildCombinedFix([
-            { codes: errorCodes.cannotFindName, fixName: fixNames.fixImport }
+            { codes: errorCodes.cannotFindName, fixName: fixNames.fixImport },
         ], client, file, documents, diagnostics);
         if (!edits.length) {
             return null;
@@ -189,7 +189,7 @@ export class TypeScriptAutoFixProvider {
     private static kindProviders = [
         SourceFixAll,
         SourceRemoveUnused,
-        SourceAddMissingImports
+        SourceAddMissingImports,
     ];
 
     public static get kinds(): CodeActionKind[] {

@@ -30,7 +30,7 @@ export function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.
     return lsp.CodeAction.create(
         info.description,
         lsp.Command.create(info.description, Commands.SELECT_REFACTORING, info, args),
-        lsp.CodeActionKind.Refactor
+        lsp.CodeActionKind.Refactor,
     );
 }
 
@@ -40,9 +40,9 @@ export function asApplyRefactoring(action: tsp.RefactorActionInfo, info: tsp.App
         lsp.Command.create(action.description, Commands.APPLY_REFACTORING, <tsp.GetEditsForRefactorRequestArgs>{
             ...args,
             refactor: info.name,
-            action: action.name
+            action: action.name,
         }),
-        asKind(info)
+        asKind(info),
     );
 }
 

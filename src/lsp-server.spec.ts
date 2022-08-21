@@ -23,14 +23,14 @@ let server: TestLspServer;
 before(async () => {
     server = await createServer({
         rootUri: uri(),
-        publishDiagnostics: args => diagnostics.set(args.uri, args)
+        publishDiagnostics: args => diagnostics.set(args.uri, args),
     });
     server.didChangeConfiguration({
         settings: {
             completions: {
-                completeFunctionCalls: true
-            }
-        }
+                completeFunctionCalls: true,
+            },
+        },
     });
 });
 
@@ -56,10 +56,10 @@ describe('completion', () => {
         export function foo(): void {
           console.log('test')
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
@@ -82,10 +82,10 @@ describe('completion', () => {
         export function foo() {
           console.log('test')
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
@@ -125,10 +125,10 @@ describe('completion', () => {
             }
 
             foo(); // call me
-            `
+            `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const pos = position(doc, 'foo(); // call me');
         const proposals = await server.completion({ textDocument: doc, position: pos });
@@ -151,10 +151,10 @@ describe('completion', () => {
         export function foo(): void {
           console.log('test')
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const pos = position(doc, 'foo');
         const proposals = await server.completion({ textDocument: doc, position: pos });
@@ -167,7 +167,7 @@ describe('completion', () => {
             uri: uri('bar.ts'),
             languageId: 'typescript',
             version: 1,
-            text: 'pathex'
+            text: 'pathex',
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: position(doc, 'ex') });
@@ -189,7 +189,7 @@ describe('completion', () => {
 
                 const foo: Foo
                 foo.i
-            `
+            `,
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.i') });
@@ -206,7 +206,7 @@ describe('completion', () => {
             uri: uri('bar.ts'),
             languageId: 'typescript',
             version: 1,
-            text: 'readFile'
+            text: 'readFile',
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
@@ -223,7 +223,7 @@ describe('completion', () => {
             uri: uri('bar.ts'),
             languageId: 'typescript',
             version: 1,
-            text: 'readFile'
+            text: 'readFile',
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
@@ -237,14 +237,14 @@ describe('completion', () => {
                 range: {
                     end: {
                         character: 0,
-                        line: 0
+                        line: 0,
                     },
                     start: {
                         character: 0,
-                        line: 0
-                    }
-                }
-            }
+                        line: 0,
+                    },
+                },
+            },
         ]);
         server.didCloseTextDocument({ textDocument: doc });
     });
@@ -255,17 +255,17 @@ describe('completion', () => {
                 typescript: {
                     format: {
                         semicolons: 'remove',
-                        insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false
-                    }
-                }
-            }
+                        insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false,
+                    },
+                },
+            },
         });
 
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
             version: 1,
-            text: 'readFile'
+            text: 'readFile',
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
@@ -279,28 +279,28 @@ describe('completion', () => {
                 range: {
                     end: {
                         character: 0,
-                        line: 0
+                        line: 0,
                     },
                     start: {
                         character: 0,
-                        line: 0
-                    }
-                }
-            }
+                        line: 0,
+                    },
+                },
+            },
         ]);
         server.didCloseTextDocument({ textDocument: doc });
         server.didChangeConfiguration({
             settings: {
                 completions: {
-                    completeFunctionCalls: true
+                    completeFunctionCalls: true,
                 },
                 typescript: {
                     format: {
                         semicolons: 'ignore',
-                        insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true
-                    }
-                }
-            }
+                        insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
+                    },
+                },
+            },
         });
     });
 
@@ -312,7 +312,7 @@ describe('completion', () => {
             text: `
                 import fs from 'fs'
                 fs.readFile
-            `
+            `,
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
@@ -338,7 +338,7 @@ describe('completion', () => {
               }
 
               test("fs/")
-            `
+            `,
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({
@@ -346,8 +346,8 @@ describe('completion', () => {
             position: positionAfter(doc, 'test("fs/'),
             context: {
                 triggerCharacter: '/',
-                triggerKind: 2
-            }
+                triggerKind: 2,
+            },
         });
         assert.isNotNull(proposals);
         const completion = proposals!.items.find(completion => completion.label === 'fs/read');
@@ -355,9 +355,9 @@ describe('completion', () => {
         assert.deepStrictEqual(completion!.textEdit, {
             range: {
                 start: { line: 5, character: 20 },
-                end: { line: 5, character: 23 }
+                end: { line: 5, character: 23 },
             },
-            newText: 'fs/read'
+            newText: 'fs/read',
         });
     });
 
@@ -373,12 +373,12 @@ describe('completion', () => {
               const obj: IFoo = {
                 /*a*/
               }
-            `
+            `,
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({
             textDocument: doc,
-            position: positionAfter(doc, '/*a*/')
+            position: positionAfter(doc, '/*a*/'),
         });
         assert.isNotNull(proposals);
         assert.lengthOf(proposals!.items, 2);
@@ -387,20 +387,20 @@ describe('completion', () => {
             {
                 label: 'bar',
                 kind: 2,
-                insertTextFormat: 2
-            }
+                insertTextFormat: 2,
+            },
         );
         assert.deepInclude(
             proposals!.items[1],
             {
                 label: 'bar',
                 labelDetails: {
-                    detail: '(x)'
+                    detail: '(x)',
                 },
                 kind: 2,
                 insertTextFormat: 2,
-                insertText: toPlatformEOL('bar(x) {\n    $0\n},')
-            }
+                insertText: toPlatformEOL('bar(x) {\n    $0\n},'),
+            },
         );
     });
 });
@@ -413,12 +413,12 @@ describe('definition', () => {
             uri: indexUri,
             languageId: 'typescript',
             version: 1,
-            text: readContents(filePath('source-definition', 'index.ts'))
+            text: readContents(filePath('source-definition', 'index.ts')),
         };
         server.didOpenTextDocument({ textDocument: indexDoc });
         const definitions = await server.definition({
             textDocument: indexDoc,
-            position: position(indexDoc, 'a/*identifier*/')
+            position: position(indexDoc, 'a/*identifier*/'),
         }) as lsp.Location[];
         assert.isArray(definitions);
         assert.equal(definitions!.length, 1);
@@ -427,13 +427,13 @@ describe('definition', () => {
             range: {
                 start: {
                     line: 0,
-                    character: 21
+                    character: 21,
                 },
                 end: {
                     line: 0,
-                    character: 22
-                }
-            }
+                    character: 22,
+                },
+            },
         });
     });
 });
@@ -445,14 +445,14 @@ describe('definition (definition link supported)', () => {
         const clientCapabilitiesOverride: lsp.ClientCapabilities = {
             textDocument: {
                 definition: {
-                    linkSupport: true
-                }
-            }
+                    linkSupport: true,
+                },
+            },
         };
         localServer = await createServer({
             rootUri: uri('source-definition'),
             publishDiagnostics: args => diagnostics.set(args.uri, args),
-            clientCapabilitiesOverride
+            clientCapabilitiesOverride,
         });
     });
 
@@ -475,12 +475,12 @@ describe('definition (definition link supported)', () => {
             uri: indexUri,
             languageId: 'typescript',
             version: 1,
-            text: readContents(filePath('source-definition', 'index.ts'))
+            text: readContents(filePath('source-definition', 'index.ts')),
         };
         localServer.didOpenTextDocument({ textDocument: indexDoc });
         const definitions = await localServer.definition({
             textDocument: indexDoc,
-            position: position(indexDoc, 'a/*identifier*/')
+            position: position(indexDoc, 'a/*identifier*/'),
         }) as lsp.DefinitionLink[];
         assert.isArray(definitions);
         assert.equal(definitions!.length, 1);
@@ -488,34 +488,34 @@ describe('definition (definition link supported)', () => {
             originSelectionRange: {
                 start: {
                     line: 1,
-                    character: 0
+                    character: 0,
                 },
                 end: {
                     line: 1,
-                    character: 1
-                }
+                    character: 1,
+                },
             },
             targetRange: {
                 start: {
                     line: 0,
-                    character: 0
+                    character: 0,
                 },
                 end: {
                     line: 0,
-                    character: 30
-                }
+                    character: 30,
+                },
             },
             targetUri: uri('source-definition', 'a.d.ts'),
             targetSelectionRange: {
                 start: {
                     line: 0,
-                    character: 21
+                    character: 21,
                 },
                 end: {
                     line: 0,
-                    character: 22
-                }
-            }
+                    character: 22,
+                },
+            },
         });
     });
 });
@@ -530,10 +530,10 @@ describe('diagnostics', () => {
         export function foo(): void {
           missing('test')
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
 
         await server.requestDiagnostics();
@@ -556,10 +556,10 @@ describe('diagnostics', () => {
         /** @deprecated */
         function foo(): void {}
         foo();
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
 
         await server.requestDiagnostics();
@@ -585,7 +585,7 @@ describe('diagnostics', () => {
     export function bar(): void {
         missing('test')
     }
-`
+`,
         };
         const doc2 = {
             uri: uri('multipleFileDiagnosticsFoo.ts'),
@@ -595,13 +595,13 @@ describe('diagnostics', () => {
     export function foo(): void {
         missing('test')
     }
-`
+`,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         server.didOpenTextDocument({
-            textDocument: doc2
+            textDocument: doc2,
         });
 
         await server.requestDiagnostics();
@@ -619,9 +619,9 @@ describe('diagnostics', () => {
         server.didChangeConfiguration({
             settings: {
                 diagnostics: {
-                    ignoredCodes: [6133]
-                }
-            }
+                    ignoredCodes: [6133],
+                },
+            },
         });
 
         const doc = {
@@ -633,10 +633,10 @@ describe('diagnostics', () => {
                     const x = 42;
                     return 1;
                 }
-          `
+          `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
 
         await server.requestDiagnostics();
@@ -660,10 +660,10 @@ describe('document symbol', () => {
           public myFunction(arg: string) {
           }
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const symbols = await server.documentSymbol({ textDocument: doc });
         assert.equal(`
@@ -686,10 +686,10 @@ interface Box {
 
 interface Box {
     scale: number;
-}`
+}`,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const symbols = await server.documentSymbol({ textDocument: doc });
         assert.equal(`
@@ -717,10 +717,10 @@ Box
           public myFunction(arg: string) {
           }
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const symbols = await server.documentSymbol({ textDocument: doc }) as lsp.DocumentSymbol[];
         const expectation = `
@@ -765,10 +765,10 @@ describe('editing', () => {
             text: `
         export function foo(): void {
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         server.didChangeTextDocument({
             textDocument: doc,
@@ -778,9 +778,9 @@ describe('editing', () => {
           export function foo(): void {
             missing('test');
           }
-          `
-                }
-            ]
+          `,
+                },
+            ],
         });
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -801,17 +801,17 @@ describe('references', () => {
             text: `
                 function foo() {};
                 foo();
-            `
+            `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         // Without declaration/definition.
         const position = lastPosition(doc, 'function foo()');
         let references = await server.references({
             context: { includeDeclaration: false },
             textDocument: doc,
-            position
+            position,
         });
         assert.strictEqual(references.length, 1);
         assert.strictEqual(references[0].range.start.line, 2);
@@ -819,7 +819,7 @@ describe('references', () => {
         references = await server.references({
             context: { includeDeclaration: true },
             textDocument: doc,
-            position
+            position,
         });
         assert.strictEqual(references.length, 2);
     });
@@ -870,15 +870,15 @@ describe('formatting', () => {
     it('full document formatting', async () => {
         const text = 'export  function foo (     )   :  void   {   }';
         const textDocument = {
-            uri: uriString, languageId, version, text
+            uri: uriString, languageId, version, text,
         };
         server.didOpenTextDocument({ textDocument });
         const edits = await server.documentFormatting({
             textDocument,
             options: {
                 tabSize: 4,
-                insertSpaces: true
-            }
+                insertSpaces: true,
+            },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('export function foo(): void { }', result);
@@ -887,15 +887,15 @@ describe('formatting', () => {
     it('indent settings (3 spaces)', async () => {
         const text = 'function foo() {\n// some code\n}';
         const textDocument = {
-            uri: uriString, languageId, version, text
+            uri: uriString, languageId, version, text,
         };
         server.didOpenTextDocument({ textDocument });
         const edits = await server.documentFormatting({
             textDocument,
             options: {
                 tabSize: 3,
-                insertSpaces: true
-            }
+                insertSpaces: true,
+            },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n   // some code\n}', result);
@@ -904,15 +904,15 @@ describe('formatting', () => {
     it('indent settings (tabs)', async () => {
         const text = 'function foo() {\n// some code\n}';
         const textDocument = {
-            uri: uriString, languageId, version, text
+            uri: uriString, languageId, version, text,
         };
         server.didOpenTextDocument({ textDocument });
         const edits = await server.documentFormatting({
             textDocument,
             options: {
                 tabSize: 4,
-                insertSpaces: false
-            }
+                insertSpaces: false,
+            },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\n\t// some code\n}', result);
@@ -921,7 +921,7 @@ describe('formatting', () => {
     it('formatting setting set through workspace configuration', async () => {
         const text = 'function foo() {\n// some code\n}';
         const textDocument = {
-            uri: uriString, languageId, version, text
+            uri: uriString, languageId, version, text,
         };
         server.didOpenTextDocument({ textDocument });
 
@@ -930,18 +930,18 @@ describe('formatting', () => {
                 typescript: {
                     format: {
                         newLineCharacter: '\n',
-                        placeOpenBraceOnNewLineForFunctions: true
-                    }
-                }
-            }
+                        placeOpenBraceOnNewLineForFunctions: true,
+                    },
+                },
+            },
         });
 
         const edits = await server.documentFormatting({
             textDocument,
             options: {
                 tabSize: 4,
-                insertSpaces: false
-            }
+                insertSpaces: false,
+            },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo()\n{\n\t// some code\n}', result);
@@ -950,7 +950,7 @@ describe('formatting', () => {
     it('selected range', async () => {
         const text = 'function foo() {\nconst first = 1;\nconst second = 2;\nconst val = foo( "something" );\n//const fourth = 4;\n}';
         const textDocument = {
-            uri: uriString, languageId, version, text
+            uri: uriString, languageId, version, text,
         };
         server.didOpenTextDocument({ textDocument });
         const edits = await server.documentRangeFormatting({
@@ -958,17 +958,17 @@ describe('formatting', () => {
             range: {
                 start: {
                     line: 2,
-                    character: 0
+                    character: 0,
                 },
                 end: {
                     line: 3,
-                    character: 30
-                }
+                    character: 30,
+                },
             },
             options: {
                 tabSize: 4,
-                insertSpaces: true
-            }
+                insertSpaces: true,
+            },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         assert.equal('function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}', result);
@@ -985,14 +985,14 @@ describe('signatureHelp', () => {
         export function foo(bar: string, baz?:boolean): void {}
         export function foo(n: number, baz?: boolean): void
         foo(param1, param2)
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         let result = (await server.signatureHelp({
             textDocument: doc,
-            position: position(doc, 'param1')
+            position: position(doc, 'param1'),
         }))!;
 
         assert.equal(result.signatures.length, 2);
@@ -1001,7 +1001,7 @@ describe('signatureHelp', () => {
 
         result = (await server.signatureHelp({
             textDocument: doc,
-            position: position(doc, 'param2')
+            position: position(doc, 'param2'),
         }))!;
 
         assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
@@ -1016,12 +1016,12 @@ describe('signatureHelp', () => {
         export function foo(bar: string, baz?: boolean): void {}
         export function foo(n: number, baz?: boolean): void
         foo(param1, param2)
-      `
+      `,
         };
         server.didOpenTextDocument({ textDocument: doc });
         let result = await server.signatureHelp({
             textDocument: doc,
-            position: position(doc, 'param1')
+            position: position(doc, 'param1'),
         });
         assert.equal(result!.signatures.length, 2);
 
@@ -1033,14 +1033,14 @@ describe('signatureHelp', () => {
                 triggerKind: lsp.SignatureHelpTriggerKind.Invoked,
                 activeSignatureHelp: {
                     signatures: result!.signatures,
-                    activeSignature: 1  // select second signature
-                }
-            }
+                    activeSignature: 1,  // select second signature
+                },
+            },
         }))!;
         const { activeSignature, signatures } = result!;
         assert.equal(activeSignature, 1);
         assert.deepInclude(signatures[activeSignature!], {
-            label: 'foo(n: number, baz?: boolean): void'
+            label: 'foo(n: number, baz?: boolean): void',
         });
     });
 });
@@ -1053,29 +1053,29 @@ describe('code actions', () => {
         text: `import { something } from "something";
     export function foo(bar: string, baz?:boolean): void {}
     foo(param1, param2)
-    `
+    `,
     };
 
     it('can provide quickfix code actions', async () => {
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
-                end: { line: 1, character: 49 }
+                end: { line: 1, character: 49 },
             },
             context: {
                 diagnostics: [{
                     range: {
                         start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 }
+                        end: { line: 1, character: 49 },
                     },
                     code: 6133,
-                    message: 'unused arg'
-                }]
-            }
+                    message: 'unused arg',
+                }],
+            },
         }))!;
 
         assert.strictEqual(result.length, 2);
@@ -1092,29 +1092,29 @@ describe('code actions', () => {
                             {
                                 textDocument: {
                                     uri: uri('bar.ts'),
-                                    version: 1
+                                    version: 1,
                                 },
                                 edits: [
                                     {
                                         range: {
                                             start: {
                                                 line: 1,
-                                                character: 24
+                                                character: 24,
                                             },
                                             end: {
                                                 line: 1,
-                                                character: 27
-                                            }
+                                                character: 27,
+                                            },
                                         },
-                                        newText: '_bar'
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                                        newText: '_bar',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
             },
-            kind: 'quickfix'
+            kind: 'quickfix',
         });
         const refactorDiagnostic = result.find(diagnostic => diagnostic.kind === 'refactor');
         assert.isDefined(refactorDiagnostic);
@@ -1131,35 +1131,35 @@ describe('code actions', () => {
                         endLine: 2,
                         endOffset: 50,
                         refactor: 'Convert parameters to destructured object',
-                        action: 'Convert parameters to destructured object'
-                    }
-                ]
+                        action: 'Convert parameters to destructured object',
+                    },
+                ],
             },
-            kind: 'refactor'
+            kind: 'refactor',
         });
     });
 
     it('can filter quickfix code actions filtered by only', async () => {
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
-                end: { line: 1, character: 49 }
+                end: { line: 1, character: 49 },
             },
             context: {
                 diagnostics: [{
                     range: {
                         start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 }
+                        end: { line: 1, character: 49 },
                     },
                     code: 6133,
-                    message: 'unused arg'
+                    message: 'unused arg',
                 }],
-                only: ['refactor', 'invalid-action']
-            }
+                only: ['refactor', 'invalid-action'],
+            },
         }))!;
 
         assert.deepEqual(result, [
@@ -1173,21 +1173,21 @@ describe('code actions', () => {
                             file: filePath('bar.ts'),
                             refactor: 'Convert parameters to destructured object',
                             startLine: 2,
-                            startOffset: 26
-                        }
+                            startOffset: 26,
+                        },
                     ],
                     command: '_typescript.applyRefactoring',
-                    title: 'Convert parameters to destructured object'
+                    title: 'Convert parameters to destructured object',
                 },
                 kind: 'refactor',
-                title: 'Convert parameters to destructured object'
-            }
+                title: 'Convert parameters to destructured object',
+            },
         ]);
     });
 
     it('does not provide organize imports when there are errors', async () => {
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1195,19 +1195,19 @@ describe('code actions', () => {
             textDocument: doc,
             range: {
                 start: { line: 1, character: 29 },
-                end: { line: 1, character: 53 }
+                end: { line: 1, character: 53 },
             },
             context: {
                 diagnostics: [{
                     range: {
                         start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 }
+                        end: { line: 1, character: 49 },
                     },
                     code: 6133,
-                    message: 'unused arg'
+                    message: 'unused arg',
                 }],
-                only: [CodeActionKind.SourceOrganizeImportsTs.value]
-            }
+                only: [CodeActionKind.SourceOrganizeImportsTs.value],
+            },
         }))!;
 
         assert.deepEqual(result, []);
@@ -1218,10 +1218,10 @@ describe('code actions', () => {
             uri: uri('bar.ts'),
             languageId: 'typescript',
             version: 1,
-            text: 'existsSync(\'t\');'
+            text: 'existsSync(\'t\');',
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1229,12 +1229,12 @@ describe('code actions', () => {
             textDocument: doc,
             range: {
                 start: { line: 1, character: 29 },
-                end: { line: 1, character: 53 }
+                end: { line: 1, character: 53 },
             },
             context: {
                 diagnostics: [],
-                only: [CodeActionKind.SourceAddMissingImportsTs.value]
-            }
+                only: [CodeActionKind.SourceAddMissingImportsTs.value],
+            },
         }))!;
 
         assert.deepEqual(result, [
@@ -1251,23 +1251,23 @@ describe('code actions', () => {
                                     range: {
                                         end: {
                                             character: 0,
-                                            line: 0
+                                            line: 0,
                                         },
                                         start: {
                                             character: 0,
-                                            line: 0
-                                        }
-                                    }
-                                }
+                                            line: 0,
+                                        },
+                                    },
+                                },
                             ],
                             textDocument: {
                                 uri: uri('bar.ts'),
-                                version: 1
-                            }
-                        }
-                    ]
-                }
-            }
+                                version: 1,
+                            },
+                        },
+                    ],
+                },
+            },
         ]);
     });
 
@@ -1279,10 +1279,10 @@ describe('code actions', () => {
             text: `function foo() {
   return
   setTimeout(() => {})
-}`
+}`,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1290,12 +1290,12 @@ describe('code actions', () => {
             textDocument: doc,
             range: {
                 start: { line: 0, character: 0 },
-                end: { line: 4, character: 0 }
+                end: { line: 4, character: 0 },
             },
             context: {
                 diagnostics: [],
-                only: [CodeActionKind.SourceFixAllTs.value]
-            }
+                only: [CodeActionKind.SourceFixAllTs.value],
+            },
         }))!;
 
         assert.deepEqual(result, [
@@ -1311,23 +1311,23 @@ describe('code actions', () => {
                                     range: {
                                         end: {
                                             character: 0,
-                                            line: 3
+                                            line: 3,
                                         },
                                         start: {
                                             character: 0,
-                                            line: 2
-                                        }
-                                    }
-                                }
+                                            line: 2,
+                                        },
+                                    },
+                                },
                             ],
                             textDocument: {
                                 uri: uri('bar.ts'),
-                                version: 1
-                            }
-                        }
-                    ]
-                }
-            }
+                                version: 1,
+                            },
+                        },
+                    ],
+                },
+            },
         ]);
     });
 
@@ -1338,28 +1338,28 @@ describe('code actions', () => {
             version: 1,
             text: `import { existsSync } from 'fs';
 import { accessSync } from 'fs';
-existsSync('t');`
+existsSync('t');`,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 0, character: 0 },
-                end: { line: 3, character: 0 }
+                end: { line: 3, character: 0 },
             },
             context: {
                 diagnostics: [{
                     range: {
                         start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 }
+                        end: { line: 1, character: 49 },
                     },
                     code: 6133,
-                    message: 'unused arg'
+                    message: 'unused arg',
                 }],
-                only: [CodeActionKind.SourceOrganizeImportsTs.value]
-            }
+                only: [CodeActionKind.SourceOrganizeImportsTs.value],
+            },
         }))!;
 
         assert.deepEqual(result, [
@@ -1375,36 +1375,36 @@ existsSync('t');`
                                     range: {
                                         end: {
                                             character: 0,
-                                            line: 1
+                                            line: 1,
                                         },
                                         start: {
                                             character: 0,
-                                            line: 0
-                                        }
-                                    }
+                                            line: 0,
+                                        },
+                                    },
                                 },
                                 {
                                     newText: '',
                                     range: {
                                         end: {
                                             character: 0,
-                                            line: 2
+                                            line: 2,
                                         },
                                         start: {
                                             character: 0,
-                                            line: 1
-                                        }
-                                    }
-                                }
+                                            line: 1,
+                                        },
+                                    },
+                                },
                             ],
                             textDocument: {
                                 uri: uri('bar.ts'),
-                                version: 1
-                            }
-                        }
-                    ]
-                }
-            }
+                                version: 1,
+                            },
+                        },
+                    ],
+                },
+            },
         ]);
     });
 
@@ -1413,10 +1413,10 @@ existsSync('t');`
             uri: uri('bar.ts'),
             languageId: 'typescript',
             version: 1,
-            text: 'import { existsSync } from \'fs\';'
+            text: 'import { existsSync } from \'fs\';',
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1424,12 +1424,12 @@ existsSync('t');`
             textDocument: doc,
             range: {
                 start: position(doc, 'existsSync'),
-                end: positionAfter(doc, 'existsSync')
+                end: positionAfter(doc, 'existsSync'),
             },
             context: {
                 diagnostics: [],
-                only: [CodeActionKind.SourceRemoveUnusedTs.value]
-            }
+                only: [CodeActionKind.SourceRemoveUnusedTs.value],
+            },
         }))!;
 
         assert.deepEqual(result, [
@@ -1445,23 +1445,23 @@ existsSync('t');`
                                     range: {
                                         end: {
                                             character: 32,
-                                            line: 0
+                                            line: 0,
                                         },
                                         start: {
                                             character: 0,
-                                            line: 0
-                                        }
-                                    }
-                                }
+                                            line: 0,
+                                        },
+                                    },
+                                },
                             ],
                             textDocument: {
                                 uri: uri('bar.ts'),
-                                version: 1
-                            }
-                        }
-                    ]
-                }
-            }
+                                version: 1,
+                            },
+                        },
+                    ],
+                },
+            },
         ]);
     });
 
@@ -1476,10 +1476,10 @@ existsSync('t');`
                     return
                     setTimeout(() => {})
                 }
-            `
+            `,
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1487,12 +1487,12 @@ existsSync('t');`
             textDocument: doc,
             range: {
                 start: { line: 0, character: 0 },
-                end: lastPosition(doc, '}')
+                end: lastPosition(doc, '}'),
             },
             context: {
                 diagnostics: [],
-                only: [CodeActionKind.SourceFixAllTs.value]
-            }
+                only: [CodeActionKind.SourceFixAllTs.value],
+            },
         }))!;
         assert.strictEqual(result.length, 1, JSON.stringify(result, null, 2));
         assert.deepEqual(result, [
@@ -1508,23 +1508,23 @@ existsSync('t');`
                                     range: {
                                         start: {
                                             line: 4,
-                                            character: 0
+                                            character: 0,
                                         },
                                         end: {
                                             line: 5,
-                                            character: 0
-                                        }
-                                    }
-                                }
+                                            character: 0,
+                                        },
+                                    },
+                                },
                             ],
                             textDocument: {
                                 uri: uri('bar.ts'),
-                                version: 1
-                            }
-                        }
-                    ]
-                }
-            }
+                                version: 1,
+                            },
+                        },
+                    ],
+                },
+            },
         ]);
     });
 });
@@ -1536,20 +1536,20 @@ describe('executeCommand', () => {
             uri: fooUri,
             languageId: 'typescript',
             version: 1,
-            text: 'export function fn(): void {}\nexport function newFn(): void {}'
+            text: 'export function fn(): void {}\nexport function newFn(): void {}',
         };
         server.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
         const codeActions = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: position(doc, 'newFn'),
-                end: position(doc, 'newFn')
+                end: position(doc, 'newFn'),
             },
             context: {
-                diagnostics: []
-            }
+                diagnostics: [],
+            },
         }))!;
         // Find refactoring code action.
         const applyRefactoringAction = codeActions.find(action => action.command?.command === Commands.APPLY_REFACTORING);
@@ -1557,7 +1557,7 @@ describe('executeCommand', () => {
         // Execute refactoring action.
         await server.executeCommand({
             command: applyRefactoringAction!.command!.command,
-            arguments: applyRefactoringAction!.command!.arguments
+            arguments: applyRefactoringAction!.command!.arguments,
         });
         assert.equal(1, server.workspaceEdits.length);
         const { changes } = server.workspaceEdits[0].edit;
@@ -1576,16 +1576,16 @@ describe('executeCommand', () => {
                     range: {
                         start: {
                             line: 1,
-                            character: 0
+                            character: 0,
                         },
                         end: {
                             line: 1,
-                            character: 32
-                        }
+                            character: 32,
+                        },
                     },
-                    newText: ''
-                }
-            ]
+                    newText: '',
+                },
+            ],
         );
         assert.deepEqual(
             change2,
@@ -1594,16 +1594,16 @@ describe('executeCommand', () => {
                     range: {
                         start: {
                             line: 0,
-                            character: 0
+                            character: 0,
                         },
                         end: {
                             line: 0,
-                            character: 0
-                        }
+                            character: 0,
+                        },
                     },
-                    newText: 'export function newFn(): void { }\n'
-                }
-            ]
+                    newText: 'export function newFn(): void { }\n',
+                },
+            ],
         );
     });
 
@@ -1614,15 +1614,15 @@ describe('executeCommand', () => {
             uri: indexUri,
             languageId: 'typescript',
             version: 1,
-            text: readContents(filePath('source-definition', 'index.ts'))
+            text: readContents(filePath('source-definition', 'index.ts')),
         };
         server.didOpenTextDocument({ textDocument: indexDoc });
         const result: lsp.Location[] | null = await server.executeCommand({
             command: Commands.SOURCE_DEFINITION,
             arguments: [
                 indexUri,
-                position(indexDoc, '/*identifier*/')
-            ]
+                position(indexDoc, '/*identifier*/'),
+            ],
         });
         assert.isNotNull(result);
         assert.equal(result!.length, 1);
@@ -1631,13 +1631,13 @@ describe('executeCommand', () => {
             range: {
                 start: {
                     line: 0,
-                    character: 13
+                    character: 13,
                 },
                 end: {
                     line: 0,
-                    character: 14
-                }
-            }
+                    character: 14,
+                },
+            },
         });
     });
 });
@@ -1652,10 +1652,10 @@ describe('documentHighlight', () => {
         export declare const Bar: unique symbol;
         export interface Bar {
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: barDoc
+            textDocument: barDoc,
         });
         const fooDoc = {
             uri: uri('bar.ts'),
@@ -1665,15 +1665,15 @@ describe('documentHighlight', () => {
         import { Bar } from './bar';
         export class Foo implements Bar {
         }
-      `
+      `,
         };
         server.didOpenTextDocument({
-            textDocument: fooDoc
+            textDocument: fooDoc,
         });
 
         const result = await server.documentHighlight({
             textDocument: fooDoc,
-            position: lastPosition(fooDoc, 'Bar')
+            position: lastPosition(fooDoc, 'Bar'),
         });
         assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
     });
@@ -1713,7 +1713,7 @@ export function two() {
 export function three() {
     return "".toString();
 }
-`
+`,
     };
 
     const fooDoc = {
@@ -1731,7 +1731,7 @@ class MyClass {
 export function factory() {
     new MyClass().doSomething();
 }
-`
+`,
     };
 
     function openDocuments() {
@@ -1743,7 +1743,7 @@ export function factory() {
         openDocuments();
         const callsResult = await server.calls({
             textDocument: fooDoc,
-            position: position(fooDoc, 'doStuff();')
+            position: position(fooDoc, 'doStuff();'),
         });
         assert.equal(
             resultToString(callsResult, lspcalls.CallDirection.Incoming),
@@ -1752,7 +1752,7 @@ export function factory() {
   ↘ doStuff (foo.ts#0) - foo.ts#0
   ↘ doSomething (foo.ts#2) - foo.ts#3
   ↘ x (foo.ts#4) - foo.ts#4
-            `.trim()
+            `.trim(),
         );
     });
 
@@ -1760,14 +1760,14 @@ export function factory() {
         openDocuments();
         const callsResult = await server.calls({
             textDocument: fooDoc,
-            position: position(fooDoc, 'doSomething() {')
+            position: position(fooDoc, 'doSomething() {'),
         });
         assert.equal(
             resultToString(callsResult, lspcalls.CallDirection.Incoming),
             `
 ↘ doSomething (foo.ts#2)
   ↘ factory (foo.ts#8) - foo.ts#9
-            `.trim()
+            `.trim(),
         );
     });
 
@@ -1777,14 +1777,14 @@ export function factory() {
         const callsResult = await server.calls({
             direction,
             textDocument: fooDoc,
-            position: position(fooDoc, 'doStuff()')
+            position: position(fooDoc, 'doStuff()'),
         });
         assert.equal(
             resultToString(callsResult, direction),
             `
 ↖ doStuff (do.ts#1)
   ↖ two (do.ts#4) - do.ts#2
-            `.trim()
+            `.trim(),
         );
     });
 
@@ -1794,7 +1794,7 @@ export function factory() {
         const callsResult = await server.calls({
             direction,
             textDocument: doDoc,
-            position: position(doDoc, 'function two()')
+            position: position(doDoc, 'function two()'),
         });
         assert.equal(
             resultToString(callsResult, direction),
@@ -1802,7 +1802,7 @@ export function factory() {
 ↖ two (do.ts#4)
   ↖ three (do.ts#9) - do.ts#5
   ↖ ttt (do.ts#6) - do.ts#7
-            `.trim()
+            `.trim(),
         );
     });
 });
@@ -1813,13 +1813,13 @@ describe('diagnostics (no client support)', () => {
     before(async () => {
         const clientCapabilitiesOverride: lsp.ClientCapabilities = {
             textDocument: {
-                publishDiagnostics: undefined
-            }
+                publishDiagnostics: undefined,
+            },
         };
         localServer = await createServer({
             rootUri: null,
             publishDiagnostics: args => diagnostics.set(args.uri, args),
-            clientCapabilitiesOverride
+            clientCapabilitiesOverride,
         });
     });
 
@@ -1844,10 +1844,10 @@ describe('diagnostics (no client support)', () => {
         export function foo(): void {
           missing('test')
         }
-      `
+      `,
         };
         localServer.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
 
         await localServer.requestDiagnostics();
@@ -1865,7 +1865,7 @@ describe('jsx/tsx project', () => {
     before(async () => {
         localServer = await createServer({
             rootUri: uri('jsx'),
-            publishDiagnostics: args => diagnostics.set(args.uri, args)
+            publishDiagnostics: args => diagnostics.set(args.uri, args),
         });
     });
 
@@ -1886,10 +1886,10 @@ describe('jsx/tsx project', () => {
             uri: uri('jsx', 'app.tsx'),
             languageId: 'typescriptreact',
             version: 1,
-            text: readContents(filePath('jsx', 'app.tsx'))
+            text: readContents(filePath('jsx', 'app.tsx')),
         };
         localServer.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
 
         const completion = await localServer.completion({ textDocument: doc, position: position(doc, 'title') });
@@ -1906,10 +1906,10 @@ describe('inlayHints', () => {
             settings: {
                 typescript: {
                     inlayHints: {
-                        includeInlayFunctionLikeReturnTypeHints: true
-                    }
-                }
-            }
+                        includeInlayFunctionLikeReturnTypeHints: true,
+                    },
+                },
+            },
         });
     });
 
@@ -1918,10 +1918,10 @@ describe('inlayHints', () => {
             settings: {
                 typescript: {
                     inlayHints: {
-                        includeInlayFunctionLikeReturnTypeHints: false
-                    }
-                }
-            }
+                        includeInlayFunctionLikeReturnTypeHints: false,
+                    },
+                },
+            },
         });
     });
 
@@ -1934,7 +1934,7 @@ describe('inlayHints', () => {
         export function foo() {
           return 3
         }
-      `
+      `,
         };
         server.didOpenTextDocument({ textDocument: doc });
         const inlayHints = await server.inlayHints({ textDocument: doc, range: lsp.Range.create(0, 0, 4, 0) });
@@ -1944,7 +1944,7 @@ describe('inlayHints', () => {
             label: ': number',
             position: { line: 1, character: 29 },
             kind: lsp.InlayHintKind.Type,
-            paddingLeft: true
+            paddingLeft: true,
         });
     });
 
@@ -1957,7 +1957,7 @@ describe('inlayHints', () => {
         export function foo() {
           return 3
         }
-      `
+      `,
         };
         server.didOpenTextDocument({ textDocument: doc });
         const { inlayHints } = await server.inlayHintsLegacy({ textDocument: doc });
@@ -1977,15 +1977,15 @@ describe('completions without client snippet support', () => {
             textDocument: {
                 completion: {
                     completionItem: {
-                        snippetSupport: false
-                    }
-                }
-            }
+                        snippetSupport: false,
+                    },
+                },
+            },
         };
         localServer = await createServer({
             rootUri: null,
             publishDiagnostics: args => diagnostics.set(args.uri, args),
-            clientCapabilitiesOverride
+            clientCapabilitiesOverride,
         });
     });
 
@@ -2009,7 +2009,7 @@ describe('completions without client snippet support', () => {
             text: `
             import fs from 'fs'
             fs.readFile
-        `
+        `,
         };
         localServer.didOpenTextDocument({ textDocument: doc });
         const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
@@ -2029,10 +2029,10 @@ describe('completions without client snippet support', () => {
             uri: uri('jsx', 'app.tsx'),
             languageId: 'typescriptreact',
             version: 1,
-            text: readContents(filePath('jsx', 'app.tsx'))
+            text: readContents(filePath('jsx', 'app.tsx')),
         };
         localServer.didOpenTextDocument({
-            textDocument: doc
+            textDocument: doc,
         });
 
         const completion = await localServer.completion({ textDocument: doc, position: position(doc, 'title') });
@@ -2053,12 +2053,12 @@ describe('completions without client snippet support', () => {
               const obj: IFoo = {
                 /*a*/
               }
-            `
+            `,
         };
         localServer.didOpenTextDocument({ textDocument: doc });
         const proposals = await localServer.completion({
             textDocument: doc,
-            position: positionAfter(doc, '/*a*/')
+            position: positionAfter(doc, '/*a*/'),
         });
         assert.isNotNull(proposals);
         assert.lengthOf(proposals!.items, 1);
@@ -2066,8 +2066,8 @@ describe('completions without client snippet support', () => {
             proposals!.items[0],
             {
                 label: 'bar',
-                kind: 2
-            }
+                kind: 2,
+            },
         );
     });
 });

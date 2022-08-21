@@ -196,6 +196,6 @@ export class KindModifiers {
         KindModifiers.tsxFile,
         KindModifiers.jsFile,
         KindModifiers.jsxFile,
-        KindModifiers.jsonFile
+        KindModifiers.jsonFile,
     ];
 }
