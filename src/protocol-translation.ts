@@ -71,8 +71,8 @@ export function toLocation(fileSpan: tsp.FileSpan, documents: LspDocuments | und
         uri: pathToUri(fileSpan.file, documents),
         range: {
             start: Position.fromLocation(fileSpan.start),
-            end: Position.fromLocation(fileSpan.end)
-        }
+            end: Position.fromLocation(fileSpan.end),
+        },
     };
 }
 
@@ -99,7 +99,7 @@ const symbolKindsMapping: { [name: string]: lsp.SymbolKind; } = {
     parameter: lsp.SymbolKind.Variable,
     property: lsp.SymbolKind.Property,
     setter: lsp.SymbolKind.Method,
-    var: lsp.SymbolKind.Variable
+    var: lsp.SymbolKind.Variable,
 };
 
 export function toSymbolKind(tspKind: string): lsp.SymbolKind {
@@ -119,13 +119,13 @@ export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments
     const lspDiagnostic: lsp.Diagnostic = {
         range: {
             start: Position.fromLocation(diagnostic.start),
-            end: Position.fromLocation(diagnostic.end)
+            end: Position.fromLocation(diagnostic.end),
         },
         message: diagnostic.text,
         severity: toDiagnosticSeverity(diagnostic.category),
         code: diagnostic.code,
         source: diagnostic.source || 'typescript',
-        relatedInformation: asRelatedInformation(diagnostic.relatedInformation, documents)
+        relatedInformation: asRelatedInformation(diagnostic.relatedInformation, documents),
     };
     if (features.diagnosticsTagSupport) {
         lspDiagnostic.tags = getDiagnosticTags(diagnostic);
@@ -154,7 +154,7 @@ function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefin
         if (span) {
             result.push(lsp.DiagnosticRelatedInformation.create(
                 toLocation(span, documents),
-                item.message
+                item.message,
             ));
         }
     }
@@ -165,9 +165,9 @@ export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
     return {
         range: {
             start: Position.fromLocation(edit.start),
-            end: Position.fromLocation(edit.end)
+            end: Position.fromLocation(edit.end),
         },
-        newText: edit.newText
+        newText: edit.newText,
     };
 }
 
@@ -175,9 +175,9 @@ export function toTextDocumentEdit(change: tsp.FileCodeEdits, documents: LspDocu
     return {
         textDocument: {
             uri: pathToUri(change.fileName, documents),
-            version: currentVersion(change.fileName, documents)
+            version: currentVersion(change.fileName, documents),
         },
-        edits: change.textChanges.map(c => toTextEdit(c))
+        edits: change.textChanges.map(c => toTextEdit(c)),
     };
 }
 
@@ -187,8 +187,8 @@ export function toDocumentHighlight(item: tsp.DocumentHighlightsItem): lsp.Docum
             kind: toDocumentHighlightKind(i.kind),
             range: {
                 start: Position.fromLocation(i.start),
-                end: Position.fromLocation(i.end)
-            }
+                end: Position.fromLocation(i.end),
+            },
         };
     });
 }
@@ -226,7 +226,7 @@ export function asDocumentation(data: {
     }
     return value.length ? {
         kind: lsp.MarkupKind.Markdown,
-        value
+        value,
     } : undefined;
 }
 

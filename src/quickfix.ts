@@ -20,8 +20,8 @@ export function provideQuickFix(response: tsp.GetCodeFixesResponse | undefined, 
         {
             title: fix.description,
             command: Commands.APPLY_WORKSPACE_EDIT,
-            arguments: [{ documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents)) }]
+            arguments: [{ documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents)) }],
         },
-        lsp.CodeActionKind.QuickFix
+        lsp.CodeActionKind.QuickFix,
     ));
 }

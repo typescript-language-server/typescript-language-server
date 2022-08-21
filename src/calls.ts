@@ -28,7 +28,7 @@ export async function computeCallers(tspClient: TspClient, args: lsp.TextDocumen
         const location = toLocation(callerReference, undefined);
         calls.push({
             location,
-            symbol
+            symbol,
         });
     }
     return { calls, symbol: contextSymbol };
@@ -59,7 +59,7 @@ export async function computeCallees(tspClient: TspClient, args: lsp.TextDocumen
         const location = toLocation(reference, undefined);
         calls.push({
             location,
-            symbol: definitionSymbol
+            symbol: definitionSymbol,
         });
     }
     return { calls, symbol: contextSymbol };
@@ -128,7 +128,7 @@ async function getDefinition(tspClient: TspClient, args: lsp.TextDocumentPositio
     const definitionResult = await tspClient.request(CommandTypes.Definition, {
         file,
         line: args.position.line + 1,
-        offset: args.position.character + 1
+        offset: args.position.character + 1,
     });
     return definitionResult.body ? definitionResult.body[0] : undefined;
 }
@@ -180,7 +180,7 @@ function findEnclosingSymbolInTree(parent: tsp.NavigationTree, range: lsp.Range)
         name: candidate.text,
         kind: toSymbolKind(candidate.kind),
         range: spanRange,
-        selectionRange: selectionRange
+        selectionRange: selectionRange,
     };
 }
 
@@ -197,7 +197,7 @@ async function findReferences(tspClient: TspClient, args: tsp.FileSpan): Promise
     const result = await tspClient.request(CommandTypes.References, {
         file,
         line: args.start.line,
-        offset: args.start.offset
+        offset: args.start.offset,
     });
     if (!result.body) {
         return [];

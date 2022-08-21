@@ -16,5 +16,5 @@ export const Commands = {
     APPLY_COMPLETION_CODE_ACTION: '_typescript.applyCompletionCodeAction',
     /** Commands below should be implemented by the client */
     SELECT_REFACTORING: '_typescript.selectRefactoring',
-    SOURCE_DEFINITION: SourceDefinitionCommand.id
+    SOURCE_DEFINITION: SourceDefinitionCommand.id,
 };

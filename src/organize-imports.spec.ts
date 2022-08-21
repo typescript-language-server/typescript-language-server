@@ -11,9 +11,9 @@ describe('provideOrganizeImports', () => {
             body: [
                 {
                     fileName,
-                    textChanges: []
-                }
-            ]
+                    textChanges: [],
+                },
+            ],
         };
         const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse, undefined);
         const expected = [{
@@ -25,11 +25,11 @@ describe('provideOrganizeImports', () => {
                         edits: [],
                         textDocument: {
                             uri: uri('file'),
-                            version: null
-                        }
-                    }
-                ]
-            }
+                            version: null,
+                        },
+                    },
+                ],
+            },
         }];
         chai.assert.deepEqual(actual, expected);
     });

@@ -43,5 +43,5 @@ createLspConnection({
     tsserverPath: options.tsserverPath as string,
     tsserverLogFile: options.tsserverLogFile as string,
     tsserverLogVerbosity: options.tsserverLogVerbosity as string,
-    showMessageLevel: logLevel as lsp.MessageType
+    showMessageLevel: logLevel as lsp.MessageType,
 }).listen();

@@ -24,7 +24,7 @@ export class TypeScriptVersion {
         public readonly source: TypeScriptVersionSource,
         public readonly path: string,
         private readonly _pathLabel?: string,
-        private readonly logger?: Logger
+        private readonly logger?: Logger,
     ) {
         this._api = null;
     }
@@ -149,7 +149,7 @@ export class TypeScriptVersionProvider {
             TypeScriptVersionSource.UserSetting,
             resolvedPath,
             undefined,
-            this.logger
+            this.logger,
         );
     }
 

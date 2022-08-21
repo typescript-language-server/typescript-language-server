@@ -48,7 +48,7 @@ function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.
                 kind: toSymbolKind(parent.kind),
                 range: spanRange,
                 selectionRange: selectionRange,
-                children
+                children,
             });
         }
     }
@@ -76,9 +76,9 @@ export function collectSymbolInformation(uri: string, current: tsp.NavigationTre
                 kind: toSymbolKind(current.kind),
                 location: {
                     uri,
-                    range
+                    range,
                 },
-                containerName
+                containerName,
             });
             symbols.push(...children);
         }

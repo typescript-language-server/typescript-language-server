@@ -13,7 +13,7 @@ export namespace Range {
 
     export const toTextSpan = (range: lsp.Range): tsp.TextSpan => ({
         start: Position.toLocation(range.start),
-        end: Position.toLocation(range.end)
+        end: Position.toLocation(range.end),
     });
 
     export const fromLocations = (start: tsp.Location, end: tsp.Location): lsp.Range =>
@@ -26,7 +26,7 @@ export namespace Range {
         startLine: range.start.line + 1,
         startOffset: range.start.character + 1,
         endLine: range.end.line + 1,
-        endOffset: range.end.character + 1
+        endOffset: range.end.character + 1,
     });
 
     export const toFormattingRequestArgs = (file: string, range: lsp.Range): tsp.FormatRequestArgs => ({
@@ -34,7 +34,7 @@ export namespace Range {
         line: range.start.line + 1,
         offset: range.start.character + 1,
         endLine: range.end.line + 1,
-        endOffset: range.end.character + 1
+        endOffset: range.end.character + 1,
     });
 
     export function intersection(one: lsp.Range, other: lsp.Range): lsp.Range | undefined {
@@ -56,19 +56,19 @@ export namespace Position {
         // even though position is supposed to be 1-based.
         return {
             line: Math.max(tslocation.line - 1, 0),
-            character: Math.max(tslocation.offset - 1, 0)
+            character: Math.max(tslocation.offset - 1, 0),
         };
     };
 
     export const toLocation = (position: lsp.Position): tsp.Location => ({
         line: position.line + 1,
-        offset: position.character + 1
+        offset: position.character + 1,
     });
 
     export const toFileLocationRequestArgs = (file: string, position: lsp.Position): tsp.FileLocationRequestArgs => ({
         file,
         line: position.line + 1,
-        offset: position.character + 1
+        offset: position.character + 1,
     });
 
     export function Min(): undefined;

@@ -29,7 +29,7 @@ export class TypeScriptInlayHintsProvider {
         documents: LspDocuments,
         tspClient: TspClient,
         lspClient: LspClient,
-        configurationManager: ConfigurationManager
+        configurationManager: ConfigurationManager,
     ): Promise<lsp.InlayHint[]> {
         if (tspClient.apiVersion.lt(TypeScriptInlayHintsProvider.minVersion)) {
             lspClient.showErrorMessage('Inlay Hints request failed. Requires TypeScript 4.4+.');

@@ -36,7 +36,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
     providePrefixAndSuffixTextForRename: true,
     provideRefactorNotApplicableReason: false,
     quotePreference: 'auto',
-    useLabelDetailsInCompletionEntries: true
+    useLabelDetailsInCompletionEntries: true,
 };
 
 export interface WorkspaceConfiguration {
@@ -88,12 +88,12 @@ export class ConfigurationManager {
         this.tspClient = client;
         const formatOptions: tsp.FormatCodeSettings = {
             // We can use \n here since the editor should normalize later on to its line endings.
-            newLineCharacter: '\n'
+            newLineCharacter: '\n',
         };
         const args: tsp.ConfigureRequestArguments = {
             ...hostInfo ? { hostInfo } : {},
             formatOptions,
-            preferences: this.tsPreferences
+            preferences: this.tsPreferences,
         };
         await this.tspClient?.request(CommandTypes.Configure, args);
     }
@@ -101,7 +101,7 @@ export class ConfigurationManager {
     public async configureGloballyFromDocument(filename: string, formattingOptions?: lsp.FormattingOptions): Promise<void> {
         const args: tsp.ConfigureRequestArguments = {
             formatOptions: this.getFormattingOptions(filename, formattingOptions),
-            preferences: this.getPreferences(filename)
+            preferences: this.getPreferences(filename),
         };
         await this.tspClient?.request(CommandTypes.Configure, args);
     }
@@ -115,12 +115,12 @@ export class ConfigurationManager {
         const preferences = Object.assign<tsp.UserPreferences, tsp.UserPreferences, tsp.UserPreferences>(
             {},
             this.tsPreferences,
-            workspacePreferences?.inlayHints || {}
+            workspacePreferences?.inlayHints || {},
         );
 
         return {
             ...preferences,
-            quotePreference: this.getQuoteStylePreference(preferences)
+            quotePreference: this.getQuoteStylePreference(preferences),
         };
     }
 
@@ -129,7 +129,7 @@ export class ConfigurationManager {
 
         const opts: tsp.FormatCodeSettings = {
             ...workspacePreferences?.format,
-            ...formattingOptions
+            ...formattingOptions,
         };
 
         if (opts.convertTabsToSpaces === undefined) {

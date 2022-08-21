@@ -18,7 +18,7 @@ export function asSignatureHelp(info: tsp.SignatureHelpItems, context?: lsp.Sign
     return {
         activeSignature: getActiveSignature(info, signatures, context),
         activeParameter: getActiveParameter(info),
-        signatures
+        signatures,
     };
 }
 
@@ -51,9 +51,9 @@ function asSignatureInformation(item: tsp.SignatureHelpItem): lsp.SignatureInfor
         label: asPlainText(item.prefixDisplayParts),
         documentation: asDocumentation({
             documentation: item.documentation,
-            tags: item.tags.filter(x => x.name !== 'param')
+            tags: item.tags.filter(x => x.name !== 'param'),
         }),
-        parameters
+        parameters,
     };
     signature.label += parameters.map(parameter => parameter.label).join(asPlainText(item.separatorDisplayParts));
     signature.label += asPlainText(item.suffixDisplayParts);
@@ -63,7 +63,7 @@ function asSignatureInformation(item: tsp.SignatureHelpItem): lsp.SignatureInfor
 function asParameterInformation(parameter: tsp.SignatureHelpParameter): lsp.ParameterInformation {
     return {
         label: asPlainText(parameter.displayParts),
-        documentation: asDocumentation(parameter)
+        documentation: asDocumentation(parameter),
     };
 }
 
