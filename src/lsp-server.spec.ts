@@ -1937,7 +1937,30 @@ describe('inlayHints', () => {
       `
         };
         server.didOpenTextDocument({ textDocument: doc });
-        const { inlayHints } = await server.inlayHints({ textDocument: doc });
+        const inlayHints = await server.inlayHints({ textDocument: doc, range: lsp.Range.create(0, 0, 4, 0) });
+        assert.isDefined(inlayHints);
+        assert.strictEqual(inlayHints!.length, 1);
+        assert.deepEqual(inlayHints![0], {
+            label: ': number',
+            position: { line: 1, character: 29 },
+            kind: lsp.InlayHintKind.Type,
+            paddingLeft: true
+        });
+    });
+
+    it('inlayHints (legacy)', async () => {
+        const doc = {
+            uri: uri('module.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+        export function foo() {
+          return 3
+        }
+      `
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const { inlayHints } = await server.inlayHintsLegacy({ textDocument: doc });
         assert.isDefined(inlayHints);
         assert.strictEqual(inlayHints.length, 1);
         assert.strictEqual(inlayHints[0].text, ': number');
