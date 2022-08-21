@@ -1,6 +1,23 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v1.0.0...v1.1.0) (2022-08-21)
+
+
+### Features
+
+* add "Go To Source Definition" command ([#560](https://github.com/typescript-language-server/typescript-language-server/issues/560)) ([9bcdaf2](https://github.com/typescript-language-server/typescript-language-server/commit/9bcdaf2b0b09da9aa4d7e6ed79bdcd742b3cfc17))
+* support `textDocument/inlayHint` request from 3.17.0 spec ([#566](https://github.com/typescript-language-server/typescript-language-server/issues/566)) ([9a2fd4e](https://github.com/typescript-language-server/typescript-language-server/commit/9a2fd4e34b6c50c57b974f617018dcefdb469788))
+* support LocationLink[] for textDocument/definition response ([#563](https://github.com/typescript-language-server/typescript-language-server/issues/563)) ([196f328](https://github.com/typescript-language-server/typescript-language-server/commit/196f328cd9fd7a06998151d59bed0b945cc68b40))
+
+
+### Bug Fixes
+
+* don't trigger error on empty Source Definition response ([#568](https://github.com/typescript-language-server/typescript-language-server/issues/568)) ([146a6ba](https://github.com/typescript-language-server/typescript-language-server/commit/146a6ba97f0792701ff8afcc431d3a1dfdb978a6))
+* make wording in the typescript lookup error more generic ([585a05e](https://github.com/typescript-language-server/typescript-language-server/commit/585a05e43a0b530f10e488aed634fac0436109ae)), closes [#554](https://github.com/typescript-language-server/typescript-language-server/issues/554)
+* snippet completions returned to clients that don't support them ([#556](https://github.com/typescript-language-server/typescript-language-server/issues/556)) ([050d335](https://github.com/typescript-language-server/typescript-language-server/commit/050d3350e16fe78b7c60d7443ed3ad6d2cc4730d))
+* update signature help feature to v3.15.0 LSP spec ([#555](https://github.com/typescript-language-server/typescript-language-server/issues/555)) ([da074a6](https://github.com/typescript-language-server/typescript-language-server/commit/da074a618ca6c29819834a0344682094d6ff08f6))
+
 ## [1.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v0.11.2...v1.0.0) (2022-08-06)
 
 
