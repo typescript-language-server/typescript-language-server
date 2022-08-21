@@ -60,10 +60,11 @@ export class SourceDefinitionCommand {
             reporter,
         }, async () => {
             const response = await tspClient.request(CommandTypes.FindSourceDefinition, args);
-            if (response.type === 'response' && response.body?.length) {
-                return response.body.map(reference => toLocation(reference, documents));
+            if (response.type !== 'response' || !response.body) {
+                lspClient.showErrorMessage('No source definitions found.');
+                return;
             }
-            lspClient.showErrorMessage('No source definitions found.');
+            return response.body.map(reference => toLocation(reference, documents));
         });
     }
 }
