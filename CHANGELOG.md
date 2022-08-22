@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.1](https://github.com/typescript-language-server/typescript-language-server/compare/v1.1.0...v1.1.1) (2022-08-22)
+
+
+### Bug Fixes
+
+* move deepmerge to dependencies ([06109d4](https://github.com/typescript-language-server/typescript-language-server/commit/06109d4646d94bdf1bbeb2768e18f1323ae1b630))
+
 ## [1.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v1.0.0...v1.1.0) (2022-08-21)
 
 
