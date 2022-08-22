@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "commander": "^9.4.0",
+    "deepmerge": "^4.2.2",
     "fs-extra": "^10.1.0",
     "p-debounce": "^4.0.0",
     "pkg-up": "^4.0.0",
@@ -66,7 +67,6 @@
     "chai": "^4.3.6",
     "concurrently": "^7.3.0",
     "cross-env": "^7.0.3",
-    "deepmerge": "^4.2.2",
     "eslint": "^8.22.0",
     "husky": "4.x",
     "mocha": "^10.0.0",
