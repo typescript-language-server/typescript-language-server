@@ -1,15 +1,14 @@
 module.exports = {
     root: true,
     env: {
-        commonjs: true,
-        es2020: true,
-        node: true
+        es2022: true,
+        node: true,
     },
     extends: 'eslint:recommended',
     parserOptions: {
         sourceType: 'module',
         project: './tsconfig.json',
-        tsconfigRootDir: __dirname
+        tsconfigRootDir: __dirname,
     },
     rules: {
         'array-bracket-spacing':  'error',
@@ -24,15 +23,15 @@ module.exports = {
         'func-call-spacing': 'error',
         indent: [
             'error', 4, {
-                SwitchCase: 1
-            }
+                SwitchCase: 1,
+            },
         ],
         'keyword-spacing': 'error',
         'linebreak-style': 'error',
         'no-console': [
             'error', {
-                allow: ['assert', 'warn', 'error']
-            }
+                allow: ['assert', 'warn', 'error'],
+            },
         ],
         'no-constant-binary-expression': 'error',
         'no-constructor-return': 'error',
@@ -54,11 +53,11 @@ module.exports = {
         'space-before-function-paren': [
             'error', {
                 anonymous: 'never',
-                named: 'never'
-            }
+                named: 'never',
+            },
         ],
         'space-in-parens': 'error',
-        'space-infix-ops': 'error'
+        'space-infix-ops': 'error',
     },
     overrides: [
         {
@@ -75,29 +74,29 @@ module.exports = {
                 // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/explicit-function-return-type.md
                 '@typescript-eslint/explicit-function-return-type': [
                     'off', {
-                        allowExpressions: true
-                    }
+                        allowExpressions: true,
+                    },
                 ],
                 '@typescript-eslint/explicit-module-boundary-types': [
                     'error', {
-                        allowArgumentsExplicitlyTypedAsAny: true
-                    }
+                        allowArgumentsExplicitlyTypedAsAny: true,
+                    },
                 ],
                 '@typescript-eslint/indent': [
                     'error', 4, {
                         SwitchCase: 1,
                         FunctionDeclaration: { parameters: 'first' },
                         FunctionExpression: { parameters: 'first' },
-                        CallExpression: { arguments: 'first' }
-                    }
+                        CallExpression: { arguments: 'first' },
+                    },
                 ],
                 '@typescript-eslint/member-delimiter-style': [
                     'error', {
                         singleline: {
                             delimiter: 'semi',
-                            requireLast: true
-                        }
-                    }
+                            requireLast: true,
+                        },
+                    },
                 ],
                 '@typescript-eslint/no-empty-function': 'off',
                 '@typescript-eslint/no-empty-interface': ['error', { allowSingleExtends: true }],
@@ -112,8 +111,8 @@ module.exports = {
                 '@typescript-eslint/no-unused-vars': [
                     'error', {
                         argsIgnorePattern: '^_',
-                        varsIgnorePattern: '^_'
-                    }
+                        varsIgnorePattern: '^_',
+                    },
                 ],
                 '@typescript-eslint/no-useless-constructor': 'error',
                 // TODO: Try to remove existing uses.
@@ -121,8 +120,8 @@ module.exports = {
                 '@typescript-eslint/no-non-null-assertion': 'off',
                 '@typescript-eslint/quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: false }],
                 '@typescript-eslint/restrict-plus-operands': 'error',
-                '@typescript-eslint/semi': ['error', 'always']
-            }
-        }
-    ]
+                '@typescript-eslint/semi': ['error', 'always'],
+            },
+        },
+    ],
 };
