@@ -558,7 +558,8 @@ export class LspServer {
             if (response.type !== 'response' || !response.body) {
                 return undefined;
             }
-            const span = Range.fromTextSpan(response.body.textSpan);
+            // `textSpan` can be undefined in older TypeScript versions, despite type saying otherwise.
+            const span = response.body.textSpan ? Range.fromTextSpan(response.body.textSpan) : undefined;
             return response.body.definitions
                 .map((location): lsp.DefinitionLink => {
                     const target = toLocation(location, this.documents);
