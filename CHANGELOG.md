@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.2](https://github.com/typescript-language-server/typescript-language-server/compare/v1.1.1...v1.1.2) (2022-08-25)
+
+
+### Bug Fixes
+
+* definition request crashing on getting span ([#574](https://github.com/typescript-language-server/typescript-language-server/issues/574)) ([4e1c82b](https://github.com/typescript-language-server/typescript-language-server/commit/4e1c82b82878316a12ff6b524d7dd5ab54b86acd))
+
 ## [1.1.1](https://github.com/typescript-language-server/typescript-language-server/compare/v1.1.0...v1.1.1) (2022-08-22)
 
 
