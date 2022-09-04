@@ -79,8 +79,8 @@ export class TypeScriptInlayHintsProvider {
 function areInlayHintsEnabledForFile(configurationManager: ConfigurationManager, filename: string) {
     const preferences = configurationManager.getPreferences(filename);
 
-    // Doesn't need to include `includeInlayVariableTypeHintsWhenTypeMatchesName` as it depends
-    // on `includeInlayVariableTypeHints` being enabled.
+    // Doesn't need to include `includeInlayVariableTypeHintsWhenTypeMatchesName` and
+    // `includeInlayVariableTypeHintsWhenTypeMatchesName` as those depend on other preferences being enabled.
     return preferences.includeInlayParameterNameHints === 'literals' ||
         preferences.includeInlayParameterNameHints === 'all' ||
         preferences.includeInlayEnumMemberValueHints ||

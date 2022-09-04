@@ -88,6 +88,12 @@ The `preferences` object is an object specifying preferences for the internal `t
 
 ```ts
 interface UserPreferences {
+    /**
+     * Glob patterns of files to exclude from auto imports. Requires using TypeScript 4.8 or newer in the workspace.
+     * Relative paths are resolved relative to the workspace root.
+     * @since 4.8.2
+     */
+    autoImportFileExcludePatterns: [],
     disableSuggestions: boolean;
     quotePreference: "auto" | "double" | "single";
     /**
@@ -172,6 +178,12 @@ interface UserPreferences {
     includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
     includeInlayFunctionParameterTypeHints: boolean,
     includeInlayVariableTypeHints: boolean;
+    /**
+     * When disabled then type hints on variables whose name is identical to the type name won't be shown. Requires using TypeScript 4.8+ in the workspace.
+     * @since 4.8.2
+     * @default false
+     */
+    includeInlayVariableTypeHintsWhenTypeMatchesName: boolean;
     includeInlayPropertyDeclarationTypeHints: boolean;
     includeInlayFunctionLikeReturnTypeHints: boolean;
     includeInlayEnumMemberValueHints: boolean;
@@ -238,6 +250,7 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 [language].inlayHints.includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
 [language].inlayHints.includeInlayPropertyDeclarationTypeHints: boolean;
 [language].inlayHints.includeInlayVariableTypeHints: boolean;
+[language].inlayHints.includeInlayVariableTypeHintsWhenTypeMatchesName: boolean;
 /**
  * Complete functions with their parameter signature.
  * @default false
@@ -412,6 +425,7 @@ export interface InlayHintsOptions extends UserPreferences {
     includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
     includeInlayFunctionParameterTypeHints: boolean;
     includeInlayVariableTypeHints: boolean;
+    includeInlayVariableTypeHintsWhenTypeMatchesName: boolean;
     includeInlayPropertyDeclarationTypeHints: boolean;
     includeInlayFunctionLikeReturnTypeHints: boolean;
     includeInlayEnumMemberValueHints: boolean;

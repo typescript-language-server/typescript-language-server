@@ -248,7 +248,7 @@ export class LspServer {
         this.typeScriptAutoFixProvider = new TypeScriptAutoFixProvider(this.tspClient);
 
         await Promise.all([
-            this.configurationManager.setAndConfigureTspClient(this._tspClient, hostInfo),
+            this.configurationManager.setAndConfigureTspClient(this.workspaceRoot, this._tspClient, hostInfo),
             this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
                 options: {
                     module: tsp.ModuleKind.CommonJS,
