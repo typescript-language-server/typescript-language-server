@@ -25,6 +25,7 @@ export class DisplayPartKind {
 }
 
 export interface SupportedFeatures {
+    codeActionDisabledSupport?: boolean;
     completionLabelDetails?: boolean;
     completionSnippets?: boolean;
     diagnosticsTagSupport?: boolean;
