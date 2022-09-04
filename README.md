@@ -208,6 +208,7 @@ From the `preferences` options listed above, this server explicilty sets the fol
     includeCompletionsWithSnippetText: true,
     jsxAttributeCompletionStyle: "auto",
     providePrefixAndSuffixTextForRename: true,
+    provideRefactorNotApplicableReason: true,
 }
 ```
 

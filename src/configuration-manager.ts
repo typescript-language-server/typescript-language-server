@@ -37,7 +37,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
     jsxAttributeCompletionStyle: 'auto',
     lazyConfiguredProjectsFromExternalProject: false,
     providePrefixAndSuffixTextForRename: true,
-    provideRefactorNotApplicableReason: false,
+    provideRefactorNotApplicableReason: true,
     quotePreference: 'auto',
     useLabelDetailsInCompletionEntries: true,
 };

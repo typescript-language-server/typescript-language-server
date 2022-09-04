@@ -8,17 +8,21 @@
 import * as lsp from 'vscode-languageserver';
 import type tsp from 'typescript/lib/protocol.d.js';
 import { Commands } from './commands.js';
+import type { SupportedFeatures } from './ts-protocol.js';
 
-export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, args: tsp.FileRangeRequestArgs): Array<lsp.CodeAction> {
+export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, args: tsp.FileRangeRequestArgs, features: SupportedFeatures): lsp.CodeAction[] {
     if (!response || !response.body) {
         return [];
     }
-    const actions: Array<lsp.CodeAction> = [];
+    const actions: lsp.CodeAction[] = [];
     for (const info of response.body) {
         if (info.inlineable === false) {
             actions.push(asSelectRefactoring(info, args));
         } else {
-            for (const action of info.actions) {
+            const relevantActions = features.codeActionDisabledSupport
+                ? info.actions
+                : info.actions.filter(action => !action.notApplicableReason);
+            for (const action of relevantActions) {
                 actions.push(asApplyRefactoring(action, info, args));
             }
         }
@@ -35,15 +39,21 @@ export function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.
 }
 
 export function asApplyRefactoring(action: tsp.RefactorActionInfo, info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
-    return lsp.CodeAction.create(
-        action.description,
-        lsp.Command.create(action.description, Commands.APPLY_REFACTORING, <tsp.GetEditsForRefactorRequestArgs>{
-            ...args,
-            refactor: info.name,
-            action: action.name,
-        }),
-        asKind(info),
-    );
+    const codeAction = lsp.CodeAction.create(action.description, asKind(info));
+    if (action.notApplicableReason) {
+        codeAction.disabled = { reason: action.notApplicableReason };
+    } else {
+        codeAction.command = lsp.Command.create(
+            action.description,
+            Commands.APPLY_REFACTORING,
+            {
+                ...args,
+                refactor: info.name,
+                action: action.name,
+            },
+        );
+    }
+    return codeAction;
 }
 
 function asKind(refactor: tsp.RefactorActionInfo): lsp.CodeActionKind {

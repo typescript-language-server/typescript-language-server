@@ -187,19 +187,22 @@ export class LspServer {
 
         // Setup supported features.
         const { textDocument } = clientCapabilities;
-        this.features.definitionLinkSupport = textDocument?.definition?.linkSupport && typescriptVersion.version?.gte(API.v270);
-        const completionCapabilities = textDocument?.completion;
-        if (completionCapabilities?.completionItem) {
-            if (this.configurationManager.tsPreferences.useLabelDetailsInCompletionEntries
+        if (textDocument) {
+            this.features.codeActionDisabledSupport = textDocument.codeAction?.disabledSupport;
+            this.features.definitionLinkSupport = textDocument.definition?.linkSupport && typescriptVersion.version?.gte(API.v270);
+            const completionCapabilities = textDocument.completion;
+            if (completionCapabilities?.completionItem) {
+                if (this.configurationManager.tsPreferences.useLabelDetailsInCompletionEntries
                 && completionCapabilities.completionItem.labelDetailsSupport
                 && typescriptVersion.version?.gte(API.v470)) {
-                this.features.completionLabelDetails = true;
-            }
-            if (completionCapabilities.completionItem.snippetSupport) {
-                this.features.completionSnippets = true;
-            }
-            if (textDocument?.publishDiagnostics?.tagSupport) {
-                this.features.diagnosticsTagSupport = true;
+                    this.features.completionLabelDetails = true;
+                }
+                if (completionCapabilities.completionItem.snippetSupport) {
+                    this.features.completionSnippets = true;
+                }
+                if (textDocument.publishDiagnostics?.tagSupport) {
+                    this.features.diagnosticsTagSupport = true;
+                }
             }
         }
 
@@ -871,7 +874,7 @@ export class LspServer {
             actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
         }
         if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.Refactor))) {
-            actions.push(...provideRefactors(await this.getRefactors(args), args));
+            actions.push(...provideRefactors(await this.getRefactors(args), args, this.features));
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
