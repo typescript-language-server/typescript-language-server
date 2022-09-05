@@ -117,7 +117,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
 
 function createTextEdit(replacementRange: lsp.Range, position: lsp.Position, insertText: string, features: SupportedFeatures): lsp.TextEdit | lsp.InsertReplaceEdit {
     if (features.insertReplaceSupport) {
-        const insertRange: lsp.Range = { start: replacementRange.start, end: position };
+        const insertRange = lsp.Range.create(replacementRange.start, position);
         return lsp.InsertReplaceEdit.create(insertText, insertRange, replacementRange);
     }
     return lsp.TextEdit.replace(replacementRange, insertText);
