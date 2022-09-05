@@ -866,15 +866,14 @@ export class LspServer {
         if (!file) {
             return [];
         }
-        const args = Range.toFileRangeRequestArgs(file, params.range);
+        const fileRangeArgs = Range.toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
         const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
         if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.QuickFix))) {
-            const errorCodes = params.context.diagnostics.map(diagnostic => Number(diagnostic.code));
-            actions.push(...provideQuickFix(await this.getCodeFixes({ ...args, errorCodes }), this.documents));
+            actions.push(...provideQuickFix(await this.getCodeFixes(fileRangeArgs, params.context), this.documents));
         }
         if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.Refactor))) {
-            actions.push(...provideRefactors(await this.getRefactors(args), args, this.features));
+            actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context), fileRangeArgs, this.features));
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
@@ -886,7 +885,7 @@ export class LspServer {
                 d => (d.severity ?? 0) <= 2,
             );
             const response = await this.getOrganizeImports({
-                scope: { type: 'file', args },
+                scope: { type: 'file', args: fileRangeArgs },
                 skipDestructiveCodeActions,
             });
             actions.push(...provideOrganizeImports(response, this.documents));
@@ -906,14 +905,24 @@ export class LspServer {
 
         return actions;
     }
-    protected async getCodeFixes(args: tsp.CodeFixRequestArgs): Promise<tsp.GetCodeFixesResponse | undefined> {
+    protected async getCodeFixes(fileRangeArgs: tsp.FileRangeRequestArgs, context: lsp.CodeActionContext): Promise<tsp.GetCodeFixesResponse | undefined> {
+        const errorCodes = context.diagnostics.map(diagnostic => Number(diagnostic.code));
+        const args: tsp.CodeFixRequestArgs = {
+            ...fileRangeArgs,
+            errorCodes,
+        };
         try {
             return await this.tspClient.request(CommandTypes.GetCodeFixes, args);
         } catch (err) {
             return undefined;
         }
     }
-    protected async getRefactors(args: tsp.GetApplicableRefactorsRequestArgs): Promise<tsp.GetApplicableRefactorsResponse | undefined> {
+    protected async getRefactors(fileRangeArgs: tsp.FileRangeRequestArgs, context: lsp.CodeActionContext): Promise<tsp.GetApplicableRefactorsResponse | undefined> {
+        const args: tsp.GetApplicableRefactorsRequestArgs = {
+            ...fileRangeArgs,
+            triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
+            kind: context.only?.length === 1 ? context.only[0] : undefined,
+        };
         try {
             return await this.tspClient.request(CommandTypes.GetApplicableRefactors, args);
         } catch (err) {
