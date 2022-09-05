@@ -188,9 +188,10 @@ export class LspServer {
         // Setup supported features.
         const { textDocument } = clientCapabilities;
         if (textDocument) {
+            const completionCapabilities = textDocument.completion;
             this.features.codeActionDisabledSupport = textDocument.codeAction?.disabledSupport;
             this.features.definitionLinkSupport = textDocument.definition?.linkSupport && typescriptVersion.version?.gte(API.v270);
-            const completionCapabilities = textDocument.completion;
+            this.features.insertReplaceSupport = completionCapabilities?.completionItem?.insertReplaceSupport ?? false;
             if (completionCapabilities?.completionItem) {
                 if (this.configurationManager.tsPreferences.useLabelDetailsInCompletionEntries
                 && completionCapabilities.completionItem.labelDetailsSupport
@@ -655,6 +656,7 @@ export class LspServer {
                 offset: params.position.character + 1,
                 triggerCharacter: getCompletionTriggerCharacter(params.context?.triggerCharacter),
                 triggerKind: params.context?.triggerKind,
+                includeInsertTextCompletions: true,
             }));
             const { body } = result;
             const completions: lsp.CompletionItem[] = [];
@@ -662,7 +664,7 @@ export class LspServer {
                 if (entry.kind === 'warning') {
                     continue;
                 }
-                const completion = asCompletionItem(entry, file, params.position, document, this.features);
+                const completion = asCompletionItem(entry, file, params.position, document, this.features, body);
                 if (!completion) {
                     continue;
                 }
