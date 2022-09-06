@@ -22,7 +22,7 @@ interface ParameterListParts {
     readonly hasOptionalParameters: boolean;
 }
 
-export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument, features: SupportedFeatures): lsp.CompletionItem | null {
+export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacementSpan: tsp.TextSpan | undefined, file: string, position: lsp.Position, document: LspDocument, features: SupportedFeatures): lsp.CompletionItem | null {
     const item: lsp.CompletionItem = {
         label: entry.name,
         ...features.completionLabelDetails ? { labelDetails: entry.labelDetails } : {},
@@ -63,7 +63,8 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
     }
 
     let insertText = entry.insertText;
-    let replacementRange = entry.replacementSpan && Range.fromTextSpan(entry.replacementSpan);
+    const replacementSpan = entry.replacementSpan || optionalReplacementSpan;
+    let replacementRange = replacementSpan && Range.fromTextSpan(replacementSpan);
     // Make sure we only replace a single line at most
     if (replacementRange && replacementRange.start.line !== replacementRange.end.line) {
         replacementRange = lsp.Range.create(replacementRange.start, document.getLineEnd(replacementRange.start.line));
@@ -108,8 +109,12 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
         if (!insertText) {
             insertText = item.label;
         }
-
-        item.textEdit = lsp.TextEdit.replace(replacementRange, insertText);
+        if (features.completionInsertReplaceSupport) {
+            const insertRange = lsp.Range.create(replacementRange.start, position);
+            item.textEdit = lsp.InsertReplaceEdit.create(insertText, insertRange, replacementRange);
+        } else {
+            item.textEdit = lsp.TextEdit.replace(replacementRange, insertText);
+        }
     } else {
         item.insertText = insertText;
     }

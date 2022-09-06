@@ -201,6 +201,70 @@ describe('completion', () => {
         server.didCloseTextDocument({ textDocument: doc });
     });
 
+    it('completions for clients that do not support insertReplaceSupport', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                class Foo {
+                    getById() {};
+                }
+
+                const foo = new Foo()
+                foo.getById()
+            `,
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.get') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'getById');
+        assert.isDefined(completion);
+        assert.isDefined(completion!.textEdit);
+        assert.containsAllKeys(completion!.textEdit, ['newText', 'range']);
+        server.didCloseTextDocument({ textDocument: doc });
+    });
+
+    it('completions for clients that support insertReplaceSupport', async () => {
+        const clientCapabilitiesOverride: lsp.ClientCapabilities = {
+            textDocument: {
+                completion: {
+                    completionItem: {
+                        insertReplaceSupport: true,
+                    },
+                },
+            },
+        };
+        const localServer = await createServer({
+            rootUri: null,
+            publishDiagnostics: () => {},
+            clientCapabilitiesOverride,
+        });
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                class Foo {
+                    getById() {};
+                }
+
+                const foo = new Foo()
+                foo.getById()
+            `,
+        };
+        localServer.didOpenTextDocument({ textDocument: doc });
+        const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, '.get') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'getById');
+        assert.isDefined(completion);
+        assert.isDefined(completion!.textEdit);
+        assert.containsAllKeys(completion!.textEdit, ['newText', 'insert', 'replace']);
+        localServer.didCloseTextDocument({ textDocument: doc });
+        localServer.closeAll();
+        localServer.shutdown();
+    });
+
     it('includes detail field with package name for auto-imports', async () => {
         const doc = {
             uri: uri('bar.ts'),
