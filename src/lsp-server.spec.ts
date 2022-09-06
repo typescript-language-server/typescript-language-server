@@ -237,7 +237,7 @@ describe('completion', () => {
         };
         const localServer = await createServer({
             rootUri: null,
-            publishDiagnostics: args => diagnostics.set(args.uri, args),
+            publishDiagnostics: () => {},
             clientCapabilitiesOverride,
         });
         const doc = {

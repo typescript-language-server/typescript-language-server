@@ -658,18 +658,22 @@ export class LspServer {
                 triggerKind: params.context?.triggerKind,
             }));
             const { body } = result;
+            if (!body) {
+                return lsp.CompletionList.create();
+            }
+            const { entries, isIncomplete, optionalReplacementSpan } = body;
             const completions: lsp.CompletionItem[] = [];
-            for (const entry of body?.entries ?? []) {
+            for (const entry of entries || []) {
                 if (entry.kind === 'warning') {
                     continue;
                 }
-                const completion = asCompletionItem(entry, body?.optionalReplacementSpan, file, params.position, document, this.features);
+                const completion = asCompletionItem(entry, optionalReplacementSpan, file, params.position, document, this.features);
                 if (!completion) {
                     continue;
                 }
                 completions.push(completion);
             }
-            return lsp.CompletionList.create(completions, body?.isIncomplete);
+            return lsp.CompletionList.create(completions, isIncomplete);
         } catch (error) {
             if ((error as Error).message === 'No content available.') {
                 this.logger.info('No content was available for completion request');
