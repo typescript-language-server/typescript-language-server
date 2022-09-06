@@ -664,7 +664,7 @@ export class LspServer {
                 if (entry.kind === 'warning') {
                     continue;
                 }
-                const completion = asCompletionItem(entry, file, params.position, document, this.features, body);
+                const completion = asCompletionItem(entry, body?.optionalReplacementSpan, file, params.position, document, this.features);
                 if (!completion) {
                     continue;
                 }

@@ -22,7 +22,7 @@ interface ParameterListParts {
     readonly hasOptionalParameters: boolean;
 }
 
-export function asCompletionItem(entry: tsp.CompletionEntry, file: string, position: lsp.Position, document: LspDocument, features: SupportedFeatures, completionInfo?: tsp.CompletionInfo): lsp.CompletionItem | null {
+export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacementSpan: tsp.TextSpan | undefined, file: string, position: lsp.Position, document: LspDocument, features: SupportedFeatures): lsp.CompletionItem | null {
     const item: lsp.CompletionItem = {
         label: entry.name,
         ...features.completionLabelDetails ? { labelDetails: entry.labelDetails } : {},
@@ -63,7 +63,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, file: string, posit
     }
 
     let insertText = entry.insertText;
-    const replacementSpan = entry.replacementSpan ?? completionInfo?.optionalReplacementSpan;
+    const replacementSpan = entry.replacementSpan ?? optionalReplacementSpan;
     let replacementRange = replacementSpan && Range.fromTextSpan(replacementSpan);
     // Make sure we only replace a single line at most
     if (replacementRange && replacementRange.start.line !== replacementRange.end.line) {
