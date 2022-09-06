@@ -109,19 +109,16 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
         if (!insertText) {
             insertText = item.label;
         }
-        item.textEdit = createTextEdit(replacementRange, position, insertText, features);
+        if (features.completionInsertReplaceSupport) {
+            const insertRange = lsp.Range.create(replacementRange.start, position);
+            item.textEdit = lsp.InsertReplaceEdit.create(insertText, insertRange, replacementRange);
+        } else {
+            item.textEdit = lsp.TextEdit.replace(replacementRange, insertText);
+        }
     } else {
         item.insertText = insertText;
     }
     return item;
-}
-
-function createTextEdit(replacementRange: lsp.Range, position: lsp.Position, insertText: string, features: SupportedFeatures): lsp.TextEdit | lsp.InsertReplaceEdit {
-    if (features.completionInsertReplaceSupport) {
-        const insertRange = lsp.Range.create(replacementRange.start, position);
-        return lsp.InsertReplaceEdit.create(insertText, insertRange, replacementRange);
-    }
-    return lsp.TextEdit.replace(replacementRange, insertText);
 }
 
 function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
