@@ -191,7 +191,7 @@ export class LspServer {
             const completionCapabilities = textDocument.completion;
             this.features.codeActionDisabledSupport = textDocument.codeAction?.disabledSupport;
             this.features.definitionLinkSupport = textDocument.definition?.linkSupport && typescriptVersion.version?.gte(API.v270);
-            this.features.completionInsertReplaceSupport = completionCapabilities?.completionItem?.insertReplaceSupport ?? false;
+            this.features.completionInsertReplaceSupport = completionCapabilities?.completionItem?.insertReplaceSupport;
             if (completionCapabilities?.completionItem) {
                 if (this.configurationManager.tsPreferences.useLabelDetailsInCompletionEntries
                 && completionCapabilities.completionItem.labelDetailsSupport
