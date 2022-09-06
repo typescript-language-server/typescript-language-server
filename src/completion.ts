@@ -105,13 +105,14 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
             }
         }
     }
-    if (!insertText) {
-        insertText = item.label;
-    }
     if (replacementRange) {
+        if (!insertText) {
+            insertText = item.label;
+        }
         item.textEdit = createTextEdit(replacementRange, position, insertText, features);
+    } else {
+        item.insertText = insertText;
     }
-    item.insertText = insertText;
     return item;
 }
 
