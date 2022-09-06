@@ -30,7 +30,7 @@ export interface SupportedFeatures {
     completionSnippets?: boolean;
     diagnosticsTagSupport?: boolean;
     definitionLinkSupport?: boolean;
-    insertReplaceSupport?: boolean;
+    completionInsertReplaceSupport?: boolean;
 }
 
 export interface TypeScriptPlugin {
