@@ -26,11 +26,11 @@ export class DisplayPartKind {
 
 export interface SupportedFeatures {
     codeActionDisabledSupport?: boolean;
+    completionInsertReplaceSupport?: boolean;
     completionLabelDetails?: boolean;
     completionSnippets?: boolean;
-    diagnosticsTagSupport?: boolean;
     definitionLinkSupport?: boolean;
-    completionInsertReplaceSupport?: boolean;
+    diagnosticsTagSupport?: boolean;
 }
 
 export interface TypeScriptPlugin {
