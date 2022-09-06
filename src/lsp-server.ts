@@ -656,7 +656,6 @@ export class LspServer {
                 offset: params.position.character + 1,
                 triggerCharacter: getCompletionTriggerCharacter(params.context?.triggerCharacter),
                 triggerKind: params.context?.triggerKind,
-                includeInsertTextCompletions: true,
             }));
             const { body } = result;
             const completions: lsp.CompletionItem[] = [];
