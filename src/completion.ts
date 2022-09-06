@@ -63,7 +63,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
     }
 
     let insertText = entry.insertText;
-    const replacementSpan = entry.replacementSpan ?? optionalReplacementSpan;
+    const replacementSpan = entry.replacementSpan || optionalReplacementSpan;
     let replacementRange = replacementSpan && Range.fromTextSpan(replacementSpan);
     // Make sure we only replace a single line at most
     if (replacementRange && replacementRange.start.line !== replacementRange.end.line) {
