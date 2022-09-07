@@ -2,8 +2,8 @@ import * as chai from 'chai';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findPathToModule } from './modules-resolver.js';
-import { MODULE_FOLDERS } from './versionProvider.js';
 import { PACKAGE_ROOT } from '../test-utils.js';
+import { MODULE_FOLDERS } from '../tsServer/versionProvider.js';
 
 export const CURDIR = dirname(fileURLToPath(import.meta.url));
 

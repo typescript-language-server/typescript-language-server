@@ -11,13 +11,13 @@ import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import deepmerge from 'deepmerge';
 import * as lsp from 'vscode-languageserver';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import { normalizePath, pathToUri } from './protocol-translation.js';
 import { TypeScriptInitializationOptions } from './ts-protocol.js';
 import { LspClient, WithProgressOptions } from './lsp-client.js';
 import { LspServer } from './lsp-server.js';
 import { ConsoleLogger } from './logger.js';
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { TypeScriptVersionProvider } from './utils/versionProvider.js';
+import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 
 const CONSOLE_LOG_LEVEL = ConsoleLogger.toMessageTypeLevel(process.env.CONSOLE_LOG_LEVEL);
 export const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url));

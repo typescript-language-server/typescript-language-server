@@ -7,9 +7,9 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import which from 'which';
 import { pkgUpSync } from 'pkg-up';
-import API from './api.js';
-import { IServerOptions } from './configuration.js';
-import { findPathToModule } from './modules-resolver.js';
+import API from '../utils/api.js';
+import type { IServerOptions } from '../utils/configuration.js';
+import { findPathToModule } from '../utils/modules-resolver.js';
 import type { Logger } from '../logger.js';
 
 export const enum TypeScriptVersionSource {

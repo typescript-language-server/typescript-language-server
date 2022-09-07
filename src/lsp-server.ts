@@ -31,11 +31,11 @@ import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScript
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { computeCallers, computeCallees } from './calls.js';
 import { IServerOptions } from './utils/configuration.js';
-import { TypeScriptVersion, TypeScriptVersionProvider } from './utils/versionProvider.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
 import { LspClient } from './lsp-client.js';
+import { TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 import { ConfigurationManager } from './configuration-manager.js';

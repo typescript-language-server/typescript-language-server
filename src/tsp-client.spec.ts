@@ -11,7 +11,7 @@ import { ConsoleLogger } from './logger.js';
 import { filePath, readContents } from './test-utils.js';
 import { CommandTypes } from './tsp-command-types.js';
 import API from './utils/api.js';
-import { TypeScriptVersionProvider } from './utils/versionProvider.js';
+import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 
 const assert = chai.assert;
 const typescriptVersionProvider = new TypeScriptVersionProvider();
