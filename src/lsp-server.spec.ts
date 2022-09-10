@@ -158,7 +158,8 @@ describe('completion', () => {
         });
         const pos = position(doc, 'foo');
         const proposals = await server.completion({ textDocument: doc, position: pos });
-        assert.isNull(proposals);
+        assert.isNotNull(proposals);
+        assert.strictEqual(proposals?.items.length, 0);
         server.didCloseTextDocument({ textDocument: doc });
     });
 

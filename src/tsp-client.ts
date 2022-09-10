@@ -1,3 +1,7 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 /*
  * Copyright (C) 2017, 2018 TypeFox and others.
  *
@@ -5,22 +9,60 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as fs from 'node:fs';
-import * as cp from 'node:child_process';
-import * as readline from 'node:readline';
-import * as decoder from 'node:string_decoder';
 import type tsp from 'typescript/lib/protocol.d.js';
-import { CancellationToken } from 'vscode-jsonrpc';
-import { temporaryFile } from 'tempy';
-import { CommandTypes } from './tsp-command-types.js';
+import type lsp from 'vscode-languageserver';
+import type { CancellationToken } from 'vscode-jsonrpc';
+import { CommandTypes, EventTypes } from './tsp-command-types.js';
 import { Logger, PrefixingLogger } from './logger.js';
-import { Deferred } from './utils.js';
 import API from './utils/api.js';
+import { ExecConfig, ServerResponse, TypeScriptRequestTypes } from './tsServer/requests.js';
+import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
+import { TypeScriptServerError } from './tsServer/serverError.js';
+import { TypeScriptServerSpawner } from './tsServer/spawner.js';
+import type { TypeScriptVersion } from './tsServer/versionProvider.js';
+import type { LspClient } from './lsp-client.js';
+
+class ServerInitializingIndicator {
+    private _loadingProjectName?: string;
+    private _progressReporter?: lsp.WorkDoneProgressReporter;
+
+    constructor(private lspClient: LspClient) {}
+
+    public reset(): void {
+        if (this._loadingProjectName) {
+            this._loadingProjectName = undefined;
+            if (this._progressReporter) {
+                this._progressReporter.done();
+                this._progressReporter = undefined;
+            }
+        }
+    }
+
+    public async startedLoadingProject(projectName: string): Promise<void> {
+        // TS projects are loaded sequentially. Cancel existing task because it should always be resolved before
+        // the incoming project loading task is.
+        this.reset();
+
+        this._loadingProjectName = projectName;
+        this._progressReporter = await this.lspClient.createProgressReporter();
+        this._progressReporter.begin('Initializing JS/TS language features…');
+    }
+
+    public finishedLoadingProject(projectName: string): void {
+        if (this._loadingProjectName === projectName) {
+            this._loadingProjectName = undefined;
+            if (this._progressReporter) {
+                this._progressReporter.done();
+                this._progressReporter = undefined;
+            }
+        }
+    }
+}
 
 export interface TspClientOptions {
-    apiVersion: API;
+    lspClient: LspClient;
+    typescriptVersion: TypeScriptVersion;
     logger: Logger;
-    tsserverPath: string;
     logFile?: string;
     logVerbosity?: string;
     disableAutomaticTypingAcquisition?: boolean;
@@ -33,234 +75,215 @@ export interface TspClientOptions {
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
 }
 
-interface TypeScriptRequestTypes {
-    [CommandTypes.ApplyCodeActionCommand]: [tsp.ApplyCodeActionCommandRequestArgs, tsp.ApplyCodeActionCommandResponse];
-    [CommandTypes.CompilerOptionsForInferredProjects]: [tsp.SetCompilerOptionsForInferredProjectsArgs, tsp.SetCompilerOptionsForInferredProjectsResponse];
-    [CommandTypes.CompletionDetails]: [tsp.CompletionDetailsRequestArgs, tsp.CompletionDetailsResponse];
-    [CommandTypes.CompletionInfo]: [tsp.CompletionsRequestArgs, tsp.CompletionInfoResponse];
-    [CommandTypes.Configure]: [tsp.ConfigureRequestArguments, tsp.ConfigureResponse];
-    [CommandTypes.Definition]: [tsp.FileLocationRequestArgs, tsp.DefinitionResponse];
-    [CommandTypes.DefinitionAndBoundSpan]: [tsp.FileLocationRequestArgs, tsp.DefinitionInfoAndBoundSpanResponse];
-    [CommandTypes.DocCommentTemplate]: [tsp.FileLocationRequestArgs, tsp.DocCommandTemplateResponse];
-    [CommandTypes.DocumentHighlights]: [tsp.DocumentHighlightsRequestArgs, tsp.DocumentHighlightsResponse];
-    [CommandTypes.EncodedSemanticClassificationsFull]: [tsp.EncodedSemanticClassificationsRequestArgs, tsp.EncodedSemanticClassificationsResponse];
-    [CommandTypes.FindSourceDefinition]: [tsp.FileLocationRequestArgs, tsp.DefinitionResponse];
-    [CommandTypes.Format]: [tsp.FormatRequestArgs, tsp.FormatResponse];
-    [CommandTypes.Formatonkey]: [tsp.FormatOnKeyRequestArgs, tsp.FormatResponse];
-    [CommandTypes.GetApplicableRefactors]: [tsp.GetApplicableRefactorsRequestArgs, tsp.GetApplicableRefactorsResponse];
-    [CommandTypes.GetCodeFixes]: [tsp.CodeFixRequestArgs, tsp.CodeFixResponse];
-    [CommandTypes.GetCombinedCodeFix]: [tsp.GetCombinedCodeFixRequestArgs, tsp.GetCombinedCodeFixResponse];
-    [CommandTypes.GetEditsForFileRename]: [tsp.GetEditsForFileRenameRequestArgs, tsp.GetEditsForFileRenameResponse];
-    [CommandTypes.GetEditsForRefactor]: [tsp.GetEditsForRefactorRequestArgs, tsp.GetEditsForRefactorResponse];
-    [CommandTypes.Geterr]: [tsp.GeterrRequestArgs, any];
-    [CommandTypes.GetOutliningSpans]: [tsp.FileRequestArgs, tsp.OutliningSpansResponse];
-    [CommandTypes.GetSupportedCodeFixes]: [null, tsp.GetSupportedCodeFixesResponse];
-    [CommandTypes.Implementation]: [tsp.FileLocationRequestArgs, tsp.ImplementationResponse];
-    [CommandTypes.JsxClosingTag]: [tsp.JsxClosingTagRequestArgs, tsp.JsxClosingTagResponse];
-    [CommandTypes.Navto]: [tsp.NavtoRequestArgs, tsp.NavtoResponse];
-    [CommandTypes.NavTree]: [tsp.FileRequestArgs, tsp.NavTreeResponse];
-    [CommandTypes.OrganizeImports]: [tsp.OrganizeImportsRequestArgs, tsp.OrganizeImportsResponse];
-    [CommandTypes.ProjectInfo]: [tsp.ProjectInfoRequestArgs, tsp.ProjectInfoResponse];
-    [CommandTypes.ProvideInlayHints]: [tsp.InlayHintsRequestArgs, tsp.InlayHintsResponse];
-    [CommandTypes.Quickinfo]: [tsp.FileLocationRequestArgs, tsp.QuickInfoResponse];
-    [CommandTypes.References]: [tsp.FileLocationRequestArgs, tsp.ReferencesResponse];
-    [CommandTypes.Rename]: [tsp.RenameRequestArgs, tsp.RenameResponse];
-    [CommandTypes.SignatureHelp]: [tsp.SignatureHelpRequestArgs, tsp.SignatureHelpResponse];
-    [CommandTypes.TypeDefinition]: [tsp.FileLocationRequestArgs, tsp.TypeDefinitionResponse];
-}
-
 export class TspClient {
     public apiVersion: API;
-    private tsserverProc: cp.ChildProcess | null = null;
-    private readlineInterface: readline.ReadLine | null = null;
-    private seq = 0;
-    private readonly deferreds: { [seq: number]: Deferred<any>; } = {};
+    private primaryTsServer: ITypeScriptServer | null = null;
     private logger: Logger;
     private tsserverLogger: Logger;
-    private cancellationPipeName: string | undefined;
+    private loadingIndicator: ServerInitializingIndicator;
 
     constructor(private options: TspClientOptions) {
-        this.apiVersion = options.apiVersion;
+        this.apiVersion = options.typescriptVersion.version || API.defaultVersion;
         this.logger = new PrefixingLogger(options.logger, '[tsclient]');
         this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]');
+        this.loadingIndicator = new ServerInitializingIndicator(options.lspClient);
     }
 
     start(): boolean {
-        if (this.readlineInterface) {
-            return false;
-        }
-        const {
-            tsserverPath,
-            logFile,
-            logVerbosity,
-            disableAutomaticTypingAcquisition,
-            maxTsServerMemory,
-            npmLocation,
-            locale,
-            globalPlugins,
-            pluginProbeLocations,
-        } = this.options;
-        const args: string[] = [];
-        if (logFile) {
-            args.push('--logFile', logFile);
-        }
-        if (logVerbosity) {
-            args.push('--logVerbosity', logVerbosity);
-        }
-        if (globalPlugins && globalPlugins.length) {
-            args.push('--globalPlugins', globalPlugins.join(','));
-        }
-        if (pluginProbeLocations && pluginProbeLocations.length) {
-            args.push('--pluginProbeLocations', pluginProbeLocations.join(','));
-        }
-        if (disableAutomaticTypingAcquisition) {
-            args.push('--disableAutomaticTypingAcquisition');
-        }
-        if (npmLocation) {
-            this.logger.info(`using npm from ${npmLocation}`);
-            args.push('--npmLocation', npmLocation);
-        }
-        if (locale) {
-            args.push('--locale', locale);
-        }
-
-        this.cancellationPipeName = temporaryFile({ name: 'tscancellation' });
-        args.push('--cancellationPipeName', `${this.cancellationPipeName}*`);
-        this.logger.log(`Starting tsserver : '${tsserverPath} ${args.join(' ')}'`);
-        const options = {
-            silent: true,
-            execArgv: [
-                ...maxTsServerMemory ? [`--max-old-space-size=${maxTsServerMemory}`] : [],
-            ],
-        };
-        this.tsserverProc = cp.fork(tsserverPath, args, options);
-        this.tsserverProc.on('exit', (exitCode, signal) => {
+        const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, this.logger);
+        const tsServer = tsServerSpawner.spawn(this.options.typescriptVersion, this.options);
+        tsServer.onExit((data: TypeScriptServerExitEvent) => {
             this.shutdown();
+            this.tsserverLogger.error(`Exited. Code: ${data.code}. Signal: ${data.signal}`);
             if (this.options.onExit) {
-                this.options.onExit(exitCode, signal);
+                this.options.onExit(data.code, data.signal);
             }
         });
-        const { stdout, stdin, stderr } = this.tsserverProc;
-        if (!stdout || !stdin || !stderr) {
-            this.logger.error(`Failed initializing input/output of tsserver (stdin: ${!!stdin}, stdout: ${!!stdout}, stderr: ${!!stderr})`);
-            return false;
-        }
-        this.readlineInterface = readline.createInterface(stdout, stdin, undefined);
-        this.readlineInterface.on('line', line => this.processMessage(line));
-
-        const dec = new decoder.StringDecoder('utf-8');
-        stderr.addListener('data', data => {
-            const stringMsg = typeof data === 'string' ? data : dec.write(data);
-            this.tsserverLogger.error(stringMsg);
+        tsServer.onError((err: Error) => {
+            if (err) {
+                this.tsserverLogger.error('Exited with error. Error message is: {0}', err.message || err.name);
+            }
+            this.serviceExited();
         });
+        tsServer.onEvent(event => this.dispatchEvent(event));
+        this.primaryTsServer = tsServer;
         return true;
     }
 
-    shutdown(): void {
-        this.readlineInterface?.close();
-        if (this.tsserverProc) {
-            this.tsserverProc.stdin?.destroy();
-            this.tsserverProc.kill('SIGTERM');
+    private serviceExited(): void {
+        this.primaryTsServer = null;
+        this.loadingIndicator.reset();
+    }
+
+    // private static isLoggingEnabled(configuration: TspClientOptions) {
+    //     return configuration.tsServerLogLevel !== TsServerLogLevel.Off;
+    // }
+
+    private dispatchEvent(event: tsp.Event) {
+        switch (event.event) {
+            case EventTypes.SyntaxDiag:
+            case EventTypes.SementicDiag:
+            case EventTypes.SuggestionDiag: {
+                // This event also roughly signals that projects have been loaded successfully (since the TS server is synchronous)
+                this.loadingIndicator.reset();
+                this.options.onEvent?.(event);
+                break;
+            }
+            // case EventTypes.ConfigFileDiag:
+            //     this._onConfigDiagnosticsReceived.fire(event as tsp.ConfigFileDiagnosticEvent);
+            //     break;
+            // case EventTypes.projectLanguageServiceState: {
+            //     const body = (event as tsp.ProjectLanguageServiceStateEvent).body!;
+            //     if (this.serverState.type === ServerState.Type.Running) {
+            //         this.serverState.updateLanguageServiceEnabled(body.languageServiceEnabled);
+            //     }
+            //     this._onProjectLanguageServiceStateChanged.fire(body);
+            //     break;
+            // }
+            // case EventTypes.projectsUpdatedInBackground: {
+            //     this.loadingIndicator.reset();
+            //     const body = (event as tsp.ProjectsUpdatedInBackgroundEvent).body;
+            //     const resources = body.openFiles.map(file => this.toResource(file));
+            //     this.bufferSyncSupport.getErr(resources);
+            //     break;
+            // }
+            // case EventTypes.beginInstallTypes:
+            //     this._onDidBeginInstallTypings.fire((event as tsp.BeginInstallTypesEvent).body);
+            //     break;
+            // case EventTypes.endInstallTypes:
+            //     this._onDidEndInstallTypings.fire((event as tsp.EndInstallTypesEvent).body);
+            //     break;
+            // case EventTypes.typesInstallerInitializationFailed:
+            //     this._onTypesInstallerInitializationFailed.fire((event as tsp.TypesInstallerInitializationFailedEvent).body);
+            //     break;
+            case EventTypes.ProjectLoadingStart:
+                this.loadingIndicator.startedLoadingProject((event as tsp.ProjectLoadingStartEvent).body.projectName);
+                break;
+            case EventTypes.ProjectLoadingFinish:
+                this.loadingIndicator.finishedLoadingProject((event as tsp.ProjectLoadingFinishEvent).body.projectName);
+                break;
         }
     }
 
-    notify(command: CommandTypes.Open, args: tsp.OpenRequestArgs): void;
-    notify(command: CommandTypes.Close, args: tsp.FileRequestArgs): void;
-    notify(command: CommandTypes.Saveto, args: tsp.SavetoRequestArgs): void;
-    notify(command: CommandTypes.Change, args: tsp.ChangeRequestArgs): void;
-    notify(command: string, args: any): void {
-        this.sendMessage(command, true, args);
+    shutdown(): void {
+        if (this.loadingIndicator) {
+            this.loadingIndicator.reset();
+        }
+        if (this.primaryTsServer) {
+            this.primaryTsServer.kill();
+        }
     }
 
-    request<K extends keyof TypeScriptRequestTypes>(
+    // High-level API.
+
+    public notify(command: CommandTypes.Open, args: tsp.OpenRequestArgs): void;
+    public notify(command: CommandTypes.Close, args: tsp.FileRequestArgs): void;
+    public notify(command: CommandTypes.Change, args: tsp.ChangeRequestArgs): void;
+    public notify(command: keyof TypeScriptRequestTypes, args: any): void {
+        this.executeWithoutWaitingForResponse(command, args);
+    }
+
+    public requestGeterr(args: tsp.GeterrRequestArgs, token: CancellationToken): Promise<any> {
+        return this.executeAsync(CommandTypes.Geterr, args, token);
+    }
+
+    public request<K extends keyof TypeScriptRequestTypes>(
         command: K,
         args: TypeScriptRequestTypes[K][0],
         token?: CancellationToken,
+        config?: ExecConfig,
     ): Promise<TypeScriptRequestTypes[K][1]> {
-        this.sendMessage(command, false, args);
-        const seq = this.seq;
-        const deferred = new Deferred<TypeScriptRequestTypes[K][1]>();
-        this.deferreds[seq] = deferred;
-        const request = deferred.promise;
-        if (token) {
-            const onCancelled = token.onCancellationRequested(() => {
-                onCancelled.dispose();
-                if (this.cancellationPipeName) {
-                    const requestCancellationPipeName = `${this.cancellationPipeName}${seq}`;
-                    fs.writeFile(requestCancellationPipeName, '', err => {
-                        if (!err) {
-                            request.then(() =>
-                                fs.unlink(requestCancellationPipeName, () => { /* no-op */ }),
-                            );
-                        }
-                    });
-                }
+        return this.execute(command, args, token, config);
+    }
+
+    // Low-level API.
+
+    public execute(command: keyof TypeScriptRequestTypes, args: any, token?: CancellationToken, config?: ExecConfig): Promise<ServerResponse.Response<tsp.Response>> {
+        let executions: Array<Promise<ServerResponse.Response<tsp.Response>> | undefined> | undefined;
+
+        // if (config?.cancelOnResourceChange) {
+        //     if (this.primaryTsServer) {
+        //         const source = new CancellationTokenSource();
+        //         token.onCancellationRequested(() => source.cancel());
+
+        //         const inFlight: ToCancelOnResourceChanged = {
+        //             resource: config.cancelOnResourceChange,
+        //             cancel: () => source.cancel(),
+        //         };
+        //         runningServerState.toCancelOnResourceChange.add(inFlight);
+
+        //         executions = this.executeImpl(command, args, {
+        //             isAsync: false,
+        //             token: source.token,
+        //             expectsResult: true,
+        //             ...config,
+        //         });
+        //         executions[0]!.finally(() => {
+        //             runningServerState.toCancelOnResourceChange.delete(inFlight);
+        //             source.dispose();
+        //         });
+        //     }
+        // }
+
+        if (!executions) {
+            executions = this.executeImpl(command, args, {
+                isAsync: false,
+                token,
+                expectsResult: true,
+                ...config,
             });
         }
-        return request;
+
+        if (config?.nonRecoverable) {
+            executions[0]!.catch(err => this.fatalError(command, err));
+        }
+
+        if (command === CommandTypes.UpdateOpen) {
+            // If update open has completed, consider that the project has loaded
+            Promise.all(executions).then(() => {
+                this.loadingIndicator.reset();
+            });
+        }
+
+        return executions[0]!;
     }
 
-    protected sendMessage(command: string, notification: boolean, args?: any): void {
-        this.seq = this.seq + 1;
-        const request: tsp.Request = {
-            command,
-            seq: this.seq,
-            type: 'request',
-        };
-        if (args) {
-            request.arguments = args;
-        }
-        const serializedRequest = JSON.stringify(request) + '\n';
-        if (this.tsserverProc) {
-            this.tsserverProc.stdin!.write(serializedRequest);
-            this.logger.log(notification ? 'notify' : 'request', request);
+    public executeWithoutWaitingForResponse(command: keyof TypeScriptRequestTypes, args: any): void {
+        this.executeImpl(command, args, {
+            isAsync: false,
+            token: undefined,
+            expectsResult: false,
+        });
+    }
+
+    public executeAsync(command: keyof TypeScriptRequestTypes, args: tsp.GeterrRequestArgs, token: CancellationToken): Promise<ServerResponse.Response<tsp.Response>> {
+        return this.executeImpl(command, args, {
+            isAsync: true,
+            token,
+            expectsResult: true,
+        })[0]!;
+    }
+
+    private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; requireSemantic?: boolean; }): Array<Promise<ServerResponse.Response<tsp.Response>> | undefined> {
+        if (this.primaryTsServer) {
+            return this.primaryTsServer.executeImpl(command, args, executeInfo);
         } else {
-            this.logger.error(`Message "${command}" couldn't be sent. Tsserver process not started.`);
+            return [Promise.resolve(ServerResponse.NoServer)];
         }
     }
 
-    protected processMessage(untrimmedMessageString: string): void {
-        const messageString = untrimmedMessageString.trim();
-        if (!messageString || messageString.startsWith('Content-Length:')) {
-            return;
+    private fatalError(command: string, error: unknown): void {
+        this.tsserverLogger.error(`A non-recoverable error occurred while executing command: ${command}`);
+        if (error instanceof TypeScriptServerError && error.serverErrorText) {
+            this.tsserverLogger.error(error.serverErrorText);
         }
-        const message: tsp.Message = JSON.parse(messageString);
-        this.logger.log('processMessage', message);
-        if (this.isResponse(message)) {
-            this.resolveResponse(message, message.request_seq, message.success);
-        } else if (this.isEvent(message)) {
-            if (this.isRequestCompletedEvent(message)) {
-                this.resolveResponse(message, message.body.request_seq, true);
-            } else {
-                if (this.options.onEvent) {
-                    this.options.onEvent(message);
-                }
+
+        if (this.primaryTsServer) {
+            this.logger.info('Killing TS Server');
+            this.primaryTsServer.kill();
+            if (error instanceof TypeScriptServerError) {
+                this.primaryTsServer = null;
             }
         }
-    }
-
-    private resolveResponse(message: tsp.Message, request_seq: number, success: boolean) {
-        const deferred = this.deferreds[request_seq];
-        this.logger.log('request completed', { request_seq, success });
-        if (deferred) {
-            if (success) {
-                this.deferreds[request_seq].resolve(message);
-            } else {
-                this.deferreds[request_seq].reject(message);
-            }
-            delete this.deferreds[request_seq];
-        }
-    }
-
-    private isEvent(message: tsp.Message): message is tsp.Event {
-        return message.type === 'event';
-    }
-
-    private isResponse(message: tsp.Message): message is tsp.Response {
-        return message.type === 'response';
-    }
-
-    private isRequestCompletedEvent(message: tsp.Message): message is tsp.RequestCompletedEvent {
-        return this.isEvent(message) && message.event === 'requestCompleted';
     }
 }

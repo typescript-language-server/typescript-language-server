@@ -105,7 +105,7 @@ export function toPlatformEOL(text: string): string {
     return text;
 }
 
-class TestLspClient implements LspClient {
+export class TestLspClient implements LspClient {
     private workspaceEditsListener: ((args: lsp.ApplyWorkspaceEditParams) => void) | null = null;
 
     constructor(protected options: TestLspServerOptions, protected logger: ConsoleLogger) {}
@@ -124,11 +124,11 @@ class TestLspClient implements LspClient {
         return await task(progress);
     }
 
-    publishDiagnostics(args: lsp.PublishDiagnosticsParams) {
+    publishDiagnostics(args: lsp.PublishDiagnosticsParams): void {
         return this.options.publishDiagnostics(args);
     }
 
-    showErrorMessage(message: string) {
+    showErrorMessage(message: string): void {
         this.logger.error(`[showErrorMessage] ${message}`);
     }
 
@@ -147,7 +147,7 @@ class TestLspClient implements LspClient {
         return { applied: true };
     }
 
-    async rename() {
+    rename(): Promise<void> {
         throw new Error('unsupported');
     }
 }
