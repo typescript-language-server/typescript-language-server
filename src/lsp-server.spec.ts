@@ -201,7 +201,7 @@ describe('completion', () => {
         server.didCloseTextDocument({ textDocument: doc });
     });
 
-    it('completions for clients that do not support insertReplaceSupport', async () => {
+    it('completions for clients that support insertReplaceSupport', async () => {
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -221,16 +221,16 @@ describe('completion', () => {
         const completion = proposals!.items.find(completion => completion.label === 'getById');
         assert.isDefined(completion);
         assert.isDefined(completion!.textEdit);
-        assert.containsAllKeys(completion!.textEdit, ['newText', 'range']);
+        assert.containsAllKeys(completion!.textEdit, ['newText', 'insert', 'replace']);
         server.didCloseTextDocument({ textDocument: doc });
     });
 
-    it('completions for clients that support insertReplaceSupport', async () => {
+    it('completions for clients that do not support insertReplaceSupport', async () => {
         const clientCapabilitiesOverride: lsp.ClientCapabilities = {
             textDocument: {
                 completion: {
                     completionItem: {
-                        insertReplaceSupport: true,
+                        insertReplaceSupport: false,
                     },
                 },
             },
@@ -258,8 +258,7 @@ describe('completion', () => {
         assert.isNotNull(proposals);
         const completion = proposals!.items.find(completion => completion.label === 'getById');
         assert.isDefined(completion);
-        assert.isDefined(completion!.textEdit);
-        assert.containsAllKeys(completion!.textEdit, ['newText', 'insert', 'replace']);
+        assert.isUndefined(completion!.textEdit);
         localServer.didCloseTextDocument({ textDocument: doc });
         localServer.closeAll();
         localServer.shutdown();
@@ -401,7 +400,7 @@ describe('completion', () => {
                 return true;
               }
 
-              test("fs/")
+              test("fs/r")
             `,
         };
         server.didOpenTextDocument({ textDocument: doc });
@@ -417,11 +416,27 @@ describe('completion', () => {
         const completion = proposals!.items.find(completion => completion.label === 'fs/read');
         assert.strictEqual(completion!.label, 'fs/read');
         assert.deepStrictEqual(completion!.textEdit, {
-            range: {
-                start: { line: 5, character: 20 },
-                end: { line: 5, character: 23 },
-            },
             newText: 'fs/read',
+            insert: {
+                start: {
+                    line: 5,
+                    character: 20,
+                },
+                end: {
+                    line: 5,
+                    character: 23,
+                },
+            },
+            replace: {
+                start: {
+                    line: 5,
+                    character: 20,
+                },
+                end: {
+                    line: 5,
+                    character: 24,
+                },
+            },
         });
     });
 

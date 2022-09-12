@@ -26,6 +26,7 @@ const DEFAULT_TEST_CLIENT_CAPABILITIES: lsp.ClientCapabilities = {
     textDocument: {
         completion: {
             completionItem: {
+                insertReplaceSupport: true,
                 snippetSupport: true,
                 labelDetailsSupport: true,
             },
