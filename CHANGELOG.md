@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v1.1.2...v1.2.0) (2022-09-12)
+
+
+### Features
+
+* Add insert replace support for completions ([#583](https://github.com/typescript-language-server/typescript-language-server/issues/583)) ([fdf9d11](https://github.com/typescript-language-server/typescript-language-server/commit/fdf9d11200c49a160ed3c3bd523e4792bc98e99d))
+* add support for new features from TypeScript 4.8 ([#576](https://github.com/typescript-language-server/typescript-language-server/issues/576)) ([7e88db3](https://github.com/typescript-language-server/typescript-language-server/commit/7e88db301a56d6d2dcd0fc1872d6baa386210497))
+* include "triggerReason" and "kind" in code action requests ([#579](https://github.com/typescript-language-server/typescript-language-server/issues/579)) ([f872078](https://github.com/typescript-language-server/typescript-language-server/commit/f872078fa3b40d8b9b90f737fec7a4c808f1ccc7))
+* support communicating with tsserver using IPC ([#585](https://github.com/typescript-language-server/typescript-language-server/issues/585)) ([8725b9b](https://github.com/typescript-language-server/typescript-language-server/commit/8725b9bee4432b7520ebd9adc67f4c65303b2c8c))
+* support for codeAction disabledSupport client capability ([#578](https://github.com/typescript-language-server/typescript-language-server/issues/578)) ([f93b849](https://github.com/typescript-language-server/typescript-language-server/commit/f93b8493eeafda32c865c93e99025c8ca11c3226))
+
+
+### Bug Fixes
+
+* only use optionalReplacementSpan if client supports InsertReplace ([#584](https://github.com/typescript-language-server/typescript-language-server/issues/584)) ([899ba6b](https://github.com/typescript-language-server/typescript-language-server/commit/899ba6b5c5f13faac8eec6478ced4d9f8d90836d))
+
 ## [1.1.2](https://github.com/typescript-language-server/typescript-language-server/compare/v1.1.1...v1.1.2) (2022-08-25)
 
 
