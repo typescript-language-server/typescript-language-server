@@ -7,26 +7,32 @@
 
 import * as chai from 'chai';
 import { TspClient } from './tsp-client.js';
-import { ConsoleLogger } from './logger.js';
+import { ConsoleLogger } from './utils/logger.js';
 import { filePath, readContents, TestLspClient, uri } from './test-utils.js';
 import { CommandTypes } from './tsp-command-types.js';
+import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
+import { TypeScriptServiceConfiguration } from './utils/configuration.js';
 
 const assert = chai.assert;
-const typescriptVersionProvider = new TypeScriptVersionProvider();
-const bundled = typescriptVersionProvider.bundledVersion();
 const logger = new ConsoleLogger();
 const lspClientOptions = {
     rootUri: uri(),
     publishDiagnostics: () => { },
 };
 const lspClient = new TestLspClient(lspClientOptions, logger);
+const configuration: TypeScriptServiceConfiguration = {
+    logger,
+    lspClient,
+};
+const typescriptVersionProvider = new TypeScriptVersionProvider(configuration);
+const bundled = typescriptVersionProvider.bundledVersion();
 let server: TspClient;
 
 before(() => {
     server = new TspClient({
-        logger,
-        lspClient,
+        ...configuration,
+        trace: Trace.Off,
         typescriptVersion: bundled!,
     });
 });

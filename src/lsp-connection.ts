@@ -5,21 +5,21 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver/node.js';
+import lsp from 'vscode-languageserver/node.js';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import * as lspinlayHints from './lsp-protocol.inlayHints.proposed.js';
-import { LspClientLogger } from './logger.js';
+import { LspClientLogger } from './utils/logger.js';
 import { LspServer } from './lsp-server.js';
 import { LspClientImpl } from './lsp-client.js';
 
-export interface IServerOptions {
+export interface LspConnectionOptions {
     tsserverPath: string;
     tsserverLogFile?: string;
     tsserverLogVerbosity?: string;
     showMessageLevel: lsp.MessageType;
 }
 
-export function createLspConnection(options: IServerOptions): lsp.Connection {
+export function createLspConnection(options: LspConnectionOptions): lsp.Connection {
     const connection = lsp.createConnection(lsp.ProposedFeatures.all);
     const lspClient = new LspClientImpl(connection);
     const logger = new LspClientLogger(lspClient, options.showMessageLevel);

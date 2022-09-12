@@ -16,7 +16,7 @@ import * as lspsemanticTokens from './semantic-tokens.js';
 import tsp from 'typescript/lib/protocol.d.js';
 import API from './utils/api.js';
 import { CommandTypes, EventTypes } from './tsp-command-types.js';
-import { Logger, PrefixingLogger } from './logger.js';
+import { Logger, PrefixingLogger } from './utils/logger.js';
 import { TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
 import { toDocumentHighlight, asTagsDocumentation, uriToPath, toSymbolKind, toLocation, pathToUri, toTextEdit, asPlainText, normalizePath } from './protocol-translation.js';
@@ -30,10 +30,11 @@ import { provideOrganizeImports } from './organize-imports.js';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, SupportedFeatures } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { computeCallers, computeCallees } from './calls.js';
-import { IServerOptions } from './utils/configuration.js';
+import { TypeScriptServiceConfiguration } from './utils/configuration.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
+import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
@@ -51,7 +52,7 @@ export class LspServer {
 
     private readonly documents = new LspDocuments();
 
-    constructor(private options: IServerOptions) {
+    constructor(private options: TypeScriptServiceConfiguration) {
         this.configurationManager = new ConfigurationManager(this.documents);
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
     }
@@ -111,7 +112,7 @@ export class LspServer {
         this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
-        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale } = userInitializationOptions;
+        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale, tsserver } = userInitializationOptions;
         const { logVerbosity, plugins }: TypeScriptInitializationOptions = {
             logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
             plugins: userInitializationOptions.plugins || [],
@@ -168,6 +169,7 @@ export class LspServer {
         );
         this._tspClient = new TspClient({
             lspClient: this.options.lspClient,
+            trace: Trace.fromString(tsserver?.trace || 'off'),
             typescriptVersion,
             logFile,
             logVerbosity,

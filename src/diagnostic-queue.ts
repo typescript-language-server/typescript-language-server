@@ -8,7 +8,7 @@
 import type tsp from 'typescript/lib/protocol.d.js';
 import * as lsp from 'vscode-languageserver';
 import debounce from 'p-debounce';
-import { Logger } from './logger.js';
+import { Logger } from './utils/logger.js';
 import { pathToUri, toDiagnostic } from './protocol-translation.js';
 import { EventTypes } from './tsp-command-types.js';
 import { LspDocuments } from './document.js';
