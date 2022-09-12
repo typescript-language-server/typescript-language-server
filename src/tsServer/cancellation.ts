@@ -19,7 +19,7 @@ export interface OngoingRequestCanceller {
 }
 
 export interface OngoingRequestCancellerFactory {
-    create(serverId: string/*, tracer: Tracer*/): OngoingRequestCanceller;
+    create(/*serverId: string, tracer: Tracer*/): OngoingRequestCanceller;
 }
 
 const noopRequestCanceller = new class implements OngoingRequestCanceller {
@@ -31,7 +31,7 @@ const noopRequestCanceller = new class implements OngoingRequestCanceller {
 };
 
 export const noopRequestCancellerFactory = new class implements OngoingRequestCancellerFactory {
-    create(_serverId: string/*, _tracer: Tracer*/): OngoingRequestCanceller {
+    create(/*_serverId: string, _tracer: Tracer*/): OngoingRequestCanceller {
         return noopRequestCanceller;
     }
 };
