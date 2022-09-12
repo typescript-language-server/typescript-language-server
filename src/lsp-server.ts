@@ -34,52 +34,13 @@ import { IServerOptions } from './utils/configuration.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
-import { LspClient } from './lsp-client.js';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 import { ConfigurationManager } from './configuration-manager.js';
 
-class ServerInitializingIndicator {
-    private _loadingProjectName?: string;
-    private _progressReporter?: lsp.WorkDoneProgressReporter;
-
-    constructor(private lspClient: LspClient) {}
-
-    public reset(): void {
-        if (this._loadingProjectName) {
-            this._loadingProjectName = undefined;
-            if (this._progressReporter) {
-                this._progressReporter.done();
-                this._progressReporter = undefined;
-            }
-        }
-    }
-
-    public async startedLoadingProject(projectName: string): Promise<void> {
-        // TS projects are loaded sequentially. Cancel existing task because it should always be resolved before
-        // the incoming project loading task is.
-        this.reset();
-
-        this._loadingProjectName = projectName;
-        this._progressReporter = await this.lspClient.createProgressReporter();
-        this._progressReporter.begin('Initializing JS/TS language features…');
-    }
-
-    public finishedLoadingProject(projectName: string): void {
-        if (this._loadingProjectName === projectName) {
-            this._loadingProjectName = undefined;
-            if (this._progressReporter) {
-                this._progressReporter.done();
-                this._progressReporter = undefined;
-            }
-        }
-    }
-}
-
 export class LspServer {
     private _tspClient: TspClient | null = null;
-    private _loadingIndicator: ServerInitializingIndicator | null = null;
     private initializeParams: TypeScriptInitializeParams | null = null;
     private diagnosticQueue?: DiagnosticEventQueue;
     private configurationManager: ConfigurationManager;
@@ -106,10 +67,6 @@ export class LspServer {
             this._tspClient.shutdown();
             this._tspClient = null;
         }
-        if (this._loadingIndicator) {
-            this._loadingIndicator.reset();
-            this._loadingIndicator = null;
-        }
     }
 
     private get tspClient(): TspClient {
@@ -117,13 +74,6 @@ export class LspServer {
             throw new Error('TS client not created. Did you forget to send the "initialize" request?');
         }
         return this._tspClient;
-    }
-
-    private get loadingIndicator(): ServerInitializingIndicator {
-        if (!this._loadingIndicator) {
-            throw new Error('Loading indicator not created. Did you forget to send the "initialize" request?');
-        }
-        return this._loadingIndicator;
     }
 
     private findTypescriptVersion(): TypeScriptVersion | null {
@@ -158,7 +108,6 @@ export class LspServer {
         }
         this.initializeParams = params;
         const clientCapabilities = this.initializeParams.capabilities;
-        this._loadingIndicator = new ServerInitializingIndicator(this.options.lspClient);
         this.workspaceRoot = this.initializeParams.rootUri ? uriToPath(this.initializeParams.rootUri) : this.initializeParams.rootPath || undefined;
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
@@ -218,8 +167,8 @@ export class LspServer {
             this.logger,
         );
         this._tspClient = new TspClient({
-            apiVersion: typescriptVersion.version || API.defaultVersion,
-            tsserverPath: typescriptVersion.tsServerPath,
+            lspClient: this.options.lspClient,
+            typescriptVersion,
             logFile,
             logVerbosity,
             disableAutomaticTypingAcquisition,
@@ -400,7 +349,7 @@ export class LspServer {
 
         const { files } = this.documents;
         try {
-            return await this.tspClient.request(CommandTypes.Geterr, { delay: 0, files }, this.diagnosticsTokenSource.token);
+            return await this.tspClient.requestGeterr({ delay: 0, files }, this.diagnosticsTokenSource.token);
         } finally {
             if (this.diagnosticsTokenSource === geterrTokenSource) {
                 this.diagnosticsTokenSource = undefined;
@@ -1176,18 +1125,8 @@ export class LspServer {
     }
 
     protected async onTsEvent(event: protocol.Event): Promise<void> {
-        if (event.event === EventTypes.SementicDiag ||
-            event.event === EventTypes.SyntaxDiag ||
-            event.event === EventTypes.SuggestionDiag) {
+        if (event.event === EventTypes.SementicDiag || event.event === EventTypes.SyntaxDiag || event.event === EventTypes.SuggestionDiag) {
             this.diagnosticQueue?.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
-        } else if (event.event === EventTypes.ProjectLoadingStart) {
-            await this.loadingIndicator.startedLoadingProject((event as tsp.ProjectLoadingStartEvent).body.projectName);
-        } else if (event.event === EventTypes.ProjectLoadingFinish) {
-            this.loadingIndicator.finishedLoadingProject((event as tsp.ProjectLoadingFinishEvent).body.projectName);
-        } else {
-            this.logger.log('Ignored event', {
-                event: event.event,
-            });
         }
     }
 
