@@ -91,7 +91,7 @@ The `tsserver` setting specifies additional options related to the internal `tss
 interface TsserverOptions {
     /**
      * The verbosity of logging of the tsserver communication.
-     * Delivered through the LSP messages and doesn't affect file logging.
+     * Delivered through the LSP messages and not related to file logging.
      * @default 'off'
      */
     trace?: 'off' | 'messages' | 'verbose';
