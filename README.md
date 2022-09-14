@@ -83,6 +83,20 @@ The language server accepts various settings through the `initializationOptions`
 | locale            | string   | The locale to use to show error messages. |
 | plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: []                                                                                                                                                         |
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more info.                                                                                                                              |
+| tsserver          | object   | Options related to the `tsserver` process. See below for more info.                                                                                                                              |
+
+The `tsserver` setting specifies additional options related to the internal `tsserver` process, like tracing and logging.
+
+```ts
+interface TsserverOptions {
+    /**
+     * The verbosity of logging of the tsserver communication.
+     * Delivered through the LSP messages and not related to file logging.
+     * @default 'off'
+     */
+    trace?: 'off' | 'messages' | 'verbose';
+}
+```
 
 The `preferences` object is an object specifying preferences for the internal `tsserver` process. Those options depend on the version of Typescript used but at the time of writing Typescript v4.4.3 contains these options:
 

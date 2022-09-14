@@ -10,6 +10,7 @@
  */
 import * as lsp from 'vscode-languageserver-protocol';
 import type tsp from 'typescript/lib/protocol.d.js';
+import type { TraceValue } from './tsServer/tracer.js';
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
@@ -40,13 +41,23 @@ export interface TypeScriptPlugin {
 
 export interface TypeScriptInitializationOptions {
     disableAutomaticTypingAcquisition?: boolean;
+    hostInfo?: string;
+    locale?: string;
     logVerbosity?: string;
     maxTsServerMemory?: number;
     npmLocation?: string;
-    locale?: string;
     plugins: TypeScriptPlugin[];
     preferences?: tsp.UserPreferences;
-    hostInfo?: string;
+    tsserver?: TsserverOptions;
+}
+
+interface TsserverOptions {
+    /**
+     * The verbosity of logging the tsserver communication through the LSP messages.
+     * This doesn't affect the file logging.
+     * @default 'off'
+     */
+    trace?: TraceValue;
 }
 
 export type TypeScriptInitializeParams = lsp.InitializeParams & {

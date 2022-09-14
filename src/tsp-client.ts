@@ -13,12 +13,13 @@ import type tsp from 'typescript/lib/protocol.d.js';
 import type lsp from 'vscode-languageserver';
 import type { CancellationToken } from 'vscode-jsonrpc';
 import { CommandTypes, EventTypes } from './tsp-command-types.js';
-import { Logger, PrefixingLogger } from './logger.js';
+import { Logger, PrefixingLogger } from './utils/logger.js';
 import API from './utils/api.js';
 import { ExecConfig, ServerResponse, TypeScriptRequestTypes } from './tsServer/requests.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
 import { TypeScriptServerError } from './tsServer/serverError.js';
 import { TypeScriptServerSpawner } from './tsServer/spawner.js';
+import Tracer, { Trace } from './tsServer/tracer.js';
 import type { TypeScriptVersion } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
 
@@ -61,6 +62,7 @@ class ServerInitializingIndicator {
 
 export interface TspClientOptions {
     lspClient: LspClient;
+    trace: Trace;
     typescriptVersion: TypeScriptVersion;
     logger: Logger;
     logFile?: string;
@@ -81,16 +83,18 @@ export class TspClient {
     private logger: Logger;
     private tsserverLogger: Logger;
     private loadingIndicator: ServerInitializingIndicator;
+    private tracer: Tracer;
 
     constructor(private options: TspClientOptions) {
         this.apiVersion = options.typescriptVersion.version || API.defaultVersion;
         this.logger = new PrefixingLogger(options.logger, '[tsclient]');
         this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]');
         this.loadingIndicator = new ServerInitializingIndicator(options.lspClient);
+        this.tracer = new Tracer(this.tsserverLogger, options.trace);
     }
 
     start(): boolean {
-        const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, this.logger);
+        const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, this.logger, this.tracer);
         const tsServer = tsServerSpawner.spawn(this.options.typescriptVersion, this.options);
         tsServer.onExit((data: TypeScriptServerExitEvent) => {
             this.shutdown();

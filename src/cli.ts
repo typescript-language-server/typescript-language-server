@@ -8,8 +8,8 @@
 
 import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
+import lsp from 'vscode-languageserver';
 import { createLspConnection } from './lsp-connection.js';
-import * as lsp from 'vscode-languageserver';
 
 const DEFAULT_LOG_LEVEL = lsp.MessageType.Info;
 const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' }));

@@ -17,6 +17,7 @@ import type { TspClientOptions } from '../tsp-client.js';
 import { OngoingRequestCanceller } from './cancellation.js';
 import { CallbackMap } from './callbackMap.js';
 import { TypeScriptServerError } from './serverError.js';
+import type Tracer from './tracer.js';
 import type { TypeScriptVersion } from './versionProvider.js';
 
 export enum ExecutionTarget {
@@ -92,7 +93,7 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
         private readonly _tsServerLogFile: string | undefined,
         private readonly _requestCanceller: OngoingRequestCanceller,
         private readonly _version: TypeScriptVersion,
-        // private readonly _tracer: Tracer,
+        private readonly _tracer: Tracer,
     ) {
         this._process.onData(msg => {
             this.dispatchMessage(msg);
@@ -161,11 +162,11 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
                         const seq = (event as tsp.RequestCompletedEvent).body.request_seq;
                         const callback = this._callbacks.fetch(seq);
                         if (callback) {
-                            // this._tracer.traceRequestCompleted(this._serverId, 'requestCompleted', seq, callback);
+                            this._tracer.traceRequestCompleted(this._serverId, 'requestCompleted', seq, callback);
                             callback.onSuccess(undefined);
                         }
                     } else {
-                        // this._tracer.traceEvent(this._serverId, event);
+                        this._tracer.traceEvent(this._serverId, event);
                         this._eventHandlers.forEach(handler => handler(event));
                     }
                     break;
@@ -203,7 +204,7 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
             return;
         }
 
-        // this._tracer.traceResponse(this._serverId, response, callback);
+        this._tracer.traceResponse(this._serverId, response, callback);
         if (response.success) {
             callback.onSuccess(response);
         } else if (response.message === 'No content available.') {
@@ -253,7 +254,7 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
 
     private sendRequest(requestItem: RequestItem): void {
         const serverRequest = requestItem.request;
-        // this._tracer.traceRequest(this._serverId, serverRequest, requestItem.expectsResponse, this._requestQueue.length);
+        this._tracer.traceRequest(this._serverId, serverRequest, requestItem.expectsResponse, this._requestQueue.length);
 
         if (requestItem.expectsResponse && !requestItem.isAsync) {
             this._pendingResponses.add(requestItem.request.seq);
@@ -277,8 +278,8 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
         return callback;
     }
 
-    private logTrace(_message: string) {
-        // this._tracer.logTrace(this._serverId, message);
+    private logTrace(message: string) {
+        this._tracer.logTrace(this._serverId, message);
     }
 
     private static readonly fenceCommands = new Set(['change', 'close', 'open', 'updateOpen']);

@@ -2,15 +2,22 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+/*
+ * Copyright (C) 2022 TypeFox and others.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ */
+
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import which from 'which';
 import { pkgUpSync } from 'pkg-up';
 import API from '../utils/api.js';
-import type { IServerOptions } from '../utils/configuration.js';
+import type { TypeScriptServiceConfiguration } from '../utils/configuration.js';
 import { findPathToModule } from '../utils/modules-resolver.js';
-import type { Logger } from '../logger.js';
+import type { Logger } from '../utils/logger.js';
 
 export const enum TypeScriptVersionSource {
     Bundled = 'bundled',
@@ -105,10 +112,10 @@ export class TypeScriptVersion {
 export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib'];
 
 export class TypeScriptVersionProvider {
-    public constructor(private configuration?: IServerOptions, private logger?: Logger) {}
+    public constructor(private configuration: TypeScriptServiceConfiguration, private logger?: Logger) {}
 
     public getUserSettingVersion(): TypeScriptVersion | null {
-        const { tsserverPath } = this.configuration || {};
+        const { tsserverPath } = this.configuration;
         if (!tsserverPath) {
             return null;
         }
