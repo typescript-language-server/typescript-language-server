@@ -61,7 +61,6 @@ typescript-language-server --stdio
     -V, --version                          output the version number
     --stdio                                use stdio (required option)
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
-    --tsserver-log-file <tsServerLogFile>  Specify a tsserver log file. example: --tsserver-log-file=ts-logs.txt
     --tsserver-log-verbosity <verbosity>   Specify tsserver log verbosity (off, terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
     --tsserver-path <path>                 Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/
     -h, --help                             output usage information
@@ -89,6 +88,14 @@ The `tsserver` setting specifies additional options related to the internal `tss
 
 ```ts
 interface TsserverOptions {
+    /**
+     * The path to the directory where the `tsserver` logs will be created.
+     * If not provided, the log files will be created within the workspace, inside the `.log` directory.
+     * If not workspace path is provided when initializating the server and no custom path is specified then
+     * the logs will not be created.
+     * @default undefined
+     */
+    logDirectory?: string;
     /**
      * The verbosity of logging of the tsserver communication.
      * Delivered through the LSP messages and not related to file logging.

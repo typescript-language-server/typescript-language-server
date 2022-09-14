@@ -12,7 +12,8 @@ import { filePath, readContents, TestLspClient, uri } from './test-utils.js';
 import { CommandTypes } from './tsp-command-types.js';
 import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
-import { TypeScriptServiceConfiguration } from './utils/configuration.js';
+import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
+import { noopLogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 
 const assert = chai.assert;
 const logger = new ConsoleLogger();
@@ -24,6 +25,7 @@ const lspClient = new TestLspClient(lspClientOptions, logger);
 const configuration: TypeScriptServiceConfiguration = {
     logger,
     lspClient,
+    tsserverLogVerbosity: TsServerLogLevel.Off,
 };
 const typescriptVersionProvider = new TypeScriptVersionProvider(configuration);
 const bundled = typescriptVersionProvider.bundledVersion();
@@ -32,6 +34,8 @@ let server: TspClient;
 before(() => {
     server = new TspClient({
         ...configuration,
+        logDirectoryProvider: noopLogDirectoryProvider,
+        logVerbosity: configuration.tsserverLogVerbosity,
         trace: Trace.Off,
         typescriptVersion: bundled!,
     });

@@ -8,7 +8,7 @@
 /**
  * **IMPORTANT** this module should not depend on `vscode-languageserver` only protocol and types
  */
-import * as lsp from 'vscode-languageserver-protocol';
+import lsp from 'vscode-languageserver-protocol';
 import type tsp from 'typescript/lib/protocol.d.js';
 import type { TraceValue } from './tsServer/tracer.js';
 
@@ -43,7 +43,6 @@ export interface TypeScriptInitializationOptions {
     disableAutomaticTypingAcquisition?: boolean;
     hostInfo?: string;
     locale?: string;
-    logVerbosity?: string;
     maxTsServerMemory?: number;
     npmLocation?: string;
     plugins: TypeScriptPlugin[];
@@ -52,6 +51,14 @@ export interface TypeScriptInitializationOptions {
 }
 
 interface TsserverOptions {
+    /**
+     * The path to the directory where the `tsserver` logs will be created.
+     * If not provided, the log files will be created within the workspace, inside the `.log` directory.
+     * If not workspace path is provided when initializating the server and no custom path is specified then
+     * the logs will not be created.
+     * @default undefined
+     */
+    logDirectory?: string;
     /**
      * The verbosity of logging the tsserver communication through the LSP messages.
      * This doesn't affect the file logging.
@@ -63,7 +70,3 @@ interface TsserverOptions {
 export type TypeScriptInitializeParams = lsp.InitializeParams & {
     initializationOptions?: Partial<TypeScriptInitializationOptions>;
 };
-
-export interface TypeScriptInitializeResult extends lsp.InitializeResult {
-    logFileUri?: string;
-}
