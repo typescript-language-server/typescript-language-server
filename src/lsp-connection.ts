@@ -11,11 +11,11 @@ import * as lspinlayHints from './lsp-protocol.inlayHints.proposed.js';
 import { LspClientLogger } from './utils/logger.js';
 import { LspServer } from './lsp-server.js';
 import { LspClientImpl } from './lsp-client.js';
+import type { TsServerLogLevel } from './utils/configuration.js';
 
 export interface LspConnectionOptions {
     tsserverPath: string;
-    tsserverLogFile?: string;
-    tsserverLogVerbosity?: string;
+    tsserverLogVerbosity: TsServerLogLevel;
     showMessageLevel: lsp.MessageType;
 }
 
@@ -27,7 +27,6 @@ export function createLspConnection(options: LspConnectionOptions): lsp.Connecti
         logger,
         lspClient,
         tsserverPath: options.tsserverPath,
-        tsserverLogFile: options.tsserverLogFile,
         tsserverLogVerbosity: options.tsserverLogVerbosity,
     });
 

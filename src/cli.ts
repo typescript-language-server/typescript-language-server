@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
 import lsp from 'vscode-languageserver';
 import { createLspConnection } from './lsp-connection.js';
+import { TsServerLogLevel } from './utils/configuration.js';
 
 const DEFAULT_LOG_LEVEL = lsp.MessageType.Info;
 const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' }));
@@ -18,7 +19,6 @@ const program = new Command('typescript-language-server')
     .version(version)
     .requiredOption('--stdio', 'use stdio')
     .option('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.')
-    .option('--tsserver-log-file <tsserverLogFile>', 'Specify a tsserver log file. example: --tsserver-log-file ts-logs.txt')
     .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
       ' example: --tsserver-log-verbosity verbose')
     .option('--tsserver-path <path>', 'Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/')
@@ -26,8 +26,10 @@ const program = new Command('typescript-language-server')
 
 const options = program.opts();
 
-if (options.tsserverLogFile && !options.tsserverLogVerbosity) {
-    options.tsserverLogVerbosity = 'normal';
+let tsserverLogVerbosity = TsServerLogLevel.fromString(options.tsserverLogVerbosity);
+
+if (options.tsserverLogFile && tsserverLogVerbosity === TsServerLogLevel.Off) {
+    tsserverLogVerbosity = TsServerLogLevel.Normal;
 }
 
 let logLevel = DEFAULT_LOG_LEVEL;
@@ -41,7 +43,6 @@ if (options.logLevel) {
 
 createLspConnection({
     tsserverPath: options.tsserverPath as string,
-    tsserverLogFile: options.tsserverLogFile as string,
-    tsserverLogVerbosity: options.tsserverLogVerbosity as string,
+    tsserverLogVerbosity,
     showMessageLevel: logLevel as lsp.MessageType,
 }).listen();

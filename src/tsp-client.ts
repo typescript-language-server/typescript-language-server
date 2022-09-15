@@ -15,6 +15,7 @@ import type { CancellationToken } from 'vscode-jsonrpc';
 import { CommandTypes, EventTypes } from './tsp-command-types.js';
 import { Logger, PrefixingLogger } from './utils/logger.js';
 import API from './utils/api.js';
+import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { ExecConfig, ServerResponse, TypeScriptRequestTypes } from './tsServer/requests.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
 import { TypeScriptServerError } from './tsServer/serverError.js';
@@ -22,6 +23,7 @@ import { TypeScriptServerSpawner } from './tsServer/spawner.js';
 import Tracer, { Trace } from './tsServer/tracer.js';
 import type { TypeScriptVersion } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
+import type { TsServerLogLevel } from './utils/configuration.js';
 
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;
@@ -65,8 +67,8 @@ export interface TspClientOptions {
     trace: Trace;
     typescriptVersion: TypeScriptVersion;
     logger: Logger;
-    logFile?: string;
-    logVerbosity?: string;
+    logVerbosity: TsServerLogLevel;
+    logDirectoryProvider: ILogDirectoryProvider;
     disableAutomaticTypingAcquisition?: boolean;
     maxTsServerMemory?: number;
     npmLocation?: string;
@@ -94,7 +96,7 @@ export class TspClient {
     }
 
     start(): boolean {
-        const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, this.logger, this.tracer);
+        const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, this.options.logDirectoryProvider, this.logger, this.tracer);
         const tsServer = tsServerSpawner.spawn(this.options.typescriptVersion, this.options);
         tsServer.onExit((data: TypeScriptServerExitEvent) => {
             this.shutdown();
@@ -118,10 +120,6 @@ export class TspClient {
         this.primaryTsServer = null;
         this.loadingIndicator.reset();
     }
-
-    // private static isLoggingEnabled(configuration: TspClientOptions) {
-    //     return configuration.tsServerLogLevel !== TsServerLogLevel.Off;
-    // }
 
     private dispatchEvent(event: tsp.Event) {
         switch (event.event) {

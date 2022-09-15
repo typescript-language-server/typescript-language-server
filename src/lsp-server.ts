@@ -8,7 +8,6 @@
 import * as path from 'node:path';
 import fs from 'fs-extra';
 import debounce from 'p-debounce';
-import { temporaryFile } from 'tempy';
 import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import * as lspinlayHints from './lsp-protocol.inlayHints.proposed.js';
@@ -27,13 +26,14 @@ import { Commands } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
 import { provideOrganizeImports } from './organize-imports.js';
-import { TypeScriptInitializeParams, TypeScriptInitializationOptions, TypeScriptInitializeResult, SupportedFeatures } from './ts-protocol.js';
+import { TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { computeCallers, computeCallees } from './calls.js';
 import { TypeScriptServiceConfiguration } from './utils/configuration.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
+import { LogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 import { Position, Range } from './utils/typeConverters.js';
@@ -102,7 +102,7 @@ export class LspServer {
         return null;
     }
 
-    async initialize(params: TypeScriptInitializeParams): Promise<TypeScriptInitializeResult> {
+    async initialize(params: TypeScriptInitializeParams): Promise<lsp.InitializeResult> {
         this.logger.log('initialize', params);
         if (this._tspClient) {
             throw new Error('The "initialize" request has already called before.');
@@ -113,12 +113,10 @@ export class LspServer {
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
         const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale, tsserver } = userInitializationOptions;
-        const { logVerbosity, plugins }: TypeScriptInitializationOptions = {
-            logVerbosity: userInitializationOptions.logVerbosity || this.options.tsserverLogVerbosity,
+        const { plugins }: TypeScriptInitializationOptions = {
             plugins: userInitializationOptions.plugins || [],
         };
 
-        const logFile = this.getLogFile(logVerbosity);
         const globalPlugins: string[] = [];
         const pluginProbeLocations: string[] = [];
         for (const plugin of plugins) {
@@ -171,8 +169,8 @@ export class LspServer {
             lspClient: this.options.lspClient,
             trace: Trace.fromString(tsserver?.trace || 'off'),
             typescriptVersion,
-            logFile,
-            logVerbosity,
+            logDirectoryProvider: new LogDirectoryProvider(this.getLogDirectoryPath(userInitializationOptions)),
+            logVerbosity: this.options.tsserverLogVerbosity,
             disableAutomaticTypingAcquisition,
             maxTsServerMemory,
             npmLocation,
@@ -216,8 +214,7 @@ export class LspServer {
             }),
         ]);
 
-        const logFileUri = logFile && pathToUri(logFile, undefined);
-        const initializeResult: TypeScriptInitializeResult = {
+        const initializeResult: lsp.InitializeResult = {
             capabilities: {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
                 completionProvider: {
@@ -290,32 +287,18 @@ export class LspServer {
                     range: true,
                 },
             },
-            logFileUri,
         };
         (initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
         this.logger.log('onInitialize result', initializeResult);
         return initializeResult;
     }
-    protected getLogFile(logVerbosity: string | undefined): string | undefined {
-        if (logVerbosity === undefined || logVerbosity === 'off') {
-            return undefined;
-        }
-        const logFile = this.doGetLogFile();
-        if (logFile) {
-            fs.ensureFileSync(logFile);
-            return logFile;
-        }
-        return temporaryFile({ name: 'tsserver.log' });
-    }
-    protected doGetLogFile(): string | undefined {
-        if (process.env.TSSERVER_LOG_FILE) {
-            return process.env.TSSERVER_LOG_FILE;
-        }
-        if (this.options.tsserverLogFile) {
-            return this.options.tsserverLogFile;
+
+    private getLogDirectoryPath(initializationOptions: TypeScriptInitializationOptions): string | undefined {
+        if (initializationOptions.tsserver?.logDirectory) {
+            return initializationOptions.tsserver.logDirectory;
         }
         if (this.workspaceRoot) {
-            return path.join(this.workspaceRoot, '.log/tsserver.log');
+            return path.join(this.workspaceRoot, '.log');
         }
         return undefined;
     }

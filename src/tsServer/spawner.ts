@@ -9,20 +9,23 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import path from 'node:path';
 import API from '../utils/api.js';
 import { ServerType } from './requests.js';
 import { Logger } from '../utils/logger.js';
 import type { TspClientOptions } from '../tsp-client.js';
 import { nodeRequestCancellerFactory } from './cancellation.js';
+import type { ILogDirectoryProvider } from './logDirectoryProvider.js';
 import { ITypeScriptServer, ProcessBasedTsServer, TsServerProcessKind } from './server.js';
 import { NodeTsServerProcessFactory } from './serverProcess.js';
 import type Tracer from './tracer.js';
 import type { TypeScriptVersion } from './versionProvider.js';
+import { TsServerLogLevel } from '../utils/configuration.js';
 
 export class TypeScriptServerSpawner {
     public constructor(
         private readonly _apiVersion: API,
-        // private readonly _logDirectoryProvider: ILogDirectoryProvider,
+        private readonly _logDirectoryProvider: ILogDirectoryProvider,
         private readonly _logger: Logger,
         private readonly _tracer: Tracer,
     ) { }
@@ -35,6 +38,15 @@ export class TypeScriptServerSpawner {
         const processFactory = new NodeTsServerProcessFactory();
         const canceller = nodeRequestCancellerFactory.create(kind, this._tracer);
         const { args, tsServerLogFile } = this.getTsServerArgs(TsServerProcessKind.Main, configuration, this._apiVersion, canceller.cancellationPipeName);
+
+        if (this.isLoggingEnabled(configuration)) {
+            if (tsServerLogFile) {
+                this._logger.info(`<${kind}> Log file: ${tsServerLogFile}`);
+            } else {
+                this._logger.error(`<${kind}> Could not create log directory`);
+            }
+        }
+
         const process = processFactory.fork(version, args, TsServerProcessKind.Main, configuration);
         this._logger.log('Starting tsserver');
         return new ProcessBasedTsServer(
@@ -85,15 +97,7 @@ export class TypeScriptServerSpawner {
             args.push('--useSingleInferredProject');
         }
 
-        const {
-            disableAutomaticTypingAcquisition,
-            globalPlugins,
-            locale,
-            logFile,
-            logVerbosity,
-            npmLocation,
-            pluginProbeLocations,
-        } = configuration;
+        const { disableAutomaticTypingAcquisition, globalPlugins, locale, npmLocation, pluginProbeLocations } = configuration;
         if (disableAutomaticTypingAcquisition || kind === TsServerProcessKind.Syntax || kind === TsServerProcessKind.Diagnostics) {
             args.push('--disableAutomaticTypingAcquisition');
         }
@@ -103,19 +107,13 @@ export class TypeScriptServerSpawner {
         if (cancellationPipeName) {
             args.push('--cancellationPipeName', cancellationPipeName + '*');
         }
-        // if (TspClient.isLoggingEnabled(configuration)) {
-        //     const logDir = this._logDirectoryProvider.getNewLogDirectory();
-        //     if (logDir) {
-        //         tsServerLogFile = path.join(logDir, 'tsserver.log');
-        //         args.push('--logVerbosity', TsServerLogLevel.toString(configuration.tsServerLogLevel));
-        //         args.push('--logFile', tsServerLogFile);
-        //     }
-        // }
-        if (logFile) {
-            args.push('--logFile', logFile);
-        }
-        if (logVerbosity) {
-            args.push('--logVerbosity', logVerbosity);
+        if (this.isLoggingEnabled(configuration)) {
+            const logDir = this._logDirectoryProvider.getNewLogDirectory();
+            if (logDir) {
+                tsServerLogFile = path.join(logDir, 'tsserver.log');
+                args.push('--logVerbosity', TsServerLogLevel.toString(configuration.logVerbosity));
+                args.push('--logFile', tsServerLogFile);
+            }
         }
         // if (configuration.enableTsServerTracing) {
         //     tsServerTraceDirectory = this._logDirectoryProvider.getNewLogDirectory();
@@ -150,6 +148,10 @@ export class TypeScriptServerSpawner {
         // args.push('--noGetErrOnBackgroundUpdate');
         args.push('--validateDefaultNpmLocation');
         return { args, tsServerLogFile, tsServerTraceDirectory };
+    }
+
+    private isLoggingEnabled(configuration: TspClientOptions) {
+        return configuration.logVerbosity !== TsServerLogLevel.Off;
     }
 }
 
