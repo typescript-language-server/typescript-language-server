@@ -54,7 +54,7 @@ interface TsserverOptions {
     /**
      * The path to the directory where the `tsserver` logs will be created.
      * If not provided, the log files will be created within the workspace, inside the `.log` directory.
-     * If not workspace path is provided when initializating the server and no custom path is specified then
+     * If no workspace root is provided when initializating the server and no custom path is specified then
      * the logs will not be created.
      * @default undefined
      */
