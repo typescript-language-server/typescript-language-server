@@ -12,7 +12,7 @@
 import path from 'node:path';
 import API from '../utils/api.js';
 import { ServerType } from './requests.js';
-import { Logger } from '../utils/logger.js';
+import { Logger, LogLevel } from '../utils/logger.js';
 import type { TspClientOptions } from '../tsp-client.js';
 import { nodeRequestCancellerFactory } from './cancellation.js';
 import type { ILogDirectoryProvider } from './logDirectoryProvider.js';
@@ -41,9 +41,9 @@ export class TypeScriptServerSpawner {
 
         if (this.isLoggingEnabled(configuration)) {
             if (tsServerLogFile) {
-                this._logger.info(`<${kind}> Log file: ${tsServerLogFile}`);
+                this._logger.logIgnoringVerbosity(LogLevel.Info, `<${kind}> Log file: ${tsServerLogFile}`);
             } else {
-                this._logger.error(`<${kind}> Could not create log directory`);
+                this._logger.logIgnoringVerbosity(LogLevel.Error, `<${kind}> Could not create log directory`);
             }
         }
 

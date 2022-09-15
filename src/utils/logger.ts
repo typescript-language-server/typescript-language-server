@@ -9,26 +9,71 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-qualifier */
+
 import lsp from 'vscode-languageserver';
 import type { LspClient } from '../lsp-client.js';
+
+export enum LogLevel {
+    Error,
+    Warning,
+    Info,
+    Log,
+}
+
+export namespace LogLevel {
+    export function fromString(value?: string): LogLevel {
+        switch (value?.toLowerCase()) {
+            case 'log':
+                return LogLevel.Log;
+            case 'info':
+                return LogLevel.Info;
+            case 'warning':
+                return LogLevel.Warning;
+            case 'error':
+            default:
+                return LogLevel.Error;
+        }
+    }
+
+    export function toString(level: LogLevel): string {
+        switch (level) {
+            case LogLevel.Error:
+                return 'error';
+            case LogLevel.Warning:
+                return 'warning';
+            case LogLevel.Info:
+                return 'info';
+            case LogLevel.Log:
+                return 'log';
+        }
+    }
+}
 
 type TraceLevel = 'Trace' | 'Info' | 'Error';
 
 export interface Logger {
-    error(...arg: any[]): void;
-    warn(...arg: any[]): void;
-    info(...arg: any[]): void;
-    log(...arg: any[]): void;
+    error(...args: any[]): void;
+    warn(...args: any[]): void;
+    info(...args: any[]): void;
+    log(...args: any[]): void;
     /**
-     * Logs the arguments regardless of the logging level.
+     * Logs the arguments regardless of the verbosity level set for the logger.
      */
-    trace(...arg: any[]): void;
+    logIgnoringVerbosity(level: LogLevel, ...args: any[]): void;
+    /**
+     * Logs the arguments regardless of the verbosity level in a trace-specific format.
+     */
+    trace(level: TraceLevel, message: string, data?: any): void;
 }
 
 export class LspClientLogger implements Logger {
-    constructor(protected client: LspClient, protected level: lsp.MessageType) { }
+    constructor(
+        private client: LspClient,
+        private level: lsp.MessageType,
+    ) {}
 
-    protected sendMessage(severity: lsp.MessageType, messageObjects: any[], options?: { overrideLevel?: boolean; }): void {
+    private sendMessage(severity: lsp.MessageType, messageObjects: any[], options?: { overrideLevel?: boolean; }): void {
         if (this.level >= severity || options?.overrideLevel) {
             const message = messageObjects.map(p => {
                 if (typeof p === 'object') {
@@ -45,102 +90,126 @@ export class LspClientLogger implements Logger {
         }
     }
 
-    error(...arg: any[]): void {
-        this.sendMessage(lsp.MessageType.Error, arg);
+    private logLevelToLspMessageType(level: LogLevel): lsp.MessageType {
+        switch (level) {
+            case LogLevel.Log:
+                return lsp.MessageType.Log;
+            case LogLevel.Info:
+                return lsp.MessageType.Info;
+            case LogLevel.Warning:
+                return lsp.MessageType.Warning;
+            case LogLevel.Error:
+                return lsp.MessageType.Error;
+        }
     }
 
-    warn(...arg: any[]): void {
-        this.sendMessage(lsp.MessageType.Warning, arg);
+    error(...args: any[]): void {
+        this.sendMessage(lsp.MessageType.Error, args);
     }
 
-    info(...arg: any[]): void {
-        this.sendMessage(lsp.MessageType.Info, arg);
+    warn(...args: any[]): void {
+        this.sendMessage(lsp.MessageType.Warning, args);
     }
 
-    log(...arg: any[]): void {
-        this.sendMessage(lsp.MessageType.Log, arg);
+    info(...args: any[]): void {
+        this.sendMessage(lsp.MessageType.Info, args);
     }
 
-    trace(...arg: any[]): void {
-        this.sendMessage(lsp.MessageType.Log, arg, { overrideLevel: true });
+    log(...args: any[]): void {
+        this.sendMessage(lsp.MessageType.Log, args);
     }
-}
 
-export enum ConsoleLogLevel {
-    error = 'error',
-    warn = 'warn',
-    info = 'warn',
-    verbose = 'verbose',
+    logIgnoringVerbosity(level: LogLevel, ...args: any[]): void {
+        this.sendMessage(this.logLevelToLspMessageType(level), args, { overrideLevel: true });
+    }
+
+    trace(level: TraceLevel, message: string, data?: any): void {
+        this.logIgnoringVerbosity(LogLevel.Log, `[${level}  - ${now()}] ${message}`);
+        if (data) {
+            this.logIgnoringVerbosity(LogLevel.Log, data2String(data));
+        }
+    }
 }
 
 export class ConsoleLogger implements Logger {
-    constructor(private level: lsp.MessageType = lsp.MessageType.Info) {}
+    constructor(
+        private level: LogLevel = LogLevel.Error,
+    ) {}
 
-    static toMessageTypeLevel(type?: string): lsp.MessageType {
-        switch (type) {
-            case 'error':
-                return lsp.MessageType.Error;
-            case 'warn':
-                return lsp.MessageType.Warning;
-            case 'log':
-                return lsp.MessageType.Log;
-            case 'info':
-            default:
-                return lsp.MessageType.Info;
+    private print(level: LogLevel, args: any[], options?: { overrideLevel?: boolean; }): void {
+        if (this.level >= level || options?.overrideLevel) {
+            // All messages logged to stderr as stdout is reserved for LSP communication.
+            console.error(`[${LogLevel.toString(level)}]`, ...this.toStrings(...args));
         }
     }
 
-    private print(type: keyof Logger, level: lsp.MessageType, ...arg: any[]): void {
-        if (this.level >= level) {
-            // eslint-disable-next-line no-console
-            console[type](...this.toStrings(arg));
+    private toStrings(...args: any[]): string[] {
+        return args.map(a => {
+            if (typeof a === 'string') {
+                return a;
+            }
+            return JSON.stringify(a, null, 2);
+        });
+    }
+
+    error(...args: any[]): void {
+        this.print(LogLevel.Error, args);
+    }
+
+    warn(...args: any[]): void {
+        this.print(LogLevel.Warning, args);
+    }
+
+    info(...args: any[]): void {
+        this.print(LogLevel.Info, args);
+    }
+
+    log(...args: any[]): void {
+        this.print(LogLevel.Log, args);
+    }
+
+    logIgnoringVerbosity(level: LogLevel, ...args: any[]): void {
+        this.print(level, args, { overrideLevel: true });
+    }
+
+    trace(level: TraceLevel, message: string, data?: any): void {
+        this.logIgnoringVerbosity(LogLevel.Log, `[${level}  - ${now()}] ${message}`);
+        if (data) {
+            this.logIgnoringVerbosity(LogLevel.Log, data2String(data));
         }
-    }
-
-    private toStrings(...arg: any[]): string[] {
-        return arg.map(a => JSON.stringify(a, null, 2));
-    }
-
-    error(...arg: any[]): void {
-        this.print('error', lsp.MessageType.Error, arg);
-    }
-    warn(...arg: any[]): void {
-        this.print('error', lsp.MessageType.Warning, arg);
-    }
-    info(...arg: any[]): void {
-        this.print('error', lsp.MessageType.Info, arg);
-    }
-    log(...arg: any[]): void {
-        this.print('error', lsp.MessageType.Log, arg);
-    }
-    trace(...arg: any[]): void {
-        this.log(arg);
     }
 }
 
 export class PrefixingLogger implements Logger {
-    constructor(private logger: Logger, private prefix: string) { }
+    constructor(
+        private logger: Logger,
+        private prefix: string,
+    ) {}
 
-    error(...arg: any[]): void {
-        this.logger.error(this.prefix, ...arg);
+    error(...args: any[]): void {
+        this.logger.error(this.prefix, ...args);
     }
 
-    warn(...arg: any[]): void {
-        this.logger.warn(this.prefix, ...arg);
+    warn(...args: any[]): void {
+        this.logger.warn(this.prefix, ...args);
     }
 
-    info(...arg: any[]): void {
-        this.logger.info(this.prefix, ...arg);
+    info(...args: any[]): void {
+        this.logger.info(this.prefix, ...args);
     }
 
-    log(...arg: any[]): void {
-        this.logger.log(this.prefix, ...arg);
+    log(...args: any[]): void {
+        this.logger.log(this.prefix, ...args);
+    }
+
+    logIgnoringVerbosity(level: LogLevel, ...args: any[]): void {
+        this.logger.logIgnoringVerbosity(level, this.prefix, ...args);
     }
 
     trace(level: TraceLevel, message: string, data?: any): void {
-        this.logger.trace(this.prefix, `[${level}  - ${now()}] ${message}`);
+        this.logIgnoringVerbosity(LogLevel.Log, this.prefix, `[${level}  - ${now()}] ${message}`);
         if (data) {
-            this.logger.trace(this.prefix, data2String(data));
+            this.logIgnoringVerbosity(LogLevel.Log, this.prefix, data2String(data));
         }
     }
 }

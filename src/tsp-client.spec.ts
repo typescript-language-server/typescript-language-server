@@ -27,7 +27,7 @@ const configuration: TypeScriptServiceConfiguration = {
     lspClient,
     tsserverLogVerbosity: TsServerLogLevel.Off,
 };
-const typescriptVersionProvider = new TypeScriptVersionProvider(configuration);
+const typescriptVersionProvider = new TypeScriptVersionProvider(configuration, logger);
 const bundled = typescriptVersionProvider.bundledVersion();
 let server: TspClient;
 
