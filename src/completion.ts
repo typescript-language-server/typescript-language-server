@@ -120,9 +120,10 @@ function getRangeFromReplacementSpan(
         };
     }
     if (features.completionInsertReplaceSupport && optionalReplacementSpan) {
+        const range = ensureRangeIsOnSingleLine(Range.fromTextSpan(optionalReplacementSpan), document);
         return {
-            insert: lsp.Range.create(position, position),
-            replace: ensureRangeIsOnSingleLine(Range.fromTextSpan(optionalReplacementSpan), document),
+            insert: lsp.Range.create(range.start, position),
+            replace: ensureRangeIsOnSingleLine(range, document),
         };
     }
 }
