@@ -579,7 +579,7 @@ yarn
  - `yarn test` - run all tests
  - `yarn test:watch` - run all tests and enable watch mode for developing
 
-By default only console logs of level `warn` and higher are printed to the console. You can override the `CONSOLE_LOG_LEVEL` level in `package.json` to either `log`, `info`, `warn` or `error` to log other levels.
+By default only console logs of level `warning` and higher are printed to the console. You can override the `CONSOLE_LOG_LEVEL` level in `package.json` to either `log`, `info`, `warning` or `error` to log other levels.
 
 ### Watch
 

@@ -15,7 +15,7 @@ import * as lspsemanticTokens from './semantic-tokens.js';
 import tsp from 'typescript/lib/protocol.d.js';
 import API from './utils/api.js';
 import { CommandTypes, EventTypes } from './tsp-command-types.js';
-import { Logger, PrefixingLogger } from './utils/logger.js';
+import { Logger, LogLevel, PrefixingLogger } from './utils/logger.js';
 import { TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
 import { toDocumentHighlight, asTagsDocumentation, uriToPath, toSymbolKind, toLocation, pathToUri, toTextEdit, asPlainText, normalizePath } from './protocol-translation.js';
@@ -85,7 +85,7 @@ export class LspServer {
             if (userSettingVersion.isValid) {
                 return userSettingVersion;
             }
-            this.logger.warn(`Typescript specified through --tsserver-path ignored due to invalid path "${userSettingVersion.path}"`);
+            this.logger.logIgnoringVerbosity(LogLevel.Warning, `Typescript specified through --tsserver-path ignored due to invalid path "${userSettingVersion.path}"`);
         }
         // Workspace version.
         if (this.workspaceRoot) {
@@ -126,7 +126,7 @@ export class LspServer {
 
         const typescriptVersion = this.findTypescriptVersion();
         if (typescriptVersion) {
-            this.logger.info(`Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
+            this.logger.logIgnoringVerbosity(LogLevel.Info, `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
         } else {
             throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid --tsserver-path is specified. Exiting.');
         }

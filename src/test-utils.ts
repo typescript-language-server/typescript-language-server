@@ -16,11 +16,11 @@ import { normalizePath, pathToUri } from './protocol-translation.js';
 import { TypeScriptInitializationOptions } from './ts-protocol.js';
 import { LspClient, WithProgressOptions } from './lsp-client.js';
 import { LspServer } from './lsp-server.js';
-import { ConsoleLogger } from './utils/logger.js';
+import { ConsoleLogger, LogLevel } from './utils/logger.js';
 import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
 
-const CONSOLE_LOG_LEVEL = ConsoleLogger.toMessageTypeLevel(process.env.CONSOLE_LOG_LEVEL);
+const CONSOLE_LOG_LEVEL = LogLevel.fromString(process.env.CONSOLE_LOG_LEVEL);
 export const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 const DEFAULT_TEST_CLIENT_CAPABILITIES: lsp.ClientCapabilities = {
@@ -110,7 +110,10 @@ export function toPlatformEOL(text: string): string {
 export class TestLspClient implements LspClient {
     private workspaceEditsListener: ((args: lsp.ApplyWorkspaceEditParams) => void) | null = null;
 
-    constructor(protected options: TestLspServerOptions, protected logger: ConsoleLogger) {}
+    constructor(
+        protected options: TestLspServerOptions,
+        protected logger: ConsoleLogger,
+    ) {}
 
     async createProgressReporter(_token?: lsp.CancellationToken, _workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter> {
         const reporter = new class implements lsp.WorkDoneProgressReporter {
@@ -173,7 +176,7 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         lspClient,
         tsserverLogVerbosity: TsServerLogLevel.Off,
     };
-    const typescriptVersionProvider = new TypeScriptVersionProvider(serverOptions);
+    const typescriptVersionProvider = new TypeScriptVersionProvider(serverOptions, logger);
     const bundled = typescriptVersionProvider.bundledVersion();
     const server = new TestLspServer({
         ...serverOptions,

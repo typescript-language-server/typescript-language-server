@@ -30,8 +30,8 @@ export class TypeScriptVersion {
     constructor(
         public readonly source: TypeScriptVersionSource,
         public readonly path: string,
+        private readonly logger: Logger,
         private readonly _pathLabel?: string,
-        private readonly logger?: Logger,
     ) {
         this._api = null;
     }
@@ -66,15 +66,15 @@ export class TypeScriptVersion {
     }
 
     private getTypeScriptVersion(serverPath: string): API | null {
-        this.logger?.info(`Resolving TypeScript version from path "${serverPath}"...`);
+        this.logger.log(`Resolving TypeScript version from path "${serverPath}"...`);
         if (!fs.existsSync(serverPath)) {
-            this.logger?.info('Server path does not exist on disk');
+            this.logger.log('Server path does not exist on disk');
             return null;
         }
 
         const p = serverPath.split(path.sep);
         if (p.length <= 2) {
-            this.logger?.info('Server path is invalid (has less than two path components).');
+            this.logger.log('Server path is invalid (has less than two path components).');
             return null;
         }
         const p2 = p.slice(0, -2);
@@ -87,24 +87,24 @@ export class TypeScriptVersion {
             }
         }
         if (!fs.existsSync(fileName)) {
-            this.logger?.info(`Failed to find package.json at path "${fileName}"`);
+            this.logger.log(`Failed to find package.json at path "${fileName}"`);
             return null;
         }
 
-        this.logger?.info(`Reading version from package.json at "${fileName}"`);
+        this.logger.log(`Reading version from package.json at "${fileName}"`);
         const contents = fs.readFileSync(fileName).toString();
         let desc: any = null;
         try {
             desc = JSON.parse(contents);
         } catch (err) {
-            this.logger?.info('Failed parsing contents of package.json.');
+            this.logger.log('Failed parsing contents of package.json.');
             return null;
         }
         if (!desc || !desc.version) {
-            this.logger?.info('Failed reading version number from package.json.');
+            this.logger.log('Failed reading version number from package.json.');
             return null;
         }
-        this.logger?.info(`Resolved TypeScript version to "${desc.version}"`);
+        this.logger.log(`Resolved TypeScript version to "${desc.version}"`);
         return API.fromVersionString(desc.version);
     }
 }
@@ -112,14 +112,14 @@ export class TypeScriptVersion {
 export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib'];
 
 export class TypeScriptVersionProvider {
-    public constructor(private configuration: TypeScriptServiceConfiguration, private logger?: Logger) {}
+    public constructor(private configuration: TypeScriptServiceConfiguration, private logger: Logger) {}
 
     public getUserSettingVersion(): TypeScriptVersion | null {
         const { tsserverPath } = this.configuration;
         if (!tsserverPath) {
             return null;
         }
-        this.logger?.info(`Resolving user-provided tsserver path "${tsserverPath}"...`);
+        this.logger.log(`Resolving user-provided tsserver path "${tsserverPath}"...`);
         let resolvedPath = tsserverPath;
         // Resolve full path to the binary if path is not absolute.
         if (!path.isAbsolute(resolvedPath)) {
@@ -127,44 +127,39 @@ export class TypeScriptVersionProvider {
             if (binaryPath) {
                 resolvedPath = binaryPath;
             }
-            this.logger?.info(`Non-absolute tsserver path resolved to "${binaryPath ? resolvedPath : '<failed>'}"`);
+            this.logger.log(`Non-absolute tsserver path resolved to "${binaryPath ? resolvedPath : '<failed>'}"`);
         }
         // Resolve symbolic link.
         let stat = fs.lstatSync(resolvedPath, { throwIfNoEntry: false });
         if (stat?.isSymbolicLink()) {
             resolvedPath = fs.realpathSync(resolvedPath);
-            this.logger?.info(`Symbolic link tsserver path resolved to "${resolvedPath}"`);
+            this.logger.log(`Symbolic link tsserver path resolved to "${resolvedPath}"`);
         }
         // Get directory path
         stat = fs.lstatSync(resolvedPath, { throwIfNoEntry: false });
         if (stat?.isFile()) {
             resolvedPath = path.dirname(resolvedPath);
-            this.logger?.info(`Resolved directory path from a file path: ${resolvedPath}`);
+            this.logger.log(`Resolved directory path from a file path: ${resolvedPath}`);
         }
         // Resolve path to the "lib" dir.
         try {
             const packageJsonPath = pkgUpSync({ cwd: resolvedPath });
-            this.logger?.info(`Resolved package.json location: "${packageJsonPath}"`);
+            this.logger.log(`Resolved package.json location: "${packageJsonPath}"`);
             if (packageJsonPath) {
                 resolvedPath = path.join(path.dirname(packageJsonPath), 'lib');
-                this.logger?.info(`Assumed tsserver lib location: "${resolvedPath}"`);
+                this.logger.log(`Assumed tsserver lib location: "${resolvedPath}"`);
             }
         } catch {
             // ignore
         }
-        return new TypeScriptVersion(
-            TypeScriptVersionSource.UserSetting,
-            resolvedPath,
-            undefined,
-            this.logger,
-        );
+        return new TypeScriptVersion(TypeScriptVersionSource.UserSetting, resolvedPath, this.logger, undefined);
     }
 
     public getWorkspaceVersion(workspaceFolders: string[]): TypeScriptVersion | null {
         for (const p of workspaceFolders) {
             const libFolder = findPathToModule(p, MODULE_FOLDERS);
             if (libFolder) {
-                const version = new TypeScriptVersion(TypeScriptVersionSource.Workspace, libFolder);
+                const version = new TypeScriptVersion(TypeScriptVersionSource.Workspace, libFolder, this.logger);
                 if (version.isValid) {
                     return version;
                 }
@@ -177,10 +172,7 @@ export class TypeScriptVersionProvider {
         const require = createRequire(import.meta.url);
         try {
             const file = require.resolve('typescript');
-            const bundledVersion = new TypeScriptVersion(
-                TypeScriptVersionSource.Bundled,
-                path.dirname(file),
-                '');
+            const bundledVersion = new TypeScriptVersion(TypeScriptVersionSource.Bundled, path.dirname(file), this.logger, '');
             return bundledVersion;
         } catch (e) {
             // window.showMessage('Bundled typescript module not found', 'error');
