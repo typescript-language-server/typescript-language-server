@@ -265,6 +265,40 @@ describe('completion', () => {
         localServer.shutdown();
     });
 
+    it('provides snippet completion in import statement', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: 'import { readFile }',
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        assert.isDefined(completion);
+        assert.deepInclude(completion!, {
+            label: 'readFile',
+            kind: lsp.CompletionItemKind.Function,
+            insertTextFormat: lsp.InsertTextFormat.Snippet,
+            detail: 'fs',
+            textEdit: {
+                newText: 'import { readFile$1 } from "fs";',
+                range: {
+                    start: {
+                        line: 0,
+                        character: 0,
+                    },
+                    end: {
+                        line: 0,
+                        character: 19,
+                    },
+                },
+            },
+        });
+        server.didCloseTextDocument({ textDocument: doc });
+    });
+
     it('includes detail field with package name for auto-imports', async () => {
         const doc = {
             uri: uri('bar.ts'),
@@ -415,27 +449,19 @@ describe('completion', () => {
         });
         assert.isNotNull(proposals);
         const completion = proposals!.items.find(completion => completion.label === 'fs/read');
-        assert.strictEqual(completion!.label, 'fs/read');
-        assert.deepStrictEqual(completion!.textEdit, {
-            newText: 'fs/read',
-            insert: {
-                start: {
-                    line: 5,
-                    character: 20,
-                },
-                end: {
-                    line: 5,
-                    character: 23,
-                },
-            },
-            replace: {
-                start: {
-                    line: 5,
-                    character: 20,
-                },
-                end: {
-                    line: 5,
-                    character: 24,
+        assert.deepInclude(completion!, {
+            label: 'fs/read',
+            textEdit: {
+                newText: 'fs/read',
+                range: {
+                    start: {
+                        line: 5,
+                        character: 20,
+                    },
+                    end: {
+                        line: 5,
+                        character: 24,
+                    },
                 },
             },
         });
