@@ -51,7 +51,7 @@
     "vscode-languageserver": "^8.0.2",
     "vscode-languageserver-protocol": "^3.17.2",
     "vscode-languageserver-textdocument": "1.0.7",
-    "vscode-uri": "^3.0.3",
+    "vscode-uri": "^3.0.6",
     "which": "^2.0.2"
   },
   "devDependencies": {
@@ -59,20 +59,20 @@
     "@types/deepmerge": "^2.2.0",
     "@types/fs-extra": "^9.0.13",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^16.11.56",
+    "@types/node": "^16.11.60",
     "@types/semver": "^7.3.12",
     "@types/which": "^2.0.1",
-    "@typescript-eslint/eslint-plugin": "^5.36.1",
-    "@typescript-eslint/parser": "^5.36.1",
+    "@typescript-eslint/eslint-plugin": "^5.38.0",
+    "@typescript-eslint/parser": "^5.38.0",
     "chai": "^4.3.6",
-    "concurrently": "^7.3.0",
+    "concurrently": "^7.4.0",
     "cross-env": "^7.0.3",
-    "eslint": "^8.23.0",
+    "eslint": "^8.24.0",
     "husky": "4.x",
     "mocha": "^10.0.0",
     "rimraf": "^3.0.2",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.1",
-    "typescript": "^4.8.2"
+    "typescript": "^4.8.3"
   }
 }
