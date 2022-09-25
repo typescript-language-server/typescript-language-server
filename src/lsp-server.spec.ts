@@ -221,8 +221,34 @@ describe('completion', () => {
         assert.isNotNull(proposals);
         const completion = proposals!.items.find(completion => completion.label === 'getById');
         assert.isDefined(completion);
-        assert.isDefined(completion!.textEdit);
-        assert.containsAllKeys(completion!.textEdit, ['newText', 'insert', 'replace']);
+        assert.deepInclude(completion!, {
+            label: 'getById',
+            kind: lsp.CompletionItemKind.Method,
+            insertTextFormat: lsp.InsertTextFormat.Snippet,
+            textEdit: {
+                newText: 'getById',
+                insert: {
+                    start: {
+                        line: 6,
+                        character: 20,
+                    },
+                    end: {
+                        line: 6,
+                        character: 23,
+                    },
+                },
+                replace: {
+                    start: {
+                        line: 6,
+                        character: 20,
+                    },
+                    end: {
+                        line: 6,
+                        character: 27,
+                    },
+                },
+            },
+        });
         server.didCloseTextDocument({ textDocument: doc });
     });
 
