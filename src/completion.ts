@@ -50,11 +50,11 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
         item.sortText = '\uffff' + entry.sortText;
     }
 
-    const { isSnippet, sourceDisplay } = entry;
+    const { isSnippet, replacementSpan, sourceDisplay } = entry;
     if (isSnippet && !features.completionSnippets) {
         return null;
     }
-    if (features.completionSnippets && (isSnippet || entry.isImportStatementCompletion || item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
+    if (features.completionSnippets && (isSnippet || item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
         // Import statements, Functions and Methods can result in a snippet completion when resolved.
         item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     }
@@ -62,15 +62,17 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
         item.detail = asPlainText(sourceDisplay);
     }
 
-    let insertText = entry.insertText;
-    const replacementSpan = entry.replacementSpan || (features.completionInsertReplaceSupport ? optionalReplacementSpan : undefined);
-    let replacementRange = replacementSpan && Range.fromTextSpan(replacementSpan);
-    // Make sure we only replace a single line at most
-    if (replacementRange && replacementRange.start.line !== replacementRange.end.line) {
-        replacementRange = lsp.Range.create(replacementRange.start, document.getLineEnd(replacementRange.start.line));
-    }
-    if (insertText && replacementRange && insertText[0] === '[') { // o.x -> o['x']
+    let { insertText } = entry;
+    if (insertText && replacementSpan && insertText[0] === '[') { // o.x -> o['x']
         item.filterText = '.' + item.label;
+    }
+    const range = getRangeFromReplacementSpan(replacementSpan, optionalReplacementSpan, position, document, features);
+    if (range) {
+        item.textEdit = range.insert
+            ? lsp.InsertReplaceEdit.create(insertText || item.label, range.insert, range.replace)
+            : lsp.TextEdit.replace(range.replace, insertText || item.label);
+    } else {
+        item.insertText = insertText;
     }
     if (entry.kindModifiers) {
         const kindModifiers = new Set(entry.kindModifiers.split(/,|\s+/g));
@@ -105,20 +107,32 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
             }
         }
     }
-    if (replacementRange) {
-        if (!insertText) {
-            insertText = item.label;
-        }
-        if (features.completionInsertReplaceSupport) {
-            const insertRange = lsp.Range.create(replacementRange.start, position);
-            item.textEdit = lsp.InsertReplaceEdit.create(insertText, insertRange, replacementRange);
-        } else {
-            item.textEdit = lsp.TextEdit.replace(replacementRange, insertText);
-        }
-    } else {
-        item.insertText = insertText;
-    }
     return item;
+}
+
+function getRangeFromReplacementSpan(
+    replacementSpan: tsp.TextSpan | undefined, optionalReplacementSpan: tsp.TextSpan | undefined, position: lsp.Position, document: LspDocument, features: SupportedFeatures,
+): { insert?: lsp.Range; replace: lsp.Range; } | undefined {
+    if (replacementSpan) {
+        // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
+        return {
+            replace: ensureRangeIsOnSingleLine(Range.fromTextSpan(replacementSpan), document),
+        };
+    }
+    if (features.completionInsertReplaceSupport && optionalReplacementSpan) {
+        const range = ensureRangeIsOnSingleLine(Range.fromTextSpan(optionalReplacementSpan), document);
+        return {
+            insert: lsp.Range.create(range.start, position),
+            replace: ensureRangeIsOnSingleLine(range, document),
+        };
+    }
+}
+
+function ensureRangeIsOnSingleLine(range: lsp.Range, document: LspDocument): lsp.Range {
+    if (range.start.line !== range.end.line) {
+        return lsp.Range.create(range.start, document.getLineEnd(range.start.line));
+    }
+    return range;
 }
 
 function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
