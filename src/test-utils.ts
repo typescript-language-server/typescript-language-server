@@ -66,6 +66,12 @@ const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOption
     },
 };
 
+const DEFAULT_WORKSPACE_SETTINGS: lsp.LSPAny = {
+    completions: {
+        completeFunctionCalls: true,
+    },
+};
+
 export function uri(...components: string[]): string {
     const resolved = filePath(...components);
     return pathToUri(resolved, undefined);
@@ -159,6 +165,13 @@ export class TestLspClient implements LspClient {
 
 export class TestLspServer extends LspServer {
     workspaceEdits: lsp.ApplyWorkspaceEditParams[] = [];
+
+    updateWorkspaceSettings(settings: lsp.LSPAny): void {
+        const configuration: lsp.DidChangeConfigurationParams = {
+            settings: deepmerge(DEFAULT_WORKSPACE_SETTINGS, settings),
+        };
+        this.didChangeConfiguration(configuration);
+    }
 }
 
 interface TestLspServerOptions {
@@ -195,5 +208,6 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         initializationOptions: DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS,
         workspaceFolders: null,
     });
+    server.updateWorkspaceSettings({});
     return server;
 }

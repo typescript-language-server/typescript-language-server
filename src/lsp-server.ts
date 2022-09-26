@@ -583,6 +583,8 @@ export class LspServer {
             throw new Error('The document should be opened for completion, file: ' + file);
         }
 
+        const completionOptions = this.configurationManager.workspaceConfiguration.completions || {};
+
         try {
             const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionInfo, {
                 file,
@@ -601,7 +603,7 @@ export class LspServer {
                 if (entry.kind === 'warning') {
                     continue;
                 }
-                const completion = asCompletionItem(entry, optionalReplacementSpan, file, params.position, document, this.features);
+                const completion = asCompletionItem(entry, optionalReplacementSpan, file, params.position, document, completionOptions, this.features);
                 if (!completion) {
                     continue;
                 }

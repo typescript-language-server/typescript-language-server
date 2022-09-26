@@ -22,7 +22,7 @@ interface ParameterListParts {
     readonly hasOptionalParameters: boolean;
 }
 
-export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacementSpan: tsp.TextSpan | undefined, file: string, position: lsp.Position, document: LspDocument, features: SupportedFeatures): lsp.CompletionItem | null {
+export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacementSpan: tsp.TextSpan | undefined, file: string, position: lsp.Position, document: LspDocument, options: WorkspaceConfigurationCompletionOptions, features: SupportedFeatures): lsp.CompletionItem | null {
     const item: lsp.CompletionItem = {
         label: entry.name,
         ...features.completionLabelDetails ? { labelDetails: entry.labelDetails } : {},
@@ -54,7 +54,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
     if (isSnippet && !features.completionSnippets) {
         return null;
     }
-    if (features.completionSnippets && (isSnippet || item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
+    if (features.completionSnippets && (isSnippet || canCreateSnippetOfFunctionCall(item.kind, options))) {
         // Import statements, Functions and Methods can result in a snippet completion when resolved.
         item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     }
@@ -217,7 +217,7 @@ export async function asResolvedCompletionItem(
         item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
         item.command = asCommand(details.codeActions, item.data.file);
     }
-    if (features.completionSnippets && options.completeFunctionCalls && (item.kind === lsp.CompletionItemKind.Function || item.kind === lsp.CompletionItemKind.Method)) {
+    if (features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
         const { line, offset } = item.data;
         const position = Position.fromLocation({ line, offset });
         const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client);
@@ -229,7 +229,7 @@ export async function asResolvedCompletionItem(
     return item;
 }
 
-export async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TspClient): Promise<boolean> {
+async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TspClient): Promise<boolean> {
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
@@ -254,6 +254,10 @@ export async function isValidFunctionCompletionContext(filepath: string, positio
     }
 }
 
+function canCreateSnippetOfFunctionCall(kind: lsp.CompletionItemKind | undefined, options: WorkspaceConfigurationCompletionOptions): boolean {
+    return options.completeFunctionCalls === true && (kind === lsp.CompletionItemKind.Function || kind === lsp.CompletionItemKind.Method);
+}
+
 function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: tsp.CompletionEntryDetails): void {
     const { displayParts } = detail;
     const parameterListParts = getParameterListParts(displayParts);
@@ -267,6 +271,9 @@ function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: tsp.Compl
     snippet.appendTabstop(0);
     item.insertText = snippet.value;
     item.insertTextFormat = lsp.InsertTextFormat.Snippet;
+    if (item.textEdit) {
+        item.textEdit.newText = snippet.value;
+    }
 }
 
 function getParameterListParts(displayParts: ReadonlyArray<tsp.SymbolDisplayPart>): ParameterListParts {
