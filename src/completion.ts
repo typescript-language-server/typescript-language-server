@@ -63,17 +63,6 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
     }
 
     let { insertText } = entry;
-    if (insertText && replacementSpan && insertText[0] === '[') { // o.x -> o['x']
-        item.filterText = '.' + item.label;
-    }
-    const range = getRangeFromReplacementSpan(replacementSpan, optionalReplacementSpan, position, document, features);
-    if (range) {
-        item.textEdit = range.insert
-            ? lsp.InsertReplaceEdit.create(insertText || item.label, range.insert, range.replace)
-            : lsp.TextEdit.replace(range.replace, insertText || item.label);
-    } else {
-        item.insertText = insertText;
-    }
     if (entry.kindModifiers) {
         const kindModifiers = new Set(entry.kindModifiers.split(/,|\s+/g));
         if (kindModifiers.has(KindModifiers.optional)) {
@@ -106,6 +95,14 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
                 }
             }
         }
+    }
+    const range = getRangeFromReplacementSpan(replacementSpan, optionalReplacementSpan, position, document, features);
+    if (range) {
+        item.textEdit = range.insert
+            ? lsp.InsertReplaceEdit.create(insertText || item.label, range.insert, range.replace)
+            : lsp.TextEdit.replace(range.replace, insertText || item.label);
+    } else {
+        item.insertText = insertText;
     }
     return item;
 }
