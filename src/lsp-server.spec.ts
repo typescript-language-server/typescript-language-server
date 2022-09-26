@@ -8,10 +8,11 @@
 import * as chai from 'chai';
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
-import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Commands } from './commands.js';
+import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
 const assert = chai.assert;
@@ -370,7 +371,7 @@ describe('completion', () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
-                    semicolons: 'remove',
+                    semicolons: SemicolonPreference.Remove,
                     insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false,
                 },
             },
@@ -407,7 +408,7 @@ describe('completion', () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
-                    semicolons: 'ignore',
+                    semicolons: SemicolonPreference.Ignore,
                     insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
                 },
             },

@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import deepmerge from 'deepmerge';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { WorkspaceConfiguration } from './configuration-manager.js';
 import { normalizePath, pathToUri } from './protocol-translation.js';
 import { TypeScriptInitializationOptions } from './ts-protocol.js';
 import { LspClient, WithProgressOptions } from './lsp-client.js';
@@ -66,7 +67,7 @@ const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOption
     },
 };
 
-const DEFAULT_WORKSPACE_SETTINGS: lsp.LSPAny = {
+const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {
     completions: {
         completeFunctionCalls: true,
     },
@@ -166,7 +167,7 @@ export class TestLspClient implements LspClient {
 export class TestLspServer extends LspServer {
     workspaceEdits: lsp.ApplyWorkspaceEditParams[] = [];
 
-    updateWorkspaceSettings(settings: lsp.LSPAny): void {
+    updateWorkspaceSettings(settings: WorkspaceConfiguration): void {
         const configuration: lsp.DidChangeConfigurationParams = {
             settings: deepmerge(DEFAULT_WORKSPACE_SETTINGS, settings),
         };
