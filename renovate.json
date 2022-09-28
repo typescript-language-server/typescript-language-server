@@ -22,6 +22,7 @@
       "enabled": false
     },
     {
+      "excludePackagePatterns": ["^typescript$"],
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "matchFiles": ["package.json"],
@@ -35,6 +36,16 @@
           "schedule:weekly"
         ]
       }
+    },
+    {
+      "groupName": "TypeScript",
+      "matchPackagePatterns": ["^typescript$"],
+      "matchFiles": ["package.json"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "semanticCommitType": "fix"
     }
   ]
 }
