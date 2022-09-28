@@ -22,7 +22,7 @@
       "enabled": false
     },
     {
-      "excludePackagePatterns": ["^typescript$"],
+      "excludePackageNames": ["typescript"],
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "matchFiles": ["package.json"],
@@ -39,7 +39,7 @@
     },
     {
       "groupName": "TypeScript",
-      "matchPackagePatterns": ["^typescript$"],
+      "matchPackageNames": ["typescript"],
       "matchFiles": ["package.json"],
       "matchUpdateTypes": [
         "minor",
