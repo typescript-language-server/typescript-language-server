@@ -218,7 +218,6 @@ describe('completion', () => {
         assert.deepInclude(completion!, {
             label: 'getById',
             kind: lsp.CompletionItemKind.Method,
-            insertTextFormat: lsp.InsertTextFormat.Snippet,
             textEdit: {
                 newText: 'getById',
                 insert: {
@@ -332,7 +331,6 @@ describe('completion', () => {
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
         assert.isDefined(completion);
         assert.strictEqual(completion!.detail, 'fs');
-        assert.strictEqual(completion!.insertTextFormat, /* snippet */2);
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -416,6 +414,11 @@ describe('completion', () => {
     });
 
     it('resolves a snippet for method completion', async () => {
+        server.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: true,
+            },
+        });
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -461,9 +464,14 @@ describe('completion', () => {
             },
         });
         server.didCloseTextDocument({ textDocument: doc });
+        server.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: false,
+            },
+        });
     });
 
-    it('does not set provide snippet completions for "$" function when completeFunctionCalls disabled', async () => {
+    it('does not provide snippet completion for "$" function when completeFunctionCalls disabled', async () => {
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -473,11 +481,6 @@ describe('completion', () => {
                 /**/$
             `,
         };
-        server.updateWorkspaceSettings({
-            completions: {
-                completeFunctionCalls: false,
-            },
-        });
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
         assert.isNotNull(proposals);
@@ -536,14 +539,14 @@ describe('completion', () => {
             },
         });
         server.didCloseTextDocument({ textDocument: doc });
+    });
+
+    it('provides snippet completions for "$" function when completeFunctionCalls enabled', async () => {
         server.updateWorkspaceSettings({
             completions: {
                 completeFunctionCalls: true,
             },
         });
-    });
-
-    it('provides snippet completions for "$" function when completeFunctionCalls enabled', async () => {
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -617,6 +620,11 @@ describe('completion', () => {
             },
         });
         server.didCloseTextDocument({ textDocument: doc });
+        server.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: false,
+            },
+        });
     });
 
     it('includes textEdit for string completion', async () => {
@@ -686,8 +694,7 @@ describe('completion', () => {
             proposals!.items[0],
             {
                 label: 'bar',
-                kind: 2,
-                insertTextFormat: 2,
+                kind: lsp.CompletionItemKind.Method,
             },
         );
         assert.deepInclude(
@@ -697,8 +704,7 @@ describe('completion', () => {
                 labelDetails: {
                     detail: '(x)',
                 },
-                kind: 2,
-                insertTextFormat: 2,
+                kind: lsp.CompletionItemKind.Method,
                 insertText: toPlatformEOL('bar(x) {\n    $0\n},'),
             },
         );
@@ -1162,6 +1168,17 @@ describe('formatting', () => {
     const uriString = uri('bar.ts');
     const languageId = 'typescript';
     const version = 1;
+
+    before(async () => {
+        server.updateWorkspaceSettings({
+            typescript: {
+                format: {
+                    semicolons: SemicolonPreference.Ignore,
+                    insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
+                },
+            },
+        });
+    });
 
     it('full document formatting', async () => {
         const text = 'export  function foo (     )   :  void   {   }';

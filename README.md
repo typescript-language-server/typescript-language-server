@@ -275,6 +275,11 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 [language].inlayHints.includeInlayVariableTypeHintsWhenTypeMatchesName: boolean;
 /**
  * Complete functions with their parameter signature.
+ *
+ * This functionality relies on LSP client resolving the completion using the `completionItem/resolve` call. If the
+ * client can't do that before inserting the completion then it's not safe to enable it as it will result in some
+ * completions having a snippet type without actually being snippets, which can then cause problems when inserting them.
+ *
  * @default false
  */
 completions.completeFunctionCalls: boolean;

@@ -67,11 +67,7 @@ const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOption
     },
 };
 
-const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {
-    completions: {
-        completeFunctionCalls: true,
-    },
-};
+const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {};
 
 export function uri(...components: string[]): string {
     const resolved = filePath(...components);
