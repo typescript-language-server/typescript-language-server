@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import deepmerge from 'deepmerge';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { WorkspaceConfiguration } from './configuration-manager.js';
 import { normalizePath, pathToUri } from './protocol-translation.js';
 import { TypeScriptInitializationOptions } from './ts-protocol.js';
 import { LspClient, WithProgressOptions } from './lsp-client.js';
@@ -65,6 +66,8 @@ const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOption
         providePrefixAndSuffixTextForRename: true,
     },
 };
+
+const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {};
 
 export function uri(...components: string[]): string {
     const resolved = filePath(...components);
@@ -159,6 +162,13 @@ export class TestLspClient implements LspClient {
 
 export class TestLspServer extends LspServer {
     workspaceEdits: lsp.ApplyWorkspaceEditParams[] = [];
+
+    updateWorkspaceSettings(settings: WorkspaceConfiguration): void {
+        const configuration: lsp.DidChangeConfigurationParams = {
+            settings: deepmerge(DEFAULT_WORKSPACE_SETTINGS, settings),
+        };
+        this.didChangeConfiguration(configuration);
+    }
 }
 
 interface TestLspServerOptions {
@@ -195,5 +205,6 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         initializationOptions: DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS,
         workspaceFolders: null,
     });
+    server.updateWorkspaceSettings({});
     return server;
 }

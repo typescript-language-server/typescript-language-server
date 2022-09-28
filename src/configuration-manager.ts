@@ -88,7 +88,7 @@ export class ConfigurationManager {
     }
 
     public setWorkspaceConfiguration(configuration: WorkspaceConfiguration): void {
-        this.workspaceConfiguration = configuration;
+        this.workspaceConfiguration = deepmerge({}, configuration);
     }
 
     public async setAndConfigureTspClient(workspaceFolder: string | undefined, client: TspClient, hostInfo?: TypeScriptInitializationOptions['hostInfo']): Promise<void> {

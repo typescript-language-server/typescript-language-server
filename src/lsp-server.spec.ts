@@ -8,10 +8,11 @@
 import * as chai from 'chai';
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
-import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Commands } from './commands.js';
+import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
 const assert = chai.assert;
@@ -24,13 +25,6 @@ before(async () => {
     server = await createServer({
         rootUri: uri(),
         publishDiagnostics: args => diagnostics.set(args.uri, args),
-    });
-    server.didChangeConfiguration({
-        settings: {
-            completions: {
-                completeFunctionCalls: true,
-            },
-        },
     });
 });
 
@@ -224,7 +218,6 @@ describe('completion', () => {
         assert.deepInclude(completion!, {
             label: 'getById',
             kind: lsp.CompletionItemKind.Method,
-            insertTextFormat: lsp.InsertTextFormat.Snippet,
             textEdit: {
                 newText: 'getById',
                 insert: {
@@ -338,7 +331,6 @@ describe('completion', () => {
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
         assert.isDefined(completion);
         assert.strictEqual(completion!.detail, 'fs');
-        assert.strictEqual(completion!.insertTextFormat, /* snippet */2);
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -374,13 +366,11 @@ describe('completion', () => {
     });
 
     it('resolves text edit for auto-import completion in right format', async () => {
-        server.didChangeConfiguration({
-            settings: {
-                typescript: {
-                    format: {
-                        semicolons: 'remove',
-                        insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false,
-                    },
+        server.updateWorkspaceSettings({
+            typescript: {
+                format: {
+                    semicolons: SemicolonPreference.Remove,
+                    insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false,
                 },
             },
         });
@@ -413,22 +403,22 @@ describe('completion', () => {
             },
         ]);
         server.didCloseTextDocument({ textDocument: doc });
-        server.didChangeConfiguration({
-            settings: {
-                completions: {
-                    completeFunctionCalls: true,
-                },
-                typescript: {
-                    format: {
-                        semicolons: 'ignore',
-                        insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
-                    },
+        server.updateWorkspaceSettings({
+            typescript: {
+                format: {
+                    semicolons: SemicolonPreference.Ignore,
+                    insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
                 },
             },
         });
     });
 
     it('resolves a snippet for method completion', async () => {
+        server.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: true,
+            },
+        });
         const doc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -442,13 +432,199 @@ describe('completion', () => {
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         assert.isNotNull(proposals);
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
-        assert.strictEqual(completion!.insertTextFormat, lsp.InsertTextFormat.Snippet);
-        assert.strictEqual(completion!.label, 'readFile');
         const resolvedItem = await server.completionResolve(completion!);
-        assert.strictEqual(resolvedItem.insertTextFormat, lsp.InsertTextFormat.Snippet);
-        // eslint-disable-next-line no-template-curly-in-string
-        assert.strictEqual(resolvedItem.insertText, 'readFile(${1:path}, ${2:options}, ${3:callback})$0');
+        assert.deepInclude(resolvedItem, {
+            label: 'readFile',
+            insertTextFormat: lsp.InsertTextFormat.Snippet,
+            // eslint-disable-next-line no-template-curly-in-string
+            insertText: 'readFile(${1:path}, ${2:options}, ${3:callback})$0',
+            textEdit: {
+                // eslint-disable-next-line no-template-curly-in-string
+                newText: 'readFile(${1:path}, ${2:options}, ${3:callback})$0',
+                insert: {
+                    start: {
+                        line: 2,
+                        character: 19,
+                    },
+                    end: {
+                        line: 2,
+                        character: 27,
+                    },
+                },
+                replace: {
+                    start: {
+                        line: 2,
+                        character: 19,
+                    },
+                    end: {
+                        line: 2,
+                        character: 27,
+                    },
+                },
+            },
+        });
         server.didCloseTextDocument({ textDocument: doc });
+        server.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: false,
+            },
+        });
+    });
+
+    it('does not provide snippet completion for "$" function when completeFunctionCalls disabled', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                function $(): void {}
+                /**/$
+            `,
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === '$');
+        assert.deepInclude(completion, {
+            label: '$',
+            textEdit: {
+                newText: '$',
+                insert: {
+                    start: {
+                        line: 2,
+                        character: 20,
+                    },
+                    end: {
+                        line: 2,
+                        character: 20,
+                    },
+                },
+                replace: {
+                    start: {
+                        line: 2,
+                        character: 20,
+                    },
+                    end: {
+                        line: 2,
+                        character: 21,
+                    },
+                },
+            },
+        });
+        const resolvedItem = await server.completionResolve(completion!);
+        assert.deepInclude(resolvedItem, {
+            label: '$',
+            textEdit: {
+                newText: '$',
+                insert: {
+                    start: {
+                        line: 2,
+                        character: 20,
+                    },
+                    end: {
+                        line: 2,
+                        character: 20,
+                    },
+                },
+                replace: {
+                    start: {
+                        line: 2,
+                        character: 20,
+                    },
+                    end: {
+                        line: 2,
+                        character: 21,
+                    },
+                },
+            },
+        });
+        server.didCloseTextDocument({ textDocument: doc });
+    });
+
+    it('provides snippet completions for "$" function when completeFunctionCalls enabled', async () => {
+        server.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: true,
+            },
+        });
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                function $(): void {}
+                /**/$
+            `,
+        };
+        server.didOpenTextDocument({ textDocument: doc });
+        const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
+        assert.isNotNull(proposals);
+        const completion = proposals!.items.find(completion => completion.label === '$');
+        // NOTE: Technically not valid until resolved.
+        assert.deepInclude(completion, {
+            label: '$',
+            insertTextFormat: lsp.InsertTextFormat.Snippet,
+            textEdit: {
+                newText: '$',
+                insert: {
+                    start: {
+                        line: 2,
+                        character: 20,
+                    },
+                    end: {
+                        line: 2,
+                        character: 20,
+                    },
+                },
+                replace: {
+                    start: {
+                        line: 2,
+                        character: 20,
+                    },
+                    end: {
+                        line: 2,
+                        character: 21,
+                    },
+                },
+            },
+        });
+        const resolvedItem = await server.completionResolve(completion!);
+        assert.deepInclude(resolvedItem, {
+            label: '$',
+            insertTextFormat: lsp.InsertTextFormat.Snippet,
+            // eslint-disable-next-line no-template-curly-in-string
+            insertText: '\\$()$0',
+            textEdit: {
+                // eslint-disable-next-line no-template-curly-in-string
+                newText: '\\$()$0',
+                insert: {
+                    start: {
+                        line: 2,
+                        character: 20,
+                    },
+                    end: {
+                        line: 2,
+                        character: 20,
+                    },
+                },
+                replace: {
+                    start: {
+                        line: 2,
+                        character: 20,
+                    },
+                    end: {
+                        line: 2,
+                        character: 21,
+                    },
+                },
+            },
+        });
+        server.didCloseTextDocument({ textDocument: doc });
+        server.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: false,
+            },
+        });
     });
 
     it('includes textEdit for string completion', async () => {
@@ -518,8 +694,7 @@ describe('completion', () => {
             proposals!.items[0],
             {
                 label: 'bar',
-                kind: 2,
-                insertTextFormat: 2,
+                kind: lsp.CompletionItemKind.Method,
             },
         );
         assert.deepInclude(
@@ -529,8 +704,7 @@ describe('completion', () => {
                 labelDetails: {
                     detail: '(x)',
                 },
-                kind: 2,
-                insertTextFormat: 2,
+                kind: lsp.CompletionItemKind.Method,
                 insertText: toPlatformEOL('bar(x) {\n    $0\n},'),
             },
         );
@@ -748,11 +922,9 @@ describe('diagnostics', () => {
     });
 
     it('code 6133 (ununsed variable) is ignored', async () => {
-        server.didChangeConfiguration({
-            settings: {
-                diagnostics: {
-                    ignoredCodes: [6133],
-                },
+        server.updateWorkspaceSettings({
+            diagnostics: {
+                ignoredCodes: [6133],
             },
         });
 
@@ -967,25 +1139,23 @@ describe('references', () => {
 //                 export function foo(): void {
 //                   console.log('test')
 //                 }
-//             `
+//             `,
 //         };
 //         server.didOpenTextDocument({
-//             textDocument: doc
+//             textDocument: doc,
 //         });
 
-//         server.didChangeConfiguration({
-//             settings: {
-//                 typescript: {
-//                     format: {
-//                         insertSpaceAfterCommaDelimiter: true
-//                     }
+//         server.updateWorkspaceSettingsttings({
+//             typescript: {
+//                 format: {
+//                     insertSpaceAfterCommaDelimiter: true,
 //                 },
-//                 javascript: {
-//                     format: {
-//                         insertSpaceAfterCommaDelimiter: false
-//                     }
-//                 }
-//             }
+//             },
+//             javascript: {
+//                 format: {
+//                     insertSpaceAfterCommaDelimiter: false,
+//                 },
+//             },
 //         });
 
 //         const file = filePath('bar.ts');
@@ -998,6 +1168,17 @@ describe('formatting', () => {
     const uriString = uri('bar.ts');
     const languageId = 'typescript';
     const version = 1;
+
+    before(async () => {
+        server.updateWorkspaceSettings({
+            typescript: {
+                format: {
+                    semicolons: SemicolonPreference.Ignore,
+                    insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
+                },
+            },
+        });
+    });
 
     it('full document formatting', async () => {
         const text = 'export  function foo (     )   :  void   {   }';
@@ -1057,13 +1238,11 @@ describe('formatting', () => {
         };
         server.didOpenTextDocument({ textDocument });
 
-        server.didChangeConfiguration({
-            settings: {
-                typescript: {
-                    format: {
-                        newLineCharacter: '\n',
-                        placeOpenBraceOnNewLineForFunctions: true,
-                    },
+        server.updateWorkspaceSettings({
+            typescript: {
+                format: {
+                    newLineCharacter: '\n',
+                    placeOpenBraceOnNewLineForFunctions: true,
                 },
             },
         });
@@ -2034,24 +2213,20 @@ describe('jsx/tsx project', () => {
 
 describe('inlayHints', () => {
     before(async () => {
-        server.didChangeConfiguration({
-            settings: {
-                typescript: {
-                    inlayHints: {
-                        includeInlayFunctionLikeReturnTypeHints: true,
-                    },
+        server.updateWorkspaceSettings({
+            typescript: {
+                inlayHints: {
+                    includeInlayFunctionLikeReturnTypeHints: true,
                 },
             },
         });
     });
 
     after(() => {
-        server.didChangeConfiguration({
-            settings: {
-                typescript: {
-                    inlayHints: {
-                        includeInlayFunctionLikeReturnTypeHints: false,
-                    },
+        server.updateWorkspaceSettings({
+            typescript: {
+                inlayHints: {
+                    includeInlayFunctionLikeReturnTypeHints: false,
                 },
             },
         });

@@ -25,6 +25,12 @@ export class DisplayPartKind {
     public static readonly text = 'text';
 }
 
+export enum SemicolonPreference {
+    Ignore = 'ignore',
+    Insert = 'insert',
+    Remove = 'remove'
+}
+
 export interface SupportedFeatures {
     codeActionDisabledSupport?: boolean;
     completionInsertReplaceSupport?: boolean;
