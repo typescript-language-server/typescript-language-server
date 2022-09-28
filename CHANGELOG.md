@@ -1,6 +1,25 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v1.2.0...v2.0.0) (2022-09-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* Replace the CLI argument `--tsserver-log-file` with `tsserver.logDirectory` option provided through `initializationOptions` of the `initialize` request.
+
+### Features
+
+* add `tsserver.logDirectory` to `initializationOptions` ([#588](https://github.com/typescript-language-server/typescript-language-server/issues/588)) ([114d430](https://github.com/typescript-language-server/typescript-language-server/commit/114d4309cb1450585f991604118d3eff3690237c))
+* add `tsserver.trace` init option for tracing tsserver ([#586](https://github.com/typescript-language-server/typescript-language-server/issues/586)) ([e3e8930](https://github.com/typescript-language-server/typescript-language-server/commit/e3e893094e501e3d6a72148e05f11286d688d2bd))
+
+
+### Bug Fixes
+
+* **completions:** don't create snippet kind without `completeFunctionCalls` ([#595](https://github.com/typescript-language-server/typescript-language-server/issues/595)) ([7f69c27](https://github.com/typescript-language-server/typescript-language-server/commit/7f69c27eb8cce71d3db006623757a74f93d76dd3))
+* **completions:** remove filterText override for bracket accessor ([#593](https://github.com/typescript-language-server/typescript-language-server/issues/593)) ([1ed4e2e](https://github.com/typescript-language-server/typescript-language-server/commit/1ed4e2eccf0b52e10204b5c2617d4944ae513afd))
+* wrong import completion when insert/replace supported ([#592](https://github.com/typescript-language-server/typescript-language-server/issues/592)) ([4fe902a](https://github.com/typescript-language-server/typescript-language-server/commit/4fe902a9e28ec4c3ccc14a9e75488efeb8079544))
+
 ## [1.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v1.1.2...v1.2.0) (2022-09-12)
 
 
