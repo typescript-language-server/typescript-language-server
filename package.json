@@ -58,7 +58,7 @@
     "@types/chai": "^4.3.3",
     "@types/deepmerge": "^2.2.0",
     "@types/fs-extra": "^9.0.13",
-    "@types/mocha": "^9.1.1",
+    "@types/mocha": "^10.0.0",
     "@types/node": "^16.11.64",
     "@types/semver": "^7.3.12",
     "@types/which": "^2.0.1",
