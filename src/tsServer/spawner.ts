@@ -47,12 +47,12 @@ export class TypeScriptServerSpawner {
             }
         }
 
-        const process = processFactory.fork(version, args, TsServerProcessKind.Main, configuration);
+        const tsProcess = processFactory.fork(version, args, TsServerProcessKind.Main, configuration);
         this._logger.log('Starting tsserver');
         return new ProcessBasedTsServer(
             kind,
             this.kindToServerType(kind),
-            process,
+            tsProcess,
             tsServerLogFile,
             canceller,
             version,
