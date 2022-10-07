@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.1](https://github.com/typescript-language-server/typescript-language-server/compare/v2.0.0...v2.0.1) (2022-10-07)
+
+
+### Bug Fixes
+
+* disable IPC communication until TypeScript bug is fixed ([#600](https://github.com/typescript-language-server/typescript-language-server/issues/600)) ([a6153a6](https://github.com/typescript-language-server/typescript-language-server/commit/a6153a66e88bed52704761f92dd4168605ef9a45))
+
 ## [2.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v1.2.0...v2.0.0) (2022-09-28)
 
 
