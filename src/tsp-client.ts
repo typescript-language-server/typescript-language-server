@@ -27,37 +27,34 @@ import type { TsServerLogLevel } from './utils/configuration.js';
 
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;
-    private _progressReporter?: lsp.WorkDoneProgressReporter;
+    private _task?: Promise<lsp.WorkDoneProgressReporter>;
 
     constructor(private lspClient: LspClient) {}
 
     public reset(): void {
         if (this._loadingProjectName) {
             this._loadingProjectName = undefined;
-            if (this._progressReporter) {
-                this._progressReporter.done();
-                this._progressReporter = undefined;
+            if (this._task) {
+                const task = this._task;
+                this._task = undefined;
+                task.then(reporter => reporter.done());
             }
         }
     }
 
-    public async startedLoadingProject(projectName: string): Promise<void> {
+    public startedLoadingProject(projectName: string): void {
         // TS projects are loaded sequentially. Cancel existing task because it should always be resolved before
         // the incoming project loading task is.
         this.reset();
 
         this._loadingProjectName = projectName;
-        this._progressReporter = await this.lspClient.createProgressReporter();
-        this._progressReporter.begin('Initializing JS/TS language features…');
+        this._task = this.lspClient.createProgressReporter();
+        this._task.then(reporter => reporter.begin('Initializing JS/TS language features…'));
     }
 
     public finishedLoadingProject(projectName: string): void {
         if (this._loadingProjectName === projectName) {
-            this._loadingProjectName = undefined;
-            if (this._progressReporter) {
-                this._progressReporter.done();
-                this._progressReporter = undefined;
-            }
+            this.reset();
         }
     }
 }
