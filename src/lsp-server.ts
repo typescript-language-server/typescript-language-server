@@ -36,6 +36,7 @@ import { SourceDefinitionCommand } from './features/source-definition.js';
 import { LogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
+import { getInferredProjectCompilerOptions } from './utils/tsconfig.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 import { ConfigurationManager } from './configuration-manager.js';
@@ -200,19 +201,8 @@ export class LspServer {
 
         this.typeScriptAutoFixProvider = new TypeScriptAutoFixProvider(this.tspClient);
 
-        await Promise.all([
-            this.configurationManager.setAndConfigureTspClient(this.workspaceRoot, this._tspClient, hostInfo),
-            this.tspClient.request(CommandTypes.CompilerOptionsForInferredProjects, {
-                options: {
-                    module: tsp.ModuleKind.CommonJS,
-                    target: tsp.ScriptTarget.ES2016,
-                    jsx: tsp.JsxEmit.Preserve,
-                    allowJs: true,
-                    allowSyntheticDefaultImports: true,
-                    allowNonTsExtensions: true,
-                },
-            }),
-        ]);
+        this.configurationManager.setAndConfigureTspClient(this.workspaceRoot, this._tspClient, hostInfo);
+        this.setCompilerOptionsForInferredProjects();
 
         const initializeResult: lsp.InitializeResult = {
             capabilities: {
@@ -303,8 +293,22 @@ export class LspServer {
         return undefined;
     }
 
+    private setCompilerOptionsForInferredProjects(): void {
+        const args: tsp.SetCompilerOptionsForInferredProjectsArgs = {
+            options: {
+                ...getInferredProjectCompilerOptions(this.configurationManager.workspaceConfiguration.implicitProjectConfiguration!),
+                allowJs: true,
+                allowNonTsExtensions: true,
+                allowSyntheticDefaultImports: true,
+                resolveJsonModule: true,
+            },
+        };
+        this.tspClient.executeWithoutWaitingForResponse(CommandTypes.CompilerOptionsForInferredProjects, args);
+    }
+
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
         this.configurationManager.setWorkspaceConfiguration(params.settings || {});
+        this.setCompilerOptionsForInferredProjects();
         const ignoredDiagnosticCodes = this.configurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
         this.diagnosticQueue?.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes);
     }
