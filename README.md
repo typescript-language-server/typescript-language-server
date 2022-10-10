@@ -286,7 +286,42 @@ completions.completeFunctionCalls: boolean;
 // Diagnostics code to be omitted when reporting diagnostics.
 // See https://github.com/microsoft/TypeScript/blob/master/src/compiler/diagnosticMessages.json for a full list of valid codes.
 diagnostics.ignoredCodes: number[];
-
+/**
+ * Enable/disable semantic checking of JavaScript files. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
+ *
+ * @default false
+ */
+implicitProjectConfiguration.checkJs: boolean;
+/**
+ * Enable/disable `experimentalDecorators` in JavaScript files that are not part of a project. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
+ *
+ * @default false
+ */
+implicitProjectConfiguration.experimentalDecorators: boolean;
+/**
+ * Sets the module system for the program. See more: https://www.typescriptlang.org/tsconfig#module.
+ *
+ * @default 'ESNext'
+ */
+implicitProjectConfiguration.module: string;
+/**
+ * Enable/disable [strict function types](https://www.typescriptlang.org/tsconfig#strictFunctionTypes) in JavaScript and TypeScript files that are not part of a project. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
+ *
+ * @default true
+ */
+implicitProjectConfiguration.strictFunctionTypes: boolean;
+/**
+ * Enable/disable [strict null checks](https://www.typescriptlang.org/tsconfig#strictNullChecks) in JavaScript and TypeScript files that are not part of a project. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
+ *
+ * @default true
+ */
+implicitProjectConfiguration.strictNullChecks: boolean;
+/**
+ * Set target JavaScript language version for emitted JavaScript and include library declarations. See more: https://www.typescriptlang.org/tsconfig#target.
+ *
+ * @default 'ES2020'
+ */
+implicitProjectConfiguration.target: string;
 ```
 
 ## Code actions on save

@@ -1,7 +1,7 @@
 import deepmerge from 'deepmerge';
 import path from 'node:path';
 import type * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.d.js';
+import tsp from 'typescript/lib/protocol.d.js';
 import { LspDocuments } from './document.js';
 import { CommandTypes } from './tsp-command-types.js';
 import type { TypeScriptInitializationOptions } from './ts-protocol.js';
@@ -42,16 +42,39 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
     useLabelDetailsInCompletionEntries: true,
 };
 
+const DEFAULT_IMPLICIT_PROJECT_CONFIGURATION: Required<WorkspaceConfigurationImplicitProjectConfigurationOptions> = {
+    checkJs: false,
+    experimentalDecorators: false,
+    module: tsp.ModuleKind.ESNext,
+    strictFunctionTypes: true,
+    strictNullChecks: true,
+    target: tsp.ScriptTarget.ES2020,
+};
+
+const DEFAULT_WORKSPACE_CONFIGURATION: WorkspaceConfiguration = {
+    implicitProjectConfiguration: DEFAULT_IMPLICIT_PROJECT_CONFIGURATION,
+};
+
 export interface WorkspaceConfiguration {
     javascript?: WorkspaceConfigurationLanguageOptions;
     typescript?: WorkspaceConfigurationLanguageOptions;
     completions?: WorkspaceConfigurationCompletionOptions;
     diagnostics?: WorkspaceConfigurationDiagnosticsOptions;
+    implicitProjectConfiguration?: WorkspaceConfigurationImplicitProjectConfigurationOptions;
 }
 
 export interface WorkspaceConfigurationLanguageOptions {
     format?: tsp.FormatCodeSettings;
     inlayHints?: TypeScriptInlayHintsPreferences;
+}
+
+export interface WorkspaceConfigurationImplicitProjectConfigurationOptions {
+    checkJs?: boolean;
+    experimentalDecorators?: boolean;
+    module?: string;
+    strictFunctionTypes?: boolean;
+    strictNullChecks?: boolean;
+    target?: string;
 }
 
 /* eslint-disable @typescript-eslint/indent */
@@ -78,7 +101,7 @@ export interface WorkspaceConfigurationCompletionOptions {
 
 export class ConfigurationManager {
     public tsPreferences: Required<tsp.UserPreferences> = deepmerge({}, DEFAULT_TSSERVER_PREFERENCES);
-    public workspaceConfiguration: WorkspaceConfiguration = {};
+    public workspaceConfiguration: WorkspaceConfiguration = deepmerge({}, DEFAULT_WORKSPACE_CONFIGURATION);
     private tspClient: TspClient | null = null;
 
     constructor(private readonly documents: LspDocuments) {}
@@ -88,10 +111,10 @@ export class ConfigurationManager {
     }
 
     public setWorkspaceConfiguration(configuration: WorkspaceConfiguration): void {
-        this.workspaceConfiguration = deepmerge({}, configuration);
+        this.workspaceConfiguration = deepmerge(DEFAULT_WORKSPACE_CONFIGURATION, configuration);
     }
 
-    public async setAndConfigureTspClient(workspaceFolder: string | undefined, client: TspClient, hostInfo?: TypeScriptInitializationOptions['hostInfo']): Promise<void> {
+    public setAndConfigureTspClient(workspaceFolder: string | undefined, client: TspClient, hostInfo?: TypeScriptInitializationOptions['hostInfo']): void {
         this.tspClient = client;
         const formatOptions: tsp.FormatCodeSettings = {
             // We can use \n here since the editor should normalize later on to its line endings.
@@ -105,7 +128,7 @@ export class ConfigurationManager {
                 autoImportFileExcludePatterns: this.getAutoImportFileExcludePatternsPreference(workspaceFolder),
             },
         };
-        await this.tspClient?.request(CommandTypes.Configure, args);
+        client.executeWithoutWaitingForResponse(CommandTypes.Configure, args);
     }
 
     public async configureGloballyFromDocument(filename: string, formattingOptions?: lsp.FormattingOptions): Promise<void> {
