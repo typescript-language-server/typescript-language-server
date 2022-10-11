@@ -238,6 +238,7 @@ export class LspServer {
                         Commands.APPLY_WORKSPACE_EDIT,
                         Commands.APPLY_CODE_ACTION,
                         Commands.APPLY_REFACTORING,
+                        Commands.CONFIGURE_PLUGIN,
                         Commands.ORGANIZE_IMPORTS,
                         Commands.APPLY_RENAME_FILE,
                         Commands.SOURCE_DEFINITION,
@@ -915,6 +916,9 @@ export class LspServer {
                     position: Position.fromLocation(renameLocation),
                 });
             }
+        } else if (arg.command === Commands.CONFIGURE_PLUGIN && arg.arguments) {
+            const [pluginName, options] = arg.arguments as [string, unknown];
+            await this.configurationManager.configurePlugin(pluginName, options);
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
             const file = arg.arguments[0] as string;
             const additionalArguments: { skipDestructiveCodeActions?: boolean; } = arg.arguments[1] || {};

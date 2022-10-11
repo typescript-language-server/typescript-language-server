@@ -116,6 +116,14 @@ export class ConfigurationManager {
         await this.tspClient?.request(CommandTypes.Configure, args);
     }
 
+    public async configurePlugin(pluginName: string, configuration: unknown): Promise<void> {
+        const args: tsp.ConfigurePluginRequestArguments = {
+            configuration,
+            pluginName,
+        };
+        await this.tspClient?.request(CommandTypes.ConfigurePlugin, args);
+    }
+
     public getPreferences(filename: string): tsp.UserPreferences {
         if (this.tspClient?.apiVersion.lt(API.v290)) {
             return {};
