@@ -44,6 +44,7 @@ export interface TypeScriptRequestTypes {
     [CommandTypes.CompletionDetails]: [tsp.CompletionDetailsRequestArgs, tsp.CompletionDetailsResponse];
     [CommandTypes.CompletionInfo]: [tsp.CompletionsRequestArgs, tsp.CompletionInfoResponse];
     [CommandTypes.Configure]: [tsp.ConfigureRequestArguments, tsp.ConfigureResponse];
+    [CommandTypes.ConfigurePlugin]: [tsp.ConfigurePluginRequestArguments, tsp.ConfigurePluginResponse];
     [CommandTypes.Definition]: [tsp.FileLocationRequestArgs, tsp.DefinitionResponse];
     [CommandTypes.DefinitionAndBoundSpan]: [tsp.FileLocationRequestArgs, tsp.DefinitionInfoAndBoundSpanResponse];
     [CommandTypes.DocCommentTemplate]: [tsp.FileLocationRequestArgs, tsp.DocCommandTemplateResponse];

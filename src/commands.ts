@@ -11,6 +11,7 @@ export const Commands = {
     APPLY_WORKSPACE_EDIT: '_typescript.applyWorkspaceEdit',
     APPLY_CODE_ACTION: '_typescript.applyCodeAction',
     APPLY_REFACTORING: '_typescript.applyRefactoring',
+    CONFIGURE_PLUGIN: '_typescript.configurePlugin',
     ORGANIZE_IMPORTS: '_typescript.organizeImports',
     APPLY_RENAME_FILE: '_typescript.applyRenameFile',
     APPLY_COMPLETION_CODE_ACTION: '_typescript.applyCompletionCodeAction',

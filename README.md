@@ -453,6 +453,20 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     void
     ```
 
+### Configure plugin
+
+- Request:
+    ```ts
+    {
+        command: `_typescript.configurePlugin`
+        arguments: [pluginName: string, configuration: any]
+    }
+    ```
+- Response:
+    ```ts
+    void
+    ```
+
 ## Inlay hints (`typescript/inlayHints`) (experimental)
 
 > !!! This implementation is deprecated. Use the spec-compliant `textDocument/inlayHint` request instead. !!!
