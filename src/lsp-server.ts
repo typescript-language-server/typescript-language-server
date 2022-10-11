@@ -917,8 +917,14 @@ export class LspServer {
                 });
             }
         } else if (arg.command === Commands.CONFIGURE_PLUGIN && arg.arguments) {
-            const [pluginName, options] = arg.arguments as [string, unknown];
-            await this.configurationManager.configurePlugin(pluginName, options);
+            const [pluginName, configuration] = arg.arguments as [string, unknown];
+
+            if (this.tspClient?.apiVersion.gte(API.v314)) {
+                this.tspClient.executeWithoutWaitingForResponse(CommandTypes.ConfigurePlugin, {
+                    configuration,
+                    pluginName,
+                });
+            }
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
             const file = arg.arguments[0] as string;
             const additionalArguments: { skipDestructiveCodeActions?: boolean; } = arg.arguments[1] || {};
