@@ -26,6 +26,7 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
     - [Apply Refactoring](#apply-refactoring)
     - [Organize Imports](#organize-imports)
     - [Rename File](#rename-file)
+    - [Configure plugin](#configure-plugin)
 - [Inlay hints \(`typescript/inlayHints`\) \(experimental\)](#inlay-hints-typescriptinlayhints-experimental)
 - [Callers and callees \(`textDocument/calls`\) \(experimental\)](#callers-and-callees-textdocumentcalls-experimental)
 - [Supported Protocol features](#supported-protocol-features)
@@ -66,7 +67,7 @@ typescript-language-server --stdio
     -h, --help                             output usage information
 ```
 
-> Note: The path passed to `--tsserver-path` should ideally be a path to the `/.../typescript/lib/` directory and not to the shell script `/.../node_modules/.bin/tsserver` or `tsserver`. Though for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script.
+> Note: The path passed to `--tsserver-path` should be a path to the `[...]/typescript/lib/tssserver.js` file or to the `[...]/typescript/lib/` directory and not to the shell script `[...]/node_modules/.bin/tsserver`. Though for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script.
 
 ## initializationOptions
 

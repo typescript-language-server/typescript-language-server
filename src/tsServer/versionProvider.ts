@@ -31,21 +31,12 @@ export class TypeScriptVersion {
         public readonly source: TypeScriptVersionSource,
         public readonly path: string,
         private readonly logger: Logger,
-        private readonly _pathLabel?: string,
     ) {
         this._api = null;
     }
 
-    public get tscPath(): string {
-        return path.resolve(this.path, '../bin/tsc');
-    }
-
     public get tsServerPath(): string {
-        return path.resolve(this.path, 'tsserver.js');
-    }
-
-    public get pathLabel(): string {
-        return typeof this._pathLabel === 'undefined' ? this.path : this._pathLabel;
+        return this.path;
     }
 
     public get isValid(): boolean {
@@ -138,6 +129,10 @@ export class TypeScriptVersionProvider {
         // Get directory path
         stat = fs.lstatSync(resolvedPath, { throwIfNoEntry: false });
         if (stat?.isFile()) {
+            if (path.basename(resolvedPath) === 'tsserver.js') {
+                this.logger.log(`Resolved tsserver location: ${resolvedPath}`);
+                return new TypeScriptVersion(TypeScriptVersionSource.UserSetting, resolvedPath, this.logger);
+            }
             resolvedPath = path.dirname(resolvedPath);
             this.logger.log(`Resolved directory path from a file path: ${resolvedPath}`);
         }
@@ -146,20 +141,21 @@ export class TypeScriptVersionProvider {
             const packageJsonPath = pkgUpSync({ cwd: resolvedPath });
             this.logger.log(`Resolved package.json location: "${packageJsonPath}"`);
             if (packageJsonPath) {
-                resolvedPath = path.join(path.dirname(packageJsonPath), 'lib');
-                this.logger.log(`Assumed tsserver lib location: "${resolvedPath}"`);
+                resolvedPath = path.join(path.dirname(packageJsonPath), 'lib', 'tsserver.js');
+                this.logger.log(`Resolved tsserver location: "${resolvedPath}"`);
             }
         } catch {
             // ignore
         }
-        return new TypeScriptVersion(TypeScriptVersionSource.UserSetting, resolvedPath, this.logger, undefined);
+        return new TypeScriptVersion(TypeScriptVersionSource.UserSetting, resolvedPath, this.logger);
     }
 
     public getWorkspaceVersion(workspaceFolders: string[]): TypeScriptVersion | null {
         for (const p of workspaceFolders) {
             const libFolder = findPathToModule(p, MODULE_FOLDERS);
             if (libFolder) {
-                const version = new TypeScriptVersion(TypeScriptVersionSource.Workspace, libFolder, this.logger);
+                const tsServerPath = path.join(libFolder, 'tsserver.js');
+                const version = new TypeScriptVersion(TypeScriptVersionSource.Workspace, tsServerPath, this.logger);
                 if (version.isValid) {
                     return version;
                 }
@@ -172,7 +168,8 @@ export class TypeScriptVersionProvider {
         const require = createRequire(import.meta.url);
         try {
             const file = require.resolve('typescript');
-            const bundledVersion = new TypeScriptVersion(TypeScriptVersionSource.Bundled, path.dirname(file), this.logger, '');
+            const tsServerPath = path.join(path.dirname(file), 'tsserver.js');
+            const bundledVersion = new TypeScriptVersion(TypeScriptVersionSource.Bundled, tsServerPath, this.logger);
             return bundledVersion;
         } catch (e) {
             // window.showMessage('Bundled typescript module not found', 'error');

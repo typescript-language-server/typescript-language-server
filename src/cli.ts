@@ -19,9 +19,9 @@ const program = new Command('typescript-language-server')
     .version(version)
     .requiredOption('--stdio', 'use stdio')
     .option('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.')
-    .option('--tsserver-log-verbosity <tsserverLogVerbosity>', 'Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
+    .option('--tsserver-log-verbosity <tsserverLogVerbosity>', '[deprecated] Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
       ' example: --tsserver-log-verbosity verbose')
-    .option('--tsserver-path <path>', 'Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/')
+    .option('--tsserver-path <path>', '[deprecated] Specify path to tsserver.js or the lib directory. example: --tsserver-path=/Users/me/typescript/lib/tsserver.js')
     .parse(process.argv);
 
 const options = program.opts();
