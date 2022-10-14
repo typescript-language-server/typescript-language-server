@@ -186,7 +186,7 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         lspClient,
         tsserverLogVerbosity: TsServerLogLevel.Off,
     };
-    const typescriptVersionProvider = new TypeScriptVersionProvider(serverOptions, logger);
+    const typescriptVersionProvider = new TypeScriptVersionProvider(serverOptions.tsserverPath, logger);
     const bundled = typescriptVersionProvider.bundledVersion();
     const server = new TestLspServer({
         ...serverOptions,

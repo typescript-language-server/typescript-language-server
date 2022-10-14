@@ -26,12 +26,6 @@ const program = new Command('typescript-language-server')
 
 const options = program.opts();
 
-let tsserverLogVerbosity = TsServerLogLevel.fromString(options.tsserverLogVerbosity);
-
-if (options.tsserverLogFile && tsserverLogVerbosity === TsServerLogLevel.Off) {
-    tsserverLogVerbosity = TsServerLogLevel.Normal;
-}
-
 let logLevel = DEFAULT_LOG_LEVEL;
 if (options.logLevel) {
     logLevel = parseInt(options.logLevel, 10);
@@ -42,7 +36,7 @@ if (options.logLevel) {
 }
 
 createLspConnection({
-    tsserverPath: options.tsserverPath as string,
-    tsserverLogVerbosity,
+    cmdLineTsserverPath: options.tsserverPath as string,
+    cmdLineTsserverLogVerbosity: TsServerLogLevel.fromString(options.tsserverLogVerbosity),
     showMessageLevel: logLevel as lsp.MessageType,
 }).listen();

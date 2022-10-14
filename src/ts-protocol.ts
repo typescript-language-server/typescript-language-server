@@ -58,13 +58,26 @@ export interface TypeScriptInitializationOptions {
 
 interface TsserverOptions {
     /**
-     * The path to the directory where the `tsserver` logs will be created.
+     * The path to the directory where the `tsserver` log files will be created.
      * If not provided, the log files will be created within the workspace, inside the `.log` directory.
      * If no workspace root is provided when initializating the server and no custom path is specified then
      * the logs will not be created.
      * @default undefined
      */
     logDirectory?: string;
+    /**
+     * Verbosity of the information logged into the `tsserver` log files.
+     *
+     * Log levels from least to most amount of details: `'terse'`, `'normal'`, `'requestTime`', `'verbose'`.
+     * Enabling particular level also enables all lower levels.
+     *
+     * @default 'off'
+     */
+    logVerbosity?: 'off' | 'terse' | 'normal' | 'requestTime' | 'verbose';
+    /**
+     * The path to the `tsserver.js` file or the typescript lib directory. For example: `/Users/me/typescript/lib/tsserver.js`.
+     */
+    path?: string;
     /**
      * The verbosity of logging the tsserver communication through the LSP messages.
      * This doesn't affect the file logging.

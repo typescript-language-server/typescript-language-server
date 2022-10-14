@@ -62,10 +62,12 @@ typescript-language-server --stdio
     -V, --version                          output the version number
     --stdio                                use stdio (required option)
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
-    --tsserver-log-verbosity <verbosity>   Specify tsserver log verbosity (off, terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
-    --tsserver-path <path>                 Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/
+    --tsserver-log-verbosity <verbosity>   [deprecated] Specify tsserver log verbosity (off, terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
+    --tsserver-path <path>                 [deprecated] Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/
     -h, --help                             output usage information
 ```
+
+> The `--tsserver-log-verbosity` and `--tsserver-path` options are deprecated and it is recommended to pass those through corresponding `tsserver.*` `initializationOptions` instead.
 
 > Note: The path passed to `--tsserver-path` should be a path to the `[...]/typescript/lib/tssserver.js` file or to the `[...]/typescript/lib/` directory and not to the shell script `[...]/node_modules/.bin/tsserver`. Though for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script.
 
@@ -89,16 +91,31 @@ The `tsserver` setting specifies additional options related to the internal `tss
 ```ts
 interface TsserverOptions {
     /**
-     * The path to the directory where the `tsserver` logs will be created.
+     * The path to the directory where the `tsserver` log files will be created.
      * If not provided, the log files will be created within the workspace, inside the `.log` directory.
      * If no workspace root is provided when initializating the server and no custom path is specified then
      * the logs will not be created.
+     *
      * @default undefined
      */
     logDirectory?: string;
     /**
+     * Verbosity of the information logged into the `tsserver` log files.
+     *
+     * Log levels from least to most amount of details: `'terse'`, `'normal'`, `'requestTime`', `'verbose'`.
+     * Enabling particular level also enables all lower levels.
+     *
+     * @default 'off'
+     */
+    logVerbosity?: 'off' | 'terse' | 'normal' | 'requestTime' | 'verbose';
+    /**
+     * The path to the `tsserver.js` file or the typescript lib directory. For example: `/Users/me/typescript/lib/tsserver.js`.
+     */
+    path?: string;
+    /**
      * The verbosity of logging of the tsserver communication.
      * Delivered through the LSP messages and not related to file logging.
+     *
      * @default 'off'
      */
     trace?: 'off' | 'messages' | 'verbose';
