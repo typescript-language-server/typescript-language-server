@@ -29,7 +29,7 @@ import { provideOrganizeImports } from './organize-imports.js';
 import { TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { computeCallers, computeCallees } from './calls.js';
-import { TypeScriptServiceConfiguration } from './utils/configuration.js';
+import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
@@ -78,31 +78,6 @@ export class LspServer {
         return this._tspClient;
     }
 
-    private findTypescriptVersion(): TypeScriptVersion | null {
-        const typescriptVersionProvider = new TypeScriptVersionProvider(this.options, this.logger);
-        // User-provided tsserver path.
-        const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
-        if (userSettingVersion) {
-            if (userSettingVersion.isValid) {
-                return userSettingVersion;
-            }
-            this.logger.logIgnoringVerbosity(LogLevel.Warning, `Typescript specified through --tsserver-path ignored due to invalid path "${userSettingVersion.path}"`);
-        }
-        // Workspace version.
-        if (this.workspaceRoot) {
-            const workspaceVersion = typescriptVersionProvider.getWorkspaceVersion([this.workspaceRoot]);
-            if (workspaceVersion) {
-                return workspaceVersion;
-            }
-        }
-        // Bundled version
-        const bundledVersion = typescriptVersionProvider.bundledVersion();
-        if (bundledVersion && bundledVersion.isValid) {
-            return bundledVersion;
-        }
-        return null;
-    }
-
     async initialize(params: TypeScriptInitializeParams): Promise<lsp.InitializeResult> {
         this.logger.log('initialize', params);
         if (this._tspClient) {
@@ -125,11 +100,11 @@ export class LspServer {
             pluginProbeLocations.push(plugin.location);
         }
 
-        const typescriptVersion = this.findTypescriptVersion();
+        const typescriptVersion = this.findTypescriptVersion(tsserver?.path);
         if (typescriptVersion) {
             this.logger.logIgnoringVerbosity(LogLevel.Info, `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
         } else {
-            throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid --tsserver-path is specified. Exiting.');
+            throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid `tsserver.path` is specified. Exiting.');
         }
 
         this.configurationManager.mergeTsPreferences(userInitializationOptions.preferences || {});
@@ -166,12 +141,13 @@ export class LspServer {
             this.features,
             this.logger,
         );
+        const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver?.logVerbosity);
         this._tspClient = new TspClient({
             lspClient: this.options.lspClient,
             trace: Trace.fromString(tsserver?.trace || 'off'),
             typescriptVersion,
             logDirectoryProvider: new LogDirectoryProvider(this.getLogDirectoryPath(userInitializationOptions)),
-            logVerbosity: this.options.tsserverLogVerbosity,
+            logVerbosity: tsserverLogVerbosity ?? this.options.tsserverLogVerbosity,
             disableAutomaticTypingAcquisition,
             maxTsServerMemory,
             npmLocation,
@@ -282,6 +258,31 @@ export class LspServer {
         (initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
         this.logger.log('onInitialize result', initializeResult);
         return initializeResult;
+    }
+
+    private findTypescriptVersion(userTsserverPath: string | undefined): TypeScriptVersion | null {
+        const typescriptVersionProvider = new TypeScriptVersionProvider(userTsserverPath || this.options.tsserverPath, this.logger);
+        // User-provided tsserver path.
+        const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
+        if (userSettingVersion) {
+            if (userSettingVersion.isValid) {
+                return userSettingVersion;
+            }
+            this.logger.logIgnoringVerbosity(LogLevel.Warning, `Typescript specified through user setting ignored due to invalid path "${userSettingVersion.path}"`);
+        }
+        // Workspace version.
+        if (this.workspaceRoot) {
+            const workspaceVersion = typescriptVersionProvider.getWorkspaceVersion([this.workspaceRoot]);
+            if (workspaceVersion) {
+                return workspaceVersion;
+            }
+        }
+        // Bundled version
+        const bundledVersion = typescriptVersionProvider.bundledVersion();
+        if (bundledVersion && bundledVersion.isValid) {
+            return bundledVersion;
+        }
+        return null;
     }
 
     private getLogDirectoryPath(initializationOptions: TypeScriptInitializationOptions): string | undefined {

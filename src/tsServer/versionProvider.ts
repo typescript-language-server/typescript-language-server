@@ -15,7 +15,6 @@ import path from 'node:path';
 import which from 'which';
 import { pkgUpSync } from 'pkg-up';
 import API from '../utils/api.js';
-import type { TypeScriptServiceConfiguration } from '../utils/configuration.js';
 import { findPathToModule } from '../utils/modules-resolver.js';
 import type { Logger } from '../utils/logger.js';
 
@@ -103,18 +102,17 @@ export class TypeScriptVersion {
 export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib'];
 
 export class TypeScriptVersionProvider {
-    public constructor(private configuration: TypeScriptServiceConfiguration, private logger: Logger) {}
+    public constructor(private userTsserverPath: string | undefined, private logger: Logger) {}
 
     public getUserSettingVersion(): TypeScriptVersion | null {
-        const { tsserverPath } = this.configuration;
-        if (!tsserverPath) {
+        if (!this.userTsserverPath) {
             return null;
         }
-        this.logger.log(`Resolving user-provided tsserver path "${tsserverPath}"...`);
-        let resolvedPath = tsserverPath;
+        this.logger.log(`Resolving user-provided tsserver path "${this.userTsserverPath}"...`);
+        let resolvedPath = this.userTsserverPath;
         // Resolve full path to the binary if path is not absolute.
         if (!path.isAbsolute(resolvedPath)) {
-            const binaryPath = which.sync(tsserverPath, { nothrow:true });
+            const binaryPath = which.sync(resolvedPath, { nothrow:true });
             if (binaryPath) {
                 resolvedPath = binaryPath;
             }
