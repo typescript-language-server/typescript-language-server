@@ -5,8 +5,10 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import vscodeUri from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { IFilePathToResourceConverter } from './utils/previewer.js';
 
 export class LspDocument implements TextDocument {
     protected document: TextDocument;
@@ -81,7 +83,7 @@ export class LspDocument implements TextDocument {
     }
 }
 
-export class LspDocuments {
+export class LspDocuments implements IFilePathToResourceConverter {
     private readonly _files: string[] = [];
     private readonly documents = new Map<string, LspDocument>();
 
@@ -121,5 +123,15 @@ export class LspDocuments {
         this.documents.delete(file);
         this._files.splice(this._files.indexOf(file), 1);
         return document;
+    }
+
+    /* IFilePathToResourceConverter implementation */
+
+    public toResource(filepath: string): vscodeUri.URI {
+        const document = this.documents.get(filepath);
+        if (document) {
+            return vscodeUri.URI.parse(document.uri);
+        }
+        return vscodeUri.URI.file(filepath);
     }
 }
