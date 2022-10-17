@@ -11,10 +11,15 @@
 
 import * as lsp from 'vscode-languageserver';
 import type tsp from 'typescript/lib/protocol.d.js';
-import { asDocumentation, asPlainText } from './protocol-translation.js';
+import * as Previewer from './utils/previewer.js';
+import { IFilePathToResourceConverter } from './utils/previewer.js';
 
-export function asSignatureHelp(info: tsp.SignatureHelpItems, context?: lsp.SignatureHelpContext): lsp.SignatureHelp {
-    const signatures = info.items.map(asSignatureInformation);
+export function asSignatureHelp(
+    info: tsp.SignatureHelpItems,
+    context: lsp.SignatureHelpContext | undefined,
+    filePathConverter: IFilePathToResourceConverter,
+): lsp.SignatureHelp {
+    const signatures = info.items.map(item => asSignatureInformation(item, filePathConverter));
     return {
         activeSignature: getActiveSignature(info, signatures, context),
         activeParameter: getActiveParameter(info),
@@ -45,25 +50,23 @@ function getActiveParameter(info: tsp.SignatureHelpItems): number {
     return info.argumentIndex;
 }
 
-function asSignatureInformation(item: tsp.SignatureHelpItem): lsp.SignatureInformation {
-    const parameters = item.parameters.map(asParameterInformation);
+function asSignatureInformation(item: tsp.SignatureHelpItem, filePathConverter: IFilePathToResourceConverter): lsp.SignatureInformation {
+    const parameters = item.parameters.map(parameter => asParameterInformation(parameter, filePathConverter));
     const signature: lsp.SignatureInformation = {
-        label: asPlainText(item.prefixDisplayParts),
-        documentation: asDocumentation({
-            documentation: item.documentation,
-            tags: item.tags.filter(x => x.name !== 'param'),
-        }),
+        label: Previewer.plainWithLinks(item.prefixDisplayParts, filePathConverter),
+        documentation: Previewer.markdownDocumentation(item.documentation, item.tags.filter(x => x.name !== 'param'), filePathConverter),
         parameters,
     };
-    signature.label += parameters.map(parameter => parameter.label).join(asPlainText(item.separatorDisplayParts));
-    signature.label += asPlainText(item.suffixDisplayParts);
+    signature.label += parameters.map(parameter => parameter.label).join(Previewer.plainWithLinks(item.separatorDisplayParts, filePathConverter));
+    signature.label += Previewer.plainWithLinks(item.suffixDisplayParts, filePathConverter);
     return signature;
 }
 
-function asParameterInformation(parameter: tsp.SignatureHelpParameter): lsp.ParameterInformation {
+function asParameterInformation(parameter: tsp.SignatureHelpParameter, filePathConverter: IFilePathToResourceConverter): lsp.ParameterInformation {
+    const { displayParts, documentation } = parameter;
     return {
-        label: asPlainText(parameter.displayParts),
-        documentation: asDocumentation(parameter),
+        label: Previewer.plainWithLinks(displayParts, filePathConverter),
+        documentation: Previewer.markdownDocumentation(documentation, undefined, filePathConverter),
     };
 }
 

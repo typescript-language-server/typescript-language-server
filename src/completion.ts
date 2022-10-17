@@ -9,10 +9,12 @@ import * as lsp from 'vscode-languageserver';
 import type tsp from 'typescript/lib/protocol.js';
 import { LspDocument } from './document.js';
 import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-types.js';
-import { toTextEdit, asPlainText, asDocumentation, normalizePath } from './protocol-translation.js';
+import { toTextEdit, normalizePath } from './protocol-translation.js';
 import { Commands } from './commands.js';
 import { TspClient } from './tsp-client.js';
 import { DisplayPartKind, SupportedFeatures } from './ts-protocol.js';
+import * as Previewer from './utils/previewer.js';
+import { IFilePathToResourceConverter } from './utils/previewer.js';
 import SnippetString from './utils/SnippetString.js';
 import { Range, Position } from './utils/typeConverters.js';
 import type { WorkspaceConfigurationCompletionOptions } from './configuration-manager.js';
@@ -22,7 +24,15 @@ interface ParameterListParts {
     readonly hasOptionalParameters: boolean;
 }
 
-export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacementSpan: tsp.TextSpan | undefined, file: string, position: lsp.Position, document: LspDocument, options: WorkspaceConfigurationCompletionOptions, features: SupportedFeatures): lsp.CompletionItem | null {
+export function asCompletionItem(
+    entry: tsp.CompletionEntry,
+    optionalReplacementSpan: tsp.TextSpan | undefined,
+    file: string, position: lsp.Position,
+    document: LspDocument,
+    filePathConverter: IFilePathToResourceConverter,
+    options: WorkspaceConfigurationCompletionOptions,
+    features: SupportedFeatures,
+): lsp.CompletionItem | null {
     const item: lsp.CompletionItem = {
         label: entry.name,
         ...features.completionLabelDetails ? { labelDetails: entry.labelDetails } : {},
@@ -59,7 +69,7 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
         item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     }
     if (sourceDisplay) {
-        item.detail = asPlainText(sourceDisplay);
+        item.detail = Previewer.plainWithLinks(sourceDisplay, filePathConverter);
     }
 
     let { insertText } = entry;
@@ -108,7 +118,11 @@ export function asCompletionItem(entry: tsp.CompletionEntry, optionalReplacement
 }
 
 function getRangeFromReplacementSpan(
-    replacementSpan: tsp.TextSpan | undefined, optionalReplacementSpan: tsp.TextSpan | undefined, position: lsp.Position, document: LspDocument, features: SupportedFeatures,
+    replacementSpan: tsp.TextSpan | undefined,
+    optionalReplacementSpan: tsp.TextSpan | undefined,
+    position: lsp.Position,
+    document: LspDocument,
+    features: SupportedFeatures,
 ): { insert?: lsp.Range; replace: lsp.Range; } | undefined {
     if (replacementSpan) {
         // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
@@ -208,10 +222,16 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 }
 
 export async function asResolvedCompletionItem(
-    item: lsp.CompletionItem, details: tsp.CompletionEntryDetails, client: TspClient, options: WorkspaceConfigurationCompletionOptions, features: SupportedFeatures,
+    item: lsp.CompletionItem,
+    details: tsp.CompletionEntryDetails,
+    client: TspClient,
+    filePathConverter: IFilePathToResourceConverter,
+    options: WorkspaceConfigurationCompletionOptions,
+    features: SupportedFeatures,
 ): Promise<lsp.CompletionItem> {
-    item.detail = asDetail(details);
-    item.documentation = asDocumentation(details);
+    item.detail = asDetail(details, filePathConverter);
+    const { documentation, tags } = details;
+    item.documentation = Previewer.markdownDocumentation(documentation, tags, filePathConverter);
     const filepath = normalizePath(item.data.file);
     if (details.codeActions?.length) {
         item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
@@ -393,13 +413,16 @@ function asCommand(codeActions: tsp.CodeAction[], filepath: string): lsp.Command
     }
 }
 
-function asDetail({ displayParts, sourceDisplay, source: deprecatedSource }: tsp.CompletionEntryDetails): string | undefined {
+function asDetail(
+    { displayParts, sourceDisplay, source: deprecatedSource }: tsp.CompletionEntryDetails,
+    filePathConverter: IFilePathToResourceConverter,
+): string | undefined {
     const result: string[] = [];
     const source = sourceDisplay || deprecatedSource;
     if (source) {
-        result.push(`Auto import from '${asPlainText(source)}'`);
+        result.push(`Auto import from '${Previewer.plainWithLinks(source, filePathConverter)}'`);
     }
-    const detail = asPlainText(displayParts);
+    const detail = Previewer.plainWithLinks(displayParts, filePathConverter);
     if (detail) {
         result.push(detail);
     }

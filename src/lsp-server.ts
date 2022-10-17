@@ -18,7 +18,7 @@ import { CommandTypes, EventTypes } from './tsp-command-types.js';
 import { Logger, LogLevel, PrefixingLogger } from './utils/logger.js';
 import { TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
-import { toDocumentHighlight, asTagsDocumentation, uriToPath, toSymbolKind, toLocation, pathToUri, toTextEdit, asPlainText, normalizePath } from './protocol-translation.js';
+import { toDocumentHighlight, uriToPath, toSymbolKind, toLocation, pathToUri, toTextEdit, normalizePath } from './protocol-translation.js';
 import { LspDocuments, LspDocument } from './document.js';
 import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
@@ -36,6 +36,8 @@ import { SourceDefinitionCommand } from './features/source-definition.js';
 import { LogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
+import { MarkdownString } from './utils/MarkdownString.js';
+import * as Previewer from './utils/previewer.js';
 import { getInferredProjectCompilerOptions } from './utils/tsconfig.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
@@ -609,7 +611,7 @@ export class LspServer {
                 if (entry.kind === 'warning') {
                     continue;
                 }
-                const completion = asCompletionItem(entry, optionalReplacementSpan, file, params.position, document, completionOptions, this.features);
+                const completion = asCompletionItem(entry, optionalReplacementSpan, file, params.position, document, this.documents, completionOptions, this.features);
                 if (!completion) {
                     continue;
                 }
@@ -634,7 +636,7 @@ export class LspServer {
         if (!details) {
             return item;
         }
-        return asResolvedCompletionItem(item, details, this.tspClient, this.configurationManager.workspaceConfiguration.completions || {}, this.features);
+        return asResolvedCompletionItem(item, details, this.tspClient, this.documents, this.configurationManager.workspaceConfiguration.completions || {}, this.features);
     }
 
     async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {
@@ -648,17 +650,15 @@ export class LspServer {
         if (!result || !result.body) {
             return { contents: [] };
         }
-        const range = Range.fromTextSpan(result.body);
-        const contents: lsp.MarkedString[] = [];
-        if (result.body.displayString) {
-            contents.push({ language: 'typescript', value: result.body.displayString });
+        const contents = new MarkdownString();
+        const { displayString, documentation, tags } = result.body;
+        if (displayString) {
+            contents.appendCodeblock('typescript', displayString);
         }
-        const tags = asTagsDocumentation(result.body.tags);
-        const documentation = asPlainText(result.body.documentation);
-        contents.push(documentation + (tags ? '\n\n' + tags : ''));
+        Previewer.addMarkdownDocumentation(contents, documentation, tags, this.documents);
         return {
-            contents,
-            range,
+            contents: contents.toMarkupContent(),
+            range: Range.fromTextSpan(result.body),
         };
     }
     protected async getQuickInfo(file: string, position: lsp.Position): Promise<tsp.QuickInfoResponse | undefined> {
@@ -791,7 +791,7 @@ export class LspServer {
         if (!response || !response.body) {
             return undefined;
         }
-        return asSignatureHelp(response.body, params.context);
+        return asSignatureHelp(response.body, params.context, this.documents);
     }
     protected async getSignatureHelp(file: string, params: lsp.SignatureHelpParams): Promise<tsp.SignatureHelpResponse | undefined> {
         try {
