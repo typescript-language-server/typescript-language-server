@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v2.0.1...v2.1.0) (2022-10-17)
+
+
+### Features
+
+* add `_typescript.configurePlugin` workspace command ([#607](https://github.com/typescript-language-server/typescript-language-server/issues/607)) ([59a5217](https://github.com/typescript-language-server/typescript-language-server/commit/59a52174148f3dc95fa2969971a1f95c6e432812))
+* add `tsserver.logVerbosity` and `tsserver.path` to `initializationOptions` ([#611](https://github.com/typescript-language-server/typescript-language-server/issues/611)) ([a03eab5](https://github.com/typescript-language-server/typescript-language-server/commit/a03eab5f1442ad68745d6bec464191a66ab85fc7))
+* add support for `[@link](https://github.com/link)` references in JSDoc ([#612](https://github.com/typescript-language-server/typescript-language-server/issues/612)) ([3722b51](https://github.com/typescript-language-server/typescript-language-server/commit/3722b51c0ad8e758c4e42f622bbe25ae981071e1))
+* add workspace implicit project defaults configuration ([#605](https://github.com/typescript-language-server/typescript-language-server/issues/605)) ([c6b3947](https://github.com/typescript-language-server/typescript-language-server/commit/c6b39473ed5343f99434506ee034fd0d45a5364d))
+
+
+### Bug Fixes
+
+* loading progress sometimes getting stuck ([#603](https://github.com/typescript-language-server/typescript-language-server/issues/603)) ([8cf4381](https://github.com/typescript-language-server/typescript-language-server/commit/8cf43810e0ff7a32d3499afc6da2344939b2d6de))
+* respect user-provided tsserver.js path from `--tsserver-path` ([#610](https://github.com/typescript-language-server/typescript-language-server/issues/610)) ([417339f](https://github.com/typescript-language-server/typescript-language-server/commit/417339fa66bc1910c80888c3f909e3d059da8ee5))
+
 ## [2.0.1](https://github.com/typescript-language-server/typescript-language-server/compare/v2.0.0...v2.0.1) (2022-10-07)
 
 
