@@ -6,9 +6,8 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.d.js';
 import { Commands } from './commands.js';
-import type { SupportedFeatures } from './ts-protocol.js';
+import type { tsp, SupportedFeatures } from './ts-protocol.js';
 
 export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, args: tsp.FileRangeRequestArgs, features: SupportedFeatures): lsp.CodeAction[] {
     if (!response || !response.body) {

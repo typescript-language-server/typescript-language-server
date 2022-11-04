@@ -10,7 +10,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.d.js';
+import type { tsp } from './ts-protocol.js';
 import * as Previewer from './utils/previewer.js';
 import { IFilePathToResourceConverter } from './utils/previewer.js';
 

@@ -6,7 +6,7 @@
  * Helpers for converting FROM LanguageServer types language-server ts types
  */
 import * as lsp from 'vscode-languageserver-protocol';
-import type tsp from 'typescript/lib/protocol.d.js';
+import type { tsp } from '../ts-protocol.js';
 
 export namespace Range {
     export const fromTextSpan = (span: tsp.TextSpan): lsp.Range => fromLocations(span.start, span.end);

@@ -9,26 +9,85 @@
  * **IMPORTANT** this module should not depend on `vscode-languageserver` only protocol and types
  */
 import lsp from 'vscode-languageserver-protocol';
-import type tsp from 'typescript/lib/protocol.d.js';
+import tslib from 'typescript/lib/tsserverlibrary.js';
 import type { TraceValue } from './tsServer/tracer.js';
+
+import tsp = tslib.server.protocol;
+
+export { tslib, tsp };
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
 }
 
-export class DisplayPartKind {
-    public static readonly functionName = 'functionName';
-    public static readonly methodName = 'methodName';
-    public static readonly parameterName = 'parameterName';
-    public static readonly propertyName = 'propertyName';
-    public static readonly punctuation = 'punctuation';
-    public static readonly text = 'text';
+declare module 'typescript/lib/tsserverlibrary.js' {
+    namespace server.protocol {
+        enum CommandTypes {
+            // Needed because it's not considered part of the public API - https://github.com/microsoft/TypeScript/issues/51410
+            EncodedSemanticClassificationsFull = 'encodedSemanticClassifications-full',
+        }
+    }
 }
 
-export enum SemicolonPreference {
-    Ignore = 'ignore',
-    Insert = 'insert',
-    Remove = 'remove'
+export const enum EventTypes {
+    ConfigFileDiag = 'configFileDiag',
+    SyntaxDiag = 'syntaxDiag',
+    SementicDiag = 'semanticDiag',
+    SuggestionDiag = 'suggestionDiag',
+    ProjectLoadingStart = 'projectLoadingStart',
+    ProjectLoadingFinish = 'projectLoadingFinish',
+}
+
+export class KindModifiers {
+    public static readonly optional = 'optional';
+    public static readonly deprecated = 'deprecated';
+    public static readonly dtsFile = '.d.ts';
+    public static readonly tsFile = '.ts';
+    public static readonly tsxFile = '.tsx';
+    public static readonly jsFile = '.js';
+    public static readonly jsxFile = '.jsx';
+    public static readonly jsonFile = '.json';
+
+    public static readonly fileExtensionKindModifiers = [
+        KindModifiers.dtsFile,
+        KindModifiers.tsFile,
+        KindModifiers.tsxFile,
+        KindModifiers.jsFile,
+        KindModifiers.jsxFile,
+        KindModifiers.jsonFile,
+    ];
+}
+
+const SYMBOL_DISPLAY_PART_KIND_MAP: Record<keyof typeof tslib.SymbolDisplayPartKind, tslib.SymbolDisplayPartKind> = {
+    aliasName: 0,
+    className: 1,
+    enumName: 2,
+    fieldName: 3,
+    interfaceName: 4,
+    keyword: 5,
+    lineBreak: 6,
+    numericLiteral: 7,
+    stringLiteral: 8,
+    localName: 9,
+    methodName: 10,
+    moduleName: 11,
+    operator: 12,
+    parameterName: 13,
+    propertyName: 14,
+    punctuation: 15,
+    space: 16,
+    text: 17,
+    typeParameterName: 18,
+    enumMemberName: 19,
+    functionName: 20,
+    regularExpressionLiteral: 21,
+    link: 22,
+    linkName: 23,
+    linkText: 24,
+};
+
+export function toSymbolDisplayPartKind(kind: string): tslib.SymbolDisplayPartKind {
+    return SYMBOL_DISPLAY_PART_KIND_MAP[kind as keyof typeof tslib.SymbolDisplayPartKind];
 }
 
 export interface SupportedFeatures {

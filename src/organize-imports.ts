@@ -6,9 +6,9 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.d.js';
 import { toTextDocumentEdit } from './protocol-translation.js';
 import { LspDocuments } from './document.js';
+import type { tsp } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
 export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {

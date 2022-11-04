@@ -1,10 +1,8 @@
 import deepmerge from 'deepmerge';
 import path from 'node:path';
 import type * as lsp from 'vscode-languageserver';
-import tsp from 'typescript/lib/protocol.d.js';
 import { LspDocuments } from './document.js';
-import { CommandTypes } from './tsp-command-types.js';
-import type { TypeScriptInitializationOptions } from './ts-protocol.js';
+import { tsp, TypeScriptInitializationOptions } from './ts-protocol.js';
 import type { TspClient } from './tsp-client.js';
 import API from './utils/api.js';
 
@@ -128,7 +126,7 @@ export class ConfigurationManager {
                 autoImportFileExcludePatterns: this.getAutoImportFileExcludePatternsPreference(workspaceFolder),
             },
         };
-        client.executeWithoutWaitingForResponse(CommandTypes.Configure, args);
+        client.executeWithoutWaitingForResponse(tsp.CommandTypes.Configure, args);
     }
 
     public async configureGloballyFromDocument(filename: string, formattingOptions?: lsp.FormattingOptions): Promise<void> {
@@ -136,7 +134,7 @@ export class ConfigurationManager {
             formatOptions: this.getFormattingOptions(filename, formattingOptions),
             preferences: this.getPreferences(filename),
         };
-        await this.tspClient?.request(CommandTypes.Configure, args);
+        await this.tspClient?.request(tsp.CommandTypes.Configure, args);
     }
 
     public getPreferences(filename: string): tsp.UserPreferences {

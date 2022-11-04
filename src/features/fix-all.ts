@@ -3,16 +3,17 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import type tsp from 'typescript/lib/protocol.d.js';
 import * as lsp from 'vscode-languageserver';
 import { LspDocuments } from '../document.js';
 import { toTextDocumentEdit } from '../protocol-translation.js';
+import { tsp } from '../ts-protocol.js';
 import { TspClient } from '../tsp-client.js';
-import { CommandTypes } from '../tsp-command-types.js';
 import * as errorCodes from '../utils/errorCodes.js';
 import * as fixNames from '../utils/fixNames.js';
 import { CodeActionKind } from '../utils/types.js';
 import { Range } from '../utils/typeConverters.js';
+
+import CommandTypes = tsp.CommandTypes;
 
 interface AutoFix {
     readonly codes: Set<number>;

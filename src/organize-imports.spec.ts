@@ -1,7 +1,7 @@
-import type tsp from 'typescript/lib/protocol.d.js';
 import * as chai from 'chai';
 import { provideOrganizeImports } from './organize-imports.js';
 import { filePath, uri } from './test-utils.js';
+import type { tsp } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
 describe('provideOrganizeImports', () => {
