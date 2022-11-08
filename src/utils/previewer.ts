@@ -11,8 +11,8 @@
 
 import vscodeUri from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.d.js';
 import { MarkdownString } from './MarkdownString.js';
+import type { tsp } from '../ts-protocol.js';
 
 export interface IFilePathToResourceConverter {
     /**

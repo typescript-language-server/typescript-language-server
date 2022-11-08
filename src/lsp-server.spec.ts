@@ -12,7 +12,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
 import { Commands } from './commands.js';
-import { SemicolonPreference } from './ts-protocol.js';
+import { tslib } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
 const assert = chai.assert;
@@ -369,7 +369,7 @@ describe('completion', () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
-                    semicolons: SemicolonPreference.Remove,
+                    semicolons: tslib.SemicolonPreference.Remove,
                     insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false,
                 },
             },
@@ -406,7 +406,7 @@ describe('completion', () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
-                    semicolons: SemicolonPreference.Ignore,
+                    semicolons: tslib.SemicolonPreference.Ignore,
                     insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
                 },
             },
@@ -1173,7 +1173,7 @@ describe('formatting', () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
-                    semicolons: SemicolonPreference.Ignore,
+                    semicolons: tslib.SemicolonPreference.Ignore,
                     insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
                 },
             },

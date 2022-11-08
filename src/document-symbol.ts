@@ -6,9 +6,8 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.d.js';
 import { toSymbolKind } from './protocol-translation.js';
-import { ScriptElementKind } from './tsp-command-types.js';
+import { tslib, tsp } from './ts-protocol.js';
 import { Range } from './utils/typeConverters.js';
 
 export function collectDocumentSymbols(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[]): boolean {
@@ -88,7 +87,7 @@ export function collectSymbolInformation(uri: string, current: tsp.NavigationTre
 }
 
 export function shouldIncludeEntry(item: tsp.NavigationTree | tsp.NavigationBarItem): boolean {
-    if (item.kind === ScriptElementKind.alias) {
+    if (item.kind === tslib.ScriptElementKind.alias) {
         return false;
     }
     return !!(item.text && item.text !== '<function>' && item.text !== '<class>');

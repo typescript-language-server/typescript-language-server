@@ -12,8 +12,8 @@
 import ChildProcess from 'node:child_process';
 import path from 'node:path';
 import type { Readable } from 'node:stream';
-import type tsp from 'typescript/lib/protocol.d.js';
 import { TsServerProcess, TsServerProcessFactory, TsServerProcessKind } from './server.js';
+import type { tsp } from '../ts-protocol.js';
 import type { TspClientOptions } from '../tsp-client.js';
 // import API from '../utils/api.js';
 import type { TypeScriptVersion } from './versionProvider.js';

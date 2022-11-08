@@ -9,10 +9,10 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type tsp from 'typescript/lib/protocol.d.js';
 import { CancellationToken } from 'vscode-jsonrpc';
 import { RequestItem, RequestQueue, RequestQueueingType } from './requestQueue.js';
 import { ServerResponse, ServerType, TypeScriptRequestTypes } from './requests.js';
+import type { tsp } from '../ts-protocol.js';
 import type { TspClientOptions } from '../tsp-client.js';
 import { OngoingRequestCanceller } from './cancellation.js';
 import { CallbackMap } from './callbackMap.js';

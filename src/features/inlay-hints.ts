@@ -9,14 +9,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import tsp from 'typescript/lib/protocol.d.js';
 import * as lsp from 'vscode-languageserver';
 import API from '../utils/api.js';
 import type { ConfigurationManager } from '../configuration-manager.js';
 import type { LspDocuments } from '../document.js';
+import { tsp } from '../ts-protocol.js';
 import type { TspClient } from '../tsp-client.js';
 import type { LspClient } from '../lsp-client.js';
-import { CommandTypes } from '../tsp-command-types.js';
 import { Position } from '../utils/typeConverters.js';
 import { uriToPath } from '../protocol-translation.js';
 
@@ -59,7 +58,7 @@ export class TypeScriptInlayHintsProvider {
         const start = document.offsetAt(range.start);
         const length = document.offsetAt(range.end) - start;
 
-        const response = await tspClient.request(CommandTypes.ProvideInlayHints, { file, start, length });
+        const response = await tspClient.request(tsp.CommandTypes.ProvideInlayHints, { file, start, length });
         if (response.type !== 'response' || !response.success || !response.body) {
             return [];
         }

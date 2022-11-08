@@ -9,8 +9,8 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import tsp from 'typescript/lib/protocol.d.js';
 import type { WorkspaceConfigurationImplicitProjectConfigurationOptions } from '../configuration-manager.js';
+import { tsp } from '../ts-protocol.js';
 
 const DEFAULT_PROJECT_CONFIG: tsp.ExternalProjectCompilerOptions = Object.freeze({
     module: tsp.ModuleKind.ESNext,

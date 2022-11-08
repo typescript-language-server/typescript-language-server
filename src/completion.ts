@@ -6,18 +6,19 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.js';
 import { LspDocument } from './document.js';
-import { CommandTypes, KindModifiers, ScriptElementKind } from './tsp-command-types.js';
 import { toTextEdit, normalizePath } from './protocol-translation.js';
 import { Commands } from './commands.js';
 import { TspClient } from './tsp-client.js';
-import { DisplayPartKind, SupportedFeatures } from './ts-protocol.js';
+import { tslib, tsp, KindModifiers, SupportedFeatures, toSymbolDisplayPartKind } from './ts-protocol.js';
 import * as Previewer from './utils/previewer.js';
 import { IFilePathToResourceConverter } from './utils/previewer.js';
 import SnippetString from './utils/SnippetString.js';
 import { Range, Position } from './utils/typeConverters.js';
 import type { WorkspaceConfigurationCompletionOptions } from './configuration-manager.js';
+
+import ScriptElementKind = tslib.ScriptElementKind;
+import SymbolDisplayPartKind = tslib.SymbolDisplayPartKind;
 
 interface ParameterListParts {
     readonly parts: ReadonlyArray<tsp.SymbolDisplayPart>;
@@ -87,10 +88,6 @@ export function asCompletionItem(
 
         if (kindModifiers.has(KindModifiers.deprecated)) {
             item.tags = [lsp.CompletionItemTag.Deprecated];
-        }
-
-        if (kindModifiers.has(KindModifiers.color)) {
-            item.kind = lsp.CompletionItemKind.Color;
         }
 
         if (entry.kind === ScriptElementKind.scriptElement) {
@@ -254,7 +251,7 @@ async function isValidFunctionCompletionContext(filepath: string, position: lsp.
     // Don't complete function calls inside of destructive assigments or imports
     try {
         const args: tsp.FileLocationRequestArgs = Position.toFileLocationRequestArgs(filepath, position);
-        const response = await client.request(CommandTypes.Quickinfo, args);
+        const response = await client.request(tsp.CommandTypes.Quickinfo, args);
         if (response.type !== 'response') {
             return true;
         }
@@ -305,17 +302,17 @@ function getParameterListParts(displayParts: ReadonlyArray<tsp.SymbolDisplayPart
 
     outer: for (let i = 0; i < displayParts.length; ++i) {
         const part = displayParts[i];
-        switch (part.kind) {
-            case DisplayPartKind.methodName:
-            case DisplayPartKind.functionName:
-            case DisplayPartKind.text:
-            case DisplayPartKind.propertyName:
+        switch (toSymbolDisplayPartKind(part.kind)) {
+            case SymbolDisplayPartKind.methodName:
+            case SymbolDisplayPartKind.functionName:
+            case SymbolDisplayPartKind.text:
+            case SymbolDisplayPartKind.propertyName:
                 if (parenCount === 0 && braceCount === 0) {
                     isInMethod = true;
                 }
                 break;
 
-            case DisplayPartKind.parameterName:
+            case SymbolDisplayPartKind.parameterName:
                 if (parenCount === 1 && braceCount === 0 && isInMethod) {
                     // Only take top level paren names
                     const next = displayParts[i + 1];
@@ -330,7 +327,7 @@ function getParameterListParts(displayParts: ReadonlyArray<tsp.SymbolDisplayPart
                 }
                 break;
 
-            case DisplayPartKind.punctuation:
+            case SymbolDisplayPartKind.punctuation:
                 if (part.text === '(') {
                     ++parenCount;
                 } else if (part.text === ')') {

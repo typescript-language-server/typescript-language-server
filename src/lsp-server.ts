@@ -12,9 +12,7 @@ import * as lsp from 'vscode-languageserver';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import * as lspinlayHints from './lsp-protocol.inlayHints.proposed.js';
 import * as lspsemanticTokens from './semantic-tokens.js';
-import tsp from 'typescript/lib/protocol.d.js';
 import API from './utils/api.js';
-import { CommandTypes, EventTypes } from './tsp-command-types.js';
 import { Logger, LogLevel, PrefixingLogger } from './utils/logger.js';
 import { TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
@@ -26,7 +24,7 @@ import { Commands } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
 import { provideOrganizeImports } from './organize-imports.js';
-import { TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
+import { tsp, EventTypes, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { computeCallers, computeCallees } from './calls.js';
 import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
@@ -42,6 +40,8 @@ import { getInferredProjectCompilerOptions } from './utils/tsconfig.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 import { ConfigurationManager } from './configuration-manager.js';
+
+import CommandTypes = tsp.CommandTypes;
 
 export class LspServer {
     private _tspClient: TspClient | null = null;
@@ -1126,7 +1126,7 @@ export class LspServer {
         }
     }
 
-    protected async onTsEvent(event: protocol.Event): Promise<void> {
+    protected async onTsEvent(event: tsp.Event): Promise<void> {
         if (event.event === EventTypes.SementicDiag || event.event === EventTypes.SyntaxDiag || event.event === EventTypes.SuggestionDiag) {
             this.diagnosticQueue?.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
         }

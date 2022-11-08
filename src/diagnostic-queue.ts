@@ -5,12 +5,11 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type tsp from 'typescript/lib/protocol.d.js';
 import * as lsp from 'vscode-languageserver';
 import debounce from 'p-debounce';
 import { Logger } from './utils/logger.js';
 import { pathToUri, toDiagnostic } from './protocol-translation.js';
-import { EventTypes } from './tsp-command-types.js';
+import type { tsp, EventTypes } from './ts-protocol.js';
 import { LspDocuments } from './document.js';
 import { SupportedFeatures } from './ts-protocol.js';
 

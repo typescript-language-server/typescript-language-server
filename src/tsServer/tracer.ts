@@ -11,7 +11,7 @@
 
 /* eslint-disable @typescript-eslint/no-unnecessary-qualifier */
 
-import type tsp from 'typescript/lib/protocol.d.js';
+import type { tsp } from '../ts-protocol.js';
 import { Logger } from '../utils/logger.js';
 
 export enum Trace {

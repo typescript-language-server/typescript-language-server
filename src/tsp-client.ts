@@ -9,12 +9,11 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type tsp from 'typescript/lib/protocol.d.js';
 import type lsp from 'vscode-languageserver';
 import type { CancellationToken } from 'vscode-jsonrpc';
-import { CommandTypes, EventTypes } from './tsp-command-types.js';
 import { Logger, PrefixingLogger } from './utils/logger.js';
 import API from './utils/api.js';
+import { tsp, EventTypes } from './ts-protocol.js';
 import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { ExecConfig, ServerResponse, TypeScriptRequestTypes } from './tsServer/requests.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
@@ -24,6 +23,8 @@ import Tracer, { Trace } from './tsServer/tracer.js';
 import type { TypeScriptVersion } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
 import type { TsServerLogLevel } from './utils/configuration.js';
+
+import CommandTypes = tsp.CommandTypes;
 
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;

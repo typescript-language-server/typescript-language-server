@@ -11,7 +11,7 @@
 
 import vscodeUri from 'vscode-uri';
 import * as chai from 'chai';
-import type tsp from 'typescript/lib/protocol.d.js';
+import type { tsp } from '../ts-protocol.js';
 import { IFilePathToResourceConverter, markdownDocumentation, plainWithLinks, tagsMarkdownPreview } from './previewer.js';
 
 const assert = chai.assert;

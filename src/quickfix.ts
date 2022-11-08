@@ -6,9 +6,9 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.d.js';
 import { Commands } from './commands.js';
 import { toTextDocumentEdit } from './protocol-translation.js';
+import type { tsp } from './ts-protocol.js';
 import { LspDocuments } from './document.js';
 
 export function provideQuickFix(response: tsp.GetCodeFixesResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {

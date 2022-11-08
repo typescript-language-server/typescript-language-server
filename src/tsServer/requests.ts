@@ -10,9 +10,10 @@
  */
 
 import vscodeUri from 'vscode-uri';
-import type tsp from 'typescript/lib/protocol.d.js';
-import { CommandTypes } from '../tsp-command-types.js';
+import { tsp } from '../ts-protocol.js';
 import { ExecutionTarget } from './server.js';
+
+import CommandTypes = tsp.CommandTypes;
 
 export enum ServerType {
     Syntax = 'syntax',

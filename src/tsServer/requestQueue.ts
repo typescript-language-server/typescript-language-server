@@ -9,7 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type tsp from 'typescript/lib/protocol.d.js';
+import type { tsp } from '../ts-protocol.js';
 
 export enum RequestQueueingType {
     /**

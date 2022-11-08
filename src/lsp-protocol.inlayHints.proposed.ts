@@ -1,6 +1,6 @@
 import * as lsp from 'vscode-languageserver';
-import type tsp from 'typescript/lib/protocol.d.js';
 import { RequestHandler } from 'vscode-jsonrpc';
+import type { tsp } from './ts-protocol.js';
 
 export type InlayHintsParams = {
     /**

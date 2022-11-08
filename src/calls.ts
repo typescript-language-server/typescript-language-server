@@ -1,10 +1,9 @@
 
-import type tsp from 'typescript/lib/protocol.d.js';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as lspcalls from './lsp-protocol.calls.proposed.js';
+import { tsp } from './ts-protocol.js';
 import { TspClient } from './tsp-client.js';
-import { CommandTypes } from './tsp-command-types.js';
 import { uriToPath, toLocation, toSymbolKind, pathToUri } from './protocol-translation.js';
 import { Range } from './utils/typeConverters.js';
 
@@ -125,7 +124,7 @@ async function getDefinition(tspClient: TspClient, args: lsp.TextDocumentPositio
     if (!file) {
         return undefined;
     }
-    const definitionResult = await tspClient.request(CommandTypes.Definition, {
+    const definitionResult = await tspClient.request(tsp.CommandTypes.Definition, {
         file,
         line: args.position.line + 1,
         offset: args.position.character + 1,
@@ -135,7 +134,7 @@ async function getDefinition(tspClient: TspClient, args: lsp.TextDocumentPositio
 
 async function findEnclosingSymbol(tspClient: TspClient, args: tsp.FileSpan): Promise<lspcalls.DefinitionSymbol | undefined> {
     const file = args.file;
-    const response = await tspClient.request(CommandTypes.NavTree, { file });
+    const response = await tspClient.request(tsp.CommandTypes.NavTree, { file });
     const tree = response.body;
     if (!tree || !tree.childItems) {
         return undefined;
@@ -194,7 +193,7 @@ async function findNonDefinitionReferences(tspClient: TspClient, args: tsp.FileS
 
 async function findReferences(tspClient: TspClient, args: tsp.FileSpan): Promise<readonly tsp.ReferencesResponseItem[]> {
     const file = args.file;
-    const result = await tspClient.request(CommandTypes.References, {
+    const result = await tspClient.request(tsp.CommandTypes.References, {
         file,
         line: args.start.line,
         offset: args.start.offset,
