@@ -147,7 +147,7 @@ class StdioChildServerProcess implements TsServerProcess {
 
     kill(): void {
         this._process.kill();
-        this.reader.dispose();
+        this.reader?.dispose();
         this._reader = null;
     }
 }
