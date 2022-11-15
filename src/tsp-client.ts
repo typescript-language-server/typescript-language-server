@@ -103,6 +103,11 @@ export class TspClient {
                 this.options.onExit(data.code, data.signal);
             }
         });
+        tsServer.onStdErr((error: string) => {
+            if (error) {
+                this.logger.error(error);
+            }
+        });
         tsServer.onError((err: Error) => {
             if (err) {
                 this.tsserverLogger.error('Exited with error. Error message is: {0}', err.message || err.name);
