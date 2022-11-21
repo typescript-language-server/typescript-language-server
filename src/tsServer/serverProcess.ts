@@ -15,7 +15,7 @@ import type { Readable } from 'node:stream';
 import { TsServerProcess, TsServerProcessFactory, TsServerProcessKind } from './server.js';
 import type { tsp } from '../ts-protocol.js';
 import type { TspClientOptions } from '../tsp-client.js';
-// import API from '../utils/api.js';
+import API from '../utils/api.js';
 import type { TypeScriptVersion } from './versionProvider.js';
 
 export class NodeTsServerProcessFactory implements TsServerProcessFactory {
@@ -26,7 +26,7 @@ export class NodeTsServerProcessFactory implements TsServerProcessFactory {
         configuration: TspClientOptions,
     ): TsServerProcess {
         const tsServerPath = version.tsServerPath;
-        const useIpc = false;  // version.version?.gte(API.v460);
+        const useIpc = version.version?.gte(API.v490);
 
         const runtimeArgs = [...args];
         if (useIpc) {
