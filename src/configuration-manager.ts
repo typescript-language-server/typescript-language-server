@@ -11,6 +11,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<tsp.UserPreferences> = {
     allowRenameOfImportPath: true,
     allowTextChangesInNewFiles: true,
     autoImportFileExcludePatterns: [],
+    disableLineTextInReferences: true,
     disableSuggestions: false,
     displayPartsForJSDoc: true,
     generateReturnInDocTemplate: true,
