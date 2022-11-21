@@ -106,6 +106,10 @@ class IpcChildServerProcess implements TsServerProcess {
         this._process.on('exit', handler);
     }
 
+    onStdErr(handler: (data: string) => void): void {
+        this._process.stderr!.on('data', data => handler(data.toString()));
+    }
+
     onError(handler: (err: Error) => void): void {
         this._process.on('error', handler);
     }
@@ -138,6 +142,10 @@ class StdioChildServerProcess implements TsServerProcess {
 
     onExit(handler: (code: number | null, signal: NodeJS.Signals | null) => void): void {
         this._process.on('exit', handler);
+    }
+
+    onStdErr(handler: (data: string) => void): void {
+        this._process.stderr!.on('data', data => handler(data.toString()));
     }
 
     onError(handler: (err: Error) => void): void {

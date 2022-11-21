@@ -33,11 +33,13 @@ export interface TypeScriptServerExitEvent {
 type OnEventHandler = (e: tsp.Event) => any;
 type OnExitHandler = (e: TypeScriptServerExitEvent) => any;
 type OnErrorHandler = (e: any) => any;
+type OnStdErrHandler = (e: string) => any;
 
 export interface ITypeScriptServer {
     onEvent(handler: OnEventHandler): void;
     onExit(handler: OnExitHandler): void;
     onError(handler: OnErrorHandler): void;
+    onStdErr(handler: OnStdErrHandler): void;
 
     readonly tsServerLogFile: string | undefined;
 
@@ -74,6 +76,7 @@ export interface TsServerProcess {
     onData(handler: (data: tsp.Response) => void): void;
     onExit(handler: (code: number | null, signal: NodeJS.Signals | null) => void): void;
     onError(handler: (error: Error) => void): void;
+    onStdErr(handler: (code: string) => void): void;
 
     kill(): void;
 }
@@ -85,6 +88,7 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
     private readonly _eventHandlers = new Set<OnEventHandler>();
     private readonly _exitHandlers = new Set<OnExitHandler>();
     private readonly _errorHandlers = new Set<OnErrorHandler>();
+    private readonly _stdErrHandlers = new Set<OnStdErrHandler>();
 
     constructor(
         private readonly _serverId: string,
@@ -97,6 +101,10 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
     ) {
         this._process.onData(msg => {
             this.dispatchMessage(msg);
+        });
+
+        this._process.onStdErr(error => {
+            this._stdErrHandlers.forEach(handler => handler(error));
         });
 
         this._process.onExit((code, signal) => {
@@ -116,6 +124,10 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
 
     public onExit(handler: OnExitHandler): void {
         this._exitHandlers.add(handler);
+    }
+
+    public onStdErr(handler: OnStdErrHandler): void {
+        this._stdErrHandlers.add(handler);
     }
 
     public onError(handler: OnErrorHandler): void {

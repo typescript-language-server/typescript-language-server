@@ -97,10 +97,16 @@ export class TspClient {
         const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, this.options.logDirectoryProvider, this.logger, this.tracer);
         const tsServer = tsServerSpawner.spawn(this.options.typescriptVersion, this.options);
         tsServer.onExit((data: TypeScriptServerExitEvent) => {
+            this.primaryTsServer = null;
             this.shutdown();
             this.tsserverLogger.error(`Exited. Code: ${data.code}. Signal: ${data.signal}`);
             if (this.options.onExit) {
                 this.options.onExit(data.code, data.signal);
+            }
+        });
+        tsServer.onStdErr((error: string) => {
+            if (error) {
+                this.logger.error(error);
             }
         });
         tsServer.onError((err: Error) => {
