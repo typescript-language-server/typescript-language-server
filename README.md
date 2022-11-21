@@ -624,6 +624,7 @@ interface DefinitionSymbol {
 - [x] textDocument/formatting
 - [x] textDocument/hover
 - [x] textDocument/inlayHint (no support for `inlayHint/resolve` or `workspace/inlayHint/refresh`)
+- [x] textDocument/prepareRename
 - [x] textDocument/rangeFormatting
 - [x] textDocument/references
 - [x] textDocument/rename

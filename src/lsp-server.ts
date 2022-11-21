@@ -214,7 +214,7 @@ export class LspServer {
                 },
                 hoverProvider: true,
                 inlayHintProvider: true,
-                renameProvider: true,
+                renameProvider: textDocument?.rename?.prepareSupport ? { prepareProvider: true, workDoneProgress: true } : true,
                 referencesProvider: true,
                 signatureHelpProvider: {
                     triggerCharacters: ['(', ',', '<'],
@@ -671,6 +671,32 @@ export class LspServer {
         } catch (err) {
             return undefined;
         }
+    }
+
+    async prepareRename(params: lsp.PrepareRenameParams): Promise<lsp.Range | { range: lsp.Range; placeholder: string; } | undefined | null> {
+        if (this.tspClient.apiVersion.lt(API.v310)) {
+            return null;
+        }
+        const file = uriToPath(params.textDocument.uri);
+        if (!file) {
+            return undefined;
+        }
+
+        const result = await this.tspClient.request(CommandTypes.Rename, {
+            file,
+            line: params.position.line + 1,
+            offset: params.position.character + 1,
+        });
+
+        const renameInfo = result.body?.info;
+        if (!renameInfo) {
+            return null;
+        }
+        if (!renameInfo.canRename) {
+            return Promise.reject(renameInfo.localizedErrorMessage);
+        }
+
+        return Range.fromTextSpan(renameInfo.triggerSpan);
     }
 
     async rename(params: lsp.RenameParams): Promise<lsp.WorkspaceEdit | undefined> {
