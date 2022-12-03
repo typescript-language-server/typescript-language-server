@@ -182,6 +182,7 @@ export class LspServer {
         this.configurationManager.setAndConfigureTspClient(this.workspaceRoot, this._tspClient, hostInfo);
         this.setCompilerOptionsForInferredProjects();
 
+        const prepareSupport = textDocument?.rename?.prepareSupport && this.tspClient.apiVersion.gte(API.v310);
         const initializeResult: lsp.InitializeResult = {
             capabilities: {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
@@ -214,7 +215,7 @@ export class LspServer {
                 },
                 hoverProvider: true,
                 inlayHintProvider: true,
-                renameProvider: textDocument?.rename?.prepareSupport ? { prepareProvider: true, workDoneProgress: true } : true,
+                renameProvider: prepareSupport ? { prepareProvider: true } : true,
                 referencesProvider: true,
                 signatureHelpProvider: {
                     triggerCharacters: ['(', ',', '<'],
@@ -674,46 +675,30 @@ export class LspServer {
     }
 
     async prepareRename(params: lsp.PrepareRenameParams): Promise<lsp.Range | { range: lsp.Range; placeholder: string; } | undefined | null> {
-        if (this.tspClient.apiVersion.lt(API.v310)) {
-            return null;
-        }
         const file = uriToPath(params.textDocument.uri);
         if (!file) {
-            return undefined;
+            return null;
         }
-
-        const result = await this.tspClient.request(CommandTypes.Rename, {
-            file,
-            line: params.position.line + 1,
-            offset: params.position.character + 1,
-        });
-
+        const result = await this.tspClient.request(CommandTypes.Rename, Position.toFileLocationRequestArgs(file, params.position));
         const renameInfo = result.body?.info;
         if (!renameInfo) {
             return null;
         }
         if (!renameInfo.canRename) {
-            return Promise.reject(renameInfo.localizedErrorMessage);
+            throw new Error(renameInfo.localizedErrorMessage);
         }
-
         return Range.fromTextSpan(renameInfo.triggerSpan);
     }
 
-    async rename(params: lsp.RenameParams): Promise<lsp.WorkspaceEdit | undefined> {
+    async rename(params: lsp.RenameParams): Promise<lsp.WorkspaceEdit | undefined | null> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('onRename', params, file);
         if (!file) {
-            return undefined;
+            return null;
         }
-
-        const result = await this.tspClient.request(CommandTypes.Rename, {
-            file,
-            line: params.position.line + 1,
-            offset: params.position.character + 1,
-        });
-
+        const result = await this.tspClient.request(CommandTypes.Rename, Position.toFileLocationRequestArgs(file, params.position));
         if (!result.body || !result.body.info.canRename || result.body.locs.length === 0) {
-            return undefined;
+            return null;
         }
         const workspaceEdit: lsp.WorkspaceEdit = {};
         result.body.locs
