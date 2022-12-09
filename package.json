@@ -43,7 +43,7 @@
   "dependencies": {
     "commander": "^9.4.1",
     "deepmerge": "^4.2.2",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.1.0",
     "p-debounce": "^4.0.0",
     "pkg-up": "^4.0.0",
     "semver": "^7.3.8",
