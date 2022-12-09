@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v2.1.0...v2.2.0) (2022-12-09)
+
+
+### Features
+
+* communicate with tsserver &gt;=4.9.0 using IPC ([#630](https://github.com/typescript-language-server/typescript-language-server/issues/630)) ([06abfde](https://github.com/typescript-language-server/typescript-language-server/commit/06abfdeb133127f4567efb77a2bf725549e9d957))
+* support `textDocument/prepareRename` request ([#628](https://github.com/typescript-language-server/typescript-language-server/issues/628)) ([9c66794](https://github.com/typescript-language-server/typescript-language-server/commit/9c6679438d6190b72a15f32c0eb83cacd7780213))
+* update typescript to 4.9.3 ([#629](https://github.com/typescript-language-server/typescript-language-server/issues/629)) ([0005648](https://github.com/typescript-language-server/typescript-language-server/commit/00056483da3f1089a3a426f08bc66651178c3665))
+
+
+### Bug Fixes
+
+* **deps:** update devdependency typescript to ^4.9.4 ([#637](https://github.com/typescript-language-server/typescript-language-server/issues/637)) ([d2b18b6](https://github.com/typescript-language-server/typescript-language-server/commit/d2b18b6d318c4b441e42f4f977ba6bd4eca36d58))
+* surface stderr output from the tsserver process ([#624](https://github.com/typescript-language-server/typescript-language-server/issues/624)) ([adf2689](https://github.com/typescript-language-server/typescript-language-server/commit/adf268927a2f4b5e689572be9bedc349573aadd5))
+
 ## [2.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v2.0.1...v2.1.0) (2022-10-17)
 
 
