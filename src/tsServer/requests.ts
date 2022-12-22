@@ -73,6 +73,7 @@ export interface TypeScriptRequestTypes {
     [CommandTypes.Quickinfo]: [tsp.FileLocationRequestArgs, tsp.QuickInfoResponse];
     [CommandTypes.References]: [tsp.FileLocationRequestArgs, tsp.ReferencesResponse];
     [CommandTypes.Rename]: [tsp.RenameRequestArgs, tsp.RenameResponse];
+    [CommandTypes.SelectionRange]: [tsp.SelectionRangeRequestArgs, tsp.SelectionRangeResponse];
     [CommandTypes.SignatureHelp]: [tsp.SignatureHelpRequestArgs, tsp.SignatureHelpResponse];
     [CommandTypes.TypeDefinition]: [tsp.FileLocationRequestArgs, tsp.TypeDefinitionResponse];
     [CommandTypes.UpdateOpen]: [tsp.UpdateOpenRequestArgs, tsp.Response];

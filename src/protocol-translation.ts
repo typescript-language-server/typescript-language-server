@@ -9,7 +9,7 @@ import * as lsp from 'vscode-languageserver';
 import vscodeUri from 'vscode-uri';
 import { LspDocuments } from './document.js';
 import { tslib, tsp, SupportedFeatures } from './ts-protocol.js';
-import { Position } from './utils/typeConverters.js';
+import { Position, Range } from './utils/typeConverters.js';
 
 const RE_PATHSEP_WINDOWS = /\\/g;
 
@@ -158,6 +158,13 @@ function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefin
         }
     }
     return result;
+}
+
+export function toSelectionRange(range: tsp.SelectionRange): lsp.SelectionRange {
+    return lsp.SelectionRange.create(
+        Range.fromTextSpan(range.textSpan),
+        range.parent ? toSelectionRange(range.parent) : undefined,
+    );
 }
 
 export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {

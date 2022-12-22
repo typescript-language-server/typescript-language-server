@@ -628,6 +628,7 @@ interface DefinitionSymbol {
 - [x] textDocument/rangeFormatting
 - [x] textDocument/references
 - [x] textDocument/rename
+- [x] textDocument/selectionRange
 - [x] textDocument/signatureHelp
 - [x] workspace/symbol
 - [x] workspace/didChangeConfiguration

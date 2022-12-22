@@ -16,7 +16,7 @@ import API from './utils/api.js';
 import { Logger, LogLevel, PrefixingLogger } from './utils/logger.js';
 import { TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
-import { toDocumentHighlight, uriToPath, toSymbolKind, toLocation, pathToUri, toTextEdit, normalizePath } from './protocol-translation.js';
+import { toDocumentHighlight, uriToPath, toSymbolKind, toLocation, toSelectionRange, pathToUri, toTextEdit, normalizePath } from './protocol-translation.js';
 import { LspDocuments, LspDocument } from './document.js';
 import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
@@ -217,6 +217,7 @@ export class LspServer {
                 inlayHintProvider: true,
                 renameProvider: prepareSupport ? { prepareProvider: true } : true,
                 referencesProvider: true,
+                selectionRangeProvider: true,
                 signatureHelpProvider: {
                     triggerCharacters: ['(', ',', '<'],
                     retriggerCharacters: [')'],
@@ -789,6 +790,21 @@ export class LspServer {
             return response.body.map(e => toTextEdit(e));
         }
         return [];
+    }
+
+    async selectionRanges(params: lsp.SelectionRangeParams): Promise<lsp.SelectionRange[] | null> {
+        const file = uriToPath(params.textDocument.uri);
+        if (!file) {
+            return null;
+        }
+        const response = await this.tspClient.request(CommandTypes.SelectionRange, {
+            file,
+            locations: params.positions.map(Position.toLocation),
+        });
+        if (response.type !== 'response' || !response.body) {
+            return null;
+        }
+        return response.body.map(toSelectionRange);
     }
 
     async signatureHelp(params: lsp.SignatureHelpParams): Promise<lsp.SignatureHelp | undefined> {
