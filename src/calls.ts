@@ -136,7 +136,7 @@ async function findEnclosingSymbol(tspClient: TspClient, args: tsp.FileSpan): Pr
     const file = args.file;
     const response = await tspClient.request(tsp.CommandTypes.NavTree, { file });
     const tree = response.body;
-    if (!tree || !tree.childItems) {
+    if (!tree?.childItems) {
         return undefined;
     }
     const pos = lsp.Position.create(args.start.line - 1, args.start.offset - 1);

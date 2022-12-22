@@ -105,7 +105,7 @@ export class TypeScriptServerSpawner {
         //     args.push('--enableTelemetry');
         // }
         if (cancellationPipeName) {
-            args.push('--cancellationPipeName', cancellationPipeName + '*');
+            args.push('--cancellationPipeName', `${cancellationPipeName}*`);
         }
         if (this.isLoggingEnabled(configuration)) {
             const logDir = this._logDirectoryProvider.getNewLogDirectory();
@@ -134,10 +134,10 @@ export class TypeScriptServerSpawner {
         // if (pluginPaths.length !== 0) {
         //     args.push('--pluginProbeLocations', pluginPaths.join(','));
         // }
-        if (globalPlugins && globalPlugins.length) {
+        if (globalPlugins?.length) {
             args.push('--globalPlugins', globalPlugins.join(','));
         }
-        if (pluginProbeLocations && pluginProbeLocations.length) {
+        if (pluginProbeLocations?.length) {
             args.push('--pluginProbeLocations', pluginProbeLocations.join(','));
         }
         if (npmLocation) {

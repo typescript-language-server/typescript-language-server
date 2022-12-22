@@ -90,7 +90,7 @@ export class TypeScriptVersion {
             this.logger.log('Failed parsing contents of package.json.');
             return null;
         }
-        if (!desc || !desc.version) {
+        if (!desc?.version) {
             this.logger.log('Failed reading version number from package.json.');
             return null;
         }

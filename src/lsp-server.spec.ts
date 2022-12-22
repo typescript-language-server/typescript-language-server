@@ -1049,11 +1049,11 @@ function symbolsAsString(symbols: (lsp.DocumentSymbol | lsp.SymbolInformation)[]
         let result = '\n' + indentation + symbol.name;
         if (lsp.DocumentSymbol.is(symbol)) {
             if (symbol.children) {
-                result = result + symbolsAsString(symbol.children, indentation + '  ');
+                result = result + symbolsAsString(symbol.children, `${indentation}  `);
             }
         } else {
             if (symbol.containerName) {
-                result = result + ` in ${symbol.containerName}`;
+                result = `${result} in ${symbol.containerName}`;
             }
         }
         return result;

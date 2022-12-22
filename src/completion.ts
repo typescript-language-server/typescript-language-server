@@ -58,7 +58,7 @@ export function asCompletionItem(
     if (entry.source && entry.hasAction) {
         // De-prioritze auto-imports
         // https://github.com/Microsoft/vscode/issues/40311
-        item.sortText = '\uffff' + entry.sortText;
+        item.sortText = `\uffff${entry.sortText}`;
     }
 
     const { isSnippet, replacementSpan, sourceDisplay } = entry;

@@ -34,7 +34,7 @@ export function pathToUri(filepath: string, documents: LspDocuments | undefined)
     }
     const fileUri = vscodeUri.URI.file(filepath);
     const normalizedFilepath = normalizePath(fileUri.fsPath);
-    const document = documents && documents.get(normalizedFilepath);
+    const document = documents?.get(normalizedFilepath);
     return document ? document.uri : fileUri.toString();
 }
 
@@ -61,7 +61,7 @@ export function normalizeFsPath(fsPath: string): string {
 function currentVersion(filepath: string, documents: LspDocuments | undefined): number | null {
     const fileUri = vscodeUri.URI.file(filepath);
     const normalizedFilepath = normalizePath(fileUri.fsPath);
-    const document = documents && documents.get(normalizedFilepath);
+    const document = documents?.get(normalizedFilepath);
     return document ? document.version : null;
 }
 

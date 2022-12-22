@@ -133,7 +133,7 @@ class StdioChildServerProcess implements TsServerProcess {
     }
 
     write(serverRequest: tsp.Request): void {
-        this._process.stdin!.write(JSON.stringify(serverRequest) + '\r\n', 'utf8');
+        this._process.stdin!.write(`${JSON.stringify(serverRequest)}\r\n`, 'utf8');
     }
 
     onData(handler: (data: tsp.Response) => void): void {

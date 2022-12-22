@@ -197,9 +197,9 @@ export class ConfigurationManager {
             const slashNormalized = p.replace(/\\/g, '/');
             const isRelative = /^\.\.?($|\/)/.test(slashNormalized);
             return path.posix.isAbsolute(p) ? p :
-                p.startsWith('*') ? '/' + slashNormalized :
+                p.startsWith('*') ? `/${slashNormalized}` :
                     isRelative ? path.posix.join(workspaceFolder, p) :
-                        '/**/' + slashNormalized;
+                        `/**/${slashNormalized}`;
         });
     }
 }

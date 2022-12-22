@@ -10,7 +10,7 @@ import { Commands } from './commands.js';
 import type { tsp, SupportedFeatures } from './ts-protocol.js';
 
 export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, args: tsp.FileRangeRequestArgs, features: SupportedFeatures): lsp.CodeAction[] {
-    if (!response || !response.body) {
+    if (!response?.body) {
         return [];
     }
     const actions: lsp.CodeAction[] = [];
@@ -57,11 +57,11 @@ export function asApplyRefactoring(action: tsp.RefactorActionInfo, info: tsp.App
 
 function asKind(refactor: tsp.RefactorActionInfo): lsp.CodeActionKind {
     if (refactor.name.startsWith('function_')) {
-        return lsp.CodeActionKind.RefactorExtract + '.function';
+        return `${lsp.CodeActionKind.RefactorExtract}.function`;
     } else if (refactor.name.startsWith('constant_')) {
-        return lsp.CodeActionKind.RefactorExtract + '.constant';
+        return `${lsp.CodeActionKind.RefactorExtract}.constant`;
     } else if (refactor.name.startsWith('Move')) {
-        return lsp.CodeActionKind.Refactor + '.move';
+        return `${lsp.CodeActionKind.Refactor}.move`;
     }
     return lsp.CodeActionKind.Refactor;
 }

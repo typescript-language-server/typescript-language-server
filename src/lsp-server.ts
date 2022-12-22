@@ -283,7 +283,7 @@ export class LspServer {
         }
         // Bundled version
         const bundledVersion = typescriptVersionProvider.bundledVersion();
-        if (bundledVersion && bundledVersion.isValid) {
+        if (bundledVersion?.isValid) {
             return bundledVersion;
         }
         return null;
@@ -428,8 +428,8 @@ export class LspServer {
 
         const document = this.documents.get(file);
         if (!document) {
-            this.logger.error('Received change on non-opened document ' + textDocument.uri);
-            throw new Error('Received change on non-opened document ' + textDocument.uri);
+            this.logger.error(`Received change on non-opened document ${textDocument.uri}`);
+            throw new Error(`Received change on non-opened document ${textDocument.uri}`);
         }
         if (textDocument.version === null) {
             throw new Error(`Received document change event for ${textDocument.uri} without valid version identifier`);
@@ -555,7 +555,7 @@ export class LspServer {
             file,
         });
         const tree = response.body;
-        if (!tree || !tree.childItems) {
+        if (!tree?.childItems) {
             return [];
         }
         if (this.supportHierarchicalDocumentSymbol) {
@@ -573,7 +573,7 @@ export class LspServer {
     }
     protected get supportHierarchicalDocumentSymbol(): boolean {
         const textDocument = this.initializeParams?.capabilities.textDocument;
-        const documentSymbol = textDocument && textDocument.documentSymbol;
+        const documentSymbol = textDocument?.documentSymbol;
         return !!documentSymbol && !!documentSymbol.hierarchicalDocumentSymbolSupport;
     }
 
@@ -590,7 +590,7 @@ export class LspServer {
 
         const document = this.documents.get(file);
         if (!document) {
-            throw new Error('The document should be opened for completion, file: ' + file);
+            throw new Error(`The document should be opened for completion, file: ${file}`);
         }
 
         const completionOptions = this.configurationManager.workspaceConfiguration.completions || {};
@@ -634,7 +634,7 @@ export class LspServer {
         this.logger.log('completion/resolve', item);
         await this.configurationManager.configureGloballyFromDocument(item.data.file);
         const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
-        const details = body && body.length && body[0];
+        const details = body?.length && body[0];
         if (!details) {
             return item;
         }
@@ -649,7 +649,7 @@ export class LspServer {
         }
 
         const result = await this.interuptDiagnostics(() => this.getQuickInfo(file, params.position));
-        if (!result || !result.body) {
+        if (!result?.body) {
             return { contents: [] };
         }
         const contents = new MarkdownString();
@@ -698,7 +698,7 @@ export class LspServer {
             return null;
         }
         const result = await this.tspClient.request(CommandTypes.Rename, Position.toFileLocationRequestArgs(file, params.position));
-        if (!result.body || !result.body.info.canRename || result.body.locs.length === 0) {
+        if (!result.body?.info.canRename || result.body.locs.length === 0) {
             return null;
         }
         const workspaceEdit: lsp.WorkspaceEdit = {};
@@ -815,7 +815,7 @@ export class LspServer {
         }
 
         const response = await this.interuptDiagnostics(() => this.getSignatureHelp(file, params));
-        if (!response || !response.body) {
+        if (!response?.body) {
             return undefined;
         }
         return asSignatureHelp(response.body, params.context, this.documents);
@@ -922,7 +922,7 @@ export class LspServer {
             if (!await this.applyFileCodeEdits(codeAction.changes)) {
                 return;
             }
-            if (codeAction.commands && codeAction.commands.length) {
+            if (codeAction.commands?.length) {
                 for (const command of codeAction.commands) {
                     await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command });
                 }
@@ -930,7 +930,7 @@ export class LspServer {
         } else if (arg.command === Commands.APPLY_REFACTORING && arg.arguments) {
             const args = arg.arguments[0] as tsp.GetEditsForRefactorRequestArgs;
             const { body } = await this.tspClient.request(CommandTypes.GetEditsForRefactor, args);
-            if (!body || !body.edits.length) {
+            if (!body?.edits.length) {
                 return;
             }
             for (const edit of body.edits) {
@@ -979,7 +979,7 @@ export class LspServer {
             const [_, codeActions] = arg.arguments as [string, tsp.CodeAction[]];
             for (const codeAction of codeActions) {
                 await this.applyFileCodeEdits(codeAction.changes);
-                if (codeAction.commands && codeAction.commands.length) {
+                if (codeAction.commands?.length) {
                     for (const command of codeAction.commands) {
                         await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command });
                     }
@@ -1102,7 +1102,7 @@ export class LspServer {
 
         const document = this.documents.get(file);
         if (!document) {
-            throw new Error("The document should be opened for foldingRanges', file: " + file);
+            throw new Error(`The document should be opened for foldingRanges', file: ${file}`);
         }
         const { body } = await this.tspClient.request(CommandTypes.GetOutliningSpans, { file });
         if (!body) {

@@ -12,7 +12,7 @@ import type { tsp } from './ts-protocol.js';
 import { LspDocuments } from './document.js';
 
 export function provideQuickFix(response: tsp.GetCodeFixesResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
-    if (!response || !response.body) {
+    if (!response?.body) {
         return [];
     }
     return response.body.map(fix => lsp.CodeAction.create(
