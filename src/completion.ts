@@ -235,14 +235,13 @@ export async function asResolvedCompletionItem(
         item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
         item.command = asCommand(details.codeActions, item.data.file);
     }
-    if (document) {
-        if (features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
-            const { line, offset } = item.data;
-            const position = Position.fromLocation({ line, offset });
-            const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client, document);
-            if (shouldCompleteFunction) {
-                createSnippetOfFunctionCall(item, details);
-            }
+
+    if (document && features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
+        const { line, offset } = item.data;
+        const position = Position.fromLocation({ line, offset });
+        const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client, document);
+        if (shouldCompleteFunction) {
+            createSnippetOfFunctionCall(item, details);
         }
     }
 
