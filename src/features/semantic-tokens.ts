@@ -1,4 +1,4 @@
-import { LspDocument } from './document.js';
+import type { LspDocument } from '../document.js';
 
 // copied from https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts
 enum TokenEncodingConsts {

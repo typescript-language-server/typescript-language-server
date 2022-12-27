@@ -30,7 +30,6 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
 - [Inlay hints \(`typescript/inlayHints`\) \(experimental\)](#inlay-hints-typescriptinlayhints-experimental)
 - [Callers and callees \(`textDocument/calls`\) \(experimental\)](#callers-and-callees-textdocumentcalls-experimental)
 - [Supported Protocol features](#supported-protocol-features)
-    - [Experimental](#experimental)
 - [Development](#development)
     - [Build](#build)
     - [Test](#test)
@@ -633,11 +632,6 @@ interface DefinitionSymbol {
 - [x] workspace/symbol
 - [x] workspace/didChangeConfiguration
 - [x] workspace/executeCommand
-
-### Experimental
-
-- [x] textDocument/calls (experimental)
-- [x] typescript/inlayHints (experimental, supported from Typescript v4.4.2) DEPRECATED (use  `textDocument/inlayHint` instead)
 
 ## Development
 

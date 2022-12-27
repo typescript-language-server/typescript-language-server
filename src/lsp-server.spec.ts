@@ -9,7 +9,6 @@ import * as chai from 'chai';
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import * as lspcalls from './lsp-protocol.calls.proposed.js';
 import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
 import { Commands } from './commands.js';
 import { tslib } from './ts-protocol.js';
@@ -1990,134 +1989,6 @@ describe('documentHighlight', () => {
     });
 });
 
-describe('calls', () => {
-    function resultToString(callsResult: lspcalls.CallsResult, direction: lspcalls.CallDirection) {
-        if (!callsResult.symbol) {
-            if (callsResult.calls.length > 0) {
-                return '<unexpected calls>';
-            }
-            return '<symbol not found>';
-        }
-        const arrow = lspcalls.CallDirection.Outgoing === direction ? '↖' : '↘';
-        const symbolToString = (symbol: lspcalls.DefinitionSymbol) =>
-            `${symbol.name} (${symbol.location.uri.split('/').pop()}#${symbol.selectionRange.start.line})`;
-        const out: string[] = [];
-        out.push(`${arrow} ${symbolToString(callsResult.symbol)}`);
-        for (const call of callsResult.calls) {
-            out.push(`  ${arrow} ${symbolToString(call.symbol)} - ${call.location.uri.split('/').pop()}#${call.location.range.start.line}`);
-        }
-        return out.join('\n');
-    }
-    const doDoc = {
-        uri: uri('do.ts'),
-        languageId: 'typescript',
-        version: 1,
-        text: `
-export function doStuff(): boolean {
-    return two() !== undefined;
-}
-export function two() {
-    three();
-    const ttt = three;
-    return ttt();
-}
-export function three() {
-    return "".toString();
-}
-`,
-    };
-
-    const fooDoc = {
-        uri: uri('foo.ts'),
-        languageId: 'typescript',
-        version: 1,
-        text: `import { doStuff } from './do';
-class MyClass {
-    doSomething() {
-        doStuff();
-        const x = doStuff();
-        function f() {};
-    }
-}
-export function factory() {
-    new MyClass().doSomething();
-}
-`,
-    };
-
-    function openDocuments() {
-        server.didOpenTextDocument({ textDocument: doDoc });
-        server.didOpenTextDocument({ textDocument: fooDoc });
-    }
-
-    it('callers: first step', async () => {
-        openDocuments();
-        const callsResult = await server.calls({
-            textDocument: fooDoc,
-            position: position(fooDoc, 'doStuff();'),
-        });
-        assert.equal(
-            resultToString(callsResult, lspcalls.CallDirection.Incoming),
-            `
-↘ doStuff (do.ts#1)
-  ↘ doStuff (foo.ts#0) - foo.ts#0
-  ↘ doSomething (foo.ts#2) - foo.ts#3
-  ↘ x (foo.ts#4) - foo.ts#4
-            `.trim(),
-        );
-    });
-
-    it('callers: second step', async () => {
-        openDocuments();
-        const callsResult = await server.calls({
-            textDocument: fooDoc,
-            position: position(fooDoc, 'doSomething() {'),
-        });
-        assert.equal(
-            resultToString(callsResult, lspcalls.CallDirection.Incoming),
-            `
-↘ doSomething (foo.ts#2)
-  ↘ factory (foo.ts#8) - foo.ts#9
-            `.trim(),
-        );
-    });
-
-    it.skip('callees: first step', async () => {
-        openDocuments();
-        const direction = lspcalls.CallDirection.Outgoing;
-        const callsResult = await server.calls({
-            direction,
-            textDocument: fooDoc,
-            position: position(fooDoc, 'doStuff()'),
-        });
-        assert.equal(
-            resultToString(callsResult, direction),
-            `
-↖ doStuff (do.ts#1)
-  ↖ two (do.ts#4) - do.ts#2
-            `.trim(),
-        );
-    });
-
-    it.skip('callees: second step', async () => {
-        openDocuments();
-        const direction = lspcalls.CallDirection.Outgoing;
-        const callsResult = await server.calls({
-            direction,
-            textDocument: doDoc,
-            position: position(doDoc, 'function two()'),
-        });
-        assert.equal(
-            resultToString(callsResult, direction),
-            `
-↖ two (do.ts#4)
-  ↖ three (do.ts#9) - do.ts#5
-  ↖ ttt (do.ts#6) - do.ts#7
-            `.trim(),
-        );
-    });
-});
-
 describe('diagnostics (no client support)', () => {
     let localServer: TestLspServer;
 
@@ -2253,26 +2124,6 @@ describe('inlayHints', () => {
             kind: lsp.InlayHintKind.Type,
             paddingLeft: true,
         });
-    });
-
-    it('inlayHints (legacy)', async () => {
-        const doc = {
-            uri: uri('module.ts'),
-            languageId: 'typescript',
-            version: 1,
-            text: `
-        export function foo() {
-          return 3
-        }
-      `,
-        };
-        server.didOpenTextDocument({ textDocument: doc });
-        const { inlayHints } = await server.inlayHintsLegacy({ textDocument: doc });
-        assert.isDefined(inlayHints);
-        assert.strictEqual(inlayHints.length, 1);
-        assert.strictEqual(inlayHints[0].text, ': number');
-        assert.strictEqual(inlayHints[0].kind, 'Type');
-        assert.deepStrictEqual(inlayHints[0].position, { line: 1, character: 29 });
     });
 });
 

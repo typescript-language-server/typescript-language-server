@@ -6,8 +6,6 @@
  */
 
 import lsp from 'vscode-languageserver/node.js';
-import * as lspcalls from './lsp-protocol.calls.proposed.js';
-import * as lspinlayHints from './lsp-protocol.inlayHints.proposed.js';
 import { LspClientLogger } from './utils/logger.js';
 import { LspServer } from './lsp-server.js';
 import { LspClientImpl } from './lsp-client.js';
@@ -58,14 +56,8 @@ export function createLspConnection(options: LspConnectionOptions): lsp.Connecti
     connection.onWorkspaceSymbol(server.workspaceSymbol.bind(server));
     connection.onFoldingRanges(server.foldingRanges.bind(server));
     connection.languages.inlayHint.on(server.inlayHints.bind(server));
-
-    // proposed `textDocument/calls` request
-    connection.onRequest(lspcalls.CallsRequest.type, server.calls.bind(server));
-
-    connection.onRequest(lspinlayHints.type, server.inlayHintsLegacy.bind(server));
-
-    connection.onRequest(lsp.SemanticTokensRequest.type, server.semanticTokensFull.bind(server));
-    connection.onRequest(lsp.SemanticTokensRangeRequest.type, server.semanticTokensRange.bind(server));
+    connection.languages.semanticTokens.on(server.semanticTokensFull.bind(server));
+    connection.languages.semanticTokens.onRange(server.semanticTokensRange.bind(server));
 
     return connection;
 }
