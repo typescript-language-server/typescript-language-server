@@ -27,10 +27,8 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
     - [Organize Imports](#organize-imports)
     - [Rename File](#rename-file)
     - [Configure plugin](#configure-plugin)
-- [Inlay hints \(`typescript/inlayHints`\) \(experimental\)](#inlay-hints-typescriptinlayhints-experimental)
-- [Callers and callees \(`textDocument/calls`\) \(experimental\)](#callers-and-callees-textdocumentcalls-experimental)
+- [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
 - [Supported Protocol features](#supported-protocol-features)
-    - [Experimental](#experimental)
 - [Development](#development)
     - [Build](#build)
     - [Test](#test)
@@ -484,35 +482,11 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     void
     ```
 
-## Inlay hints (`typescript/inlayHints`) (experimental)
-
-> !!! This implementation is deprecated. Use the spec-compliant `textDocument/inlayHint` request instead. !!!
-
-Supports experimental inline hints.
-
-```ts
-type Request = {
-  textDocument: TextDocumentIdentifier,
-  range?: Range,
-}
-
-type Response = {
-  inlayHints: InlayHint[];
-}
-
-type InlayHint = {
-    text: string;
-    position: lsp.Position;
-    kind: 'Type' | 'Parameter' | 'Enum';
-    whitespaceBefore?: boolean;
-    whitespaceAfter?: boolean;
-};
-```
+## Inlay hints (`textDocument/inlayHint`)
 
 For the request to return any results, some or all of the following options need to be enabled through `preferences`:
 
 ```ts
-// Not officially part of UserPreferences yet but you can send them along with the UserPreferences just fine:
 export interface InlayHintsOptions extends UserPreferences {
     includeInlayParameterNameHints: 'none' | 'literals' | 'all';
     includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
@@ -522,90 +496,6 @@ export interface InlayHintsOptions extends UserPreferences {
     includeInlayPropertyDeclarationTypeHints: boolean;
     includeInlayFunctionLikeReturnTypeHints: boolean;
     includeInlayEnumMemberValueHints: boolean;
-}
-```
-
-## Callers and callees (`textDocument/calls`) (experimental)
-
-Supports showing callers and calles for a given symbol. If the editor has support for appropriate UI, it can generate a tree of callers and calles for a document.
-
-```ts
-type Request = {
-    /**
-     * The text document.
-     */
-    textDocument: TextDocumentIdentifier;
-    /**
-     * The position inside the text document.
-     */
-    position: Position;
-    /**
-     * Outgoing direction for callees.
-     * The default is incoming for callers.
-     */
-    direction?: CallDirection;
-}
-
-export enum CallDirection {
-    /**
-     * Incoming calls aka. callers
-     */
-    Incoming = 'incoming',
-    /**
-     * Outgoing calls aka. callees
-     */
-    Outgoing = 'outgoing',
-}
-
-type Result = {
-    /**
-     * The symbol of a definition for which the request was made.
-     *
-     * If no definition is found at a given text document position, the symbol is undefined.
-     */
-    symbol?: DefinitionSymbol;
-    /**
-     * List of calls.
-     */
-    calls: Call[];
-}
-
-interface Call {
-    /**
-     * Actual location of a call to a definition.
-     */
-    location: Location;
-    /**
-     * Symbol refered to by this call. For outgoing calls this is a callee,
-     * otherwise a caller.
-     */
-    symbol: DefinitionSymbol;
-}
-
-interface DefinitionSymbol {
-    /**
-     * The name of this symbol.
-     */
-    name: string;
-    /**
-     * More detail for this symbol, e.g the signature of a function.
-     */
-    detail?: string;
-    /**
-     * The kind of this symbol.
-     */
-    kind: SymbolKind;
-    /**
-     * The range enclosing this symbol not including leading/trailing whitespace but everything else
-     * like comments. This information is typically used to determine if the the clients cursor is
-     * inside the symbol to reveal in the symbol in the UI.
-     */
-    location: Location;
-    /**
-     * The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
-     * Must be contained by the the `range`.
-     */
-    selectionRange: Range;
 }
 ```
 
@@ -633,11 +523,6 @@ interface DefinitionSymbol {
 - [x] workspace/symbol
 - [x] workspace/didChangeConfiguration
 - [x] workspace/executeCommand
-
-### Experimental
-
-- [x] textDocument/calls (experimental)
-- [x] typescript/inlayHints (experimental, supported from Typescript v4.4.2) DEPRECATED (use  `textDocument/inlayHint` instead)
 
 ## Development
 

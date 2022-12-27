@@ -9,9 +9,6 @@ import * as path from 'node:path';
 import fs from 'fs-extra';
 import debounce from 'p-debounce';
 import * as lsp from 'vscode-languageserver';
-import * as lspcalls from './lsp-protocol.calls.proposed.js';
-import * as lspinlayHints from './lsp-protocol.inlayHints.proposed.js';
-import * as lspsemanticTokens from './semantic-tokens.js';
 import API from './utils/api.js';
 import { Logger, LogLevel, PrefixingLogger } from './utils/logger.js';
 import { TspClient } from './tsp-client.js';
@@ -26,10 +23,10 @@ import { provideRefactors } from './refactor.js';
 import { provideOrganizeImports } from './organize-imports.js';
 import { tsp, EventTypes, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
-import { computeCallers, computeCallees } from './calls.js';
 import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
+import * as SemanticTokens from './features/semantic-tokens.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
 import { LogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { Trace } from './tsServer/tracer.js';
@@ -259,7 +256,6 @@ export class LspServer {
                 },
             },
         };
-        (initializeResult.capabilities as lspcalls.CallsServerCapabilities).callsProvider = true;
         this.logger.log('onInitialize result', initializeResult);
         return initializeResult;
     }
@@ -1160,79 +1156,9 @@ export class LspServer {
         }
     }
 
-    async calls(params: lspcalls.CallsParams): Promise<lspcalls.CallsResult> {
-        let callsResult = <lspcalls.CallsResult>{ calls: [] };
-        const file = uriToPath(params.textDocument.uri);
-        this.logger.log('calls', params, file);
-        if (!file) {
-            return callsResult;
-        }
-        if (params.direction === lspcalls.CallDirection.Outgoing) {
-            const documentProvider = (file: string) => this.documents.get(file);
-            callsResult = await computeCallees(this.tspClient, params, documentProvider);
-        } else {
-            callsResult = await computeCallers(this.tspClient, params);
-        }
-        return callsResult;
-    }
-
     async inlayHints(params: lsp.InlayHintParams): Promise<lsp.InlayHint[] | undefined> {
         return await TypeScriptInlayHintsProvider.provideInlayHints(
             params.textDocument.uri, params.range, this.documents, this.tspClient, this.options.lspClient, this.configurationManager);
-    }
-
-    async inlayHintsLegacy(params: lspinlayHints.InlayHintsParams): Promise<lspinlayHints.InlayHintsResult> {
-        this.options.lspClient.logMessage({
-            message: 'Support for experimental "typescript/inlayHints" request is deprecated. Use spec-compliant "textDocument/inlayHint" instead.',
-            type: lsp.MessageType.Warning,
-        });
-        const file = uriToPath(params.textDocument.uri);
-        this.logger.log('inlayHints', params, file);
-        if (!file) {
-            return { inlayHints: [] };
-        }
-
-        await this.configurationManager.configureGloballyFromDocument(file);
-
-        const doc = this.documents.get(file);
-        if (!doc) {
-            return { inlayHints: [] };
-        }
-
-        const start = doc.offsetAt(params.range?.start ?? {
-            line: 0,
-            character: 0,
-        });
-        const end = doc.offsetAt(params.range?.end ?? {
-            line: doc.lineCount + 1,
-            character: 0,
-        });
-
-        try {
-            const result = await this.tspClient.request(
-                CommandTypes.ProvideInlayHints,
-                {
-                    file,
-                    start: start,
-                    length: end - start,
-                },
-            );
-
-            return {
-                inlayHints:
-                    result.body?.map((item) => ({
-                        text: item.text,
-                        position: Position.fromLocation(item.position),
-                        whitespaceAfter: item.whitespaceAfter,
-                        whitespaceBefore: item.whitespaceBefore,
-                        kind: item.kind,
-                    })) ?? [],
-            };
-        } catch {
-            return {
-                inlayHints: [],
-            };
-        }
     }
 
     async semanticTokensFull(params: lsp.SemanticTokensParams): Promise<lsp.SemanticTokens> {
@@ -1290,7 +1216,7 @@ export class LspServer {
             );
 
             const spans = result.body?.spans ?? [];
-            return { data: lspsemanticTokens.transformSpans(doc, spans) };
+            return { data: SemanticTokens.transformSpans(doc, spans) };
         } catch {
             return { data: [] };
         }
