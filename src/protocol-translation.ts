@@ -7,7 +7,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import vscodeUri from 'vscode-uri';
-import { LspDocuments } from './document.js';
+import type { LspDocuments } from './document.js';
 import { tslib, tsp, SupportedFeatures } from './ts-protocol.js';
 import { Position, Range } from './utils/typeConverters.js';
 
