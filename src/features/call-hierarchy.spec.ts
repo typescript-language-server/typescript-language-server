@@ -122,7 +122,6 @@ describe.only('call hierarchy', () => {
   -|> tada (symbol: three.ts#2)
     -|> print (symbol: three.ts#6)
       -|> log (symbol: console.d.ts#220)
-      -|> log (symbol: lib.dom.d.ts#17329)
   -|> Three (symbol: three.ts#1)
 `.trim(),
         );
