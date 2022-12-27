@@ -632,13 +632,14 @@ export class LspServer {
 
     async completionResolve(item: lsp.CompletionItem): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
+        const document = item.data?.file ? this.documents.get(item.data.file) : undefined;
         await this.configurationManager.configureGloballyFromDocument(item.data.file);
         const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
         const details = body?.length && body[0];
         if (!details) {
             return item;
         }
-        return asResolvedCompletionItem(item, details, this.tspClient, this.documents, this.configurationManager.workspaceConfiguration.completions || {}, this.features);
+        return asResolvedCompletionItem(item, details, document, this.tspClient, this.documents, this.configurationManager.workspaceConfiguration.completions || {}, this.features);
     }
 
     async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {

@@ -221,6 +221,7 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 export async function asResolvedCompletionItem(
     item: lsp.CompletionItem,
     details: tsp.CompletionEntryDetails,
+    document: LspDocument | undefined,
     client: TspClient,
     filePathConverter: IFilePathToResourceConverter,
     options: WorkspaceConfigurationCompletionOptions,
@@ -234,10 +235,11 @@ export async function asResolvedCompletionItem(
         item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
         item.command = asCommand(details.codeActions, item.data.file);
     }
-    if (features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
+
+    if (document && features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
         const { line, offset } = item.data;
         const position = Position.fromLocation({ line, offset });
-        const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client);
+        const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client, document);
         if (shouldCompleteFunction) {
             createSnippetOfFunctionCall(item, details);
         }
@@ -246,29 +248,29 @@ export async function asResolvedCompletionItem(
     return item;
 }
 
-async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TspClient): Promise<boolean> {
+async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TspClient, document: LspDocument): Promise<boolean> {
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
         const args: tsp.FileLocationRequestArgs = Position.toFileLocationRequestArgs(filepath, position);
         const response = await client.request(tsp.CommandTypes.Quickinfo, args);
-        if (response.type !== 'response') {
-            return true;
-        }
-
-        const { body } = response;
-        switch (body?.kind) {
-            case 'var':
-            case 'let':
-            case 'const':
-            case 'alias':
-                return false;
-            default:
-                return true;
+        if (response.type === 'response' && response.body) {
+            switch (response.body.kind) {
+                case 'var':
+                case 'let':
+                case 'const':
+                case 'alias':
+                    return false;
+            }
         }
     } catch {
-        return true;
+        // Noop
     }
+
+    // Don't complete function call if there is already something that looks like a function call
+    // https://github.com/microsoft/vscode/issues/18131
+    const after = document.getLine(position.line).slice(position.character);
+    return after.match(/^[a-z_$0-9]*\s*\(/gi) === null;
 }
 
 function canCreateSnippetOfFunctionCall(kind: lsp.CompletionItemKind | undefined, options: WorkspaceConfigurationCompletionOptions): boolean {
