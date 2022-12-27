@@ -484,8 +484,6 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 
 ## Inlay hints (`textDocument/inlayHint`)
 
-Supports experimental inline hints.
-
 For the request to return any results, some or all of the following options need to be enabled through `preferences`:
 
 ```ts
