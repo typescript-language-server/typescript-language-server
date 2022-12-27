@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.0](https://github.com/typescript-language-server/typescript-language-server/compare/v2.2.0...v2.3.0) (2022-12-27)
+
+
+### Features
+
+* implement `textDocument/selectionRange` request ([#642](https://github.com/typescript-language-server/typescript-language-server/issues/642)) ([a5598c6](https://github.com/typescript-language-server/typescript-language-server/commit/a5598c68aac961cbd6294133a9235e4db5b95929))
+
+
+### Bug Fixes
+
+* **completions:** don't insert call snippet if already a call ([#646](https://github.com/typescript-language-server/typescript-language-server/issues/646)) ([5d34de5](https://github.com/typescript-language-server/typescript-language-server/commit/5d34de5fd38ce5a9dcafc4a385ccb39b0a89f2b0))
+
 ## [2.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v2.1.0...v2.2.0) (2022-12-09)
 
 
