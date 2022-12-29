@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v2.3.0...v3.0.0) (2022-12-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* Remove experimental and legacy implementations of inlay hints and call hierarchy. Use to the official `textDocument/inlayHint` and `textDocument/prepareCallHierarchy` implementations instead.
+
+### Features
+
+* drop experimental `textDocument/calls`, `typescript/inlayHints` ([#647](https://github.com/typescript-language-server/typescript-language-server/issues/647)) ([b15f8a7](https://github.com/typescript-language-server/typescript-language-server/commit/b15f8a7cca8470b0ef9e9878e94fba95e278d372))
+* implement support for spec version of Call Hierarchy ([#649](https://github.com/typescript-language-server/typescript-language-server/issues/649)) ([3ce0e17](https://github.com/typescript-language-server/typescript-language-server/commit/3ce0e17e72f32913739c9d67d3dfb6092f09a2aa))
+
 ## [2.3.0](https://github.com/typescript-language-server/typescript-language-server/compare/v2.2.0...v2.3.0) (2022-12-27)
 
 
