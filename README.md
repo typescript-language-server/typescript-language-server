@@ -514,6 +514,9 @@ export interface InlayHintsOptions extends UserPreferences {
 - [x] textDocument/formatting
 - [x] textDocument/hover
 - [x] textDocument/inlayHint (no support for `inlayHint/resolve` or `workspace/inlayHint/refresh`)
+- [x] textDocument/prepareCallHierarchy
+- [x] callHierarchy/incomingCalls
+- [x] callHierarchy/outgoingCalls
 - [x] textDocument/prepareRename
 - [x] textDocument/rangeFormatting
 - [x] textDocument/references

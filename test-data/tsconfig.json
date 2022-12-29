@@ -8,5 +8,6 @@
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,
         "moduleResolution": "node",
+        "noLib": true
     },
 }

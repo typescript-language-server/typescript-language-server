@@ -68,6 +68,9 @@ export interface TypeScriptRequestTypes {
     [CommandTypes.NavTree]: [tsp.FileRequestArgs, tsp.NavTreeResponse];
     [CommandTypes.Open]: [tsp.OpenRequestArgs, null];
     [CommandTypes.OrganizeImports]: [tsp.OrganizeImportsRequestArgs, tsp.OrganizeImportsResponse];
+    [CommandTypes.PrepareCallHierarchy]: [tsp.FileLocationRequestArgs, tsp.PrepareCallHierarchyResponse];
+    [CommandTypes.ProvideCallHierarchyIncomingCalls]: [tsp.FileLocationRequestArgs, tsp.ProvideCallHierarchyIncomingCallsResponse];
+    [CommandTypes.ProvideCallHierarchyOutgoingCalls]: [tsp.FileLocationRequestArgs, tsp.ProvideCallHierarchyOutgoingCallsResponse];
     [CommandTypes.ProjectInfo]: [tsp.ProjectInfoRequestArgs, tsp.ProjectInfoResponse];
     [CommandTypes.ProvideInlayHints]: [tsp.InlayHintsRequestArgs, tsp.InlayHintsResponse];
     [CommandTypes.Quickinfo]: [tsp.FileLocationRequestArgs, tsp.QuickInfoResponse];

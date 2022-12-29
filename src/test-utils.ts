@@ -82,6 +82,16 @@ export function readContents(path: string): string {
     return fs.readFileSync(path, 'utf-8').toString();
 }
 
+export function documentFromFile({ path, languageId = 'typescript' }: { path: string; languageId?: string; }): lsp.TextDocumentItem {
+    const pathComponents = path.split('/');
+    return {
+        languageId,
+        text: readContents(filePath(...pathComponents)),
+        uri: uri(...pathComponents),
+        version: 1,
+    };
+}
+
 export function positionAt(document: lsp.TextDocumentItem, idx: number): lsp.Position {
     const doc = TextDocument.create(document.uri, document.languageId, document.version, document.text);
     const pos = doc.positionAt(idx);

@@ -24,6 +24,7 @@ import { provideOrganizeImports } from './organize-imports.js';
 import { tsp, EventTypes, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
+import { fromProtocolCallHierarchyItem, fromProtocolCallHierarchyIncomingCall, fromProtocolCallHierarchyOutgoingCall } from './features/call-hierarchy.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
 import * as SemanticTokens from './features/semantic-tokens.js';
@@ -256,6 +257,9 @@ export class LspServer {
                 },
             },
         };
+        if (textDocument?.callHierarchy && typescriptVersion.version?.gte(API.v380)) {
+            initializeResult.capabilities.callHierarchyProvider = true;
+        }
         this.logger.log('onInitialize result', initializeResult);
         return initializeResult;
     }
@@ -1154,6 +1158,46 @@ export class LspServer {
         if (event.event === EventTypes.SementicDiag || event.event === EventTypes.SyntaxDiag || event.event === EventTypes.SuggestionDiag) {
             this.diagnosticQueue?.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
         }
+    }
+
+    async prepareCallHierarchy(params: lsp.CallHierarchyPrepareParams): Promise<lsp.CallHierarchyItem[] | null> {
+        const file = uriToPath(params.textDocument.uri);
+        if (!file) {
+            return null;
+        }
+        const args = Position.toFileLocationRequestArgs(file, params.position);
+        const response = await this.tspClient.request(CommandTypes.PrepareCallHierarchy, args);
+        if (response.type !== 'response' || !response.body) {
+            return null;
+        }
+        const items = Array.isArray(response.body) ? response.body : [response.body];
+        return items.map(item => fromProtocolCallHierarchyItem(item, this.documents, this.workspaceRoot));
+    }
+
+    async callHierarchyIncomingCalls(params: lsp.CallHierarchyIncomingCallsParams): Promise<lsp.CallHierarchyIncomingCall[] | null> {
+        const file = uriToPath(params.item.uri);
+        if (!file) {
+            return null;
+        }
+        const args = Position.toFileLocationRequestArgs(file, params.item.selectionRange.start);
+        const response = await this.tspClient.request(CommandTypes.ProvideCallHierarchyIncomingCalls, args);
+        if (response.type !== 'response' || !response.body) {
+            return null;
+        }
+        return response.body.map(item => fromProtocolCallHierarchyIncomingCall(item, this.documents, this.workspaceRoot));
+    }
+
+    async callHierarchyOutgoingCalls(params: lsp.CallHierarchyOutgoingCallsParams): Promise<lsp.CallHierarchyOutgoingCall[] | null> {
+        const file = uriToPath(params.item.uri);
+        if (!file) {
+            return null;
+        }
+        const args = Position.toFileLocationRequestArgs(file, params.item.selectionRange.start);
+        const response = await this.tspClient.request(CommandTypes.ProvideCallHierarchyOutgoingCalls, args);
+        if (response.type !== 'response' || !response.body) {
+            return null;
+        }
+        return response.body.map(item => fromProtocolCallHierarchyOutgoingCall(item, this.documents, this.workspaceRoot));
     }
 
     async inlayHints(params: lsp.InlayHintParams): Promise<lsp.InlayHint[] | undefined> {
