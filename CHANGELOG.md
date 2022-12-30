@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.0.1](https://github.com/typescript-language-server/typescript-language-server/compare/v3.0.0...v3.0.1) (2022-12-30)
+
+
+### Bug Fixes
+
+* cancel pending geterr request before triggering new ([#651](https://github.com/typescript-language-server/typescript-language-server/issues/651)) ([95b92e5](https://github.com/typescript-language-server/typescript-language-server/commit/95b92e5d15f47eea77e08765a1e378dbcd90d1f0))
+
 ## [3.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v2.3.0...v3.0.0) (2022-12-29)
 
 
