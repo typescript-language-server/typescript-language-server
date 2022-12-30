@@ -354,6 +354,7 @@ export class LspServer {
     }
     protected cancelDiagnostics(): void {
         if (this.diagnosticsTokenSource) {
+            this.diagnosticsTokenSource.cancel();
             this.diagnosticsTokenSource = undefined;
         }
     }
