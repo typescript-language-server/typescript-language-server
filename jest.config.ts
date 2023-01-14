@@ -12,7 +12,7 @@ const config: Config = {
     testTimeout: 20000,
     transform: {
         // transpile vscode-uri as we're redirecting to esm imports but the package has no "type": "module" set.
-        '^.+vscode-uri\\/lib\\/esm\\/index\\.js$': 'babel-jest',
+        '^.+vscode-uri.+.js$': 'babel-jest',
         '^.+\\.tsx?$': [
             'ts-jest',
             {
