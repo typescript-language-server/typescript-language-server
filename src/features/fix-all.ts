@@ -6,14 +6,13 @@
 import * as lsp from 'vscode-languageserver';
 import { LspDocuments } from '../document.js';
 import { toTextDocumentEdit } from '../protocol-translation.js';
-import { tsp } from '../ts-protocol.js';
+import { CommandTypes } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import { TspClient } from '../tsp-client.js';
 import * as errorCodes from '../utils/errorCodes.js';
 import * as fixNames from '../utils/fixNames.js';
 import { CodeActionKind } from '../utils/types.js';
 import { Range } from '../utils/typeConverters.js';
-
-import CommandTypes = tsp.CommandTypes;
 
 interface AutoFix {
     readonly codes: Set<number>;
@@ -34,7 +33,7 @@ async function buildIndividualFixes(
                 continue;
             }
 
-            const args: tsp.CodeFixRequestArgs = {
+            const args: ts.server.protocol.CodeFixRequestArgs = {
                 ...Range.toFileRangeRequestArgs(file, diagnostic.range),
                 errorCodes: [+diagnostic.code!],
             };
@@ -68,7 +67,7 @@ async function buildCombinedFix(
                 continue;
             }
 
-            const args: tsp.CodeFixRequestArgs = {
+            const args: ts.server.protocol.CodeFixRequestArgs = {
                 ...Range.toFileRangeRequestArgs(file, diagnostic.range),
                 errorCodes: [+diagnostic.code!],
             };
@@ -88,7 +87,7 @@ async function buildCombinedFix(
                 return edits;
             }
 
-            const combinedArgs: tsp.GetCombinedCodeFixRequestArgs = {
+            const combinedArgs: ts.server.protocol.GetCombinedCodeFixRequestArgs = {
                 scope: {
                     type: 'file',
                     args: { file },

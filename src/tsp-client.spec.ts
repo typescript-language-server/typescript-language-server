@@ -9,13 +9,11 @@ import * as chai from 'chai';
 import { TspClient } from './tsp-client.js';
 import { ConsoleLogger } from './utils/logger.js';
 import { filePath, readContents, TestLspClient, uri } from './test-utils.js';
-import { tsp } from './ts-protocol.js';
+import { CommandTypes } from './ts-protocol.js';
 import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
 import { noopLogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
-
-import CommandTypes = tsp.CommandTypes;
 
 const assert = chai.assert;
 const logger = new ConsoleLogger();
@@ -65,7 +63,7 @@ describe('ts server client', () => {
             prefix: 'im',
         });
         assert.isDefined(completions.body);
-        assert.equal(completions.body!.entries[1].name, 'ImageBitmap');
+        assert.equal(completions.body!.entries[1].name, 'import');
     });
 
     it('references', async () => {

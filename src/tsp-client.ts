@@ -13,7 +13,8 @@ import type lsp from 'vscode-languageserver';
 import type { CancellationToken } from 'vscode-jsonrpc';
 import { Logger, PrefixingLogger } from './utils/logger.js';
 import API from './utils/api.js';
-import { tsp, EventTypes } from './ts-protocol.js';
+import { CommandTypes, EventTypes } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { ExecConfig, ServerResponse, TypeScriptRequestTypes } from './tsServer/requests.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
@@ -23,8 +24,6 @@ import Tracer, { Trace } from './tsServer/tracer.js';
 import type { TypeScriptVersion } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
 import type { TsServerLogLevel } from './utils/configuration.js';
-
-import CommandTypes = tsp.CommandTypes;
 
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;
@@ -73,7 +72,7 @@ export interface TspClientOptions {
     locale?: string;
     globalPlugins?: string[];
     pluginProbeLocations?: string[];
-    onEvent?: (event: tsp.Event) => void;
+    onEvent?: (event: ts.server.protocol.Event) => void;
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
 }
 
@@ -125,7 +124,7 @@ export class TspClient {
         this.loadingIndicator.reset();
     }
 
-    private dispatchEvent(event: tsp.Event) {
+    private dispatchEvent(event: ts.server.protocol.Event) {
         switch (event.event) {
             case EventTypes.SyntaxDiag:
             case EventTypes.SementicDiag:
@@ -136,10 +135,10 @@ export class TspClient {
                 break;
             }
             // case EventTypes.ConfigFileDiag:
-            //     this._onConfigDiagnosticsReceived.fire(event as tsp.ConfigFileDiagnosticEvent);
+            //     this._onConfigDiagnosticsReceived.fire(event as ts.server.protocol.ConfigFileDiagnosticEvent);
             //     break;
             // case EventTypes.projectLanguageServiceState: {
-            //     const body = (event as tsp.ProjectLanguageServiceStateEvent).body!;
+            //     const body = (event as ts.server.protocol.ProjectLanguageServiceStateEvent).body!;
             //     if (this.serverState.type === ServerState.Type.Running) {
             //         this.serverState.updateLanguageServiceEnabled(body.languageServiceEnabled);
             //     }
@@ -148,25 +147,25 @@ export class TspClient {
             // }
             // case EventTypes.projectsUpdatedInBackground: {
             //     this.loadingIndicator.reset();
-            //     const body = (event as tsp.ProjectsUpdatedInBackgroundEvent).body;
+            //     const body = (event as ts.server.protocol.ProjectsUpdatedInBackgroundEvent).body;
             //     const resources = body.openFiles.map(file => this.toResource(file));
             //     this.bufferSyncSupport.getErr(resources);
             //     break;
             // }
             // case EventTypes.beginInstallTypes:
-            //     this._onDidBeginInstallTypings.fire((event as tsp.BeginInstallTypesEvent).body);
+            //     this._onDidBeginInstallTypings.fire((event as ts.server.protocol.BeginInstallTypesEvent).body);
             //     break;
             // case EventTypes.endInstallTypes:
-            //     this._onDidEndInstallTypings.fire((event as tsp.EndInstallTypesEvent).body);
+            //     this._onDidEndInstallTypings.fire((event as ts.server.protocol.EndInstallTypesEvent).body);
             //     break;
             // case EventTypes.typesInstallerInitializationFailed:
-            //     this._onTypesInstallerInitializationFailed.fire((event as tsp.TypesInstallerInitializationFailedEvent).body);
+            //     this._onTypesInstallerInitializationFailed.fire((event as ts.server.protocol.TypesInstallerInitializationFailedEvent).body);
             //     break;
             case EventTypes.ProjectLoadingStart:
-                this.loadingIndicator.startedLoadingProject((event as tsp.ProjectLoadingStartEvent).body.projectName);
+                this.loadingIndicator.startedLoadingProject((event as ts.server.protocol.ProjectLoadingStartEvent).body.projectName);
                 break;
             case EventTypes.ProjectLoadingFinish:
-                this.loadingIndicator.finishedLoadingProject((event as tsp.ProjectLoadingFinishEvent).body.projectName);
+                this.loadingIndicator.finishedLoadingProject((event as ts.server.protocol.ProjectLoadingFinishEvent).body.projectName);
                 break;
         }
     }
@@ -182,14 +181,14 @@ export class TspClient {
 
     // High-level API.
 
-    public notify(command: CommandTypes.Open, args: tsp.OpenRequestArgs): void;
-    public notify(command: CommandTypes.Close, args: tsp.FileRequestArgs): void;
-    public notify(command: CommandTypes.Change, args: tsp.ChangeRequestArgs): void;
+    public notify(command: CommandTypes.Open, args: ts.server.protocol.OpenRequestArgs): void;
+    public notify(command: CommandTypes.Close, args: ts.server.protocol.FileRequestArgs): void;
+    public notify(command: CommandTypes.Change, args: ts.server.protocol.ChangeRequestArgs): void;
     public notify(command: keyof TypeScriptRequestTypes, args: any): void {
         this.executeWithoutWaitingForResponse(command, args);
     }
 
-    public requestGeterr(args: tsp.GeterrRequestArgs, token: CancellationToken): Promise<any> {
+    public requestGeterr(args: ts.server.protocol.GeterrRequestArgs, token: CancellationToken): Promise<any> {
         return this.executeAsync(CommandTypes.Geterr, args, token);
     }
 
@@ -204,8 +203,8 @@ export class TspClient {
 
     // Low-level API.
 
-    public execute(command: keyof TypeScriptRequestTypes, args: any, token?: CancellationToken, config?: ExecConfig): Promise<ServerResponse.Response<tsp.Response>> {
-        let executions: Array<Promise<ServerResponse.Response<tsp.Response>> | undefined> | undefined;
+    public execute(command: keyof TypeScriptRequestTypes, args: any, token?: CancellationToken, config?: ExecConfig): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
+        let executions: Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> | undefined;
 
         // if (config?.cancelOnResourceChange) {
         //     if (this.primaryTsServer) {
@@ -262,7 +261,7 @@ export class TspClient {
         });
     }
 
-    public executeAsync(command: keyof TypeScriptRequestTypes, args: tsp.GeterrRequestArgs, token: CancellationToken): Promise<ServerResponse.Response<tsp.Response>> {
+    public executeAsync(command: keyof TypeScriptRequestTypes, args: ts.server.protocol.GeterrRequestArgs, token: CancellationToken): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
         return this.executeImpl(command, args, {
             isAsync: true,
             token,
@@ -270,7 +269,7 @@ export class TspClient {
         })[0]!;
     }
 
-    private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; requireSemantic?: boolean; }): Array<Promise<ServerResponse.Response<tsp.Response>> | undefined> {
+    private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; requireSemantic?: boolean; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         if (this.primaryTsServer) {
             return this.primaryTsServer.executeImpl(command, args, executeInfo);
         } else {

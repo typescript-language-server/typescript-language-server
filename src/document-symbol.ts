@@ -7,14 +7,15 @@
 
 import * as lsp from 'vscode-languageserver';
 import { toSymbolKind } from './protocol-translation.js';
-import { tslib, tsp } from './ts-protocol.js';
+import { ScriptElementKind } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import { Range } from './utils/typeConverters.js';
 
-export function collectDocumentSymbols(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[]): boolean {
+export function collectDocumentSymbols(parent: ts.server.protocol.NavigationTree, symbols: lsp.DocumentSymbol[]): boolean {
     return collectDocumentSymbolsInRange(parent, symbols, { start: Range.fromTextSpan(parent.spans[0]).start, end: Range.fromTextSpan(parent.spans[parent.spans.length - 1]).end });
 }
 
-function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.DocumentSymbol[], range: lsp.Range): boolean {
+function collectDocumentSymbolsInRange(parent: ts.server.protocol.NavigationTree, symbols: lsp.DocumentSymbol[], range: lsp.Range): boolean {
     let shouldInclude = shouldIncludeEntry(parent);
 
     for (const span of parent.spans) {
@@ -55,7 +56,7 @@ function collectDocumentSymbolsInRange(parent: tsp.NavigationTree, symbols: lsp.
     return shouldInclude;
 }
 
-export function collectSymbolInformation(uri: string, current: tsp.NavigationTree, symbols: lsp.SymbolInformation[], containerName?: string): boolean {
+export function collectSymbolInformation(uri: string, current: ts.server.protocol.NavigationTree, symbols: lsp.SymbolInformation[], containerName?: string): boolean {
     let shouldInclude = shouldIncludeEntry(current);
     const name = current.text;
     for (const span of current.spans) {
@@ -86,8 +87,8 @@ export function collectSymbolInformation(uri: string, current: tsp.NavigationTre
     return shouldInclude;
 }
 
-export function shouldIncludeEntry(item: tsp.NavigationTree | tsp.NavigationBarItem): boolean {
-    if (item.kind === tslib.ScriptElementKind.alias) {
+export function shouldIncludeEntry(item: ts.server.protocol.NavigationTree | ts.server.protocol.NavigationBarItem): boolean {
+    if (item.kind === ScriptElementKind.alias) {
         return false;
     }
     return !!(item.text && item.text !== '<function>' && item.text !== '<class>');

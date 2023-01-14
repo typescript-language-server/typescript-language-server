@@ -13,7 +13,7 @@ import ChildProcess from 'node:child_process';
 import path from 'node:path';
 import type { Readable } from 'node:stream';
 import { TsServerProcess, TsServerProcessFactory, TsServerProcessKind } from './server.js';
-import type { tsp } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import type { TspClientOptions } from '../tsp-client.js';
 import API from '../utils/api.js';
 import type { TypeScriptVersion } from './versionProvider.js';
@@ -94,11 +94,11 @@ class IpcChildServerProcess implements TsServerProcess {
         private readonly _process: ChildProcess.ChildProcess,
     ) {}
 
-    write(serverRequest: tsp.Request): void {
+    write(serverRequest: ts.server.protocol.Request): void {
         this._process.send(serverRequest);
     }
 
-    onData(handler: (data: tsp.Response) => void): void {
+    onData(handler: (data: ts.server.protocol.Response) => void): void {
         this._process.on('message', handler);
     }
 
@@ -120,23 +120,23 @@ class IpcChildServerProcess implements TsServerProcess {
 }
 
 class StdioChildServerProcess implements TsServerProcess {
-    private _reader: Reader<tsp.Response> | null;
+    private _reader: Reader<ts.server.protocol.Response> | null;
 
     constructor(
         private readonly _process: ChildProcess.ChildProcess,
     ) {
-        this._reader = new Reader<tsp.Response>(this._process.stdout!);
+        this._reader = new Reader<ts.server.protocol.Response>(this._process.stdout!);
     }
 
-    private get reader(): Reader<tsp.Response> {
+    private get reader(): Reader<ts.server.protocol.Response> {
         return this._reader!;
     }
 
-    write(serverRequest: tsp.Request): void {
+    write(serverRequest: ts.server.protocol.Request): void {
         this._process.stdin!.write(`${JSON.stringify(serverRequest)}\r\n`, 'utf8');
     }
 
-    onData(handler: (data: tsp.Response) => void): void {
+    onData(handler: (data: ts.server.protocol.Response) => void): void {
         this.reader.onData(handler);
     }
 

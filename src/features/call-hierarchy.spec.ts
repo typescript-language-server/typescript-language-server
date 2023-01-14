@@ -7,7 +7,7 @@
 
 import * as chai from 'chai';
 import * as lsp from 'vscode-languageserver';
-import { uri, createServer, TestLspServer, positionAfter, documentFromFile } from './../test-utils.js';
+import { uri, createServer, TestLspServer, positionAfter, documentFromFile } from '../test-utils.js';
 
 const assert = chai.assert;
 
@@ -68,7 +68,7 @@ after(() => {
     server.shutdown();
 });
 
-describe.only('call hierarchy', () => {
+describe('call hierarchy', () => {
     const oneDoc = documentFromFile({ path: 'call-hierarchy/one.ts' });
     const twoDoc = documentFromFile({ path: 'call-hierarchy/two.ts' });
     const threeDoc = documentFromFile({ path: 'call-hierarchy/three.ts' });

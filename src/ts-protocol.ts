@@ -9,25 +9,240 @@
  * **IMPORTANT** this module should not depend on `vscode-languageserver` only protocol and types
  */
 import lsp from 'vscode-languageserver-protocol';
-import tslib from 'typescript/lib/tsserverlibrary.js';
+import type ts from 'typescript/lib/tsserverlibrary.js';
 import type { TraceValue } from './tsServer/tracer.js';
 
-import tsp = tslib.server.protocol;
-
-export { tslib, tsp };
+export type { ts };
 
 export namespace TypeScriptRenameRequest {
     export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
 }
 
-declare module 'typescript/lib/tsserverlibrary.js' {
-    namespace server.protocol {
-        enum CommandTypes {
-            // Needed because it's not considered part of the public API - https://github.com/microsoft/TypeScript/issues/51410
-            EncodedSemanticClassificationsFull = 'encodedSemanticClassifications-full',
-        }
-    }
+// START: Duplicated from typescript/lib/tsserverlibrary.js since we don't want to depend on typescript at runtime
+
+export enum CommandTypes {
+    JsxClosingTag = 'jsxClosingTag',
+    Brace = 'brace',
+    BraceCompletion = 'braceCompletion',
+    GetSpanOfEnclosingComment = 'getSpanOfEnclosingComment',
+    Change = 'change',
+    Close = 'close',
+    /** @deprecated Prefer CompletionInfo -- see comment on CompletionsResponse */
+    Completions = 'completions',
+    CompletionInfo = 'completionInfo',
+    CompletionDetails = 'completionEntryDetails',
+    CompileOnSaveAffectedFileList = 'compileOnSaveAffectedFileList',
+    CompileOnSaveEmitFile = 'compileOnSaveEmitFile',
+    Configure = 'configure',
+    Definition = 'definition',
+    DefinitionAndBoundSpan = 'definitionAndBoundSpan',
+    // Not considered part of the public API - https://github.com/microsoft/TypeScript/issues/51410
+    EncodedSemanticClassificationsFull = 'encodedSemanticClassifications-full',
+    Implementation = 'implementation',
+    Exit = 'exit',
+    FileReferences = 'fileReferences',
+    Format = 'format',
+    Formatonkey = 'formatonkey',
+    Geterr = 'geterr',
+    GeterrForProject = 'geterrForProject',
+    SemanticDiagnosticsSync = 'semanticDiagnosticsSync',
+    SyntacticDiagnosticsSync = 'syntacticDiagnosticsSync',
+    SuggestionDiagnosticsSync = 'suggestionDiagnosticsSync',
+    NavBar = 'navbar',
+    Navto = 'navto',
+    NavTree = 'navtree',
+    NavTreeFull = 'navtree-full',
+    /** @deprecated */
+    Occurrences = 'occurrences',
+    DocumentHighlights = 'documentHighlights',
+    Open = 'open',
+    Quickinfo = 'quickinfo',
+    References = 'references',
+    Reload = 'reload',
+    Rename = 'rename',
+    Saveto = 'saveto',
+    SignatureHelp = 'signatureHelp',
+    FindSourceDefinition = 'findSourceDefinition',
+    Status = 'status',
+    TypeDefinition = 'typeDefinition',
+    ProjectInfo = 'projectInfo',
+    ReloadProjects = 'reloadProjects',
+    Unknown = 'unknown',
+    OpenExternalProject = 'openExternalProject',
+    OpenExternalProjects = 'openExternalProjects',
+    CloseExternalProject = 'closeExternalProject',
+    UpdateOpen = 'updateOpen',
+    GetOutliningSpans = 'getOutliningSpans',
+    TodoComments = 'todoComments',
+    Indentation = 'indentation',
+    DocCommentTemplate = 'docCommentTemplate',
+    CompilerOptionsForInferredProjects = 'compilerOptionsForInferredProjects',
+    GetCodeFixes = 'getCodeFixes',
+    GetCombinedCodeFix = 'getCombinedCodeFix',
+    ApplyCodeActionCommand = 'applyCodeActionCommand',
+    GetSupportedCodeFixes = 'getSupportedCodeFixes',
+    GetApplicableRefactors = 'getApplicableRefactors',
+    GetEditsForRefactor = 'getEditsForRefactor',
+    OrganizeImports = 'organizeImports',
+    GetEditsForFileRename = 'getEditsForFileRename',
+    ConfigurePlugin = 'configurePlugin',
+    SelectionRange = 'selectionRange',
+    ToggleLineComment = 'toggleLineComment',
+    ToggleMultilineComment = 'toggleMultilineComment',
+    CommentSelection = 'commentSelection',
+    UncommentSelection = 'uncommentSelection',
+    PrepareCallHierarchy = 'prepareCallHierarchy',
+    ProvideCallHierarchyIncomingCalls = 'provideCallHierarchyIncomingCalls',
+    ProvideCallHierarchyOutgoingCalls = 'provideCallHierarchyOutgoingCalls',
+    ProvideInlayHints = 'provideInlayHints'
 }
+
+export enum HighlightSpanKind {
+    none = 'none',
+    definition = 'definition',
+    reference = 'reference',
+    writtenReference = 'writtenReference'
+}
+
+export enum JsxEmit {
+    None = 'None',
+    Preserve = 'Preserve',
+    ReactNative = 'ReactNative',
+    React = 'React'
+}
+
+export enum ModuleKind {
+    None = 'None',
+    CommonJS = 'CommonJS',
+    AMD = 'AMD',
+    UMD = 'UMD',
+    System = 'System',
+    ES6 = 'ES6',
+    ES2015 = 'ES2015',
+    ESNext = 'ESNext'
+}
+
+export enum ModuleResolutionKind {
+    Classic = 'Classic',
+    Node = 'Node'
+}
+
+export enum SemicolonPreference {
+    Ignore = 'ignore',
+    Insert = 'insert',
+    Remove = 'remove'
+}
+
+export enum ScriptElementKind {
+    unknown = '',
+    warning = 'warning',
+    keyword = 'keyword',
+    scriptElement = 'script',
+    moduleElement = 'module',
+    classElement = 'class',
+    localClassElement = 'local class',
+    interfaceElement = 'interface',
+    typeElement = 'type',
+    enumElement = 'enum',
+    enumMemberElement = 'enum member',
+    variableElement = 'var',
+    localVariableElement = 'local var',
+    functionElement = 'function',
+    localFunctionElement = 'local function',
+    memberFunctionElement = 'method',
+    memberGetAccessorElement = 'getter',
+    memberSetAccessorElement = 'setter',
+    memberVariableElement = 'property',
+    memberAccessorVariableElement = 'accessor',
+    constructorImplementationElement = 'constructor',
+    callSignatureElement = 'call',
+    indexSignatureElement = 'index',
+    constructSignatureElement = 'construct',
+    parameterElement = 'parameter',
+    typeParameterElement = 'type parameter',
+    primitiveType = 'primitive type',
+    label = 'label',
+    alias = 'alias',
+    constElement = 'const',
+    letElement = 'let',
+    directory = 'directory',
+    externalModuleName = 'external module name',
+    jsxAttribute = 'JSX attribute',
+    string = 'string',
+    link = 'link',
+    linkName = 'link name',
+    linkText = 'link text'
+}
+
+export enum ScriptElementKindModifier {
+    none = '',
+    publicMemberModifier = 'public',
+    privateMemberModifier = 'private',
+    protectedMemberModifier = 'protected',
+    exportedModifier = 'export',
+    ambientModifier = 'declare',
+    staticModifier = 'static',
+    abstractModifier = 'abstract',
+    optionalModifier = 'optional',
+    deprecatedModifier = 'deprecated',
+    dtsModifier = '.d.ts',
+    tsModifier = '.ts',
+    tsxModifier = '.tsx',
+    jsModifier = '.js',
+    jsxModifier = '.jsx',
+    jsonModifier = '.json',
+    dmtsModifier = '.d.mts',
+    mtsModifier = '.mts',
+    mjsModifier = '.mjs',
+    dctsModifier = '.d.cts',
+    ctsModifier = '.cts',
+    cjsModifier = '.cjs'
+}
+
+export enum ScriptTarget {
+    ES3 = 'ES3',
+    ES5 = 'ES5',
+    ES6 = 'ES6',
+    ES2015 = 'ES2015',
+    ES2016 = 'ES2016',
+    ES2017 = 'ES2017',
+    ES2018 = 'ES2018',
+    ES2019 = 'ES2019',
+    ES2020 = 'ES2020',
+    ES2021 = 'ES2021',
+    ES2022 = 'ES2022',
+    ESNext = 'ESNext'
+}
+
+export enum SymbolDisplayPartKind {
+    aliasName = 0,
+    className = 1,
+    enumName = 2,
+    fieldName = 3,
+    interfaceName = 4,
+    keyword = 5,
+    lineBreak = 6,
+    numericLiteral = 7,
+    stringLiteral = 8,
+    localName = 9,
+    methodName = 10,
+    moduleName = 11,
+    operator = 12,
+    parameterName = 13,
+    propertyName = 14,
+    punctuation = 15,
+    space = 16,
+    text = 17,
+    typeParameterName = 18,
+    enumMemberName = 19,
+    functionName = 20,
+    regularExpressionLiteral = 21,
+    link = 22,
+    linkName = 23,
+    linkText = 24
+}
+
+// END: Duplicated from typescript/lib/tsserverlibrary.js since we don't want to depend on typescript at runtime
 
 export const enum EventTypes {
     ConfigFileDiag = 'configFileDiag',
@@ -58,7 +273,7 @@ export class KindModifiers {
     ];
 }
 
-const SYMBOL_DISPLAY_PART_KIND_MAP: Record<keyof typeof tslib.SymbolDisplayPartKind, tslib.SymbolDisplayPartKind> = {
+const SYMBOL_DISPLAY_PART_KIND_MAP: Record<keyof typeof ts.SymbolDisplayPartKind, ts.SymbolDisplayPartKind> = {
     aliasName: 0,
     className: 1,
     enumName: 2,
@@ -86,8 +301,8 @@ const SYMBOL_DISPLAY_PART_KIND_MAP: Record<keyof typeof tslib.SymbolDisplayPartK
     linkText: 24,
 };
 
-export function toSymbolDisplayPartKind(kind: string): tslib.SymbolDisplayPartKind {
-    return SYMBOL_DISPLAY_PART_KIND_MAP[kind as keyof typeof tslib.SymbolDisplayPartKind];
+export function toSymbolDisplayPartKind(kind: string): ts.SymbolDisplayPartKind {
+    return SYMBOL_DISPLAY_PART_KIND_MAP[kind as keyof typeof ts.SymbolDisplayPartKind];
 }
 
 export interface SupportedFeatures {
@@ -111,7 +326,7 @@ export interface TypeScriptInitializationOptions {
     maxTsServerMemory?: number;
     npmLocation?: string;
     plugins: TypeScriptPlugin[];
-    preferences?: tsp.UserPreferences;
+    preferences?: ts.server.protocol.UserPreferences;
     tsserver?: TsserverOptions;
 }
 

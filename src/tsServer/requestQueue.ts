@@ -9,7 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type { tsp } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 
 export enum RequestQueueingType {
     /**
@@ -32,7 +32,7 @@ export enum RequestQueueingType {
 }
 
 export interface RequestItem {
-    readonly request: tsp.Request;
+    readonly request: ts.server.protocol.Request;
     readonly expectsResponse: boolean;
     readonly isAsync: boolean;
     readonly queueingType: RequestQueueingType;
@@ -76,7 +76,7 @@ export class RequestQueue {
         return false;
     }
 
-    public createRequest(command: string, args: any): tsp.Request {
+    public createRequest(command: string, args: any): ts.server.protocol.Request {
         return {
             seq: this.sequenceNumber++,
             type: 'request',

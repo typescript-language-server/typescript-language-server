@@ -5,7 +5,7 @@ import { findPathToModule } from './modules-resolver.js';
 import { PACKAGE_ROOT } from '../test-utils.js';
 import { MODULE_FOLDERS } from '../tsServer/versionProvider.js';
 
-export const CURDIR = dirname(fileURLToPath(import.meta.url));
+const CURDIR = dirname(fileURLToPath(import.meta.url));
 
 describe('findPathToModule', () => {
     it('resolves tsserver in own directory', () => {

@@ -13,10 +13,11 @@ import path from 'node:path';
 import * as lsp from 'vscode-languageserver';
 import type { LspDocuments } from '../document.js';
 import { pathToUri } from '../protocol-translation.js';
-import { tslib, tsp } from '../ts-protocol.js';
+import { ScriptElementKind, ScriptElementKindModifier } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import { Range } from '../utils/typeConverters.js';
 
-export function fromProtocolCallHierarchyItem(item: tsp.CallHierarchyItem, documents: LspDocuments, workspaceRoot: string | undefined): lsp.CallHierarchyItem {
+export function fromProtocolCallHierarchyItem(item: ts.server.protocol.CallHierarchyItem, documents: LspDocuments, workspaceRoot: string | undefined): lsp.CallHierarchyItem {
     const useFileName = isSourceFileItem(item);
     const name = useFileName ? path.basename(item.file) : item.name;
     const detail = useFileName
@@ -32,54 +33,54 @@ export function fromProtocolCallHierarchyItem(item: tsp.CallHierarchyItem, docum
     };
 
     const kindModifiers = item.kindModifiers ? parseKindModifier(item.kindModifiers) : undefined;
-    if (kindModifiers?.has(tslib.ScriptElementKindModifier.deprecatedModifier)) {
+    if (kindModifiers?.has(ScriptElementKindModifier.deprecatedModifier)) {
         result.tags = [lsp.SymbolTag.Deprecated];
     }
     return result;
 }
 
-export function fromProtocolCallHierarchyIncomingCall(item: tsp.CallHierarchyIncomingCall, documents: LspDocuments, workspaceRoot: string | undefined): lsp.CallHierarchyIncomingCall {
+export function fromProtocolCallHierarchyIncomingCall(item: ts.server.protocol.CallHierarchyIncomingCall, documents: LspDocuments, workspaceRoot: string | undefined): lsp.CallHierarchyIncomingCall {
     return {
         from: fromProtocolCallHierarchyItem(item.from, documents, workspaceRoot),
         fromRanges: item.fromSpans.map(Range.fromTextSpan),
     };
 }
 
-export function fromProtocolCallHierarchyOutgoingCall(item: tsp.CallHierarchyOutgoingCall, documents: LspDocuments, workspaceRoot: string | undefined): lsp.CallHierarchyOutgoingCall {
+export function fromProtocolCallHierarchyOutgoingCall(item: ts.server.protocol.CallHierarchyOutgoingCall, documents: LspDocuments, workspaceRoot: string | undefined): lsp.CallHierarchyOutgoingCall {
     return {
         to: fromProtocolCallHierarchyItem(item.to, documents, workspaceRoot),
         fromRanges: item.fromSpans.map(Range.fromTextSpan),
     };
 }
 
-function isSourceFileItem(item: tsp.CallHierarchyItem) {
-    return item.kind === tslib.ScriptElementKind.scriptElement || item.kind === tslib.ScriptElementKind.moduleElement && item.selectionSpan.start.line === 1 && item.selectionSpan.start.offset === 1;
+function isSourceFileItem(item: ts.server.protocol.CallHierarchyItem) {
+    return item.kind === ScriptElementKind.scriptElement || item.kind === ScriptElementKind.moduleElement && item.selectionSpan.start.line === 1 && item.selectionSpan.start.offset === 1;
 }
 
-function fromProtocolScriptElementKind(kind: tslib.ScriptElementKind): lsp.SymbolKind {
+function fromProtocolScriptElementKind(kind: ScriptElementKind): lsp.SymbolKind {
     switch (kind) {
-        case tslib.ScriptElementKind.moduleElement:return lsp.SymbolKind.Module;
-        case tslib.ScriptElementKind.classElement:return lsp.SymbolKind.Class;
-        case tslib.ScriptElementKind.enumElement:return lsp.SymbolKind.Enum;
-        case tslib.ScriptElementKind.enumMemberElement:return lsp.SymbolKind.EnumMember;
-        case tslib.ScriptElementKind.interfaceElement:return lsp.SymbolKind.Interface;
-        case tslib.ScriptElementKind.indexSignatureElement:return lsp.SymbolKind.Method;
-        case tslib.ScriptElementKind.callSignatureElement:return lsp.SymbolKind.Method;
-        case tslib.ScriptElementKind.memberFunctionElement:return lsp.SymbolKind.Method;
-        case tslib.ScriptElementKind.memberVariableElement:return lsp.SymbolKind.Property;
-        case tslib.ScriptElementKind.memberGetAccessorElement:return lsp.SymbolKind.Property;
-        case tslib.ScriptElementKind.memberSetAccessorElement:return lsp.SymbolKind.Property;
-        case tslib.ScriptElementKind.variableElement:return lsp.SymbolKind.Variable;
-        case tslib.ScriptElementKind.letElement:return lsp.SymbolKind.Variable;
-        case tslib.ScriptElementKind.constElement:return lsp.SymbolKind.Variable;
-        case tslib.ScriptElementKind.localVariableElement:return lsp.SymbolKind.Variable;
-        case tslib.ScriptElementKind.alias:return lsp.SymbolKind.Variable;
-        case tslib.ScriptElementKind.functionElement:return lsp.SymbolKind.Function;
-        case tslib.ScriptElementKind.localFunctionElement:return lsp.SymbolKind.Function;
-        case tslib.ScriptElementKind.constructSignatureElement:return lsp.SymbolKind.Constructor;
-        case tslib.ScriptElementKind.constructorImplementationElement:return lsp.SymbolKind.Constructor;
-        case tslib.ScriptElementKind.typeParameterElement:return lsp.SymbolKind.TypeParameter;
-        case tslib.ScriptElementKind.string:return lsp.SymbolKind.String;
+        case ScriptElementKind.moduleElement:return lsp.SymbolKind.Module;
+        case ScriptElementKind.classElement:return lsp.SymbolKind.Class;
+        case ScriptElementKind.enumElement:return lsp.SymbolKind.Enum;
+        case ScriptElementKind.enumMemberElement:return lsp.SymbolKind.EnumMember;
+        case ScriptElementKind.interfaceElement:return lsp.SymbolKind.Interface;
+        case ScriptElementKind.indexSignatureElement:return lsp.SymbolKind.Method;
+        case ScriptElementKind.callSignatureElement:return lsp.SymbolKind.Method;
+        case ScriptElementKind.memberFunctionElement:return lsp.SymbolKind.Method;
+        case ScriptElementKind.memberVariableElement:return lsp.SymbolKind.Property;
+        case ScriptElementKind.memberGetAccessorElement:return lsp.SymbolKind.Property;
+        case ScriptElementKind.memberSetAccessorElement:return lsp.SymbolKind.Property;
+        case ScriptElementKind.variableElement:return lsp.SymbolKind.Variable;
+        case ScriptElementKind.letElement:return lsp.SymbolKind.Variable;
+        case ScriptElementKind.constElement:return lsp.SymbolKind.Variable;
+        case ScriptElementKind.localVariableElement:return lsp.SymbolKind.Variable;
+        case ScriptElementKind.alias:return lsp.SymbolKind.Variable;
+        case ScriptElementKind.functionElement:return lsp.SymbolKind.Function;
+        case ScriptElementKind.localFunctionElement:return lsp.SymbolKind.Function;
+        case ScriptElementKind.constructSignatureElement:return lsp.SymbolKind.Constructor;
+        case ScriptElementKind.constructorImplementationElement:return lsp.SymbolKind.Constructor;
+        case ScriptElementKind.typeParameterElement:return lsp.SymbolKind.TypeParameter;
+        case ScriptElementKind.string:return lsp.SymbolKind.String;
         default: return lsp.SymbolKind.Variable;
     }
 }

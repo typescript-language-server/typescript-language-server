@@ -11,7 +11,7 @@
 
 /* eslint-disable @typescript-eslint/no-unnecessary-qualifier */
 
-import type { tsp } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import { Logger } from '../utils/logger.js';
 
 export enum Trace {
@@ -49,7 +49,7 @@ export default class Tracer {
     ) {
     }
 
-    public traceRequest(serverId: string, request: tsp.Request, responseExpected: boolean, queueLength: number): void {
+    public traceRequest(serverId: string, request: ts.server.protocol.Request, responseExpected: boolean, queueLength: number): void {
         if (this.trace === Trace.Off) {
             return;
         }
@@ -60,7 +60,7 @@ export default class Tracer {
         this.logTrace(serverId, `Sending request: ${request.command} (${request.seq}). Response expected: ${responseExpected ? 'yes' : 'no'}. Current queue length: ${queueLength}`, data);
     }
 
-    public traceResponse(serverId: string, response: tsp.Response, meta: RequestExecutionMetadata): void {
+    public traceResponse(serverId: string, response: ts.server.protocol.Response, meta: RequestExecutionMetadata): void {
         if (this.trace === Trace.Off) {
             return;
         }
@@ -78,7 +78,7 @@ export default class Tracer {
         this.logTrace(serverId, `Async response received: ${command} (${request_seq}). Request took ${Date.now() - meta.queuingStartTime} ms.`);
     }
 
-    public traceEvent(serverId: string, event: tsp.Event): void {
+    public traceEvent(serverId: string, event: ts.server.protocol.Event): void {
         if (this.trace === Trace.Off) {
             return;
         }

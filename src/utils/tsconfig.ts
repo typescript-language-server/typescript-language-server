@@ -10,18 +10,19 @@
  */
 
 import type { WorkspaceConfigurationImplicitProjectConfigurationOptions } from '../configuration-manager.js';
-import { tsp } from '../ts-protocol.js';
+import { ModuleKind, ModuleResolutionKind, ScriptTarget, JsxEmit } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 
-const DEFAULT_PROJECT_CONFIG: tsp.ExternalProjectCompilerOptions = Object.freeze({
-    module: tsp.ModuleKind.ESNext,
-    moduleResolution: tsp.ModuleResolutionKind.Node,
-    target: tsp.ScriptTarget.ES2020,
-    jsx: tsp.JsxEmit.React,
+const DEFAULT_PROJECT_CONFIG: ts.server.protocol.ExternalProjectCompilerOptions = Object.freeze({
+    module: ModuleKind.ESNext,
+    moduleResolution: ModuleResolutionKind.Node,
+    target: ScriptTarget.ES2020,
+    jsx: JsxEmit.React,
 });
 
 export function getInferredProjectCompilerOptions(
     workspaceConfig: WorkspaceConfigurationImplicitProjectConfigurationOptions,
-): tsp.ExternalProjectCompilerOptions {
+): ts.server.protocol.ExternalProjectCompilerOptions {
     const projectConfig = { ...DEFAULT_PROJECT_CONFIG };
 
     if (workspaceConfig.checkJs) {
@@ -41,11 +42,11 @@ export function getInferredProjectCompilerOptions(
     }
 
     if (workspaceConfig.module) {
-        projectConfig.module = workspaceConfig.module as tsp.ModuleKind;
+        projectConfig.module = workspaceConfig.module as ts.server.protocol.ModuleKind;
     }
 
     if (workspaceConfig.target) {
-        projectConfig.target = workspaceConfig.target as tsp.ScriptTarget;
+        projectConfig.target = workspaceConfig.target as ts.server.protocol.ScriptTarget;
     }
 
     projectConfig.sourceMap = true;

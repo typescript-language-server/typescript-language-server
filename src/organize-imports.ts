@@ -8,10 +8,10 @@
 import * as lsp from 'vscode-languageserver';
 import { toTextDocumentEdit } from './protocol-translation.js';
 import { LspDocuments } from './document.js';
-import type { tsp } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
-export function provideOrganizeImports(response: tsp.OrganizeImportsResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
+export function provideOrganizeImports(response: ts.server.protocol.OrganizeImportsResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
     if (!response || response.body.length === 0) {
         return [];
     }

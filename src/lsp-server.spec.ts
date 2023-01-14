@@ -11,7 +11,7 @@ import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
 import { Commands } from './commands.js';
-import { tslib } from './ts-protocol.js';
+import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
 const assert = chai.assert;
@@ -58,7 +58,7 @@ describe('completion', () => {
         const proposals = await server.completion({ textDocument: doc, position: pos });
         assert.isNotNull(proposals);
         assert.isAtLeast(proposals!.items.length, 800);
-        const item = proposals!.items.find(i => i.label === 'addEventListener');
+        const item = proposals!.items.find(i => i.label === 'setTimeout');
         assert.isDefined(item);
         const resolvedItem = await server.completionResolve(item!);
         assert.isNotTrue(resolvedItem.deprecated, 'resolved item is not deprecated');
@@ -368,7 +368,7 @@ describe('completion', () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
-                    semicolons: tslib.SemicolonPreference.Remove,
+                    semicolons: SemicolonPreference.Remove,
                     insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false,
                 },
             },
@@ -405,7 +405,7 @@ describe('completion', () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
-                    semicolons: tslib.SemicolonPreference.Ignore,
+                    semicolons: SemicolonPreference.Ignore,
                     insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
                 },
             },
@@ -1172,7 +1172,7 @@ describe('formatting', () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
-                    semicolons: tslib.SemicolonPreference.Ignore,
+                    semicolons: SemicolonPreference.Ignore,
                     insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
                 },
             },

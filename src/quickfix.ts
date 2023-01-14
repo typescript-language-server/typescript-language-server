@@ -8,10 +8,10 @@
 import * as lsp from 'vscode-languageserver';
 import { Commands } from './commands.js';
 import { toTextDocumentEdit } from './protocol-translation.js';
-import type { tsp } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import { LspDocuments } from './document.js';
 
-export function provideQuickFix(response: tsp.GetCodeFixesResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
+export function provideQuickFix(response: ts.server.protocol.GetCodeFixesResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
     if (!response?.body) {
         return [];
     }

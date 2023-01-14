@@ -9,14 +9,14 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type { tsp } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import type { TypeScriptVersion } from './versionProvider.js';
 
 export class TypeScriptServerError extends Error {
     public static create(
         serverId: string,
         version: TypeScriptVersion,
-        response: tsp.Response,
+        response: ts.server.protocol.Response,
     ): TypeScriptServerError {
         const parsedResult = TypeScriptServerError.parseErrorText(response);
         return new TypeScriptServerError(serverId, version, response, parsedResult?.message, parsedResult?.stack);
@@ -25,7 +25,7 @@ export class TypeScriptServerError extends Error {
     private constructor(
         public readonly serverId: string,
         public readonly version: TypeScriptVersion,
-        private readonly response: tsp.Response,
+        private readonly response: ts.server.protocol.Response,
         public readonly serverMessage: string | undefined,
         public readonly serverStack: string | undefined,
     ) {
@@ -43,7 +43,7 @@ export class TypeScriptServerError extends Error {
     /**
      * Given a `errorText` from a tsserver request indicating failure in handling a request.
      */
-    private static parseErrorText(response: tsp.Response) {
+    private static parseErrorText(response: ts.server.protocol.Response) {
         const errorText = response.message;
         if (errorText) {
             const errorPrefix = 'Error processing request. ';

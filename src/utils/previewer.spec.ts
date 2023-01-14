@@ -11,7 +11,7 @@
 
 import vscodeUri from 'vscode-uri';
 import * as chai from 'chai';
-import type { tsp } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import { IFilePathToResourceConverter, markdownDocumentation, plainWithLinks, tagsMarkdownPreview } from './previewer.js';
 
 const assert = chai.assert;
@@ -155,7 +155,7 @@ describe('typescript.previewer', () => {
                         start: { line: 7, offset: 5 },
                         end: { line: 7, offset: 13 },
                     },
-                } as tsp.SymbolDisplayPart,
+                } as ts.server.protocol.SymbolDisplayPart,
                 { text: '}', kind: 'link' },
                 { text: ' b', kind: 'text' },
             ], noopToResource),
@@ -175,7 +175,7 @@ describe('typescript.previewer', () => {
                         start: { line: 7, offset: 5 },
                         end: { line: 7, offset: 13 },
                     },
-                } as tsp.SymbolDisplayPart,
+                } as ts.server.protocol.SymbolDisplayPart,
                 { text: 'husky', kind: 'linkText' },
                 { text: '}', kind: 'link' },
                 { text: ' b', kind: 'text' },
