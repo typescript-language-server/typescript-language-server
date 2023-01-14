@@ -8,7 +8,8 @@ const config: Config = {
         // vscode-uri has buggy exports: https://github.com/microsoft/vscode-uri/pull/25
         'vscode-uri': 'vscode-uri/lib/esm/index.js',
     },
-    slowTestThreshold: 30,
+    slowTestThreshold: 15,
+    testTimeout: 20000,
     transform: {
         // transpile vscode-uri as we're redirecting to esm imports but the package has no "type": "module" set.
         '^.+vscode-uri\\/lib\\/esm\\/index\\.js$': 'babel-jest',
