@@ -5,15 +5,12 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import chai from 'chai';
 import { LspServer } from './lsp-server.js';
 import { uri, createServer, lastPosition, filePath, readContents, positionAfter } from './test-utils.js';
 
-const assert = chai.assert;
-
 let server: LspServer;
 
-before(async () => {
+beforeAll(async () => {
     server = await createServer({
         rootUri: uri(),
         publishDiagnostics: () => { },
@@ -24,7 +21,7 @@ beforeEach(() => {
     server.closeAll();
 });
 
-after(() => {
+afterAll(() => {
     server.closeAll();
     server.shutdown();
 });
@@ -45,7 +42,7 @@ describe('documentHighlight', () => {
             textDocument: doc,
             position: lastPosition(doc, 'doStuff'),
         });
-        assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
+        expect(result).toHaveLength(2);
     });
 });
 
@@ -62,12 +59,12 @@ describe('completions', () => {
             textDocument: doc,
             position: positionAfter(doc, 'doStuff'),
         });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(item => item.label === 'doStuff');
-        assert.isDefined(completion);
+        expect(completion).toBeDefined();
         const resolvedCompletion = await server.completionResolve(completion!);
-        assert.isDefined(resolvedCompletion.additionalTextEdits);
-        assert.isUndefined(resolvedCompletion.command);
+        expect(resolvedCompletion.additionalTextEdits).toBeDefined();
+        expect(resolvedCompletion.command).toBeUndefined();
         server.didCloseTextDocument({ textDocument: doc });
     });
 });

@@ -9,7 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import vscodeUri from 'vscode-uri';
+import { URI } from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
 import { MarkdownString } from './MarkdownString.js';
 import type { ts } from '../ts-protocol.js';
@@ -18,7 +18,7 @@ export interface IFilePathToResourceConverter {
     /**
      * Convert a typescript filepath to an URI resource.
      */
-    toResource(filepath: string): vscodeUri.URI;
+    toResource(filepath: string): URI;
 }
 
 function replaceLinks(text: string): string {

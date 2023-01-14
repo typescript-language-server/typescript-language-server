@@ -5,7 +5,6 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as chai from 'chai';
 import { TspClient } from './tsp-client.js';
 import { ConsoleLogger } from './utils/logger.js';
 import { filePath, readContents, TestLspClient, uri } from './test-utils.js';
@@ -15,7 +14,6 @@ import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
 import { noopLogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 
-const assert = chai.assert;
 const logger = new ConsoleLogger();
 const lspClientOptions = {
     rootUri: uri(),
@@ -31,7 +29,7 @@ const typescriptVersionProvider = new TypeScriptVersionProvider(configuration.ts
 const bundled = typescriptVersionProvider.bundledVersion();
 let server: TspClient;
 
-before(() => {
+beforeAll(() => {
     server = new TspClient({
         ...configuration,
         logDirectoryProvider: noopLogDirectoryProvider,
@@ -41,12 +39,12 @@ before(() => {
     });
 });
 
-after(() => {
+afterAll(() => {
     server.shutdown();
 });
 
 describe('ts server client', () => {
-    before(() => {
+    beforeAll(() => {
         server.start();
     });
 
@@ -62,8 +60,8 @@ describe('ts server client', () => {
             offset: 0,
             prefix: 'im',
         });
-        assert.isDefined(completions.body);
-        assert.equal(completions.body!.entries[1].name, 'import');
+        expect(completions.body).not.toBeNull();
+        expect(completions.body!.entries[1].name).toBe('import');
     });
 
     it('references', async () => {
@@ -77,8 +75,8 @@ describe('ts server client', () => {
             line: 8,
             offset: 16,
         });
-        assert.isDefined(references.body);
-        assert.equal(references.body!.symbolName, 'doStuff');
+        expect(references.body).not.toBeNull();
+        expect(references.body!.symbolName).toBe('doStuff');
     });
 
     it('inlayHints', async () => {
@@ -100,8 +98,8 @@ describe('ts server client', () => {
                 length: 1000,
             },
         );
-        assert.isDefined(inlayHints.body);
-        assert.equal(inlayHints.body![0].text, ': boolean');
+        expect(inlayHints.body).not.toBeNull();
+        expect(inlayHints.body![0].text).toBe(': boolean');
     });
 
     it('documentHighlight', async () => {
@@ -116,8 +114,8 @@ describe('ts server client', () => {
             offset: 16,
             filesToSearch: [f],
         });
-        assert.isDefined(response.body);
-        assert.isTrue(response.body!.some(({ file }) => file.endsWith('module2.ts')), JSON.stringify(response.body, undefined, 2));
-        assert.isFalse(response.body!.some(({ file: file_1 }) => file_1.endsWith('module1.ts')), JSON.stringify(response.body, undefined, 2));
+        expect(response.body).not.toBeNull();
+        expect(response.body!.some(({ file }) => file.endsWith('module2.ts'))).toBeTruthy();
+        expect(response.body!.some(({ file: file_1 }) => file_1.endsWith('module1.ts'))).toBeFalsy();
     });
 });

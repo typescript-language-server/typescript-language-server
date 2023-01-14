@@ -42,6 +42,7 @@ import { ConfigurationManager } from './configuration-manager.js';
 
 export class LspServer {
     private _tspClient: TspClient | null = null;
+    private hasShutDown = false;
     private initializeParams: TypeScriptInitializeParams | null = null;
     private diagnosticQueue?: DiagnosticEventQueue;
     private configurationManager: ConfigurationManager;
@@ -67,6 +68,7 @@ export class LspServer {
         if (this._tspClient) {
             this._tspClient.shutdown();
             this._tspClient = null;
+            this.hasShutDown = true;
         }
     }
 
@@ -101,7 +103,7 @@ export class LspServer {
 
         const typescriptVersion = this.findTypescriptVersion(tsserver?.path);
         if (typescriptVersion) {
-            this.logger.logIgnoringVerbosity(LogLevel.Info, `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
+            this.logger.log(LogLevel.Info, `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
         } else {
             throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid `tsserver.path` is specified. Exiting.');
         }
@@ -338,6 +340,9 @@ export class LspServer {
     readonly doRequestDiagnosticsDebounced = debounce(() => this.doRequestDiagnostics(), 200);
     protected async doRequestDiagnostics(): Promise<void> {
         this.cancelDiagnostics();
+        if (this.hasShutDown) {
+            return;
+        }
         const geterrTokenSource = new lsp.CancellationTokenSource();
         this.diagnosticsTokenSource = geterrTokenSource;
 

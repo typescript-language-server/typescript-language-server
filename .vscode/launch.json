@@ -5,17 +5,7 @@
                 "type": "node",
                 "request": "launch",
                 "name": "Mocha Tests",
-                "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
-                "args": [
-                    "--reporter",
-                    "spec",
-                    "--require",
-                    "source-map-support/register",
-                    "--require",
-                    "ts-node/register",
-                    "--no-timeouts",
-                    "${file}"
-                ],
+                "program": "${workspaceRoot}/node_modules/jest/bin/jest",
                 "env": {
                     "TS_NODE_PROJECT": "${workspaceRoot}/tsconfig.json",
                     "PATH": "${workspaceRoot}/node_modules/.bin/:${env:PATH}"

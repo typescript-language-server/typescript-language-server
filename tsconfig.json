@@ -1,11 +1,14 @@
 {
     "include": [
-        "src"
+        "src/**/*.ts",
+        "jest.config.ts",
+        "rollup.config.ts",
     ],
     "compilerOptions": {
-        "composite": true,
-        "declaration": true,
-        "declarationMap": true,
+        "allowJs": true,
+        "declaration": false,
+        "declarationMap": false,
+        "noEmit": true,
         "esModuleInterop": true,
         "lib": ["es2020"],
         "module": "Node16",

@@ -5,11 +5,8 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as chai from 'chai';
 import * as lsp from 'vscode-languageserver';
 import { uri, createServer, TestLspServer, positionAfter, documentFromFile } from '../test-utils.js';
-
-const assert = chai.assert;
 
 const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 let server: TestLspServer;
@@ -50,7 +47,7 @@ function callsToString(item: CallHierarchyItemWithChildren, indentLevel: number,
     }
 }
 
-before(async () => {
+beforeAll(async () => {
     server = await createServer({
         rootUri: uri(),
         publishDiagnostics: args => diagnostics.set(args.uri, args),
@@ -63,7 +60,7 @@ beforeEach(() => {
     diagnostics.clear();
 });
 
-after(() => {
+afterAll(() => {
     server.closeAll();
     server.shutdown();
 });
@@ -85,16 +82,15 @@ describe('call hierarchy', () => {
             textDocument: twoDoc,
             position: positionAfter(twoDoc, 'new Three().tada'),
         });
-        assert.isNotNull(items);
-        assert.lengthOf(items!, 1);
+        expect(items).not.toBeNull();
+        expect(items).toHaveLength(1);
         const lines: string[] = [];
         for (const item of items!) {
             lines.push(itemToString(item, 0));
             const incomingCalls = await getIncomingCalls(server, item);
             callsToString(incomingCalls, 0, lines);
         }
-        assert.equal(lines.join('\n'),
-                     `
+        expect(lines.join('\n')).toEqual(`
 -|> tada (symbol: three.ts#2)
   -|> callThreeTwice (symbol: two.ts#3)
     -|> main (symbol: one.ts#2)
@@ -108,16 +104,15 @@ describe('call hierarchy', () => {
             textDocument: oneDoc,
             position: positionAfter(oneDoc, 'new Two().callThreeTwice'),
         });
-        assert.isNotNull(items);
-        assert.lengthOf(items!, 1);
+        expect(items).not.toBeNull();
+        expect(items).toHaveLength(1);
         const lines: string[] = [];
         for (const item of items!) {
             lines.push(itemToString(item, 0));
             const outgoingCalls = await getOutgoingCalls(server, item);
             callsToString(outgoingCalls, 0, lines);
         }
-        assert.equal(lines.join('\n'),
-                     `
+        expect(lines.join('\n')).toEqual(`
 -|> callThreeTwice (symbol: two.ts#3)
   -|> tada (symbol: three.ts#2)
     -|> print (symbol: three.ts#6)

@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import vscodeUri from 'vscode-uri';
+import { URI } from 'vscode-uri';
 import type { LspDocuments } from './document.js';
 import { HighlightSpanKind, SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
@@ -20,7 +20,7 @@ export function uriToPath(stringUri: string): string | undefined {
     if (stringUri.startsWith('zipfile:')) {
         return stringUri;
     }
-    const uri = vscodeUri.URI.parse(stringUri);
+    const uri = URI.parse(stringUri);
     if (uri.scheme !== 'file') {
         return undefined;
     }
@@ -33,7 +33,7 @@ export function pathToUri(filepath: string, documents: LspDocuments | undefined)
     if (filepath.startsWith('zipfile:')) {
         return filepath;
     }
-    const fileUri = vscodeUri.URI.file(filepath);
+    const fileUri = URI.file(filepath);
     const normalizedFilepath = normalizePath(fileUri.fsPath);
     const document = documents?.get(normalizedFilepath);
     return document ? document.uri : fileUri.toString();
@@ -48,7 +48,7 @@ export function pathToUri(filepath: string, documents: LspDocuments | undefined)
  * will be normalized to "c:/path/file.ts".
  */
 export function normalizePath(filePath: string): string {
-    const fsPath = vscodeUri.URI.file(filePath).fsPath;
+    const fsPath = URI.file(filePath).fsPath;
     return normalizeFsPath(fsPath);
 }
 
@@ -60,7 +60,7 @@ export function normalizeFsPath(fsPath: string): string {
 }
 
 function currentVersion(filepath: string, documents: LspDocuments | undefined): number | null {
-    const fileUri = vscodeUri.URI.file(filepath);
+    const fileUri = URI.file(filepath);
     const normalizedFilepath = normalizePath(fileUri.fsPath);
     const document = documents?.get(normalizedFilepath);
     return document ? document.version : null;
