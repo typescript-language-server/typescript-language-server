@@ -7,9 +7,9 @@
 
 import * as lsp from 'vscode-languageserver';
 import { Commands } from './commands.js';
-import type { tsp, SupportedFeatures } from './ts-protocol.js';
+import type { ts, SupportedFeatures } from './ts-protocol.js';
 
-export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | undefined, args: tsp.FileRangeRequestArgs, features: SupportedFeatures): lsp.CodeAction[] {
+export function provideRefactors(response: ts.server.protocol.GetApplicableRefactorsResponse | undefined, args: ts.server.protocol.FileRangeRequestArgs, features: SupportedFeatures): lsp.CodeAction[] {
     if (!response?.body) {
         return [];
     }
@@ -29,7 +29,7 @@ export function provideRefactors(response: tsp.GetApplicableRefactorsResponse | 
     return actions;
 }
 
-export function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
+export function asSelectRefactoring(info: ts.server.protocol.ApplicableRefactorInfo, args: ts.server.protocol.FileRangeRequestArgs): lsp.CodeAction {
     return lsp.CodeAction.create(
         info.description,
         lsp.Command.create(info.description, Commands.SELECT_REFACTORING, info, args),
@@ -37,7 +37,7 @@ export function asSelectRefactoring(info: tsp.ApplicableRefactorInfo, args: tsp.
     );
 }
 
-export function asApplyRefactoring(action: tsp.RefactorActionInfo, info: tsp.ApplicableRefactorInfo, args: tsp.FileRangeRequestArgs): lsp.CodeAction {
+export function asApplyRefactoring(action: ts.server.protocol.RefactorActionInfo, info: ts.server.protocol.ApplicableRefactorInfo, args: ts.server.protocol.FileRangeRequestArgs): lsp.CodeAction {
     const codeAction = lsp.CodeAction.create(action.description, asKind(info));
     if (action.notApplicableReason) {
         codeAction.disabled = { reason: action.notApplicableReason };
@@ -55,7 +55,7 @@ export function asApplyRefactoring(action: tsp.RefactorActionInfo, info: tsp.App
     return codeAction;
 }
 
-function asKind(refactor: tsp.RefactorActionInfo): lsp.CodeActionKind {
+function asKind(refactor: ts.server.protocol.RefactorActionInfo): lsp.CodeActionKind {
     if (refactor.name.startsWith('function_')) {
         return `${lsp.CodeActionKind.RefactorExtract}.function`;
     } else if (refactor.name.startsWith('constant_')) {

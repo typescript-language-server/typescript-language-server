@@ -10,24 +10,22 @@ import { LspDocument } from './document.js';
 import { toTextEdit, normalizePath } from './protocol-translation.js';
 import { Commands } from './commands.js';
 import { TspClient } from './tsp-client.js';
-import { tslib, tsp, KindModifiers, SupportedFeatures, toSymbolDisplayPartKind } from './ts-protocol.js';
+import { CommandTypes, KindModifiers, ScriptElementKind, SupportedFeatures, SymbolDisplayPartKind, toSymbolDisplayPartKind } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import * as Previewer from './utils/previewer.js';
 import { IFilePathToResourceConverter } from './utils/previewer.js';
 import SnippetString from './utils/SnippetString.js';
 import { Range, Position } from './utils/typeConverters.js';
 import type { WorkspaceConfigurationCompletionOptions } from './configuration-manager.js';
 
-import ScriptElementKind = tslib.ScriptElementKind;
-import SymbolDisplayPartKind = tslib.SymbolDisplayPartKind;
-
 interface ParameterListParts {
-    readonly parts: ReadonlyArray<tsp.SymbolDisplayPart>;
+    readonly parts: ReadonlyArray<ts.server.protocol.SymbolDisplayPart>;
     readonly hasOptionalParameters: boolean;
 }
 
 export function asCompletionItem(
-    entry: tsp.CompletionEntry,
-    optionalReplacementSpan: tsp.TextSpan | undefined,
+    entry: ts.server.protocol.CompletionEntry,
+    optionalReplacementSpan: ts.server.protocol.TextSpan | undefined,
     file: string, position: lsp.Position,
     document: LspDocument,
     filePathConverter: IFilePathToResourceConverter,
@@ -115,8 +113,8 @@ export function asCompletionItem(
 }
 
 function getRangeFromReplacementSpan(
-    replacementSpan: tsp.TextSpan | undefined,
-    optionalReplacementSpan: tsp.TextSpan | undefined,
+    replacementSpan: ts.server.protocol.TextSpan | undefined,
+    optionalReplacementSpan: ts.server.protocol.TextSpan | undefined,
     position: lsp.Position,
     document: LspDocument,
     features: SupportedFeatures,
@@ -220,7 +218,7 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 
 export async function asResolvedCompletionItem(
     item: lsp.CompletionItem,
-    details: tsp.CompletionEntryDetails,
+    details: ts.server.protocol.CompletionEntryDetails,
     document: LspDocument | undefined,
     client: TspClient,
     filePathConverter: IFilePathToResourceConverter,
@@ -252,8 +250,8 @@ async function isValidFunctionCompletionContext(filepath: string, position: lsp.
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
-        const args: tsp.FileLocationRequestArgs = Position.toFileLocationRequestArgs(filepath, position);
-        const response = await client.request(tsp.CommandTypes.Quickinfo, args);
+        const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(filepath, position);
+        const response = await client.request(CommandTypes.Quickinfo, args);
         if (response.type === 'response' && response.body) {
             switch (response.body.kind) {
                 case 'var':
@@ -277,7 +275,7 @@ function canCreateSnippetOfFunctionCall(kind: lsp.CompletionItemKind | undefined
     return options.completeFunctionCalls === true && (kind === lsp.CompletionItemKind.Function || kind === lsp.CompletionItemKind.Method);
 }
 
-function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: tsp.CompletionEntryDetails): void {
+function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: ts.server.protocol.CompletionEntryDetails): void {
     const { displayParts } = detail;
     const parameterListParts = getParameterListParts(displayParts);
     const snippet = new SnippetString();
@@ -295,8 +293,8 @@ function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: tsp.Compl
     }
 }
 
-function getParameterListParts(displayParts: ReadonlyArray<tsp.SymbolDisplayPart>): ParameterListParts {
-    const parts: tsp.SymbolDisplayPart[] = [];
+function getParameterListParts(displayParts: ReadonlyArray<ts.server.protocol.SymbolDisplayPart>): ParameterListParts {
+    const parts: ts.server.protocol.SymbolDisplayPart[] = [];
     let isInMethod = false;
     let hasOptionalParameters = false;
     let parenCount = 0;
@@ -352,7 +350,7 @@ function getParameterListParts(displayParts: ReadonlyArray<tsp.SymbolDisplayPart
     return { hasOptionalParameters, parts };
 }
 
-function appendJoinedPlaceholders(snippet: SnippetString, parts: ReadonlyArray<tsp.SymbolDisplayPart>, joiner: string): void {
+function appendJoinedPlaceholders(snippet: SnippetString, parts: ReadonlyArray<ts.server.protocol.SymbolDisplayPart>, joiner: string): void {
     for (let i = 0; i < parts.length; ++i) {
         const paramterPart = parts[i];
         snippet.appendPlaceholder(paramterPart.text);
@@ -362,7 +360,7 @@ function appendJoinedPlaceholders(snippet: SnippetString, parts: ReadonlyArray<t
     }
 }
 
-function asAdditionalTextEdits(codeActions: tsp.CodeAction[], filepath: string): lsp.TextEdit[] | undefined {
+function asAdditionalTextEdits(codeActions: ts.server.protocol.CodeAction[], filepath: string): lsp.TextEdit[] | undefined {
     // Try to extract out the additionalTextEdits for the current file.
     const additionalTextEdits: lsp.TextEdit[] = [];
     for (const tsAction of codeActions) {
@@ -380,7 +378,7 @@ function asAdditionalTextEdits(codeActions: tsp.CodeAction[], filepath: string):
     return additionalTextEdits.length ? additionalTextEdits : undefined;
 }
 
-function asCommand(codeActions: tsp.CodeAction[], filepath: string): lsp.Command | undefined {
+function asCommand(codeActions: ts.server.protocol.CodeAction[], filepath: string): lsp.Command | undefined {
     let hasRemainingCommandsOrEdits = false;
     for (const tsAction of codeActions) {
         if (tsAction.commands) {
@@ -413,7 +411,7 @@ function asCommand(codeActions: tsp.CodeAction[], filepath: string): lsp.Command
 }
 
 function asDetail(
-    { displayParts, sourceDisplay, source: deprecatedSource }: tsp.CompletionEntryDetails,
+    { displayParts, sourceDisplay, source: deprecatedSource }: ts.server.protocol.CompletionEntryDetails,
     filePathConverter: IFilePathToResourceConverter,
 ): string | undefined {
     const result: string[] = [];
@@ -428,7 +426,7 @@ function asDetail(
     return result.join('\n');
 }
 
-export function getCompletionTriggerCharacter(character: string | undefined): tsp.CompletionsTriggerCharacter | undefined {
+export function getCompletionTriggerCharacter(character: string | undefined): ts.server.protocol.CompletionsTriggerCharacter | undefined {
     switch (character) {
         case '@':
         case '#':

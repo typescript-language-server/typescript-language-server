@@ -12,7 +12,7 @@
 import vscodeUri from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
 import { MarkdownString } from './MarkdownString.js';
-import type { tsp } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 
 export interface IFilePathToResourceConverter {
     /**
@@ -40,7 +40,7 @@ function processInlineTags(text: string): string {
 }
 
 function getTagBodyText(
-    tag: tsp.JSDocTagInfo,
+    tag: ts.server.protocol.JSDocTagInfo,
     filePathConverter: IFilePathToResourceConverter,
 ): string | undefined {
     if (!tag.text) {
@@ -84,7 +84,7 @@ function getTagBodyText(
 }
 
 function getTagDocumentation(
-    tag: tsp.JSDocTagInfo,
+    tag: ts.server.protocol.JSDocTagInfo,
     filePathConverter: IFilePathToResourceConverter,
 ): string | undefined {
     switch (tag.name) {
@@ -115,7 +115,7 @@ function getTagDocumentation(
 }
 
 export function plainWithLinks(
-    parts: readonly tsp.SymbolDisplayPart[] | string,
+    parts: readonly ts.server.protocol.SymbolDisplayPart[] | string,
     filePathConverter: IFilePathToResourceConverter,
 ): string {
     return processInlineTags(convertLinkTags(parts, filePathConverter));
@@ -125,7 +125,7 @@ export function plainWithLinks(
  * Convert `@link` inline tags to markdown links
  */
 function convertLinkTags(
-    parts: readonly tsp.SymbolDisplayPart[] | string | undefined,
+    parts: readonly ts.server.protocol.SymbolDisplayPart[] | string | undefined,
     filePathConverter: IFilePathToResourceConverter,
 ): string {
     if (!parts) {
@@ -138,7 +138,7 @@ function convertLinkTags(
 
     const out: string[] = [];
 
-    let currentLink: { name?: string; target?: tsp.FileSpan; text?: string; readonly linkcode: boolean; } | undefined;
+    let currentLink: { name?: string; target?: ts.server.protocol.FileSpan; text?: string; readonly linkcode: boolean; } | undefined;
     for (const part of parts) {
         switch (part.kind) {
             case 'link':
@@ -178,7 +178,7 @@ function convertLinkTags(
             case 'linkName':
                 if (currentLink) {
                     currentLink.name = part.text;
-                    currentLink.target = (part as tsp.JSDocLinkDisplayPart).target;
+                    currentLink.target = (part as ts.server.protocol.JSDocLinkDisplayPart).target;
                 }
                 break;
 
@@ -197,15 +197,15 @@ function convertLinkTags(
 }
 
 export function tagsMarkdownPreview(
-    tags: readonly tsp.JSDocTagInfo[],
+    tags: readonly ts.server.protocol.JSDocTagInfo[],
     filePathConverter: IFilePathToResourceConverter,
 ): string {
     return tags.map(tag => getTagDocumentation(tag, filePathConverter)).join('  \n\n');
 }
 
 export function markdownDocumentation(
-    documentation: tsp.SymbolDisplayPart[] | string | undefined,
-    tags: tsp.JSDocTagInfo[] | undefined,
+    documentation: ts.server.protocol.SymbolDisplayPart[] | string | undefined,
+    tags: ts.server.protocol.JSDocTagInfo[] | undefined,
     filePathConverter: IFilePathToResourceConverter,
 ): lsp.MarkupContent | undefined {
     const out = new MarkdownString();
@@ -215,8 +215,8 @@ export function markdownDocumentation(
 
 export function addMarkdownDocumentation(
     out: MarkdownString,
-    documentation: string | tsp.SymbolDisplayPart[] | undefined,
-    tags: tsp.JSDocTagInfo[] | undefined,
+    documentation: string | ts.server.protocol.SymbolDisplayPart[] | undefined,
+    tags: ts.server.protocol.JSDocTagInfo[] | undefined,
     converter: IFilePathToResourceConverter,
 ): MarkdownString {
     if (documentation) {

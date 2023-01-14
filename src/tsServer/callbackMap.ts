@@ -10,7 +10,7 @@
  */
 
 import { ServerResponse } from './requests.js';
-import type { tsp } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 
 export interface CallbackItem<R> {
     readonly onSuccess: (value: R) => void;
@@ -19,7 +19,7 @@ export interface CallbackItem<R> {
     readonly isAsync: boolean;
 }
 
-export class CallbackMap<R extends tsp.Response> {
+export class CallbackMap<R extends ts.server.protocol.Response> {
     private readonly _callbacks = new Map<number, CallbackItem<ServerResponse.Response<R> | undefined>>();
     private readonly _asyncCallbacks = new Map<number, CallbackItem<ServerResponse.Response<R> | undefined>>();
 

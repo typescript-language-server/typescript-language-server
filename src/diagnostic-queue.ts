@@ -9,12 +9,13 @@ import * as lsp from 'vscode-languageserver';
 import debounce from 'p-debounce';
 import { Logger } from './utils/logger.js';
 import { pathToUri, toDiagnostic } from './protocol-translation.js';
-import type { tsp, EventTypes } from './ts-protocol.js';
+import { EventTypes } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import { LspDocuments } from './document.js';
 import { SupportedFeatures } from './ts-protocol.js';
 
 class FileDiagnostics {
-    private readonly diagnosticsPerKind = new Map<EventTypes, tsp.Diagnostic[]>();
+    private readonly diagnosticsPerKind = new Map<EventTypes, ts.server.protocol.Diagnostic[]>();
 
     constructor(
         protected readonly uri: string,
@@ -23,7 +24,7 @@ class FileDiagnostics {
         protected readonly features: SupportedFeatures,
     ) { }
 
-    update(kind: EventTypes, diagnostics: tsp.Diagnostic[]): void {
+    update(kind: EventTypes, diagnostics: ts.server.protocol.Diagnostic[]): void {
         this.diagnosticsPerKind.set(kind, diagnostics);
         this.firePublishDiagnostics();
     }
@@ -54,7 +55,7 @@ export class DiagnosticEventQueue {
         protected readonly logger: Logger,
     ) { }
 
-    updateDiagnostics(kind: EventTypes, event: tsp.DiagnosticEvent): void {
+    updateDiagnostics(kind: EventTypes, event: ts.server.protocol.DiagnosticEvent): void {
         if (!event.body) {
             this.logger.error(`Received empty ${event.event} diagnostics.`);
             return;
@@ -81,7 +82,7 @@ export class DiagnosticEventQueue {
         return this.diagnostics.get(uri)?.getDiagnostics() || [];
     }
 
-    private isDiagnosticIgnored(diagnostic: tsp.Diagnostic) : boolean {
+    private isDiagnosticIgnored(diagnostic: ts.server.protocol.Diagnostic) : boolean {
         return diagnostic.code !== undefined && this.ignoredDiagnosticCodes.has(diagnostic.code);
     }
 }

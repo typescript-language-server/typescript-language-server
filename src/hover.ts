@@ -10,12 +10,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as lsp from 'vscode-languageserver';
-import type { tsp } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import * as Previewer from './utils/previewer.js';
 import { IFilePathToResourceConverter } from './utils/previewer.js';
 
 export function asSignatureHelp(
-    info: tsp.SignatureHelpItems,
+    info: ts.server.protocol.SignatureHelpItems,
     context: lsp.SignatureHelpContext | undefined,
     filePathConverter: IFilePathToResourceConverter,
 ): lsp.SignatureHelp {
@@ -27,7 +27,7 @@ export function asSignatureHelp(
     };
 }
 
-function getActiveSignature(info: tsp.SignatureHelpItems, signatures: readonly lsp.SignatureInformation[], context?: lsp.SignatureHelpContext): number {
+function getActiveSignature(info: ts.server.protocol.SignatureHelpItems, signatures: readonly lsp.SignatureInformation[], context?: lsp.SignatureHelpContext): number {
     // Try matching the previous active signature's label to keep it selected
     if (context?.activeSignatureHelp?.activeSignature !== undefined) {
         const previouslyActiveSignature = context.activeSignatureHelp.signatures[context.activeSignatureHelp.activeSignature];
@@ -42,7 +42,7 @@ function getActiveSignature(info: tsp.SignatureHelpItems, signatures: readonly l
     return info.selectedItemIndex;
 }
 
-function getActiveParameter(info: tsp.SignatureHelpItems): number {
+function getActiveParameter(info: ts.server.protocol.SignatureHelpItems): number {
     const activeSignature = info.items[info.selectedItemIndex];
     if (activeSignature?.isVariadic) {
         return Math.min(info.argumentIndex, activeSignature.parameters.length - 1);
@@ -50,7 +50,7 @@ function getActiveParameter(info: tsp.SignatureHelpItems): number {
     return info.argumentIndex;
 }
 
-function asSignatureInformation(item: tsp.SignatureHelpItem, filePathConverter: IFilePathToResourceConverter): lsp.SignatureInformation {
+function asSignatureInformation(item: ts.server.protocol.SignatureHelpItem, filePathConverter: IFilePathToResourceConverter): lsp.SignatureInformation {
     const parameters = item.parameters.map(parameter => asParameterInformation(parameter, filePathConverter));
     const signature: lsp.SignatureInformation = {
         label: Previewer.plainWithLinks(item.prefixDisplayParts, filePathConverter),
@@ -62,7 +62,7 @@ function asSignatureInformation(item: tsp.SignatureHelpItem, filePathConverter: 
     return signature;
 }
 
-function asParameterInformation(parameter: tsp.SignatureHelpParameter, filePathConverter: IFilePathToResourceConverter): lsp.ParameterInformation {
+function asParameterInformation(parameter: ts.server.protocol.SignatureHelpParameter, filePathConverter: IFilePathToResourceConverter): lsp.ParameterInformation {
     const { displayParts, documentation } = parameter;
     return {
         label: Previewer.plainWithLinks(displayParts, filePathConverter),
@@ -70,7 +70,7 @@ function asParameterInformation(parameter: tsp.SignatureHelpParameter, filePathC
     };
 }
 
-export function toTsTriggerReason(context: lsp.SignatureHelpContext): tsp.SignatureHelpTriggerReason {
+export function toTsTriggerReason(context: lsp.SignatureHelpContext): ts.server.protocol.SignatureHelpTriggerReason {
     switch (context.triggerKind) {
         case lsp.SignatureHelpTriggerKind.TriggerCharacter:
             if (context.triggerCharacter) {

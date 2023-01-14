@@ -10,10 +10,9 @@
  */
 
 import vscodeUri from 'vscode-uri';
-import { tsp } from '../ts-protocol.js';
+import { CommandTypes } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import { ExecutionTarget } from './server.js';
-
-import CommandTypes = tsp.CommandTypes;
 
 export enum ServerType {
     Syntax = 'syntax',
@@ -21,65 +20,58 @@ export enum ServerType {
 }
 
 export namespace ServerResponse {
-
     export class Cancelled {
         public readonly type = 'cancelled';
-
-        constructor(
-            public readonly reason: string,
-        ) { }
+        constructor(public readonly reason: string) {}
     }
-
     export const NoContent = { type: 'noContent' } as const;
-
     export const NoServer = { type: 'noServer' } as const;
-
-    export type Response<T extends tsp.Response> = T | Cancelled | typeof NoContent | typeof NoServer;
+    export type Response<T extends ts.server.protocol.Response> = T | Cancelled | typeof NoContent | typeof NoServer;
 }
 
 export interface TypeScriptRequestTypes {
-    [CommandTypes.ApplyCodeActionCommand]: [tsp.ApplyCodeActionCommandRequestArgs, tsp.ApplyCodeActionCommandResponse];
-    [CommandTypes.Change]: [tsp.ChangeRequestArgs, null];
-    [CommandTypes.Close]: [tsp.FileRequestArgs, null];
-    [CommandTypes.CompilerOptionsForInferredProjects]: [tsp.SetCompilerOptionsForInferredProjectsArgs, tsp.SetCompilerOptionsForInferredProjectsResponse];
-    [CommandTypes.CompletionDetails]: [tsp.CompletionDetailsRequestArgs, tsp.CompletionDetailsResponse];
-    [CommandTypes.CompletionInfo]: [tsp.CompletionsRequestArgs, tsp.CompletionInfoResponse];
-    [CommandTypes.Configure]: [tsp.ConfigureRequestArguments, tsp.ConfigureResponse];
-    [CommandTypes.ConfigurePlugin]: [tsp.ConfigurePluginRequestArguments, tsp.ConfigurePluginResponse];
-    [CommandTypes.Definition]: [tsp.FileLocationRequestArgs, tsp.DefinitionResponse];
-    [CommandTypes.DefinitionAndBoundSpan]: [tsp.FileLocationRequestArgs, tsp.DefinitionInfoAndBoundSpanResponse];
-    [CommandTypes.DocCommentTemplate]: [tsp.FileLocationRequestArgs, tsp.DocCommandTemplateResponse];
-    [CommandTypes.DocumentHighlights]: [tsp.DocumentHighlightsRequestArgs, tsp.DocumentHighlightsResponse];
-    [CommandTypes.EncodedSemanticClassificationsFull]: [tsp.EncodedSemanticClassificationsRequestArgs, tsp.EncodedSemanticClassificationsResponse];
-    [CommandTypes.FindSourceDefinition]: [tsp.FileLocationRequestArgs, tsp.DefinitionResponse];
-    [CommandTypes.Format]: [tsp.FormatRequestArgs, tsp.FormatResponse];
-    [CommandTypes.Formatonkey]: [tsp.FormatOnKeyRequestArgs, tsp.FormatResponse];
-    [CommandTypes.GetApplicableRefactors]: [tsp.GetApplicableRefactorsRequestArgs, tsp.GetApplicableRefactorsResponse];
-    [CommandTypes.GetCodeFixes]: [tsp.CodeFixRequestArgs, tsp.CodeFixResponse];
-    [CommandTypes.GetCombinedCodeFix]: [tsp.GetCombinedCodeFixRequestArgs, tsp.GetCombinedCodeFixResponse];
-    [CommandTypes.GetEditsForFileRename]: [tsp.GetEditsForFileRenameRequestArgs, tsp.GetEditsForFileRenameResponse];
-    [CommandTypes.GetEditsForRefactor]: [tsp.GetEditsForRefactorRequestArgs, tsp.GetEditsForRefactorResponse];
-    [CommandTypes.Geterr]: [tsp.GeterrRequestArgs, any];
-    [CommandTypes.GetOutliningSpans]: [tsp.FileRequestArgs, tsp.OutliningSpansResponse];
-    [CommandTypes.GetSupportedCodeFixes]: [null, tsp.GetSupportedCodeFixesResponse];
-    [CommandTypes.Implementation]: [tsp.FileLocationRequestArgs, tsp.ImplementationResponse];
-    [CommandTypes.JsxClosingTag]: [tsp.JsxClosingTagRequestArgs, tsp.JsxClosingTagResponse];
-    [CommandTypes.Navto]: [tsp.NavtoRequestArgs, tsp.NavtoResponse];
-    [CommandTypes.NavTree]: [tsp.FileRequestArgs, tsp.NavTreeResponse];
-    [CommandTypes.Open]: [tsp.OpenRequestArgs, null];
-    [CommandTypes.OrganizeImports]: [tsp.OrganizeImportsRequestArgs, tsp.OrganizeImportsResponse];
-    [CommandTypes.PrepareCallHierarchy]: [tsp.FileLocationRequestArgs, tsp.PrepareCallHierarchyResponse];
-    [CommandTypes.ProvideCallHierarchyIncomingCalls]: [tsp.FileLocationRequestArgs, tsp.ProvideCallHierarchyIncomingCallsResponse];
-    [CommandTypes.ProvideCallHierarchyOutgoingCalls]: [tsp.FileLocationRequestArgs, tsp.ProvideCallHierarchyOutgoingCallsResponse];
-    [CommandTypes.ProjectInfo]: [tsp.ProjectInfoRequestArgs, tsp.ProjectInfoResponse];
-    [CommandTypes.ProvideInlayHints]: [tsp.InlayHintsRequestArgs, tsp.InlayHintsResponse];
-    [CommandTypes.Quickinfo]: [tsp.FileLocationRequestArgs, tsp.QuickInfoResponse];
-    [CommandTypes.References]: [tsp.FileLocationRequestArgs, tsp.ReferencesResponse];
-    [CommandTypes.Rename]: [tsp.RenameRequestArgs, tsp.RenameResponse];
-    [CommandTypes.SelectionRange]: [tsp.SelectionRangeRequestArgs, tsp.SelectionRangeResponse];
-    [CommandTypes.SignatureHelp]: [tsp.SignatureHelpRequestArgs, tsp.SignatureHelpResponse];
-    [CommandTypes.TypeDefinition]: [tsp.FileLocationRequestArgs, tsp.TypeDefinitionResponse];
-    [CommandTypes.UpdateOpen]: [tsp.UpdateOpenRequestArgs, tsp.Response];
+    [CommandTypes.ApplyCodeActionCommand]: [ts.server.protocol.ApplyCodeActionCommandRequestArgs, ts.server.protocol.ApplyCodeActionCommandResponse];
+    [CommandTypes.Change]: [ts.server.protocol.ChangeRequestArgs, null];
+    [CommandTypes.Close]: [ts.server.protocol.FileRequestArgs, null];
+    [CommandTypes.CompilerOptionsForInferredProjects]: [ts.server.protocol.SetCompilerOptionsForInferredProjectsArgs, ts.server.protocol.SetCompilerOptionsForInferredProjectsResponse];
+    [CommandTypes.CompletionDetails]: [ts.server.protocol.CompletionDetailsRequestArgs, ts.server.protocol.CompletionDetailsResponse];
+    [CommandTypes.CompletionInfo]: [ts.server.protocol.CompletionsRequestArgs, ts.server.protocol.CompletionInfoResponse];
+    [CommandTypes.Configure]: [ts.server.protocol.ConfigureRequestArguments, ts.server.protocol.ConfigureResponse];
+    [CommandTypes.ConfigurePlugin]: [ts.server.protocol.ConfigurePluginRequestArguments, ts.server.protocol.ConfigurePluginResponse];
+    [CommandTypes.Definition]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.DefinitionResponse];
+    [CommandTypes.DefinitionAndBoundSpan]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.DefinitionInfoAndBoundSpanResponse];
+    [CommandTypes.DocCommentTemplate]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.DocCommandTemplateResponse];
+    [CommandTypes.DocumentHighlights]: [ts.server.protocol.DocumentHighlightsRequestArgs, ts.server.protocol.DocumentHighlightsResponse];
+    [CommandTypes.EncodedSemanticClassificationsFull]: [ts.server.protocol.EncodedSemanticClassificationsRequestArgs, ts.server.protocol.EncodedSemanticClassificationsResponse];
+    [CommandTypes.FindSourceDefinition]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.DefinitionResponse];
+    [CommandTypes.Format]: [ts.server.protocol.FormatRequestArgs, ts.server.protocol.FormatResponse];
+    [CommandTypes.Formatonkey]: [ts.server.protocol.FormatOnKeyRequestArgs, ts.server.protocol.FormatResponse];
+    [CommandTypes.GetApplicableRefactors]: [ts.server.protocol.GetApplicableRefactorsRequestArgs, ts.server.protocol.GetApplicableRefactorsResponse];
+    [CommandTypes.GetCodeFixes]: [ts.server.protocol.CodeFixRequestArgs, ts.server.protocol.CodeFixResponse];
+    [CommandTypes.GetCombinedCodeFix]: [ts.server.protocol.GetCombinedCodeFixRequestArgs, ts.server.protocol.GetCombinedCodeFixResponse];
+    [CommandTypes.GetEditsForFileRename]: [ts.server.protocol.GetEditsForFileRenameRequestArgs, ts.server.protocol.GetEditsForFileRenameResponse];
+    [CommandTypes.GetEditsForRefactor]: [ts.server.protocol.GetEditsForRefactorRequestArgs, ts.server.protocol.GetEditsForRefactorResponse];
+    [CommandTypes.Geterr]: [ts.server.protocol.GeterrRequestArgs, any];
+    [CommandTypes.GetOutliningSpans]: [ts.server.protocol.FileRequestArgs, ts.server.protocol.OutliningSpansResponse];
+    [CommandTypes.GetSupportedCodeFixes]: [null, ts.server.protocol.GetSupportedCodeFixesResponse];
+    [CommandTypes.Implementation]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ImplementationResponse];
+    [CommandTypes.JsxClosingTag]: [ts.server.protocol.JsxClosingTagRequestArgs, ts.server.protocol.JsxClosingTagResponse];
+    [CommandTypes.Navto]: [ts.server.protocol.NavtoRequestArgs, ts.server.protocol.NavtoResponse];
+    [CommandTypes.NavTree]: [ts.server.protocol.FileRequestArgs, ts.server.protocol.NavTreeResponse];
+    [CommandTypes.Open]: [ts.server.protocol.OpenRequestArgs, null];
+    [CommandTypes.OrganizeImports]: [ts.server.protocol.OrganizeImportsRequestArgs, ts.server.protocol.OrganizeImportsResponse];
+    [CommandTypes.PrepareCallHierarchy]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.PrepareCallHierarchyResponse];
+    [CommandTypes.ProvideCallHierarchyIncomingCalls]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ProvideCallHierarchyIncomingCallsResponse];
+    [CommandTypes.ProvideCallHierarchyOutgoingCalls]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ProvideCallHierarchyOutgoingCallsResponse];
+    [CommandTypes.ProjectInfo]: [ts.server.protocol.ProjectInfoRequestArgs, ts.server.protocol.ProjectInfoResponse];
+    [CommandTypes.ProvideInlayHints]: [ts.server.protocol.InlayHintsRequestArgs, ts.server.protocol.InlayHintsResponse];
+    [CommandTypes.Quickinfo]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.QuickInfoResponse];
+    [CommandTypes.References]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ReferencesResponse];
+    [CommandTypes.Rename]: [ts.server.protocol.RenameRequestArgs, ts.server.protocol.RenameResponse];
+    [CommandTypes.SelectionRange]: [ts.server.protocol.SelectionRangeRequestArgs, ts.server.protocol.SelectionRangeResponse];
+    [CommandTypes.SignatureHelp]: [ts.server.protocol.SignatureHelpRequestArgs, ts.server.protocol.SignatureHelpResponse];
+    [CommandTypes.TypeDefinition]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.TypeDefinitionResponse];
+    [CommandTypes.UpdateOpen]: [ts.server.protocol.UpdateOpenRequestArgs, ts.server.protocol.Response];
 }
 
 export type ExecConfig = {

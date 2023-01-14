@@ -16,7 +16,7 @@ import { toLocation, uriToPath } from '../protocol-translation.js';
 import type { LspDocuments } from '../document.js';
 import type { TspClient } from '../tsp-client.js';
 import type { LspClient } from '../lsp-client.js';
-import { tsp } from '../ts-protocol.js';
+import { CommandTypes } from '../ts-protocol.js';
 
 export class SourceDefinitionCommand {
     public static readonly id = '_typescript.goToSourceDefinition';
@@ -59,7 +59,7 @@ export class SourceDefinitionCommand {
             message: 'Finding source definitions…',
             reporter,
         }, async () => {
-            const response = await tspClient.request(tsp.CommandTypes.FindSourceDefinition, args);
+            const response = await tspClient.request(CommandTypes.FindSourceDefinition, args);
             if (response.type !== 'response' || !response.body) {
                 lspClient.showErrorMessage('No source definitions found.');
                 return;

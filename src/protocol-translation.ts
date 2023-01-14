@@ -8,7 +8,8 @@
 import * as lsp from 'vscode-languageserver';
 import vscodeUri from 'vscode-uri';
 import type { LspDocuments } from './document.js';
-import { tslib, tsp, SupportedFeatures } from './ts-protocol.js';
+import { HighlightSpanKind, SupportedFeatures } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import { Position, Range } from './utils/typeConverters.js';
 
 const RE_PATHSEP_WINDOWS = /\\/g;
@@ -65,7 +66,7 @@ function currentVersion(filepath: string, documents: LspDocuments | undefined): 
     return document ? document.version : null;
 }
 
-export function toLocation(fileSpan: tsp.FileSpan, documents: LspDocuments | undefined): lsp.Location {
+export function toLocation(fileSpan: ts.server.protocol.FileSpan, documents: LspDocuments | undefined): lsp.Location {
     return {
         uri: pathToUri(fileSpan.file, documents),
         range: {
@@ -114,7 +115,7 @@ function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     }
 }
 
-export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments | undefined, features: SupportedFeatures): lsp.Diagnostic {
+export function toDiagnostic(diagnostic: ts.server.protocol.Diagnostic, documents: LspDocuments | undefined, features: SupportedFeatures): lsp.Diagnostic {
     const lspDiagnostic: lsp.Diagnostic = {
         range: {
             start: Position.fromLocation(diagnostic.start),
@@ -132,7 +133,7 @@ export function toDiagnostic(diagnostic: tsp.Diagnostic, documents: LspDocuments
     return lspDiagnostic;
 }
 
-function getDiagnosticTags(diagnostic: tsp.Diagnostic): lsp.DiagnosticTag[] {
+function getDiagnosticTags(diagnostic: ts.server.protocol.Diagnostic): lsp.DiagnosticTag[] {
     const tags: lsp.DiagnosticTag[] = [];
     if (diagnostic.reportsUnnecessary) {
         tags.push(lsp.DiagnosticTag.Unnecessary);
@@ -143,7 +144,7 @@ function getDiagnosticTags(diagnostic: tsp.Diagnostic): lsp.DiagnosticTag[] {
     return tags;
 }
 
-function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
+function asRelatedInformation(info: ts.server.protocol.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
     if (!info) {
         return undefined;
     }
@@ -160,14 +161,14 @@ function asRelatedInformation(info: tsp.DiagnosticRelatedInformation[] | undefin
     return result;
 }
 
-export function toSelectionRange(range: tsp.SelectionRange): lsp.SelectionRange {
+export function toSelectionRange(range: ts.server.protocol.SelectionRange): lsp.SelectionRange {
     return lsp.SelectionRange.create(
         Range.fromTextSpan(range.textSpan),
         range.parent ? toSelectionRange(range.parent) : undefined,
     );
 }
 
-export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
+export function toTextEdit(edit: ts.server.protocol.CodeEdit): lsp.TextEdit {
     return {
         range: {
             start: Position.fromLocation(edit.start),
@@ -177,7 +178,7 @@ export function toTextEdit(edit: tsp.CodeEdit): lsp.TextEdit {
     };
 }
 
-export function toTextDocumentEdit(change: tsp.FileCodeEdits, documents: LspDocuments | undefined): lsp.TextDocumentEdit {
+export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, documents: LspDocuments | undefined): lsp.TextDocumentEdit {
     return {
         textDocument: {
             uri: pathToUri(change.fileName, documents),
@@ -187,7 +188,7 @@ export function toTextDocumentEdit(change: tsp.FileCodeEdits, documents: LspDocu
     };
 }
 
-export function toDocumentHighlight(item: tsp.DocumentHighlightsItem): lsp.DocumentHighlight[] {
+export function toDocumentHighlight(item: ts.server.protocol.DocumentHighlightsItem): lsp.DocumentHighlight[] {
     return item.highlightSpans.map(i => {
         return <lsp.DocumentHighlight>{
             kind: toDocumentHighlightKind(i.kind),
@@ -199,11 +200,11 @@ export function toDocumentHighlight(item: tsp.DocumentHighlightsItem): lsp.Docum
     });
 }
 
-function toDocumentHighlightKind(kind: tslib.HighlightSpanKind): lsp.DocumentHighlightKind {
+function toDocumentHighlightKind(kind: HighlightSpanKind): lsp.DocumentHighlightKind {
     switch (kind) {
-        case tslib.HighlightSpanKind.definition: return lsp.DocumentHighlightKind.Write;
-        case tslib.HighlightSpanKind.reference:
-        case tslib.HighlightSpanKind.writtenReference: return lsp.DocumentHighlightKind.Read;
+        case HighlightSpanKind.definition: return lsp.DocumentHighlightKind.Write;
+        case HighlightSpanKind.reference:
+        case HighlightSpanKind.writtenReference: return lsp.DocumentHighlightKind.Read;
         default: return lsp.DocumentHighlightKind.Text;
     }
 }

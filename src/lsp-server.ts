@@ -21,7 +21,8 @@ import { Commands } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
 import { provideOrganizeImports } from './organize-imports.js';
-import { tsp, EventTypes, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
+import { CommandTypes, EventTypes, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
 import { fromProtocolCallHierarchyItem, fromProtocolCallHierarchyIncomingCall, fromProtocolCallHierarchyOutgoingCall } from './features/call-hierarchy.js';
@@ -38,8 +39,6 @@ import { getInferredProjectCompilerOptions } from './utils/tsconfig.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 import { ConfigurationManager } from './configuration-manager.js';
-
-import CommandTypes = tsp.CommandTypes;
 
 export class LspServer {
     private _tspClient: TspClient | null = null;
@@ -300,7 +299,7 @@ export class LspServer {
     }
 
     private setCompilerOptionsForInferredProjects(): void {
-        const args: tsp.SetCompilerOptionsForInferredProjectsArgs = {
+        const args: ts.server.protocol.SetCompilerOptionsForInferredProjectsArgs = {
             options: {
                 ...getInferredProjectCompilerOptions(this.configurationManager.workspaceConfiguration.implicitProjectConfiguration!),
                 allowJs: true,
@@ -337,7 +336,7 @@ export class LspServer {
         await this.doRequestDiagnosticsDebounced();
     }
     readonly doRequestDiagnosticsDebounced = debounce(() => this.doRequestDiagnostics(), 200);
-    protected async doRequestDiagnostics(): Promise<tsp.RequestCompletedEvent> {
+    protected async doRequestDiagnostics(): Promise<void> {
         this.cancelDiagnostics();
         const geterrTokenSource = new lsp.CancellationTokenSource();
         this.diagnosticsTokenSource = geterrTokenSource;
@@ -386,7 +385,7 @@ export class LspServer {
         }
     }
 
-    protected getScriptKindName(languageId: string): tsp.ScriptKindName | undefined {
+    protected getScriptKindName(languageId: string): ts.server.protocol.ScriptKindName | undefined {
         switch (languageId) {
             case 'typescript': return 'TS';
             case 'typescriptreact': return 'TSX';
@@ -665,7 +664,7 @@ export class LspServer {
             range: Range.fromTextSpan(result.body),
         };
     }
-    protected async getQuickInfo(file: string, position: lsp.Position): Promise<tsp.QuickInfoResponse | undefined> {
+    protected async getQuickInfo(file: string, position: lsp.Position): Promise<ts.server.protocol.QuickInfoResponse | undefined> {
         try {
             return await this.tspClient.request(CommandTypes.Quickinfo, {
                 file,
@@ -822,7 +821,7 @@ export class LspServer {
         }
         return asSignatureHelp(response.body, params.context, this.documents);
     }
-    protected async getSignatureHelp(file: string, params: lsp.SignatureHelpParams): Promise<tsp.SignatureHelpResponse | undefined> {
+    protected async getSignatureHelp(file: string, params: lsp.SignatureHelpParams): Promise<ts.server.protocol.SignatureHelpResponse | undefined> {
         try {
             const { position, context } = params;
             return await this.tspClient.request(CommandTypes.SignatureHelp, {
@@ -881,9 +880,9 @@ export class LspServer {
 
         return actions;
     }
-    protected async getCodeFixes(fileRangeArgs: tsp.FileRangeRequestArgs, context: lsp.CodeActionContext): Promise<tsp.GetCodeFixesResponse | undefined> {
+    protected async getCodeFixes(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext): Promise<ts.server.protocol.GetCodeFixesResponse | undefined> {
         const errorCodes = context.diagnostics.map(diagnostic => Number(diagnostic.code));
-        const args: tsp.CodeFixRequestArgs = {
+        const args: ts.server.protocol.CodeFixRequestArgs = {
             ...fileRangeArgs,
             errorCodes,
         };
@@ -893,8 +892,8 @@ export class LspServer {
             return undefined;
         }
     }
-    protected async getRefactors(fileRangeArgs: tsp.FileRangeRequestArgs, context: lsp.CodeActionContext): Promise<tsp.GetApplicableRefactorsResponse | undefined> {
-        const args: tsp.GetApplicableRefactorsRequestArgs = {
+    protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext): Promise<ts.server.protocol.GetApplicableRefactorsResponse | undefined> {
+        const args: ts.server.protocol.GetApplicableRefactorsRequestArgs = {
             ...fileRangeArgs,
             triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
             kind: context.only?.length === 1 ? context.only[0] : undefined,
@@ -905,7 +904,7 @@ export class LspServer {
             return undefined;
         }
     }
-    protected async getOrganizeImports(args: tsp.OrganizeImportsRequestArgs): Promise<tsp.OrganizeImportsResponse | undefined> {
+    protected async getOrganizeImports(args: ts.server.protocol.OrganizeImportsRequestArgs): Promise<ts.server.protocol.OrganizeImportsResponse | undefined> {
         try {
             await this.configurationManager.configureGloballyFromDocument(args.scope.args.file);
             return await this.tspClient.request(CommandTypes.OrganizeImports, args);
@@ -920,7 +919,7 @@ export class LspServer {
             const edit = arg.arguments[0] as lsp.WorkspaceEdit;
             await this.options.lspClient.applyWorkspaceEdit({ edit });
         } else if (arg.command === Commands.APPLY_CODE_ACTION && arg.arguments) {
-            const codeAction = arg.arguments[0] as tsp.CodeAction;
+            const codeAction = arg.arguments[0] as ts.server.protocol.CodeAction;
             if (!await this.applyFileCodeEdits(codeAction.changes)) {
                 return;
             }
@@ -930,7 +929,7 @@ export class LspServer {
                 }
             }
         } else if (arg.command === Commands.APPLY_REFACTORING && arg.arguments) {
-            const args = arg.arguments[0] as tsp.GetEditsForRefactorRequestArgs;
+            const args = arg.arguments[0] as ts.server.protocol.GetEditsForRefactorRequestArgs;
             const { body } = await this.tspClient.request(CommandTypes.GetEditsForRefactor, args);
             if (!body?.edits.length) {
                 return;
@@ -978,7 +977,7 @@ export class LspServer {
             };
             this.applyRenameFile(sourceUri, targetUri);
         } else if (arg.command === Commands.APPLY_COMPLETION_CODE_ACTION && arg.arguments) {
-            const [_, codeActions] = arg.arguments as [string, tsp.CodeAction[]];
+            const [_, codeActions] = arg.arguments as [string, ts.server.protocol.CodeAction[]];
             for (const codeAction of codeActions) {
                 await this.applyFileCodeEdits(codeAction.changes);
                 if (codeAction.commands?.length) {
@@ -998,7 +997,7 @@ export class LspServer {
         }
     }
 
-    protected async applyFileCodeEdits(edits: ReadonlyArray<tsp.FileCodeEdits>): Promise<boolean> {
+    protected async applyFileCodeEdits(edits: ReadonlyArray<ts.server.protocol.FileCodeEdits>): Promise<boolean> {
         if (!edits.length) {
             return false;
         }
@@ -1016,7 +1015,7 @@ export class LspServer {
         const edits = await this.getEditsForFileRename(sourceUri, targetUri);
         this.applyFileCodeEdits(edits);
     }
-    protected async getEditsForFileRename(sourceUri: string, targetUri: string): Promise<ReadonlyArray<tsp.FileCodeEdits>> {
+    protected async getEditsForFileRename(sourceUri: string, targetUri: string): Promise<ReadonlyArray<ts.server.protocol.FileCodeEdits>> {
         const newFilePath = uriToPath(targetUri);
         const oldFilePath = uriToPath(sourceUri);
         if (!newFilePath || !oldFilePath) {
@@ -1039,7 +1038,7 @@ export class LspServer {
         if (!file) {
             return [];
         }
-        let response: tsp.DocumentHighlightsResponse;
+        let response: ts.server.protocol.DocumentHighlightsResponse;
         try {
             response = await this.tspClient.request(CommandTypes.DocumentHighlights, {
                 file,
@@ -1119,7 +1118,7 @@ export class LspServer {
         }
         return foldingRanges;
     }
-    protected asFoldingRange(span: tsp.OutliningSpan, document: LspDocument): lsp.FoldingRange | undefined {
+    protected asFoldingRange(span: ts.server.protocol.OutliningSpan, document: LspDocument): lsp.FoldingRange | undefined {
         const range = Range.fromTextSpan(span.textSpan);
         const kind = this.asFoldingRangeKind(span);
 
@@ -1145,7 +1144,7 @@ export class LspServer {
             kind,
         };
     }
-    protected asFoldingRangeKind(span: tsp.OutliningSpan): lsp.FoldingRangeKind | undefined {
+    protected asFoldingRangeKind(span: ts.server.protocol.OutliningSpan): lsp.FoldingRangeKind | undefined {
         switch (span.kind) {
             case 'comment': return lsp.FoldingRangeKind.Comment;
             case 'region': return lsp.FoldingRangeKind.Region;
@@ -1155,9 +1154,9 @@ export class LspServer {
         }
     }
 
-    protected async onTsEvent(event: tsp.Event): Promise<void> {
+    protected async onTsEvent(event: ts.server.protocol.Event): Promise<void> {
         if (event.event === EventTypes.SementicDiag || event.event === EventTypes.SyntaxDiag || event.event === EventTypes.SuggestionDiag) {
-            this.diagnosticQueue?.updateDiagnostics(event.event, event as tsp.DiagnosticEvent);
+            this.diagnosticQueue?.updateDiagnostics(event.event, event as ts.server.protocol.DiagnosticEvent);
         }
     }
 

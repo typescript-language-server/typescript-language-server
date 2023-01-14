@@ -12,7 +12,7 @@
 import { CancellationToken } from 'vscode-jsonrpc';
 import { RequestItem, RequestQueue, RequestQueueingType } from './requestQueue.js';
 import { ServerResponse, ServerType, TypeScriptRequestTypes } from './requests.js';
-import type { tsp } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import type { TspClientOptions } from '../tsp-client.js';
 import { OngoingRequestCanceller } from './cancellation.js';
 import { CallbackMap } from './callbackMap.js';
@@ -30,7 +30,7 @@ export interface TypeScriptServerExitEvent {
     readonly signal: NodeJS.Signals | null;
 }
 
-type OnEventHandler = (e: tsp.Event) => any;
+type OnEventHandler = (e: ts.server.protocol.Event) => any;
 type OnExitHandler = (e: TypeScriptServerExitEvent) => any;
 type OnErrorHandler = (e: any) => any;
 type OnStdErrHandler = (e: string) => any;
@@ -49,7 +49,7 @@ export interface ITypeScriptServer {
      * @return A list of all execute requests. If there are multiple entries, the first item is the primary
      * request while the rest are secondary ones.
      */
-    executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<tsp.Response>> | undefined>;
+    executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined>;
 
     dispose(): void;
 }
@@ -71,9 +71,9 @@ export interface TsServerProcessFactory {
 }
 
 export interface TsServerProcess {
-    write(serverRequest: tsp.Request): void;
+    write(serverRequest: ts.server.protocol.Request): void;
 
-    onData(handler: (data: tsp.Response) => void): void;
+    onData(handler: (data: ts.server.protocol.Response) => void): void;
     onExit(handler: (code: number | null, signal: NodeJS.Signals | null) => void): void;
     onError(handler: (error: Error) => void): void;
     onStdErr(handler: (code: string) => void): void;
@@ -83,7 +83,7 @@ export interface TsServerProcess {
 
 export class ProcessBasedTsServer implements ITypeScriptServer {
     private readonly _requestQueue = new RequestQueue();
-    private readonly _callbacks = new CallbackMap<tsp.Response>();
+    private readonly _callbacks = new CallbackMap<ts.server.protocol.Response>();
     private readonly _pendingResponses = new Set<number>();
     private readonly _eventHandlers = new Set<OnEventHandler>();
     private readonly _exitHandlers = new Set<OnExitHandler>();
@@ -138,7 +138,7 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
         return this._tsServerLogFile;
     }
 
-    private write(serverRequest: tsp.Request) {
+    private write(serverRequest: ts.server.protocol.Request) {
         this._process.write(serverRequest);
     }
 
@@ -155,23 +155,23 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
         this._process.kill();
     }
 
-    private dispatchMessage(message: tsp.Message) {
+    private dispatchMessage(message: ts.server.protocol.Message) {
         try {
             switch (message.type) {
                 case 'response':
                     if (this._serverSource) {
                         this.dispatchResponse({
-                            ...(message as tsp.Response),
+                            ...(message as ts.server.protocol.Response),
                         });
                     } else {
-                        this.dispatchResponse(message as tsp.Response);
+                        this.dispatchResponse(message as ts.server.protocol.Response);
                     }
                     break;
 
                 case 'event': {
-                    const event = message as tsp.Event;
+                    const event = message as ts.server.protocol.Event;
                     if (event.event === 'requestCompleted') {
-                        const seq = (event as tsp.RequestCompletedEvent).body.request_seq;
+                        const seq = (event as ts.server.protocol.RequestCompletedEvent).body.request_seq;
                         const callback = this._callbacks.fetch(seq);
                         if (callback) {
                             this._tracer.traceRequestCompleted(this._serverId, 'requestCompleted', seq, callback);
@@ -210,7 +210,7 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
         }
     }
 
-    private dispatchResponse(response: tsp.Response) {
+    private dispatchResponse(response: ts.server.protocol.Response) {
         const callback = this.fetchCallback(response.request_seq);
         if (!callback) {
             return;
@@ -227,7 +227,7 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
         }
     }
 
-    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<tsp.Response>> | undefined> {
+    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         const request = this._requestQueue.createRequest(command, args);
         const requestInfo: RequestItem = {
             request,
@@ -235,10 +235,10 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
             isAsync: executeInfo.isAsync,
             queueingType: ProcessBasedTsServer.getQueueingType(command, executeInfo.lowPriority),
         };
-        let result: Promise<ServerResponse.Response<tsp.Response>> | undefined;
+        let result: Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined;
         if (executeInfo.expectsResult) {
-            result = new Promise<ServerResponse.Response<tsp.Response>>((resolve, reject) => {
-                this._callbacks.add(request.seq, { onSuccess: resolve as () => ServerResponse.Response<tsp.Response> | undefined, onError: reject, queuingStartTime: Date.now(), isAsync: executeInfo.isAsync }, executeInfo.isAsync);
+            result = new Promise<ServerResponse.Response<ts.server.protocol.Response>>((resolve, reject) => {
+                this._callbacks.add(request.seq, { onSuccess: resolve as () => ServerResponse.Response<ts.server.protocol.Response> | undefined, onError: reject, queuingStartTime: Date.now(), isAsync: executeInfo.isAsync }, executeInfo.isAsync);
 
                 if (executeInfo.token) {
                     executeInfo.token.onCancellationRequested(() => {

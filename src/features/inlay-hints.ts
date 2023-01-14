@@ -13,7 +13,8 @@ import * as lsp from 'vscode-languageserver';
 import API from '../utils/api.js';
 import type { ConfigurationManager } from '../configuration-manager.js';
 import type { LspDocuments } from '../document.js';
-import { tsp } from '../ts-protocol.js';
+import { CommandTypes } from '../ts-protocol.js';
+import type { ts } from '../ts-protocol.js';
 import type { TspClient } from '../tsp-client.js';
 import type { LspClient } from '../lsp-client.js';
 import { Position } from '../utils/typeConverters.js';
@@ -58,7 +59,7 @@ export class TypeScriptInlayHintsProvider {
         const start = document.offsetAt(range.start);
         const length = document.offsetAt(range.end) - start;
 
-        const response = await tspClient.request(tsp.CommandTypes.ProvideInlayHints, { file, start, length });
+        const response = await tspClient.request(CommandTypes.ProvideInlayHints, { file, start, length });
         if (response.type !== 'response' || !response.success || !response.body) {
             return [];
         }
@@ -89,7 +90,7 @@ function areInlayHintsEnabledForFile(configurationManager: ConfigurationManager,
         preferences.includeInlayVariableTypeHints;
 }
 
-function fromProtocolInlayHintKind(kind: tsp.InlayHintKind): lsp.InlayHintKind | undefined {
+function fromProtocolInlayHintKind(kind: ts.server.protocol.InlayHintKind): lsp.InlayHintKind | undefined {
     switch (kind) {
         case 'Parameter': return lsp.InlayHintKind.Parameter;
         case 'Type': return lsp.InlayHintKind.Type;

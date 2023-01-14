@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import { provideOrganizeImports } from './organize-imports.js';
 import { filePath, uri } from './test-utils.js';
-import type { tsp } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
 describe('provideOrganizeImports', () => {
@@ -15,7 +15,7 @@ describe('provideOrganizeImports', () => {
                 },
             ],
         };
-        const actual = provideOrganizeImports(response as any as tsp.OrganizeImportsResponse, undefined);
+        const actual = provideOrganizeImports(response as any as ts.server.protocol.OrganizeImportsResponse, undefined);
         const expected = [{
             title: 'Organize imports',
             kind: CodeActionKind.SourceOrganizeImportsTs.value,
