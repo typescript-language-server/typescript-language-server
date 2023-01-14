@@ -123,5 +123,13 @@ module.exports = {
                 '@typescript-eslint/semi': ['error', 'always'],
             },
         },
+        {
+            files: ['**/*.spec.*'],
+            extends: [
+                'plugin:jest/recommended',
+                'plugin:jest/style',
+            ],
+            rules: {},
+        },
     ],
 };

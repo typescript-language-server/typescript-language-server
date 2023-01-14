@@ -5,7 +5,6 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as chai from 'chai';
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -14,13 +13,11 @@ import { Commands } from './commands.js';
 import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 
-const assert = chai.assert;
-
 const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 
 let server: TestLspServer;
 
-before(async () => {
+beforeAll(async () => {
     server = await createServer({
         rootUri: uri(),
         publishDiagnostics: args => diagnostics.set(args.uri, args),
@@ -34,7 +31,7 @@ beforeEach(() => {
     server.workspaceEdits = [];
 });
 
-after(() => {
+afterAll(() => {
     server.closeAll();
     server.shutdown();
 });
@@ -56,13 +53,13 @@ describe('completion', () => {
         });
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
-        assert.isNotNull(proposals);
-        assert.isAtLeast(proposals!.items.length, 800);
+        expect(proposals).not.toBeNull();
+        expect(proposals!.items.length).toBeGreaterThan(800);
         const item = proposals!.items.find(i => i.label === 'setTimeout');
-        assert.isDefined(item);
+        expect(item).toBeDefined();
         const resolvedItem = await server.completionResolve(item!);
-        assert.isNotTrue(resolvedItem.deprecated, 'resolved item is not deprecated');
-        assert.isDefined(resolvedItem.detail);
+        expect(resolvedItem.deprecated).not.toBeTruthy();
+        expect(resolvedItem.detail).toBeDefined();
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -82,12 +79,12 @@ describe('completion', () => {
         });
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
-        assert.isNotNull(proposals);
-        assert.isAtLeast(proposals!.items.length, 800);
+        expect(proposals).not.toBeNull();
+        expect(proposals!.items.length).toBeGreaterThan(800);
         const item = proposals!.items.find(i => i.label === 'addEventListener');
-        assert.isDefined(item);
+        expect(item).toBeDefined();
         const resolvedItem = await server.completionResolve(item!);
-        assert.isDefined(resolvedItem.detail);
+        expect(resolvedItem.detail).toBeDefined();
 
         const containsInvalidCompletions = proposals!.items.reduce((accumulator, current) => {
             if (accumulator) {
@@ -99,7 +96,7 @@ describe('completion', () => {
                 (current.kind !== lsp.CompletionItemKind.Function && current.kind !== lsp.CompletionItemKind.Method);
         }, false);
 
-        assert.isFalse(containsInvalidCompletions);
+        expect(containsInvalidCompletions).toBe(false);
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -125,13 +122,13 @@ describe('completion', () => {
         });
         const pos = position(doc, 'foo(); // call me');
         const proposals = await server.completion({ textDocument: doc, position: pos });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const item = proposals!.items.find(i => i.label === 'foo');
-        assert.isDefined(item);
+        expect(item).toBeDefined();
         const resolvedItem = await server.completionResolve(item!);
-        assert.isDefined(resolvedItem.detail);
-        assert.isArray(resolvedItem.tags);
-        assert.include(resolvedItem.tags!, lsp.CompletionItemTag.Deprecated, 'resolved item is deprecated');
+        expect(resolvedItem.detail).toBeDefined();
+        expect(Array.isArray(resolvedItem.tags)).toBeTruthy();
+        expect(resolvedItem.tags).toContain(lsp.CompletionItemTag.Deprecated);
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -151,8 +148,8 @@ describe('completion', () => {
         });
         const pos = position(doc, 'foo');
         const proposals = await server.completion({ textDocument: doc, position: pos });
-        assert.isNotNull(proposals);
-        assert.strictEqual(proposals?.items.length, 0);
+        expect(proposals).not.toBeNull();
+        expect(proposals?.items).toHaveLength(0);
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -165,9 +162,9 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: position(doc, 'ex') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const pathExistsCompletion = proposals!.items.find(completion => completion.label === 'pathExists');
-        assert.isDefined(pathExistsCompletion);
+        expect(pathExistsCompletion).toBeDefined();
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -187,11 +184,11 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.i') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'invalid-identifier-name');
-        assert.isDefined(completion);
-        assert.isDefined(completion!.textEdit);
-        assert.equal(completion!.textEdit!.newText, '["invalid-identifier-name"]');
+        expect(completion).toBeDefined();
+        expect(completion!.textEdit).toBeDefined();
+        expect(completion!.textEdit!.newText).toBe('["invalid-identifier-name"]');
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -211,10 +208,10 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.get') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'getById');
-        assert.isDefined(completion);
-        assert.deepInclude(completion!, {
+        expect(completion).toBeDefined();
+        expect(completion).toMatchObject({
             label: 'getById',
             kind: lsp.CompletionItemKind.Method,
             textEdit: {
@@ -274,10 +271,10 @@ describe('completion', () => {
         };
         localServer.didOpenTextDocument({ textDocument: doc });
         const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, '.get') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'getById');
-        assert.isDefined(completion);
-        assert.isUndefined(completion!.textEdit);
+        expect(completion).toBeDefined();
+        expect(completion!.textEdit).toBeUndefined();
         localServer.didCloseTextDocument({ textDocument: doc });
         localServer.closeAll();
         localServer.shutdown();
@@ -292,10 +289,10 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
-        assert.isDefined(completion);
-        assert.deepInclude(completion!, {
+        expect(completion).toBeDefined();
+        expect(completion).toEqual(expect.objectContaining({
             label: 'readFile',
             kind: lsp.CompletionItemKind.Function,
             insertTextFormat: lsp.InsertTextFormat.Snippet,
@@ -313,7 +310,7 @@ describe('completion', () => {
                     },
                 },
             },
-        });
+        }));
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -326,10 +323,10 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
-        assert.isDefined(completion);
-        assert.strictEqual(completion!.detail, 'fs');
+        expect(completion).toBeDefined();
+        expect(completion!.detail).toBe('fs');
         server.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -342,11 +339,11 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
-        assert.isDefined(completion);
+        expect(completion).toBeDefined();
         const resolvedItem = await server.completionResolve(completion!);
-        assert.deepEqual(resolvedItem.additionalTextEdits, [
+        expect(resolvedItem.additionalTextEdits).toMatchObject([
             {
                 newText: 'import { readFile } from "fs";\n\n',
                 range: {
@@ -382,11 +379,11 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
-        assert.isDefined(completion);
+        expect(completion).toBeDefined();
         const resolvedItem = await server.completionResolve(completion!);
-        assert.deepEqual(resolvedItem.additionalTextEdits, [
+        expect(resolvedItem.additionalTextEdits).toMatchObject([
             {
                 newText: 'import {readFile} from "fs"\n\n',
                 range: {
@@ -429,10 +426,10 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
         const resolvedItem = await server.completionResolve(completion!);
-        assert.deepInclude(resolvedItem, {
+        expect(resolvedItem).toMatchObject({
             label: 'readFile',
             insertTextFormat: lsp.InsertTextFormat.Snippet,
             // eslint-disable-next-line no-template-curly-in-string
@@ -482,9 +479,9 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === '$');
-        assert.deepInclude(completion, {
+        expect(completion).toMatchObject({
             label: '$',
             textEdit: {
                 newText: '$',
@@ -511,7 +508,7 @@ describe('completion', () => {
             },
         });
         const resolvedItem = await server.completionResolve(completion!);
-        assert.deepInclude(resolvedItem, {
+        expect(resolvedItem).toMatchObject({
             label: '$',
             textEdit: {
                 newText: '$',
@@ -557,10 +554,10 @@ describe('completion', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === '$');
         // NOTE: Technically not valid until resolved.
-        assert.deepInclude(completion, {
+        expect(completion).toMatchObject({
             label: '$',
             insertTextFormat: lsp.InsertTextFormat.Snippet,
             textEdit: {
@@ -588,7 +585,7 @@ describe('completion', () => {
             },
         });
         const resolvedItem = await server.completionResolve(completion!);
-        assert.deepInclude(resolvedItem, {
+        expect(resolvedItem).toMatchObject({
             label: '$',
             insertTextFormat: lsp.InsertTextFormat.Snippet,
             // eslint-disable-next-line no-template-curly-in-string
@@ -648,9 +645,9 @@ describe('completion', () => {
                 triggerKind: 2,
             },
         });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'fs/read');
-        assert.deepInclude(completion!, {
+        expect(completion).toMatchObject({
             label: 'fs/read',
             textEdit: {
                 newText: 'fs/read',
@@ -687,17 +684,15 @@ describe('completion', () => {
             textDocument: doc,
             position: positionAfter(doc, '/*a*/'),
         });
-        assert.isNotNull(proposals);
-        assert.lengthOf(proposals!.items, 2);
-        assert.deepInclude(
-            proposals!.items[0],
+        expect(proposals).not.toBeNull();
+        expect(proposals!.items).toHaveLength(2);
+        expect(proposals!.items[0]).toMatchObject(
             {
                 label: 'bar',
                 kind: lsp.CompletionItemKind.Method,
             },
         );
-        assert.deepInclude(
-            proposals!.items[1],
+        expect(proposals!.items[1]).toMatchObject(
             {
                 label: 'bar',
                 labelDetails: {
@@ -725,9 +720,9 @@ describe('definition', () => {
             textDocument: indexDoc,
             position: position(indexDoc, 'a/*identifier*/'),
         }) as lsp.Location[];
-        assert.isArray(definitions);
-        assert.equal(definitions!.length, 1);
-        assert.deepEqual(definitions![0], {
+        expect(Array.isArray(definitions)).toBeTruthy();
+        expect(definitions!).toHaveLength(1);
+        expect(definitions![0]).toMatchObject({
             uri: uri('source-definition', 'a.d.ts'),
             range: {
                 start: {
@@ -746,7 +741,7 @@ describe('definition', () => {
 describe('definition (definition link supported)', () => {
     let localServer: TestLspServer;
 
-    before(async () => {
+    beforeAll(async () => {
         const clientCapabilitiesOverride: lsp.ClientCapabilities = {
             textDocument: {
                 definition: {
@@ -768,7 +763,7 @@ describe('definition (definition link supported)', () => {
         localServer.workspaceEdits = [];
     });
 
-    after(() => {
+    afterAll(() => {
         localServer.closeAll();
         localServer.shutdown();
     });
@@ -787,9 +782,9 @@ describe('definition (definition link supported)', () => {
             textDocument: indexDoc,
             position: position(indexDoc, 'a/*identifier*/'),
         }) as lsp.DefinitionLink[];
-        assert.isArray(definitions);
-        assert.equal(definitions!.length, 1);
-        assert.deepEqual(definitions![0], {
+        expect(Array.isArray(definitions)).toBeTruthy();
+        expect(definitions!).toHaveLength(1);
+        expect(definitions![0]).toMatchObject({
             originSelectionRange: {
                 start: {
                     line: 1,
@@ -844,10 +839,10 @@ describe('diagnostics', () => {
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const resultsForFile = diagnostics.get(doc.uri);
-        assert.isDefined(resultsForFile);
+        expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
-        assert.equal(fileDiagnostics.length, 1);
-        assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
+        expect(fileDiagnostics).toHaveLength(1);
+        expect("Cannot find name 'missing'.").toBe(fileDiagnostics[0].message);
     });
 
     it('supports diagnostic tags', async () => {
@@ -870,15 +865,15 @@ describe('diagnostics', () => {
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const resultsForFile = diagnostics.get(doc.uri);
-        assert.isDefined(resultsForFile);
+        expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
-        assert.equal(fileDiagnostics.length, 2);
+        expect(fileDiagnostics).toHaveLength(2);
         const unusedDiagnostic = fileDiagnostics.find(d => d.code === 6133);
-        assert.isDefined(unusedDiagnostic);
-        assert.deepEqual(unusedDiagnostic!.tags, [lsp.DiagnosticTag.Unnecessary]);
+        expect(unusedDiagnostic).toBeDefined();
+        expect(unusedDiagnostic!.tags).toEqual([lsp.DiagnosticTag.Unnecessary]);
         const deprecatedDiagnostic = fileDiagnostics.find(d => d.code === 6387);
-        assert.isDefined(deprecatedDiagnostic);
-        assert.deepEqual(deprecatedDiagnostic!.tags, [lsp.DiagnosticTag.Deprecated]);
+        expect(deprecatedDiagnostic).toBeDefined();
+        expect(deprecatedDiagnostic!.tags).toEqual([lsp.DiagnosticTag.Deprecated]);
     });
 
     it('multiple files test', async () => {
@@ -911,13 +906,13 @@ describe('diagnostics', () => {
 
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
-        assert.equal(diagnostics.size, 2);
+        expect(diagnostics.size).toBe(2);
         const diagnosticsForDoc = diagnostics.get(doc.uri);
         const diagnosticsForDoc2 = diagnostics.get(doc2.uri);
-        assert.isDefined(diagnosticsForDoc);
-        assert.isDefined(diagnosticsForDoc2);
-        assert.equal(diagnosticsForDoc!.diagnostics.length, 1, JSON.stringify(diagnostics));
-        assert.equal(diagnosticsForDoc2!.diagnostics.length, 1, JSON.stringify(diagnostics));
+        expect(diagnosticsForDoc).toBeDefined();
+        expect(diagnosticsForDoc2).toBeDefined();
+        expect(diagnosticsForDoc!.diagnostics).toHaveLength(1);
+        expect(diagnosticsForDoc2!.diagnostics).toHaveLength(1);
     });
 
     it('code 6133 (ununsed variable) is ignored', async () => {
@@ -945,9 +940,9 @@ describe('diagnostics', () => {
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const diagnosticsForThisFile = diagnostics.get(doc.uri);
-        assert.isDefined(diagnosticsForThisFile);
+        expect(diagnosticsForThisFile).toBeDefined();
         const fileDiagnostics = diagnosticsForThisFile!.diagnostics;
-        assert.equal(fileDiagnostics.length, 0, JSON.stringify(fileDiagnostics));
+        expect(fileDiagnostics).toHaveLength(0);
     });
 });
 
@@ -969,11 +964,11 @@ describe('document symbol', () => {
             textDocument: doc,
         });
         const symbols = await server.documentSymbol({ textDocument: doc });
-        assert.equal(`
+        expect(`
 Foo
   foo
   myFunction
-`, symbolsAsString(symbols) + '\n');
+`).toBe(symbolsAsString(symbols) + '\n');
     });
 
     it('merges interfaces correctly', async () => {
@@ -995,13 +990,13 @@ interface Box {
             textDocument: doc,
         });
         const symbols = await server.documentSymbol({ textDocument: doc });
-        assert.equal(`
+        expect(`
 Box
   height
   width
 Box
   scale
-`, symbolsAsString(symbols) + '\n');
+`).toBe(symbolsAsString(symbols) + '\n');
     });
 
     it('duplication test', async () => {
@@ -1034,12 +1029,12 @@ Foo
   foo
   myFunction
 `;
-        assert.equal(symbolsAsString(symbols) + '\n', expectation);
-        assert.deepEqual(symbols[0].selectionRange, { start: { line: 1, character: 21 }, end: { line: 1, character: 24 } });
-        assert.deepEqual(symbols[0].range, { start: { line: 1, character: 8 }, end: { line: 5, character: 9 } });
+        expect(symbolsAsString(symbols) + '\n').toBe(expectation);
+        expect(symbols[0].selectionRange).toMatchObject({ start: { line: 1, character: 21 }, end: { line: 1, character: 24 } });
+        expect(symbols[0].range).toMatchObject({ start: { line: 1, character: 8 }, end: { line: 5, character: 9 } });
 
-        assert.deepEqual(symbols[1].selectionRange, symbols[1].range);
-        assert.deepEqual(symbols[1].range, { start: { line: 6, character: 8 }, end: { line: 10, character: 9 } });
+        expect(symbols[1].selectionRange).toMatchObject(symbols[1].range);
+        expect(symbols[1].range).toMatchObject({ start: { line: 6, character: 8 }, end: { line: 10, character: 9 } });
     });
 });
 
@@ -1088,10 +1083,10 @@ describe('editing', () => {
         await server.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const resultsForFile = diagnostics.get(doc.uri);
-        assert.isDefined(resultsForFile);
+        expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
-        assert.isTrue(fileDiagnostics.length >= 1, fileDiagnostics.map(d => d.message).join(','));
-        assert.equal("Cannot find name 'missing'.", fileDiagnostics[0].message);
+        expect(fileDiagnostics.length).toBeGreaterThan(0);
+        expect(fileDiagnostics[0].message).toBe("Cannot find name 'missing'.");
     });
 });
 
@@ -1116,59 +1111,24 @@ describe('references', () => {
             textDocument: doc,
             position,
         });
-        assert.strictEqual(references.length, 1);
-        assert.strictEqual(references[0].range.start.line, 2);
+        expect(references).toHaveLength(1);
+        expect(references[0].range.start.line).toBe(2);
         // With declaration/definition.
         references = await server.references({
             context: { includeDeclaration: true },
             textDocument: doc,
             position,
         });
-        assert.strictEqual(references.length, 2);
+        expect(references).toHaveLength(2);
     });
 });
-
-// describe('workspace configuration', () => {
-//     it('receives workspace configuration notification', async ()=>{
-//         const doc = {
-//             uri: uri('bar.ts'),
-//             languageId: 'typescript',
-//             version: 1,
-//             text: `
-//                 export function foo(): void {
-//                   console.log('test')
-//                 }
-//             `,
-//         };
-//         server.didOpenTextDocument({
-//             textDocument: doc,
-//         });
-
-//         server.updateWorkspaceSettingsttings({
-//             typescript: {
-//                 format: {
-//                     insertSpaceAfterCommaDelimiter: true,
-//                 },
-//             },
-//             javascript: {
-//                 format: {
-//                     insertSpaceAfterCommaDelimiter: false,
-//                 },
-//             },
-//         });
-
-//         const file = filePath('bar.ts');
-//         const settings = server.getWorkspacePreferencesForDocument(file);
-//         assert.deepEqual(settings, { format: { insertSpaceAfterCommaDelimiter: true } });
-//     });
-// });
 
 describe('formatting', () => {
     const uriString = uri('bar.ts');
     const languageId = 'typescript';
     const version = 1;
 
-    before(async () => {
+    beforeAll(async () => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
@@ -1193,7 +1153,7 @@ describe('formatting', () => {
             },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
-        assert.equal('export function foo(): void { }', result);
+        expect('export function foo(): void { }').toBe(result);
     });
 
     it('indent settings (3 spaces)', async () => {
@@ -1210,7 +1170,7 @@ describe('formatting', () => {
             },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
-        assert.equal('function foo() {\n   // some code\n}', result);
+        expect('function foo() {\n   // some code\n}').toBe(result);
     });
 
     it('indent settings (tabs)', async () => {
@@ -1227,7 +1187,7 @@ describe('formatting', () => {
             },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
-        assert.equal('function foo() {\n\t// some code\n}', result);
+        expect('function foo() {\n\t// some code\n}').toBe(result);
     });
 
     it('formatting setting set through workspace configuration', async () => {
@@ -1254,7 +1214,7 @@ describe('formatting', () => {
             },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
-        assert.equal('function foo()\n{\n\t// some code\n}', result);
+        expect('function foo()\n{\n\t// some code\n}').toBe(result);
     });
 
     it('selected range', async () => {
@@ -1281,7 +1241,7 @@ describe('formatting', () => {
             },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
-        assert.equal('function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}', result);
+        expect('function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}').toBe(result);
     });
 });
 
@@ -1305,16 +1265,16 @@ describe('signatureHelp', () => {
             position: position(doc, 'param1'),
         }))!;
 
-        assert.equal(result.signatures.length, 2);
+        expect(result.signatures).toHaveLength(2);
 
-        assert.equal('bar: string', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
+        expect(result.signatures[result.activeSignature!].parameters![result.activeParameter!].label).toBe('bar: string');
 
         result = (await server.signatureHelp({
             textDocument: doc,
             position: position(doc, 'param2'),
         }))!;
 
-        assert.equal('baz?: boolean', result.signatures[result.activeSignature!].parameters![result.activeParameter!].label);
+        expect(result.signatures[result.activeSignature!].parameters![result.activeParameter!].label).toBe('baz?: boolean');
     });
 
     it('retrigger with specific signature active', async () => {
@@ -1333,7 +1293,7 @@ describe('signatureHelp', () => {
             textDocument: doc,
             position: position(doc, 'param1'),
         });
-        assert.equal(result!.signatures.length, 2);
+        expect(result!.signatures).toHaveLength(2);
 
         result = (await server.signatureHelp({
             textDocument: doc,
@@ -1348,8 +1308,8 @@ describe('signatureHelp', () => {
             },
         }))!;
         const { activeSignature, signatures } = result!;
-        assert.equal(activeSignature, 1);
-        assert.deepInclude(signatures[activeSignature!], {
+        expect(activeSignature).toBe(1);
+        expect(signatures[activeSignature!]).toMatchObject({
             label: 'foo(n: number, baz?: boolean): void',
         });
     });
@@ -1388,10 +1348,10 @@ describe('code actions', () => {
             },
         }))!;
 
-        assert.strictEqual(result.length, 2);
+        expect(result).toHaveLength(2);
         const quickFixDiagnostic = result.find(diagnostic => diagnostic.kind === 'quickfix');
-        assert.isDefined(quickFixDiagnostic);
-        assert.deepEqual(quickFixDiagnostic, {
+        expect(quickFixDiagnostic).toBeDefined();
+        expect(quickFixDiagnostic).toMatchObject({
             title: "Prefix 'bar' with an underscore",
             command: {
                 title: "Prefix 'bar' with an underscore",
@@ -1427,8 +1387,8 @@ describe('code actions', () => {
             kind: 'quickfix',
         });
         const refactorDiagnostic = result.find(diagnostic => diagnostic.kind === 'refactor');
-        assert.isDefined(refactorDiagnostic);
-        assert.deepEqual(refactorDiagnostic, {
+        expect(refactorDiagnostic).toBeDefined();
+        expect(refactorDiagnostic).toMatchObject({
             title: 'Convert parameters to destructured object',
             command: {
                 title: 'Convert parameters to destructured object',
@@ -1472,7 +1432,7 @@ describe('code actions', () => {
             },
         }))!;
 
-        assert.deepEqual(result, [
+        expect(result).toMatchObject([
             {
                 command: {
                     arguments: [
@@ -1520,7 +1480,7 @@ describe('code actions', () => {
             },
         }))!;
 
-        assert.deepEqual(result, []);
+        expect(result).toEqual([]);
     });
 
     it('provides "add missing imports" when explicitly requested in only', async () => {
@@ -1547,7 +1507,7 @@ describe('code actions', () => {
             },
         }))!;
 
-        assert.deepEqual(result, [
+        expect(result).toMatchObject([
             {
                 kind: CodeActionKind.SourceAddMissingImportsTs.value,
                 title: 'Add all missing imports',
@@ -1608,7 +1568,7 @@ describe('code actions', () => {
             },
         }))!;
 
-        assert.deepEqual(result, [
+        expect(result).toMatchObject([
             {
                 kind: CodeActionKind.SourceFixAllTs.value,
                 title: 'Fix all',
@@ -1672,7 +1632,7 @@ existsSync('t');`,
             },
         }))!;
 
-        assert.deepEqual(result, [
+        expect(result).toMatchObject([
             {
                 kind: CodeActionKind.SourceOrganizeImportsTs.value,
                 title: 'Organize imports',
@@ -1742,7 +1702,7 @@ existsSync('t');`,
             },
         }))!;
 
-        assert.deepEqual(result, [
+        expect(result).toMatchObject([
             {
                 kind: CodeActionKind.SourceRemoveUnusedTs.value,
                 title: 'Remove all unused code',
@@ -1804,8 +1764,8 @@ existsSync('t');`,
                 only: [CodeActionKind.SourceFixAllTs.value],
             },
         }))!;
-        assert.strictEqual(result.length, 1, JSON.stringify(result, null, 2));
-        assert.deepEqual(result, [
+        expect(result).toHaveLength(1);
+        expect(result).toMatchObject([
             {
                 kind: CodeActionKind.SourceFixAllTs.value,
                 title: 'Fix all',
@@ -1863,57 +1823,53 @@ describe('executeCommand', () => {
         }))!;
         // Find refactoring code action.
         const applyRefactoringAction = codeActions.find(action => action.command?.command === Commands.APPLY_REFACTORING);
-        assert.isDefined(applyRefactoringAction);
+        expect(applyRefactoringAction).toBeDefined();
         // Execute refactoring action.
         await server.executeCommand({
             command: applyRefactoringAction!.command!.command,
             arguments: applyRefactoringAction!.command!.arguments,
         });
-        assert.equal(1, server.workspaceEdits.length);
+        expect(server.workspaceEdits).toHaveLength(1);
         const { changes } = server.workspaceEdits[0].edit;
-        assert.isDefined(changes);
-        assert.equal(2, Object.keys(changes!).length);
+        expect(changes).toBeDefined();
+        expect(Object.keys(changes!)).toHaveLength(2);
         const change1 = changes![fooUri];
-        assert.isDefined(change1);
+        expect(change1).toBeDefined();
         const change2 = changes![uri('newFn.ts')];
-        assert.isDefined(change2);
+        expect(change2).toBeDefined();
         // Clean up file that is created on applying edit.
         fs.unlinkSync(filePath('newFn.ts'));
-        assert.deepEqual(
-            change1,
-            [
-                {
-                    range: {
-                        start: {
-                            line: 1,
-                            character: 0,
-                        },
-                        end: {
-                            line: 1,
-                            character: 32,
-                        },
+        expect(change1).toMatchObject([
+            {
+                range: {
+                    start: {
+                        line: 1,
+                        character: 0,
                     },
-                    newText: '',
+                    end: {
+                        line: 1,
+                        character: 32,
+                    },
                 },
-            ],
+                newText: '',
+            },
+        ],
         );
-        assert.deepEqual(
-            change2,
-            [
-                {
-                    range: {
-                        start: {
-                            line: 0,
-                            character: 0,
-                        },
-                        end: {
-                            line: 0,
-                            character: 0,
-                        },
+        expect(change2).toMatchObject([
+            {
+                range: {
+                    start: {
+                        line: 0,
+                        character: 0,
                     },
-                    newText: 'export function newFn(): void { }\n',
+                    end: {
+                        line: 0,
+                        character: 0,
+                    },
                 },
-            ],
+                newText: 'export function newFn(): void { }\n',
+            },
+        ],
         );
     });
 
@@ -1934,9 +1890,9 @@ describe('executeCommand', () => {
                 position(indexDoc, '/*identifier*/'),
             ],
         });
-        assert.isNotNull(result);
-        assert.equal(result!.length, 1);
-        assert.deepEqual(result![0], {
+        expect(result).not.toBeNull();
+        expect(result).toHaveLength(1);
+        expect(result![0]).toMatchObject({
             uri: uri('source-definition', 'a.js'),
             range: {
                 start: {
@@ -1985,14 +1941,14 @@ describe('documentHighlight', () => {
             textDocument: fooDoc,
             position: lastPosition(fooDoc, 'Bar'),
         });
-        assert.equal(2, result.length, JSON.stringify(result, undefined, 2));
+        expect(result).toHaveLength(2);
     });
 });
 
 describe('diagnostics (no client support)', () => {
     let localServer: TestLspServer;
 
-    before(async () => {
+    beforeAll(async () => {
         const clientCapabilitiesOverride: lsp.ClientCapabilities = {
             textDocument: {
                 publishDiagnostics: undefined,
@@ -2012,7 +1968,7 @@ describe('diagnostics (no client support)', () => {
         localServer.workspaceEdits = [];
     });
 
-    after(() => {
+    afterAll(() => {
         localServer.closeAll();
         localServer.shutdown();
     });
@@ -2035,16 +1991,16 @@ describe('diagnostics (no client support)', () => {
         await localServer.requestDiagnostics();
         await new Promise(resolve => setTimeout(resolve, 200));
         const resultsForFile = diagnostics.get(doc.uri);
-        assert.isDefined(resultsForFile);
-        assert.strictEqual(resultsForFile!.diagnostics.length, 1);
-        assert.notProperty(resultsForFile!.diagnostics[0], 'tags');
+        expect(resultsForFile).toBeDefined();
+        expect(resultsForFile!.diagnostics).toHaveLength(1);
+        expect(resultsForFile!.diagnostics[0]).not.toHaveProperty('tags');
     });
 });
 
 describe('jsx/tsx project', () => {
     let localServer: TestLspServer;
 
-    before(async () => {
+    beforeAll(async () => {
         localServer = await createServer({
             rootUri: uri('jsx'),
             publishDiagnostics: args => diagnostics.set(args.uri, args),
@@ -2058,7 +2014,7 @@ describe('jsx/tsx project', () => {
         localServer.workspaceEdits = [];
     });
 
-    after(() => {
+    afterAll(() => {
         localServer.closeAll();
         localServer.shutdown();
     });
@@ -2075,15 +2031,15 @@ describe('jsx/tsx project', () => {
         });
 
         const completion = await localServer.completion({ textDocument: doc, position: position(doc, 'title') });
-        assert.isNotNull(completion);
+        expect(completion).not.toBeNull();
         const item = completion!.items.find(i => i.label === 'title');
-        assert.isDefined(item);
-        assert.strictEqual(item?.insertTextFormat, 2);
+        expect(item).toBeDefined();
+        expect(item?.insertTextFormat).toBe(2);
     });
 });
 
 describe('inlayHints', () => {
-    before(async () => {
+    beforeAll(async () => {
         server.updateWorkspaceSettings({
             typescript: {
                 inlayHints: {
@@ -2093,7 +2049,7 @@ describe('inlayHints', () => {
         });
     });
 
-    after(() => {
+    afterAll(() => {
         server.updateWorkspaceSettings({
             typescript: {
                 inlayHints: {
@@ -2116,9 +2072,9 @@ describe('inlayHints', () => {
         };
         server.didOpenTextDocument({ textDocument: doc });
         const inlayHints = await server.inlayHints({ textDocument: doc, range: lsp.Range.create(0, 0, 4, 0) });
-        assert.isDefined(inlayHints);
-        assert.strictEqual(inlayHints!.length, 1);
-        assert.deepEqual(inlayHints![0], {
+        expect(inlayHints).toBeDefined();
+        expect(inlayHints).toHaveLength(1);
+        expect(inlayHints![0]).toMatchObject({
             label: ': number',
             position: { line: 1, character: 29 },
             kind: lsp.InlayHintKind.Type,
@@ -2130,7 +2086,7 @@ describe('inlayHints', () => {
 describe('completions without client snippet support', () => {
     let localServer: TestLspServer;
 
-    before(async () => {
+    beforeAll(async () => {
         const clientCapabilitiesOverride: lsp.ClientCapabilities = {
             textDocument: {
                 completion: {
@@ -2154,7 +2110,7 @@ describe('completions without client snippet support', () => {
         localServer.workspaceEdits = [];
     });
 
-    after(() => {
+    afterAll(() => {
         localServer.closeAll();
         localServer.shutdown();
     });
@@ -2171,14 +2127,14 @@ describe('completions without client snippet support', () => {
         };
         localServer.didOpenTextDocument({ textDocument: doc });
         const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
-        assert.isNotNull(proposals);
+        expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
-        assert.notEqual(completion!.insertTextFormat, lsp.InsertTextFormat.Snippet);
-        assert.strictEqual(completion!.label, 'readFile');
+        expect(completion!.insertTextFormat).not.toBe(lsp.InsertTextFormat.Snippet);
+        expect(completion!.label).toBe('readFile');
         const resolvedItem = await localServer.completionResolve(completion!);
-        assert.strictEqual(resolvedItem!.label, 'readFile');
-        assert.strictEqual(resolvedItem.insertText, undefined);
-        assert.strictEqual(resolvedItem.insertTextFormat, undefined);
+        expect(resolvedItem!.label).toBe('readFile');
+        expect(resolvedItem.insertText).toBeUndefined();
+        expect(resolvedItem.insertTextFormat).toBeUndefined();
         localServer.didCloseTextDocument({ textDocument: doc });
     });
 
@@ -2194,9 +2150,9 @@ describe('completions without client snippet support', () => {
         });
 
         const completion = await localServer.completion({ textDocument: doc, position: position(doc, 'title') });
-        assert.isNotNull(completion);
+        expect(completion).not.toBeNull();
         const item = completion!.items.find(i => i.label === 'title');
-        assert.isUndefined(item);
+        expect(item).toBeUndefined();
     });
 
     it('does not include snippet completions for object methods', async () => {
@@ -2218,10 +2174,9 @@ describe('completions without client snippet support', () => {
             textDocument: doc,
             position: positionAfter(doc, '/*a*/'),
         });
-        assert.isNotNull(proposals);
-        assert.lengthOf(proposals!.items, 1);
-        assert.deepInclude(
-            proposals!.items[0],
+        expect(proposals).not.toBeNull();
+        expect(proposals!.items).toHaveLength(1);
+        expect(proposals!.items[0]).toMatchObject(
             {
                 label: 'bar',
                 kind: 2,

@@ -9,7 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import vscodeUri from 'vscode-uri';
+import { URI } from 'vscode-uri';
 import { CommandTypes } from '../ts-protocol.js';
 import type { ts } from '../ts-protocol.js';
 import { ExecutionTarget } from './server.js';
@@ -77,7 +77,7 @@ export interface TypeScriptRequestTypes {
 export type ExecConfig = {
     readonly lowPriority?: boolean;
     readonly nonRecoverable?: boolean;
-    readonly cancelOnResourceChange?: vscodeUri.URI;
+    readonly cancelOnResourceChange?: URI;
     readonly executionTarget?: ExecutionTarget;
 };
 

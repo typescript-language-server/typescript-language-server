@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import vscodeUri from 'vscode-uri';
+import { URI } from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { IFilePathToResourceConverter } from './utils/previewer.js';
@@ -127,11 +127,11 @@ export class LspDocuments implements IFilePathToResourceConverter {
 
     /* IFilePathToResourceConverter implementation */
 
-    public toResource(filepath: string): vscodeUri.URI {
+    public toResource(filepath: string): URI {
         const document = this.documents.get(filepath);
         if (document) {
-            return vscodeUri.URI.parse(document.uri);
+            return URI.parse(document.uri);
         }
-        return vscodeUri.URI.file(filepath);
+        return URI.file(filepath);
     }
 }

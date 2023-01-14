@@ -1,4 +1,3 @@
-import * as chai from 'chai';
 import { provideOrganizeImports } from './organize-imports.js';
 import { filePath, uri } from './test-utils.js';
 import type { ts } from './ts-protocol.js';
@@ -31,10 +30,10 @@ describe('provideOrganizeImports', () => {
                 ],
             },
         }];
-        chai.assert.deepEqual(actual, expected);
+        expect(actual).toEqual(expected);
     });
 
     it('handles a missing response', () => {
-        chai.assert.equal(provideOrganizeImports(undefined, undefined).length, 0);
+        expect(provideOrganizeImports(undefined, undefined)).toHaveLength(0);
     });
 });

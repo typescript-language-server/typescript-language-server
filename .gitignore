@@ -1,5 +1,6 @@
+/lib/
+/node_modules/
+/.rollup.cache/
 .DS_Store
-lib
-node_modules
 *.log
 *.tsbuildinfo
