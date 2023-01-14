@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.0.2](https://github.com/typescript-language-server/typescript-language-server/compare/v3.0.1...v3.0.2) (2023-01-14)
+
+
+### Bug Fixes
+
+* remove hard dependency on typescript ([#661](https://github.com/typescript-language-server/typescript-language-server/issues/661)) ([9a2e2c8](https://github.com/typescript-language-server/typescript-language-server/commit/9a2e2c83d4992cd90cebc706618a9af604fcf1a9))
+
+
+### Refactors
+
+* bundle with rollup and switch to jest for testing ([#663](https://github.com/typescript-language-server/typescript-language-server/issues/663)) ([2c9eb63](https://github.com/typescript-language-server/typescript-language-server/commit/2c9eb632659a3bb9995095576afe88e84833bbdd))
+
 ## [3.0.1](https://github.com/typescript-language-server/typescript-language-server/compare/v3.0.0...v3.0.1) (2022-12-30)
 
 
