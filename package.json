@@ -55,7 +55,7 @@
     "@typescript-eslint/eslint-plugin": "^5.48.1",
     "@typescript-eslint/parser": "^5.48.1",
     "babel-jest": "^29.3.1",
-    "commander": "^9.5.0",
+    "commander": "^10.0.0",
     "concurrently": "^7.6.0",
     "cross-env": "^7.0.3",
     "deepmerge": "^4.2.2",
