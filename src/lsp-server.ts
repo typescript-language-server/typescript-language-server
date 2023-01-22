@@ -103,7 +103,7 @@ export class LspServer {
 
         const typescriptVersion = this.findTypescriptVersion(tsserver?.path);
         if (typescriptVersion) {
-            this.logger.log(LogLevel.Info, `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`);
+            this.options.lspClient.logMessage({ type: LogLevel.Info, message: `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"` });
         } else {
             throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid `tsserver.path` is specified. Exiting.');
         }
