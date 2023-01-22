@@ -3,7 +3,6 @@
         "src/**/*.ts",
         "jest.config.ts",
         "rollup.config.ts",
-        "setupTests.ts",
     ],
     "compilerOptions": {
         "allowJs": true,

@@ -8,7 +8,6 @@ const config: Config = {
         // vscode-uri has buggy exports: https://github.com/microsoft/vscode-uri/pull/25
         'vscode-uri': 'vscode-uri/lib/esm/index.js',
     },
-    setupFiles: ['<rootDir>/setupTests.ts'],
     slowTestThreshold: 15,
     testTimeout: 20000,
     transform: {
