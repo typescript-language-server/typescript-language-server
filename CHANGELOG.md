@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.0.3](https://github.com/typescript-language-server/typescript-language-server/compare/v3.0.2...v3.0.3) (2023-01-23)
+
+
+### Bug Fixes
+
+* restore tsserver version logging on initialization ([#669](https://github.com/typescript-language-server/typescript-language-server/issues/669)) ([232219c](https://github.com/typescript-language-server/typescript-language-server/commit/232219cd0fe138558ed98e22aa7314e0941e4f10))
+
 ## [3.0.2](https://github.com/typescript-language-server/typescript-language-server/compare/v3.0.1...v3.0.2) (2023-01-14)
 
 
