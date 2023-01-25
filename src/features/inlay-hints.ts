@@ -30,6 +30,7 @@ export class TypeScriptInlayHintsProvider {
         tspClient: TspClient,
         lspClient: LspClient,
         configurationManager: ConfigurationManager,
+        token?: lsp.CancellationToken,
     ): Promise<lsp.InlayHint[]> {
         if (tspClient.apiVersion.lt(TypeScriptInlayHintsProvider.minVersion)) {
             lspClient.showErrorMessage('Inlay Hints request failed. Requires TypeScript 4.4+.');
@@ -59,7 +60,7 @@ export class TypeScriptInlayHintsProvider {
         const start = document.offsetAt(range.start);
         const length = document.offsetAt(range.end) - start;
 
-        const response = await tspClient.request(CommandTypes.ProvideInlayHints, { file, start, length });
+        const response = await tspClient.request(CommandTypes.ProvideInlayHints, { file, start, length }, token);
         if (response.type !== 'response' || !response.success || !response.body) {
             return [];
         }
