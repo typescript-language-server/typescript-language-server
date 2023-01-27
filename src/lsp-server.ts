@@ -318,6 +318,8 @@ export class LspServer {
         this.setCompilerOptionsForInferredProjects();
         const ignoredDiagnosticCodes = this.configurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
         this.diagnosticQueue?.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes);
+        this.cancelDiagnostics();
+        this.requestDiagnostics();
     }
 
     protected diagnosticsTokenSource: lsp.CancellationTokenSource | undefined;
@@ -376,6 +378,7 @@ export class LspServer {
                 scriptKindName: this.getScriptKindName(params.textDocument.languageId),
                 projectRootPath: this.workspaceRoot,
             });
+            this.cancelDiagnostics();
             this.requestDiagnostics();
         } else {
             this.logger.log(`Cannot open already opened doc '${params.textDocument.uri}'.`);
@@ -467,6 +470,7 @@ export class LspServer {
             });
             document.applyEdit(textDocument.version, change);
         }
+        this.cancelDiagnostics();
         this.requestDiagnostics();
     }
 
@@ -474,31 +478,31 @@ export class LspServer {
         // do nothing
     }
 
-    async definition(params: lsp.DefinitionParams): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
+    async definition(params: lsp.DefinitionParams, token?: lsp.CancellationToken): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
         return this.getDefinition({
             type: this.features.definitionLinkSupport ? CommandTypes.DefinitionAndBoundSpan : CommandTypes.Definition,
             params,
-        });
+        }, token);
     }
 
-    async implementation(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition | undefined> {
+    async implementation(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.Definition | undefined> {
         return this.getSymbolLocations({
             type: CommandTypes.Implementation,
             params,
-        });
+        }, token);
     }
 
-    async typeDefinition(params: lsp.TextDocumentPositionParams): Promise<lsp.Definition | undefined> {
+    async typeDefinition(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.Definition | undefined> {
         return this.getSymbolLocations({
             type: CommandTypes.TypeDefinition,
             params,
-        });
+        }, token);
     }
 
     private async getDefinition({ type, params }: {
         type: CommandTypes.Definition | CommandTypes.DefinitionAndBoundSpan;
         params: lsp.TextDocumentPositionParams;
-    }): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
+    }, token?: lsp.CancellationToken): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log(type, params, file);
         if (!file) {
@@ -507,7 +511,7 @@ export class LspServer {
 
         if (type === CommandTypes.DefinitionAndBoundSpan) {
             const args = Position.toFileLocationRequestArgs(file, params.position);
-            const response = await this.tspClient.request(type, args);
+            const response = await this.tspClient.request(type, args, token);
             if (response.type !== 'response' || !response.body) {
                 return undefined;
             }
@@ -534,7 +538,7 @@ export class LspServer {
     private async getSymbolLocations({ type, params }: {
         type: CommandTypes.Definition | CommandTypes.Implementation | CommandTypes.TypeDefinition;
         params: lsp.TextDocumentPositionParams;
-    }): Promise<lsp.Definition | undefined> {
+    }, token?: lsp.CancellationToken): Promise<lsp.Definition | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log(type, params, file);
         if (!file) {
@@ -542,23 +546,21 @@ export class LspServer {
         }
 
         const args = Position.toFileLocationRequestArgs(file, params.position);
-        const response = await this.tspClient.request(type, args);
+        const response = await this.tspClient.request(type, args, token);
         if (response.type !== 'response' || !response.body) {
             return undefined;
         }
         return response.body.map(fileSpan => toLocation(fileSpan, this.documents));
     }
 
-    async documentSymbol(params: lsp.DocumentSymbolParams): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
+    async documentSymbol(params: lsp.DocumentSymbolParams, token?: lsp.CancellationToken): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('symbol', params, file);
         if (!file) {
             return [];
         }
 
-        const response = await this.tspClient.request(CommandTypes.NavTree, {
-            file,
-        });
+        const response = await this.tspClient.request(CommandTypes.NavTree, { file }, token);
         const tree = response.body;
         if (!tree?.childItems) {
             return [];
@@ -586,7 +588,7 @@ export class LspServer {
      * implemented based on
      * https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/completions.ts
      */
-    async completion(params: lsp.CompletionParams): Promise<lsp.CompletionList | null> {
+    async completion(params: lsp.CompletionParams, token?: lsp.CancellationToken): Promise<lsp.CompletionList | null> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('completion', params, file);
         if (!file) {
@@ -601,13 +603,16 @@ export class LspServer {
         const completionOptions = this.configurationManager.workspaceConfiguration.completions || {};
 
         try {
-            const result = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionInfo, {
-                file,
-                line: params.position.line + 1,
-                offset: params.position.character + 1,
-                triggerCharacter: getCompletionTriggerCharacter(params.context?.triggerCharacter),
-                triggerKind: params.context?.triggerKind,
-            }));
+            const result = await this.interuptDiagnostics(() => this.tspClient.request(
+                CommandTypes.CompletionInfo,
+                {
+                    file,
+                    line: params.position.line + 1,
+                    offset: params.position.character + 1,
+                    triggerCharacter: getCompletionTriggerCharacter(params.context?.triggerCharacter),
+                    triggerKind: params.context?.triggerKind,
+                },
+                token));
             const { body } = result;
             if (!body) {
                 return lsp.CompletionList.create();
@@ -635,11 +640,11 @@ export class LspServer {
         }
     }
 
-    async completionResolve(item: lsp.CompletionItem): Promise<lsp.CompletionItem> {
+    async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
         const document = item.data?.file ? this.documents.get(item.data.file) : undefined;
         await this.configurationManager.configureGloballyFromDocument(item.data.file);
-        const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data));
+        const { body } = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data, token));
         const details = body?.length && body[0];
         if (!details) {
             return item;
@@ -647,14 +652,14 @@ export class LspServer {
         return asResolvedCompletionItem(item, details, document, this.tspClient, this.documents, this.configurationManager.workspaceConfiguration.completions || {}, this.features);
     }
 
-    async hover(params: lsp.TextDocumentPositionParams): Promise<lsp.Hover> {
+    async hover(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.Hover> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('hover', params, file);
         if (!file) {
             return { contents: [] };
         }
 
-        const result = await this.interuptDiagnostics(() => this.getQuickInfo(file, params.position));
+        const result = await this.interuptDiagnostics(() => this.getQuickInfo(file, params.position, token));
         if (!result?.body) {
             return { contents: [] };
         }
@@ -669,24 +674,28 @@ export class LspServer {
             range: Range.fromTextSpan(result.body),
         };
     }
-    protected async getQuickInfo(file: string, position: lsp.Position): Promise<ts.server.protocol.QuickInfoResponse | undefined> {
+    protected async getQuickInfo(file: string, position: lsp.Position, token?: lsp.CancellationToken): Promise<ts.server.protocol.QuickInfoResponse | undefined> {
         try {
-            return await this.tspClient.request(CommandTypes.Quickinfo, {
-                file,
-                line: position.line + 1,
-                offset: position.character + 1,
-            });
+            return await this.tspClient.request(
+                CommandTypes.Quickinfo,
+                {
+                    file,
+                    line: position.line + 1,
+                    offset: position.character + 1,
+                },
+                token,
+            );
         } catch (err) {
             return undefined;
         }
     }
 
-    async prepareRename(params: lsp.PrepareRenameParams): Promise<lsp.Range | { range: lsp.Range; placeholder: string; } | undefined | null> {
+    async prepareRename(params: lsp.PrepareRenameParams, token?: lsp.CancellationToken): Promise<lsp.Range | { range: lsp.Range; placeholder: string; } | undefined | null> {
         const file = uriToPath(params.textDocument.uri);
         if (!file) {
             return null;
         }
-        const result = await this.tspClient.request(CommandTypes.Rename, Position.toFileLocationRequestArgs(file, params.position));
+        const result = await this.tspClient.request(CommandTypes.Rename, Position.toFileLocationRequestArgs(file, params.position), token);
         const renameInfo = result.body?.info;
         if (!renameInfo) {
             return null;
@@ -697,13 +706,13 @@ export class LspServer {
         return Range.fromTextSpan(renameInfo.triggerSpan);
     }
 
-    async rename(params: lsp.RenameParams): Promise<lsp.WorkspaceEdit | undefined | null> {
+    async rename(params: lsp.RenameParams, token?: lsp.CancellationToken): Promise<lsp.WorkspaceEdit | undefined | null> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('onRename', params, file);
         if (!file) {
             return null;
         }
-        const result = await this.tspClient.request(CommandTypes.Rename, Position.toFileLocationRequestArgs(file, params.position));
+        const result = await this.tspClient.request(CommandTypes.Rename, Position.toFileLocationRequestArgs(file, params.position), token);
         if (!result.body?.info.canRename || result.body.locs.length === 0) {
             return null;
         }
@@ -730,18 +739,22 @@ export class LspServer {
         return workspaceEdit;
     }
 
-    async references(params: lsp.ReferenceParams): Promise<lsp.Location[]> {
+    async references(params: lsp.ReferenceParams, token?: lsp.CancellationToken): Promise<lsp.Location[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('onReferences', params, file);
         if (!file) {
             return [];
         }
 
-        const result = await this.tspClient.request(CommandTypes.References, {
-            file,
-            line: params.position.line + 1,
-            offset: params.position.character + 1,
-        });
+        const result = await this.tspClient.request(
+            CommandTypes.References,
+            {
+                file,
+                line: params.position.line + 1,
+                offset: params.position.character + 1,
+            },
+            token,
+        );
         if (!result.body) {
             return [];
         }
@@ -750,7 +763,7 @@ export class LspServer {
             .map(fileSpan => toLocation(fileSpan, this.documents));
     }
 
-    async documentFormatting(params: lsp.DocumentFormattingParams): Promise<lsp.TextEdit[]> {
+    async documentFormatting(params: lsp.DocumentFormattingParams, token?: lsp.CancellationToken): Promise<lsp.TextEdit[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('documentFormatting', params, file);
         if (!file) {
@@ -760,21 +773,25 @@ export class LspServer {
         const formatOptions = params.options;
         await this.configurationManager.configureGloballyFromDocument(file, formatOptions);
 
-        const response = await this.tspClient.request(CommandTypes.Format, {
-            file,
-            line: 1,
-            offset: 1,
-            endLine: Number.MAX_SAFE_INTEGER,
-            endOffset: Number.MAX_SAFE_INTEGER,
-            options: formatOptions,
-        });
+        const response = await this.tspClient.request(
+            CommandTypes.Format,
+            {
+                file,
+                line: 1,
+                offset: 1,
+                endLine: Number.MAX_SAFE_INTEGER,
+                endOffset: Number.MAX_SAFE_INTEGER,
+                options: formatOptions,
+            },
+            token,
+        );
         if (response.body) {
             return response.body.map(e => toTextEdit(e));
         }
         return [];
     }
 
-    async documentRangeFormatting(params: lsp.DocumentRangeFormattingParams): Promise<lsp.TextEdit[]> {
+    async documentRangeFormatting(params: lsp.DocumentRangeFormattingParams, token?: lsp.CancellationToken): Promise<lsp.TextEdit[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('documentRangeFormatting', params, file);
         if (!file) {
@@ -784,63 +801,75 @@ export class LspServer {
         const formatOptions = params.options;
         await this.configurationManager.configureGloballyFromDocument(file, formatOptions);
 
-        const response = await this.tspClient.request(CommandTypes.Format, {
-            file,
-            line: params.range.start.line + 1,
-            offset: params.range.start.character + 1,
-            endLine: params.range.end.line + 1,
-            endOffset: params.range.end.character + 1,
-            options: formatOptions,
-        });
+        const response = await this.tspClient.request(
+            CommandTypes.Format,
+            {
+                file,
+                line: params.range.start.line + 1,
+                offset: params.range.start.character + 1,
+                endLine: params.range.end.line + 1,
+                endOffset: params.range.end.character + 1,
+                options: formatOptions,
+            },
+            token,
+        );
         if (response.body) {
             return response.body.map(e => toTextEdit(e));
         }
         return [];
     }
 
-    async selectionRanges(params: lsp.SelectionRangeParams): Promise<lsp.SelectionRange[] | null> {
+    async selectionRanges(params: lsp.SelectionRangeParams, token?: lsp.CancellationToken): Promise<lsp.SelectionRange[] | null> {
         const file = uriToPath(params.textDocument.uri);
         if (!file) {
             return null;
         }
-        const response = await this.tspClient.request(CommandTypes.SelectionRange, {
-            file,
-            locations: params.positions.map(Position.toLocation),
-        });
+        const response = await this.tspClient.request(
+            CommandTypes.SelectionRange,
+            {
+                file,
+                locations: params.positions.map(Position.toLocation),
+            },
+            token,
+        );
         if (response.type !== 'response' || !response.body) {
             return null;
         }
         return response.body.map(toSelectionRange);
     }
 
-    async signatureHelp(params: lsp.SignatureHelpParams): Promise<lsp.SignatureHelp | undefined> {
+    async signatureHelp(params: lsp.SignatureHelpParams, token?: lsp.CancellationToken): Promise<lsp.SignatureHelp | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('signatureHelp', params, file);
         if (!file) {
             return undefined;
         }
 
-        const response = await this.interuptDiagnostics(() => this.getSignatureHelp(file, params));
+        const response = await this.interuptDiagnostics(() => this.getSignatureHelp(file, params, token));
         if (!response?.body) {
             return undefined;
         }
         return asSignatureHelp(response.body, params.context, this.documents);
     }
-    protected async getSignatureHelp(file: string, params: lsp.SignatureHelpParams): Promise<ts.server.protocol.SignatureHelpResponse | undefined> {
+    protected async getSignatureHelp(file: string, params: lsp.SignatureHelpParams, token?: lsp.CancellationToken): Promise<ts.server.protocol.SignatureHelpResponse | undefined> {
         try {
             const { position, context } = params;
-            return await this.tspClient.request(CommandTypes.SignatureHelp, {
-                file,
-                line: position.line + 1,
-                offset: position.character + 1,
-                triggerReason: context ? toTsTriggerReason(context) : undefined,
-            });
+            return await this.tspClient.request(
+                CommandTypes.SignatureHelp,
+                {
+                    file,
+                    line: position.line + 1,
+                    offset: position.character + 1,
+                    triggerReason: context ? toTsTriggerReason(context) : undefined,
+                },
+                token,
+            );
         } catch (err) {
             return undefined;
         }
     }
 
-    async codeAction(params: lsp.CodeActionParams): Promise<lsp.CodeAction[]> {
+    async codeAction(params: lsp.CodeActionParams, token?: lsp.CancellationToken): Promise<lsp.CodeAction[]> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('codeAction', params, file);
         if (!file) {
@@ -850,10 +879,10 @@ export class LspServer {
         const actions: lsp.CodeAction[] = [];
         const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
         if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.QuickFix))) {
-            actions.push(...provideQuickFix(await this.getCodeFixes(fileRangeArgs, params.context), this.documents));
+            actions.push(...provideQuickFix(await this.getCodeFixes(fileRangeArgs, params.context, token), this.documents));
         }
         if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.Refactor))) {
-            actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context), fileRangeArgs, this.features));
+            actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context, token), fileRangeArgs, this.features));
         }
 
         // organize import is provided by tsserver for any line, so we only get it if explicitly requested
@@ -867,7 +896,7 @@ export class LspServer {
             const response = await this.getOrganizeImports({
                 scope: { type: 'file', args: fileRangeArgs },
                 skipDestructiveCodeActions,
-            });
+            }, token);
             actions.push(...provideOrganizeImports(response, this.documents));
         }
 
@@ -885,34 +914,34 @@ export class LspServer {
 
         return actions;
     }
-    protected async getCodeFixes(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext): Promise<ts.server.protocol.GetCodeFixesResponse | undefined> {
+    protected async getCodeFixes(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, token?: lsp.CancellationToken): Promise<ts.server.protocol.GetCodeFixesResponse | undefined> {
         const errorCodes = context.diagnostics.map(diagnostic => Number(diagnostic.code));
         const args: ts.server.protocol.CodeFixRequestArgs = {
             ...fileRangeArgs,
             errorCodes,
         };
         try {
-            return await this.tspClient.request(CommandTypes.GetCodeFixes, args);
+            return await this.tspClient.request(CommandTypes.GetCodeFixes, args, token);
         } catch (err) {
             return undefined;
         }
     }
-    protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext): Promise<ts.server.protocol.GetApplicableRefactorsResponse | undefined> {
+    protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, token?: lsp.CancellationToken): Promise<ts.server.protocol.GetApplicableRefactorsResponse | undefined> {
         const args: ts.server.protocol.GetApplicableRefactorsRequestArgs = {
             ...fileRangeArgs,
             triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
             kind: context.only?.length === 1 ? context.only[0] : undefined,
         };
         try {
-            return await this.tspClient.request(CommandTypes.GetApplicableRefactors, args);
+            return await this.tspClient.request(CommandTypes.GetApplicableRefactors, args, token);
         } catch (err) {
             return undefined;
         }
     }
-    protected async getOrganizeImports(args: ts.server.protocol.OrganizeImportsRequestArgs): Promise<ts.server.protocol.OrganizeImportsResponse | undefined> {
+    protected async getOrganizeImports(args: ts.server.protocol.OrganizeImportsRequestArgs, token?: lsp.CancellationToken): Promise<ts.server.protocol.OrganizeImportsResponse | undefined> {
         try {
             await this.configurationManager.configureGloballyFromDocument(args.scope.args.file);
-            return await this.tspClient.request(CommandTypes.OrganizeImports, args);
+            return await this.tspClient.request(CommandTypes.OrganizeImports, args, token);
         } catch (err) {
             return undefined;
         }
@@ -930,12 +959,12 @@ export class LspServer {
             }
             if (codeAction.commands?.length) {
                 for (const command of codeAction.commands) {
-                    await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command });
+                    await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command }, token);
                 }
             }
         } else if (arg.command === Commands.APPLY_REFACTORING && arg.arguments) {
             const args = arg.arguments[0] as ts.server.protocol.GetEditsForRefactorRequestArgs;
-            const { body } = await this.tspClient.request(CommandTypes.GetEditsForRefactor, args);
+            const { body } = await this.tspClient.request(CommandTypes.GetEditsForRefactor, args, token);
             if (!body?.edits.length) {
                 return;
             }
@@ -958,36 +987,43 @@ export class LspServer {
             const [pluginName, configuration] = arg.arguments as [string, unknown];
 
             if (this.tspClient?.apiVersion.gte(API.v314)) {
-                this.tspClient.executeWithoutWaitingForResponse(CommandTypes.ConfigurePlugin, {
-                    configuration,
-                    pluginName,
-                });
+                this.tspClient.executeWithoutWaitingForResponse(
+                    CommandTypes.ConfigurePlugin,
+                    {
+                        configuration,
+                        pluginName,
+                    },
+                );
             }
         } else if (arg.command === Commands.ORGANIZE_IMPORTS && arg.arguments) {
             const file = arg.arguments[0] as string;
             const additionalArguments: { skipDestructiveCodeActions?: boolean; } = arg.arguments[1] || {};
             await this.configurationManager.configureGloballyFromDocument(file);
-            const { body } = await this.tspClient.request(CommandTypes.OrganizeImports, {
-                scope: {
-                    type: 'file',
-                    args: { file },
+            const { body } = await this.tspClient.request(
+                CommandTypes.OrganizeImports,
+                {
+                    scope: {
+                        type: 'file',
+                        args: { file },
+                    },
+                    skipDestructiveCodeActions: additionalArguments.skipDestructiveCodeActions,
                 },
-                skipDestructiveCodeActions: additionalArguments.skipDestructiveCodeActions,
-            });
+                token,
+            );
             await this.applyFileCodeEdits(body);
         } else if (arg.command === Commands.APPLY_RENAME_FILE && arg.arguments) {
             const { sourceUri, targetUri } = arg.arguments[0] as {
                 sourceUri: string;
                 targetUri: string;
             };
-            this.applyRenameFile(sourceUri, targetUri);
+            this.applyRenameFile(sourceUri, targetUri, token);
         } else if (arg.command === Commands.APPLY_COMPLETION_CODE_ACTION && arg.arguments) {
             const [_, codeActions] = arg.arguments as [string, ts.server.protocol.CodeAction[]];
             for (const codeAction of codeActions) {
                 await this.applyFileCodeEdits(codeAction.changes);
                 if (codeAction.commands?.length) {
                     for (const command of codeAction.commands) {
-                        await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command });
+                        await this.tspClient.request(CommandTypes.ApplyCodeActionCommand, { command }, token);
                     }
                 }
                 // Execute only the first code action.
@@ -996,7 +1032,7 @@ export class LspServer {
         } else if (arg.command === Commands.SOURCE_DEFINITION) {
             const [uri, position] = (arg.arguments || []) as [lsp.DocumentUri?, lsp.Position?];
             const reporter = await this.options.lspClient.createProgressReporter(token, workDoneProgress);
-            return SourceDefinitionCommand.execute(uri, position, this.documents, this.tspClient, this.options.lspClient, reporter);
+            return SourceDefinitionCommand.execute(uri, position, this.documents, this.tspClient, this.options.lspClient, reporter, token);
         } else {
             this.logger.error(`Unknown command ${arg.command}.`);
         }
@@ -1016,28 +1052,32 @@ export class LspServer {
         return applied;
     }
 
-    protected async applyRenameFile(sourceUri: string, targetUri: string): Promise<void> {
-        const edits = await this.getEditsForFileRename(sourceUri, targetUri);
+    protected async applyRenameFile(sourceUri: string, targetUri: string, token?: lsp.CancellationToken): Promise<void> {
+        const edits = await this.getEditsForFileRename(sourceUri, targetUri, token);
         this.applyFileCodeEdits(edits);
     }
-    protected async getEditsForFileRename(sourceUri: string, targetUri: string): Promise<ReadonlyArray<ts.server.protocol.FileCodeEdits>> {
+    protected async getEditsForFileRename(sourceUri: string, targetUri: string, token?: lsp.CancellationToken): Promise<ReadonlyArray<ts.server.protocol.FileCodeEdits>> {
         const newFilePath = uriToPath(targetUri);
         const oldFilePath = uriToPath(sourceUri);
         if (!newFilePath || !oldFilePath) {
             return [];
         }
         try {
-            const { body } = await this.tspClient.request(CommandTypes.GetEditsForFileRename, {
-                oldFilePath,
-                newFilePath,
-            });
+            const { body } = await this.tspClient.request(
+                CommandTypes.GetEditsForFileRename,
+                {
+                    oldFilePath,
+                    newFilePath,
+                },
+                token,
+            );
             return body;
         } catch (err) {
             return [];
         }
     }
 
-    async documentHighlight(arg: lsp.TextDocumentPositionParams): Promise<lsp.DocumentHighlight[]> {
+    async documentHighlight(arg: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.DocumentHighlight[]> {
         const file = uriToPath(arg.textDocument.uri);
         this.logger.log('documentHighlight', arg, file);
         if (!file) {
@@ -1045,12 +1085,16 @@ export class LspServer {
         }
         let response: ts.server.protocol.DocumentHighlightsResponse;
         try {
-            response = await this.tspClient.request(CommandTypes.DocumentHighlights, {
-                file,
-                line: arg.position.line + 1,
-                offset: arg.position.character + 1,
-                filesToSearch: [file],
-            });
+            response = await this.tspClient.request(
+                CommandTypes.DocumentHighlights,
+                {
+                    file,
+                    line: arg.position.line + 1,
+                    offset: arg.position.character + 1,
+                    filesToSearch: [file],
+                },
+                token,
+            );
         } catch (err) {
             return [];
         }
@@ -1073,11 +1117,15 @@ export class LspServer {
         return this.documents.files[0] || this.workspaceRoot;
     }
 
-    async workspaceSymbol(params: lsp.WorkspaceSymbolParams): Promise<lsp.SymbolInformation[]> {
-        const result = await this.tspClient.request(CommandTypes.Navto, {
-            file: this.lastFileOrDummy(),
-            searchValue: params.query,
-        });
+    async workspaceSymbol(params: lsp.WorkspaceSymbolParams, token?: lsp.CancellationToken): Promise<lsp.SymbolInformation[]> {
+        const result = await this.tspClient.request(
+            CommandTypes.Navto,
+            {
+                file: this.lastFileOrDummy(),
+                searchValue: params.query,
+            },
+            token,
+        );
         if (!result.body) {
             return [];
         }
@@ -1099,7 +1147,7 @@ export class LspServer {
     /**
      * implemented based on https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/folding.ts
      */
-    async foldingRanges(params: lsp.FoldingRangeParams): Promise<lsp.FoldingRange[] | undefined> {
+    async foldingRanges(params: lsp.FoldingRangeParams, token?: lsp.CancellationToken): Promise<lsp.FoldingRange[] | undefined> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('foldingRanges', params, file);
         if (!file) {
@@ -1110,7 +1158,7 @@ export class LspServer {
         if (!document) {
             throw new Error(`The document should be opened for foldingRanges', file: ${file}`);
         }
-        const { body } = await this.tspClient.request(CommandTypes.GetOutliningSpans, { file });
+        const { body } = await this.tspClient.request(CommandTypes.GetOutliningSpans, { file }, token);
         if (!body) {
             return undefined;
         }
@@ -1165,13 +1213,13 @@ export class LspServer {
         }
     }
 
-    async prepareCallHierarchy(params: lsp.CallHierarchyPrepareParams): Promise<lsp.CallHierarchyItem[] | null> {
+    async prepareCallHierarchy(params: lsp.CallHierarchyPrepareParams, token?: lsp.CancellationToken): Promise<lsp.CallHierarchyItem[] | null> {
         const file = uriToPath(params.textDocument.uri);
         if (!file) {
             return null;
         }
         const args = Position.toFileLocationRequestArgs(file, params.position);
-        const response = await this.tspClient.request(CommandTypes.PrepareCallHierarchy, args);
+        const response = await this.tspClient.request(CommandTypes.PrepareCallHierarchy, args, token);
         if (response.type !== 'response' || !response.body) {
             return null;
         }
@@ -1179,38 +1227,38 @@ export class LspServer {
         return items.map(item => fromProtocolCallHierarchyItem(item, this.documents, this.workspaceRoot));
     }
 
-    async callHierarchyIncomingCalls(params: lsp.CallHierarchyIncomingCallsParams): Promise<lsp.CallHierarchyIncomingCall[] | null> {
+    async callHierarchyIncomingCalls(params: lsp.CallHierarchyIncomingCallsParams, token?: lsp.CancellationToken): Promise<lsp.CallHierarchyIncomingCall[] | null> {
         const file = uriToPath(params.item.uri);
         if (!file) {
             return null;
         }
         const args = Position.toFileLocationRequestArgs(file, params.item.selectionRange.start);
-        const response = await this.tspClient.request(CommandTypes.ProvideCallHierarchyIncomingCalls, args);
+        const response = await this.tspClient.request(CommandTypes.ProvideCallHierarchyIncomingCalls, args, token);
         if (response.type !== 'response' || !response.body) {
             return null;
         }
         return response.body.map(item => fromProtocolCallHierarchyIncomingCall(item, this.documents, this.workspaceRoot));
     }
 
-    async callHierarchyOutgoingCalls(params: lsp.CallHierarchyOutgoingCallsParams): Promise<lsp.CallHierarchyOutgoingCall[] | null> {
+    async callHierarchyOutgoingCalls(params: lsp.CallHierarchyOutgoingCallsParams, token?: lsp.CancellationToken): Promise<lsp.CallHierarchyOutgoingCall[] | null> {
         const file = uriToPath(params.item.uri);
         if (!file) {
             return null;
         }
         const args = Position.toFileLocationRequestArgs(file, params.item.selectionRange.start);
-        const response = await this.tspClient.request(CommandTypes.ProvideCallHierarchyOutgoingCalls, args);
+        const response = await this.tspClient.request(CommandTypes.ProvideCallHierarchyOutgoingCalls, args, token);
         if (response.type !== 'response' || !response.body) {
             return null;
         }
         return response.body.map(item => fromProtocolCallHierarchyOutgoingCall(item, this.documents, this.workspaceRoot));
     }
 
-    async inlayHints(params: lsp.InlayHintParams): Promise<lsp.InlayHint[] | undefined> {
+    async inlayHints(params: lsp.InlayHintParams, token?: lsp.CancellationToken): Promise<lsp.InlayHint[] | undefined> {
         return await TypeScriptInlayHintsProvider.provideInlayHints(
-            params.textDocument.uri, params.range, this.documents, this.tspClient, this.options.lspClient, this.configurationManager);
+            params.textDocument.uri, params.range, this.documents, this.tspClient, this.options.lspClient, this.configurationManager, token);
     }
 
-    async semanticTokensFull(params: lsp.SemanticTokensParams): Promise<lsp.SemanticTokens> {
+    async semanticTokensFull(params: lsp.SemanticTokensParams, token?: lsp.CancellationToken): Promise<lsp.SemanticTokens> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('semanticTokensFull', params, file);
         if (!file) {
@@ -1231,10 +1279,10 @@ export class LspServer {
             character: 0,
         });
 
-        return this.getSemanticTokens(doc, file, start, end);
+        return this.getSemanticTokens(doc, file, start, end, token);
     }
 
-    async semanticTokensRange(params: lsp.SemanticTokensRangeParams): Promise<lsp.SemanticTokens> {
+    async semanticTokensRange(params: lsp.SemanticTokensRangeParams, token?: lsp.CancellationToken): Promise<lsp.SemanticTokens> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('semanticTokensRange', params, file);
         if (!file) {
@@ -1249,10 +1297,10 @@ export class LspServer {
         const start = doc.offsetAt(params.range.start);
         const end = doc.offsetAt(params.range.end);
 
-        return this.getSemanticTokens(doc, file, start, end);
+        return this.getSemanticTokens(doc, file, start, end, token);
     }
 
-    async getSemanticTokens(doc: LspDocument, file: string, startOffset: number, endOffset: number) : Promise<lsp.SemanticTokens> {
+    async getSemanticTokens(doc: LspDocument, file: string, startOffset: number, endOffset: number, token?: lsp.CancellationToken) : Promise<lsp.SemanticTokens> {
         try {
             const result = await this.tspClient.request(
                 CommandTypes.EncodedSemanticClassificationsFull,
@@ -1262,6 +1310,7 @@ export class LspServer {
                     length: endOffset - startOffset,
                     format: '2020',
                 },
+                token,
             );
 
             const spans = result.body?.spans ?? [];
