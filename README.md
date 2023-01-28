@@ -28,6 +28,7 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
     - [Rename File](#rename-file)
     - [Configure plugin](#configure-plugin)
 - [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
+- [TypeScript Version Notification](#typescript-version-notification)
 - [Supported Protocol features](#supported-protocol-features)
 - [Development](#development)
     - [Build](#build)
@@ -498,6 +499,15 @@ export interface InlayHintsOptions extends UserPreferences {
     includeInlayEnumMemberValueHints: boolean;
 }
 ```
+
+## TypeScript Version Notification
+
+Right after initializing, the server sends a custom `$/typescriptVersion` notification that carries information about the version of TypeScript that is utilized by the server. The editor can then display that information in the UI.
+
+The `$/typescriptVersion` notification params include two properties:
+
+ - `version` - a semantic version (for example `4.8.4`)
+ - `source` - a string specifying whether used TypeScript version comes from the local workspace (`workspace`), is explicitly specified through a `initializationOptions.tsserver.path` setting (`user-setting`) or was bundled with the server (`bundled`)
 
 ## Supported Protocol features
 

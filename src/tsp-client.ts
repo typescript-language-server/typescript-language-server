@@ -21,7 +21,7 @@ import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/se
 import { TypeScriptServerError } from './tsServer/serverError.js';
 import { TypeScriptServerSpawner } from './tsServer/spawner.js';
 import Tracer, { Trace } from './tsServer/tracer.js';
-import type { TypeScriptVersion } from './tsServer/versionProvider.js';
+import type { TypeScriptVersion, TypeScriptVersionSource } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
 import type { TsServerLogLevel } from './utils/configuration.js';
 
@@ -78,6 +78,7 @@ export interface TspClientOptions {
 
 export class TspClient {
     public apiVersion: API;
+    public typescriptVersionSource: TypeScriptVersionSource;
     private primaryTsServer: ITypeScriptServer | null = null;
     private logger: Logger;
     private tsserverLogger: Logger;
@@ -86,6 +87,7 @@ export class TspClient {
 
     constructor(private options: TspClientOptions) {
         this.apiVersion = options.typescriptVersion.version || API.defaultVersion;
+        this.typescriptVersionSource = options.typescriptVersion.source;
         this.logger = new PrefixingLogger(options.logger, '[tsclient]');
         this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]');
         this.loadingIndicator = new ServerInitializingIndicator(options.lspClient);

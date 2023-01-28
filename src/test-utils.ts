@@ -168,6 +168,10 @@ export class TestLspClient implements LspClient {
     rename(): Promise<void> {
         throw new Error('unsupported');
     }
+
+    sendNotification<P>(_type: lsp.NotificationType<P>, _params: P): Promise<void> {
+        throw new Error('unsupported');
+    }
 }
 
 export class TestLspServer extends LspServer {
