@@ -23,6 +23,7 @@ export interface LspClient {
     logMessage(args: lsp.LogMessageParams): void;
     applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult>;
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
+    sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void>;
 }
 
 // Hack around the LSP library that makes it otherwise impossible to differentiate between Null and Client-initiated reporter.
@@ -68,5 +69,9 @@ export class LspClientImpl implements LspClient {
 
     async rename(args: lsp.TextDocumentPositionParams): Promise<any> {
         return this.connection.sendRequest(TypeScriptRenameRequest.type, args);
+    }
+
+    async sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void> {
+        await this.connection.sendNotification(type, params);
     }
 }

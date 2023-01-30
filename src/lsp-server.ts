@@ -17,7 +17,7 @@ import { toDocumentHighlight, uriToPath, toSymbolKind, toLocation, toSelectionRa
 import { LspDocuments, LspDocument } from './document.js';
 import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
-import { Commands } from './commands.js';
+import { Commands, TypescriptVersionNotification } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
 import { provideOrganizeImports } from './organize-imports.js';
@@ -263,6 +263,14 @@ export class LspServer {
         }
         this.logger.log('onInitialize result', initializeResult);
         return initializeResult;
+    }
+
+    public initialized(_: lsp.InitializedParams): void {
+        const { apiVersion, typescriptVersionSource } = this.tspClient;
+        this.options.lspClient.sendNotification(TypescriptVersionNotification, {
+            version: apiVersion.displayName,
+            source: typescriptVersionSource,
+        });
     }
 
     private findTypescriptVersion(userTsserverPath: string | undefined): TypeScriptVersion | null {

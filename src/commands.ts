@@ -5,7 +5,9 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import * as lsp from 'vscode-languageserver';
 import { SourceDefinitionCommand } from './features/source-definition.js';
+import { TypeScriptVersionSource } from './tsServer/versionProvider.js';
 
 export const Commands = {
     APPLY_WORKSPACE_EDIT: '_typescript.applyWorkspaceEdit',
@@ -19,3 +21,11 @@ export const Commands = {
     SELECT_REFACTORING: '_typescript.selectRefactoring',
     SOURCE_DEFINITION: SourceDefinitionCommand.id,
 };
+
+type TypescriptVersionNotificationParams = {
+    version: string;
+    source: TypeScriptVersionSource;
+};
+
+export const TypescriptVersionNotification = new lsp.NotificationType<TypescriptVersionNotificationParams>('$/typescriptVersion');
+
