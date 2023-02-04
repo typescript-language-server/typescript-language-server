@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v3.0.3...v3.1.0) (2023-01-30)
+
+
+### Features
+
+* send `$/typescriptVersion` notification with TypeScript version ([#674](https://github.com/typescript-language-server/typescript-language-server/issues/674)) ([b081112](https://github.com/typescript-language-server/typescript-language-server/commit/b081112f12a35fa70aae3a134191dea025de64da))
+* support for canceling LSP requests ([#672](https://github.com/typescript-language-server/typescript-language-server/issues/672)) ([1daf209](https://github.com/typescript-language-server/typescript-language-server/commit/1daf209121fc20bbc0a64ec0491cd40582cb9a4b))
+
 ## [3.0.3](https://github.com/typescript-language-server/typescript-language-server/compare/v3.0.2...v3.0.3) (2023-01-23)
 
 
