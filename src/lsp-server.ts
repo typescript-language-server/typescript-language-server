@@ -625,13 +625,31 @@ export class LspServer {
             if (!body) {
                 return lsp.CompletionList.create();
             }
-            const { entries, isIncomplete, optionalReplacementSpan } = body;
+            const { entries, isIncomplete, optionalReplacementSpan, isMemberCompletion } = body;
+            let dotAccessorContext: { range: lsp.Range; text: string; } | undefined;
+            if (isMemberCompletion) {
+                const line = document.getLine(params.position.line);
+                const dotMatch = line.slice(0, params.position.character).match(/\??\.\s*$/) || undefined;
+                if (dotMatch) {
+                    const startPosition = lsp.Position.create(params.position.line, params.position.character - dotMatch[0].length);
+                    const range = lsp.Range.create(startPosition, params.position);
+                    const text = document.getText(range);
+                    dotAccessorContext = {
+                        range,
+                        text,
+                    };
+                }
+            }
             const completions: lsp.CompletionItem[] = [];
             for (const entry of entries || []) {
                 if (entry.kind === 'warning') {
                     continue;
                 }
-                const completion = asCompletionItem(entry, optionalReplacementSpan, file, params.position, document, this.documents, completionOptions, this.features);
+                const completion = asCompletionItem(entry, file, params.position, document, this.documents, completionOptions, this.features, {
+                    isMemberCompletion,
+                    dotAccessorContext,
+                    optionalReplacementSpan,
+                });
                 if (!completion) {
                     continue;
                 }

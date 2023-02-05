@@ -274,7 +274,19 @@ describe('completion', () => {
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'getById');
         expect(completion).toBeDefined();
-        expect(completion!.textEdit).toBeUndefined();
+        expect(completion!.textEdit).toMatchObject({
+            newText: 'getById',
+            range: {
+                start: {
+                    character: 20,
+                    line: 6,
+                },
+                end: {
+                    character: 23,
+                    line: 6,
+                },
+            },
+        });
         localServer.didCloseTextDocument({ textDocument: doc });
         localServer.closeAll();
         localServer.shutdown();
@@ -299,7 +311,17 @@ describe('completion', () => {
             detail: 'fs',
             textEdit: {
                 newText: 'import { readFile$1 } from "fs";',
-                range: {
+                insert: {
+                    start: {
+                        line: 0,
+                        character: 0,
+                    },
+                    end: {
+                        line: 0,
+                        character: 19,
+                    },
+                },
+                replace: {
                     start: {
                         line: 0,
                         character: 0,
@@ -651,7 +673,17 @@ describe('completion', () => {
             label: 'fs/read',
             textEdit: {
                 newText: 'fs/read',
-                range: {
+                insert: {
+                    start: {
+                        line: 5,
+                        character: 20,
+                    },
+                    end: {
+                        line: 5,
+                        character: 24,
+                    },
+                },
+                replace: {
                     start: {
                         line: 5,
                         character: 20,

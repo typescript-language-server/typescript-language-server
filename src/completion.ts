@@ -23,14 +23,23 @@ interface ParameterListParts {
     readonly hasOptionalParameters: boolean;
 }
 
+interface CompletionContext {
+    readonly isMemberCompletion?: boolean;
+    readonly dotAccessorContext?: {
+        range: lsp.Range;
+        text: string;
+    };
+    readonly optionalReplacementSpan?: ts.server.protocol.TextSpan;
+}
+
 export function asCompletionItem(
     entry: ts.server.protocol.CompletionEntry,
-    optionalReplacementSpan: ts.server.protocol.TextSpan | undefined,
     file: string, position: lsp.Position,
     document: LspDocument,
     filePathConverter: IFilePathToResourceConverter,
     options: WorkspaceConfigurationCompletionOptions,
     features: SupportedFeatures,
+    completionContext: CompletionContext,
 ): lsp.CompletionItem | null {
     const item: lsp.CompletionItem = {
         label: entry.name,
@@ -53,13 +62,15 @@ export function asCompletionItem(
         },
     };
 
+    const line = document.getLine(position.line);
+
     if (entry.source && entry.hasAction) {
         // De-prioritze auto-imports
         // https://github.com/Microsoft/vscode/issues/40311
         item.sortText = `\uffff${entry.sortText}`;
     }
 
-    const { isSnippet, replacementSpan, sourceDisplay } = entry;
+    const { isSnippet, sourceDisplay } = entry;
     if (isSnippet && !features.completionSnippets) {
         return null;
     }
@@ -70,13 +81,32 @@ export function asCompletionItem(
     if (sourceDisplay) {
         item.detail = Previewer.plainWithLinks(sourceDisplay, filePathConverter);
     }
+    const wordRange = completionContext.optionalReplacementSpan ? Range.fromTextSpan(completionContext.optionalReplacementSpan) : undefined;
+    let range: lsp.Range | ReturnType<typeof getRangeFromReplacementSpan> = getRangeFromReplacementSpan(entry, document);
+    item.insertText = entry.insertText;
+    item.filterText = getFilterText(entry, wordRange, line, item.insertText);
 
-    let { insertText } = entry;
+    if (completionContext.isMemberCompletion && completionContext.dotAccessorContext && !entry.isSnippet) {
+        item.filterText = completionContext.dotAccessorContext.text + (item.insertText || entry.name);
+        if (!range) {
+            const replacementRange = wordRange;
+            if (replacementRange) {
+                range = {
+                    inserting: completionContext.dotAccessorContext.range,
+                    replacing: rangeUnion(completionContext.dotAccessorContext.range, replacementRange),
+                };
+            } else {
+                range = completionContext.dotAccessorContext.range;
+            }
+            item.insertText = item.filterText;
+        }
+    }
+
     if (entry.kindModifiers) {
         const kindModifiers = new Set(entry.kindModifiers.split(/,|\s+/g));
         if (kindModifiers.has(KindModifiers.optional)) {
-            if (!insertText) {
-                insertText = item.label;
+            if (!item.insertText) {
+                item.insertText = item.label;
             }
             if (!item.filterText) {
                 item.filterText = item.label;
@@ -101,44 +131,78 @@ export function asCompletionItem(
             }
         }
     }
-    const range = getRangeFromReplacementSpan(replacementSpan, optionalReplacementSpan, position, document, features);
-    if (range) {
-        item.textEdit = range.insert
-            ? lsp.InsertReplaceEdit.create(insertText || item.label, range.insert, range.replace)
-            : lsp.TextEdit.replace(range.replace, insertText || item.label);
-    } else {
-        item.insertText = insertText;
+
+    if (!range && wordRange) {
+        range = {
+            inserting: lsp.Range.create(wordRange.start, position),
+            replacing: wordRange,
+        };
     }
+
+    if (range) {
+        if (lsp.Range.is(range)) {
+            item.textEdit = lsp.TextEdit.replace(range, item.insertText || item.label);
+        } else {
+            item.textEdit = lsp.InsertReplaceEdit.create(item.insertText || item.label, range.inserting, range.replacing);
+            if (!features.completionInsertReplaceSupport) {
+                item.textEdit = lsp.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
+            }
+        }
+    }
+
     return item;
 }
 
-function getRangeFromReplacementSpan(
-    replacementSpan: ts.server.protocol.TextSpan | undefined,
-    optionalReplacementSpan: ts.server.protocol.TextSpan | undefined,
-    position: lsp.Position,
-    document: LspDocument,
-    features: SupportedFeatures,
-): { insert?: lsp.Range; replace: lsp.Range; } | undefined {
-    if (replacementSpan) {
-        // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
-        return {
-            replace: ensureRangeIsOnSingleLine(Range.fromTextSpan(replacementSpan), document),
-        };
+function getFilterText(entry: ts.server.protocol.CompletionEntry, wordRange: lsp.Range | undefined, line: string, insertText: string | undefined): string | undefined {
+    // Handle private field completions
+    if (entry.name.startsWith('#')) {
+        const wordStart = wordRange ? line.charAt(wordRange.start.character) : undefined;
+        if (insertText) {
+            if (insertText.startsWith('this.#')) {
+                return wordStart === '#' ? insertText : insertText.replace(/&this\.#/, '');
+            } else {
+                return wordStart;
+            }
+        } else {
+            return wordStart === '#' ? undefined : entry.name.replace(/^#/, '');
+        }
     }
-    if (features.completionInsertReplaceSupport && optionalReplacementSpan) {
-        const range = ensureRangeIsOnSingleLine(Range.fromTextSpan(optionalReplacementSpan), document);
-        return {
-            insert: lsp.Range.create(range.start, position),
-            replace: ensureRangeIsOnSingleLine(range, document),
-        };
+
+    // For `this.` completions, generally don't set the filter text since we don't want them to be overly prioritized. #74164
+    if (insertText?.startsWith('this.')) {
+        return undefined;
     }
+
+    // Handle the case:
+    // ```
+    // const xyz = { 'ab c': 1 };
+    // xyz.ab|
+    // ```
+    // In which case we want to insert a bracket accessor but should use `.abc` as the filter text instead of
+    // the bracketed insert text.
+    if (insertText?.startsWith('[')) {
+        return insertText.replace(/^\[['"](.+)[['"]\]$/, '.$1');
+    }
+
+    // In all other cases, fallback to using the insertText
+    return insertText;
 }
 
-function ensureRangeIsOnSingleLine(range: lsp.Range, document: LspDocument): lsp.Range {
-    if (range.start.line !== range.end.line) {
-        return lsp.Range.create(range.start, document.getLineEnd(range.start.line));
+function getRangeFromReplacementSpan(entry: ts.server.protocol.CompletionEntry, document: LspDocument) {
+    if (!entry.replacementSpan) {
+        return;
     }
-    return range;
+
+    let replacementSpan = Range.fromTextSpan(entry.replacementSpan);
+
+    if (replacementSpan && replacementSpan.start.line !== replacementSpan.end.line) {
+        replacementSpan = lsp.Range.create(replacementSpan.start, document.getLineEnd(replacementSpan.start.line));
+    }
+
+    return {
+        inserting: replacementSpan,
+        replacing: replacementSpan,
+    };
 }
 
 function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
@@ -441,4 +505,10 @@ export function getCompletionTriggerCharacter(character: string | undefined): ts
         default:
             return undefined;
     }
+}
+
+function rangeUnion(a: lsp.Range, b: lsp.Range): lsp.Range {
+    const start = a.start.line < b.start.line || a.start.line === b.start.line && a.start.character < b.start.character ? a.start : b.start;
+    const end = a.end.line > b.end.line || a.end.line === b.end.line && a.end.character > b.end.character ? a.end : b.end;
+    return { start, end };
 }
