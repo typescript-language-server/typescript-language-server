@@ -93,7 +93,7 @@ export function asCompletionItem(
             if (replacementRange) {
                 range = {
                     inserting: dotAccessorContext.range,
-                    replacing: rangeUnion(dotAccessorContext.range, replacementRange),
+                    replacing: Range.union(dotAccessorContext.range, replacementRange),
                 };
             } else {
                 range = dotAccessorContext.range;
@@ -505,10 +505,4 @@ export function getCompletionTriggerCharacter(character: string | undefined): ts
         default:
             return undefined;
     }
-}
-
-function rangeUnion(a: lsp.Range, b: lsp.Range): lsp.Range {
-    const start = a.start.line < b.start.line || a.start.line === b.start.line && a.start.character < b.start.character ? a.start : b.start;
-    const end = a.end.line > b.end.line || a.end.line === b.end.line && a.end.character > b.end.character ? a.end : b.end;
-    return { start, end };
 }

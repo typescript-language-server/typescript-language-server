@@ -48,6 +48,12 @@ export namespace Range {
         }
         return lsp.Range.create(start, end);
     }
+
+    export function union(one: lsp.Range, other: lsp.Range): lsp.Range {
+        const start = Position.Min(other.start, one.start);
+        const end = Position.Max(other.end, one.end);
+        return lsp.Range.create(start, end);
+    }
 }
 
 export namespace Position {
