@@ -24,7 +24,7 @@ interface ParameterListParts {
 }
 
 interface CompletionContext {
-    readonly isMemberCompletion?: boolean;
+    readonly isMemberCompletion: boolean;
     readonly dotAccessorContext?: {
         range: lsp.Range;
         text: string;
