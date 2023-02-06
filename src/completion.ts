@@ -30,6 +30,8 @@ interface CompletionContext {
         text: string;
     };
     readonly optionalReplacementSpan?: ts.server.protocol.TextSpan;
+    line: string;
+    wordRange: lsp.Range | undefined;
 }
 
 export function asCompletionItem(
@@ -62,8 +64,6 @@ export function asCompletionItem(
         },
     };
 
-    const line = document.getLine(position.line);
-
     if (entry.source && entry.hasAction) {
         // De-prioritze auto-imports
         // https://github.com/Microsoft/vscode/issues/40311
@@ -81,22 +81,22 @@ export function asCompletionItem(
     if (sourceDisplay) {
         item.detail = Previewer.plainWithLinks(sourceDisplay, filePathConverter);
     }
-    const wordRange = completionContext.optionalReplacementSpan ? Range.fromTextSpan(completionContext.optionalReplacementSpan) : undefined;
+    const { line, wordRange, isMemberCompletion, dotAccessorContext } = completionContext;
     let range: lsp.Range | ReturnType<typeof getRangeFromReplacementSpan> = getRangeFromReplacementSpan(entry, document);
     item.insertText = entry.insertText;
     item.filterText = getFilterText(entry, wordRange, line, item.insertText);
 
-    if (completionContext.isMemberCompletion && completionContext.dotAccessorContext && !entry.isSnippet) {
-        item.filterText = completionContext.dotAccessorContext.text + (item.insertText || entry.name);
+    if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
+        item.filterText = dotAccessorContext.text + (item.insertText || entry.name);
         if (!range) {
             const replacementRange = wordRange;
             if (replacementRange) {
                 range = {
-                    inserting: completionContext.dotAccessorContext.range,
-                    replacing: rangeUnion(completionContext.dotAccessorContext.range, replacementRange),
+                    inserting: dotAccessorContext.range,
+                    replacing: rangeUnion(dotAccessorContext.range, replacementRange),
                 };
             } else {
-                range = completionContext.dotAccessorContext.range;
+                range = dotAccessorContext.range;
             }
             item.insertText = item.filterText;
         }

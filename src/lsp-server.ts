@@ -649,6 +649,8 @@ export class LspServer {
                     isMemberCompletion,
                     dotAccessorContext,
                     optionalReplacementSpan,
+                    line: document.getLine(params.position.line),
+                    wordRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
                 });
                 if (!completion) {
                     continue;
