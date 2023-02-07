@@ -88,7 +88,7 @@ export function asCompletionItem(
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
         item.filterText = dotAccessorContext.text + (insertText || entry.name);
         if (!range) {
-            range = { replacing: dotAccessorContext.range };
+            range = { replace: dotAccessorContext.range };
             insertText = item.filterText;
         }
     }
@@ -124,9 +124,9 @@ export function asCompletionItem(
     }
 
     if (range) {
-        item.textEdit = range.inserting
-            ? lsp.InsertReplaceEdit.create(insertText || item.label, range.inserting, range.replacing)
-            : lsp.TextEdit.replace(range.replacing, insertText || item.label);
+        item.textEdit = range.insert
+            ? lsp.InsertReplaceEdit.create(insertText || item.label, range.insert, range.replace)
+            : lsp.TextEdit.replace(range.replace, insertText || item.label);
     } else {
         item.insertText = insertText;
     }
@@ -175,18 +175,18 @@ function getRangeFromReplacementSpan(
     position: lsp.Position,
     document: LspDocument,
     features: SupportedFeatures,
-): { inserting?: lsp.Range; replacing: lsp.Range; } | undefined {
+): { insert?: lsp.Range; replace: lsp.Range; } | undefined {
     if (entry.replacementSpan) {
         // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
         return {
-            replacing: ensureRangeIsOnSingleLine(Range.fromTextSpan(entry.replacementSpan), document),
+            replace: ensureRangeIsOnSingleLine(Range.fromTextSpan(entry.replacementSpan), document),
         };
     }
     if (features.completionInsertReplaceSupport && optionalReplacementRange) {
         const range = ensureRangeIsOnSingleLine(optionalReplacementRange, document);
         return {
-            inserting: lsp.Range.create(range.start, position),
-            replacing: ensureRangeIsOnSingleLine(range, document),
+            insert: lsp.Range.create(range.start, position),
+            replace: ensureRangeIsOnSingleLine(range, document),
         };
     }
 }
