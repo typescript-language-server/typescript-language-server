@@ -627,17 +627,14 @@ export class LspServer {
             }
             const { entries, isIncomplete, optionalReplacementSpan, isMemberCompletion } = body;
             const line = document.getLine(params.position.line);
-            let dotAccessorContext: { range: lsp.Range; text: string; } | undefined;
+            let dotAccessorContext: CompletionContext['dotAccessorContext'];
             if (isMemberCompletion) {
                 const dotMatch = line.slice(0, params.position.character).match(/\??\.\s*$/) || undefined;
                 if (dotMatch) {
                     const startPosition = lsp.Position.create(params.position.line, params.position.character - dotMatch[0].length);
                     const range = lsp.Range.create(startPosition, params.position);
                     const text = document.getText(range);
-                    dotAccessorContext = {
-                        range,
-                        text,
-                    };
+                    dotAccessorContext = { range, text };
                 }
             }
             const completionContext: CompletionContext = {
