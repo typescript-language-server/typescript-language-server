@@ -159,7 +159,7 @@ function getRangeFromReplacementSpan(
         const range = ensureRangeIsOnSingleLine(optionalReplacementRange, document);
         return {
             insert: lsp.Range.create(range.start, position),
-            replace: ensureRangeIsOnSingleLine(range, document),
+            replace: range,
         };
     }
 }
