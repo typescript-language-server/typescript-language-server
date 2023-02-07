@@ -142,6 +142,28 @@ export function asCompletionItem(
     return item;
 }
 
+function getRangeFromReplacementSpan(
+    replacementSpan: ts.server.protocol.TextSpan | undefined,
+    optionalReplacementRange: lsp.Range | undefined,
+    position: lsp.Position,
+    document: LspDocument,
+    features: SupportedFeatures,
+): { insert?: lsp.Range; replace: lsp.Range; } | undefined {
+    if (replacementSpan) {
+        // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
+        return {
+            replace: ensureRangeIsOnSingleLine(Range.fromTextSpan(replacementSpan), document),
+        };
+    }
+    if (features.completionInsertReplaceSupport && optionalReplacementRange) {
+        const range = ensureRangeIsOnSingleLine(optionalReplacementRange, document);
+        return {
+            insert: lsp.Range.create(range.start, position),
+            replace: ensureRangeIsOnSingleLine(range, document),
+        };
+    }
+}
+
 function getFilterText(entry: ts.server.protocol.CompletionEntry, wordRange: lsp.Range | undefined, line: string, insertText: string | undefined): string | undefined {
     // Handle private field completions
     if (entry.name.startsWith('#')) {
@@ -175,28 +197,6 @@ function getFilterText(entry: ts.server.protocol.CompletionEntry, wordRange: lsp
 
     // In all other cases, fallback to using the insertText
     return insertText;
-}
-
-function getRangeFromReplacementSpan(
-    replacementSpan: ts.server.protocol.TextSpan | undefined,
-    optionalReplacementRange: lsp.Range | undefined,
-    position: lsp.Position,
-    document: LspDocument,
-    features: SupportedFeatures,
-): { insert?: lsp.Range; replace: lsp.Range; } | undefined {
-    if (replacementSpan) {
-        // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
-        return {
-            replace: ensureRangeIsOnSingleLine(Range.fromTextSpan(replacementSpan), document),
-        };
-    }
-    if (features.completionInsertReplaceSupport && optionalReplacementRange) {
-        const range = ensureRangeIsOnSingleLine(optionalReplacementRange, document);
-        return {
-            insert: lsp.Range.create(range.start, position),
-            replace: ensureRangeIsOnSingleLine(range, document),
-        };
-    }
 }
 
 function ensureRangeIsOnSingleLine(range: lsp.Range, document: LspDocument): lsp.Range {
