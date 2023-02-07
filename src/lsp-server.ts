@@ -15,7 +15,7 @@ import { TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
 import { toDocumentHighlight, uriToPath, toSymbolKind, toLocation, toSelectionRange, pathToUri, toTextEdit, normalizePath } from './protocol-translation.js';
 import { LspDocuments, LspDocument } from './document.js';
-import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion.js';
+import { asCompletionItem, asResolvedCompletionItem, CompletionContext, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
@@ -640,17 +640,18 @@ export class LspServer {
                     };
                 }
             }
+            const completionContext: CompletionContext = {
+                isMemberCompletion,
+                dotAccessorContext,
+                line: document.getLine(params.position.line),
+                optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
+            };
             const completions: lsp.CompletionItem[] = [];
             for (const entry of entries || []) {
                 if (entry.kind === 'warning') {
                     continue;
                 }
-                const completion = asCompletionItem(entry, file, params.position, document, this.documents, completionOptions, this.features, {
-                    isMemberCompletion,
-                    dotAccessorContext,
-                    line: document.getLine(params.position.line),
-                    optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
-                });
+                const completion = asCompletionItem(entry, file, params.position, document, this.documents, completionOptions, this.features, completionContext);
                 if (!completion) {
                     continue;
                 }

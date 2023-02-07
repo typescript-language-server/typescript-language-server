@@ -23,14 +23,14 @@ interface ParameterListParts {
     readonly hasOptionalParameters: boolean;
 }
 
-interface CompletionContext {
+export interface CompletionContext {
     readonly isMemberCompletion: boolean;
     readonly dotAccessorContext?: {
         range: lsp.Range;
         text: string;
     };
-    line: string;
-    optionalReplacementRange: lsp.Range | undefined;
+    readonly line: string;
+    readonly optionalReplacementRange: lsp.Range | undefined;
 }
 
 export function asCompletionItem(
