@@ -1,6 +1,6 @@
-/lib/
-/node_modules/
-/.rollup.cache/
-.DS_Store
 *.log
 *.tsbuildinfo
+.DS_Store
+/.rollup.cache/
+/lib/
+node_modules/

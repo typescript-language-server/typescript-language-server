@@ -626,9 +626,9 @@ export class LspServer {
                 return lsp.CompletionList.create();
             }
             const { entries, isIncomplete, optionalReplacementSpan, isMemberCompletion } = body;
+            const line = document.getLine(params.position.line);
             let dotAccessorContext: { range: lsp.Range; text: string; } | undefined;
             if (isMemberCompletion) {
-                const line = document.getLine(params.position.line);
                 const dotMatch = line.slice(0, params.position.character).match(/\??\.\s*$/) || undefined;
                 if (dotMatch) {
                     const startPosition = lsp.Position.create(params.position.line, params.position.character - dotMatch[0].length);
@@ -643,7 +643,7 @@ export class LspServer {
             const completionContext: CompletionContext = {
                 isMemberCompletion,
                 dotAccessorContext,
-                line: document.getLine(params.position.line),
+                line,
                 optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
             };
             const completions: lsp.CompletionItem[] = [];
