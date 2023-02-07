@@ -29,9 +29,8 @@ interface CompletionContext {
         range: lsp.Range;
         text: string;
     };
-    readonly optionalReplacementSpan?: ts.server.protocol.TextSpan;
     line: string;
-    wordRange: lsp.Range | undefined;
+    optionalReplacementRange: lsp.Range | undefined;
 }
 
 export function asCompletionItem(
@@ -81,15 +80,15 @@ export function asCompletionItem(
     if (sourceDisplay) {
         item.detail = Previewer.plainWithLinks(sourceDisplay, filePathConverter);
     }
-    const { line, wordRange, isMemberCompletion, dotAccessorContext } = completionContext;
+    const { line, optionalReplacementRange, isMemberCompletion, dotAccessorContext } = completionContext;
     let range: lsp.Range | ReturnType<typeof getRangeFromReplacementSpan> = getRangeFromReplacementSpan(entry, document);
     item.insertText = entry.insertText;
-    item.filterText = getFilterText(entry, wordRange, line, item.insertText);
+    item.filterText = getFilterText(entry, optionalReplacementRange, line, item.insertText);
 
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
         item.filterText = dotAccessorContext.text + (item.insertText || entry.name);
         if (!range) {
-            const replacementRange = wordRange;
+            const replacementRange = optionalReplacementRange;
             if (replacementRange) {
                 range = {
                     inserting: dotAccessorContext.range,
@@ -132,10 +131,10 @@ export function asCompletionItem(
         }
     }
 
-    if (!range && wordRange) {
+    if (!range && optionalReplacementRange) {
         range = {
-            inserting: lsp.Range.create(wordRange.start, position),
-            replacing: wordRange,
+            inserting: lsp.Range.create(optionalReplacementRange.start, position),
+            replacing: optionalReplacementRange,
         };
     }
 

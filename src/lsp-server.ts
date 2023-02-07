@@ -648,9 +648,8 @@ export class LspServer {
                 const completion = asCompletionItem(entry, file, params.position, document, this.documents, completionOptions, this.features, {
                     isMemberCompletion,
                     dotAccessorContext,
-                    optionalReplacementSpan,
                     line: document.getLine(params.position.line),
-                    wordRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
+                    optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
                 });
                 if (!completion) {
                     continue;
