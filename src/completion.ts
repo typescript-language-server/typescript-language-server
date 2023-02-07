@@ -82,11 +82,11 @@ export function asCompletionItem(
     }
     const { line, optionalReplacementRange, isMemberCompletion, dotAccessorContext } = completionContext;
     let range: lsp.Range | ReturnType<typeof getRangeFromReplacementSpan> = getRangeFromReplacementSpan(entry, document);
-    item.insertText = entry.insertText;
-    item.filterText = getFilterText(entry, optionalReplacementRange, line, item.insertText);
+    let { insertText } = entry;
+    item.filterText = getFilterText(entry, optionalReplacementRange, line, insertText);
 
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
-        item.filterText = dotAccessorContext.text + (item.insertText || entry.name);
+        item.filterText = dotAccessorContext.text + (insertText || entry.name);
         if (!range) {
             const replacementRange = optionalReplacementRange;
             if (replacementRange) {
@@ -97,15 +97,15 @@ export function asCompletionItem(
             } else {
                 range = dotAccessorContext.range;
             }
-            item.insertText = item.filterText;
+            insertText = item.filterText;
         }
     }
 
     if (entry.kindModifiers) {
         const kindModifiers = new Set(entry.kindModifiers.split(/,|\s+/g));
         if (kindModifiers.has(KindModifiers.optional)) {
-            if (!item.insertText) {
-                item.insertText = item.label;
+            if (!insertText) {
+                insertText = item.label;
             }
             if (!item.filterText) {
                 item.filterText = item.label;
@@ -140,13 +140,15 @@ export function asCompletionItem(
 
     if (range) {
         if (lsp.Range.is(range)) {
-            item.textEdit = lsp.TextEdit.replace(range, item.insertText || item.label);
+            item.textEdit = lsp.TextEdit.replace(range, insertText || item.label);
         } else {
-            item.textEdit = lsp.InsertReplaceEdit.create(item.insertText || item.label, range.inserting, range.replacing);
+            item.textEdit = lsp.InsertReplaceEdit.create(insertText || item.label, range.inserting, range.replacing);
             if (!features.completionInsertReplaceSupport) {
                 item.textEdit = lsp.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
             }
         }
+    } else {
+        item.insertText = insertText;
     }
 
     return item;
@@ -342,7 +344,7 @@ function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: ts.server
     const { displayParts } = detail;
     const parameterListParts = getParameterListParts(displayParts);
     const snippet = new SnippetString();
-    snippet.appendText(`${item.insertText || item.label}(`);
+    snippet.appendText(`${item.insertText || item.textEdit?.newText || item.label}(`);
     appendJoinedPlaceholders(snippet, parameterListParts.parts, ', ');
     if (parameterListParts.hasOptionalParameters) {
         snippet.appendTabstop();
