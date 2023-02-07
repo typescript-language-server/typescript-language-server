@@ -69,7 +69,7 @@ export function asCompletionItem(
         item.sortText = `\uffff${entry.sortText}`;
     }
 
-    const { isSnippet, sourceDisplay } = entry;
+    const { isSnippet, replacementSpan, sourceDisplay } = entry;
     if (isSnippet && !features.completionSnippets) {
         return null;
     }
@@ -80,8 +80,9 @@ export function asCompletionItem(
     if (sourceDisplay) {
         item.detail = Previewer.plainWithLinks(sourceDisplay, filePathConverter);
     }
+
     const { line, optionalReplacementRange, isMemberCompletion, dotAccessorContext } = completionContext;
-    let range = getRangeFromReplacementSpan(entry, optionalReplacementRange, position, document, features);
+    let range = getRangeFromReplacementSpan(replacementSpan, optionalReplacementRange, position, document, features);
     let { insertText } = entry;
     item.filterText = getFilterText(entry, optionalReplacementRange, line, insertText);
 
@@ -170,16 +171,16 @@ function getFilterText(entry: ts.server.protocol.CompletionEntry, wordRange: lsp
 }
 
 function getRangeFromReplacementSpan(
-    entry: ts.server.protocol.CompletionEntry,
+    replacementSpan: ts.server.protocol.TextSpan | undefined,
     optionalReplacementRange: lsp.Range | undefined,
     position: lsp.Position,
     document: LspDocument,
     features: SupportedFeatures,
 ): { insert?: lsp.Range; replace: lsp.Range; } | undefined {
-    if (entry.replacementSpan) {
+    if (replacementSpan) {
         // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
         return {
-            replace: ensureRangeIsOnSingleLine(Range.fromTextSpan(entry.replacementSpan), document),
+            replace: ensureRangeIsOnSingleLine(Range.fromTextSpan(replacementSpan), document),
         };
     }
     if (features.completionInsertReplaceSupport && optionalReplacementRange) {
