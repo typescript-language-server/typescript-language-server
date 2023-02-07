@@ -87,7 +87,7 @@ export function asCompletionItem(
     item.filterText = getFilterText(entry, optionalReplacementRange, line, insertText);
 
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
-        item.filterText = dotAccessorContext.text + (insertText || entry.name);
+        item.filterText = dotAccessorContext.text + (insertText || item.label);
         if (!range) {
             if (features.completionInsertReplaceSupport && optionalReplacementRange) {
                 range = {
