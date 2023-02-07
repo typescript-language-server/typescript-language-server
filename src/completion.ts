@@ -89,7 +89,14 @@ export function asCompletionItem(
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
         item.filterText = dotAccessorContext.text + (insertText || entry.name);
         if (!range) {
-            range = { replace: dotAccessorContext.range };
+            if (features.completionInsertReplaceSupport && optionalReplacementRange) {
+                range = {
+                    insert: dotAccessorContext.range,
+                    replace: Range.union(dotAccessorContext.range, optionalReplacementRange),
+                };
+            } else {
+                range = { replace: dotAccessorContext.range };
+            }
             insertText = item.filterText;
         }
     }
