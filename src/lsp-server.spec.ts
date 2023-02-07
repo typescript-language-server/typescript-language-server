@@ -311,17 +311,7 @@ describe('completion', () => {
             detail: 'fs',
             textEdit: {
                 newText: 'import { readFile$1 } from "fs";',
-                insert: {
-                    start: {
-                        line: 0,
-                        character: 0,
-                    },
-                    end: {
-                        line: 0,
-                        character: 19,
-                    },
-                },
-                replace: {
+                range: {
                     start: {
                         line: 0,
                         character: 0,
@@ -673,17 +663,7 @@ describe('completion', () => {
             label: 'fs/read',
             textEdit: {
                 newText: 'fs/read',
-                insert: {
-                    start: {
-                        line: 5,
-                        character: 20,
-                    },
-                    end: {
-                        line: 5,
-                        character: 24,
-                    },
-                },
-                replace: {
+                range: {
                     start: {
                         line: 5,
                         character: 20,

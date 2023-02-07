@@ -81,7 +81,7 @@ export function asCompletionItem(
         item.detail = Previewer.plainWithLinks(sourceDisplay, filePathConverter);
     }
     const { line, optionalReplacementRange, isMemberCompletion, dotAccessorContext } = completionContext;
-    let range: lsp.Range | ReturnType<typeof getRangeFromReplacementSpan> = getRangeFromReplacementSpan(entry, document);
+    let range = getRangeFromReplacementSpan(entry, optionalReplacementRange, position, document);
     let { insertText } = entry;
     item.filterText = getFilterText(entry, optionalReplacementRange, line, insertText);
 
@@ -94,7 +94,7 @@ export function asCompletionItem(
                     replacing: Range.union(dotAccessorContext.range, optionalReplacementRange),
                 };
             } else {
-                range = dotAccessorContext.range;
+                range = { replacing: dotAccessorContext.range };
             }
             insertText = item.filterText;
         }
@@ -138,13 +138,12 @@ export function asCompletionItem(
     }
 
     if (range) {
-        if (lsp.Range.is(range)) {
-            item.textEdit = lsp.TextEdit.replace(range, insertText || item.label);
-        } else {
-            item.textEdit = lsp.InsertReplaceEdit.create(insertText || item.label, range.inserting, range.replacing);
-            if (!features.completionInsertReplaceSupport) {
-                item.textEdit = lsp.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
-            }
+        item.textEdit = range.inserting
+            ? lsp.InsertReplaceEdit.create(insertText || item.label, range.inserting, range.replacing)
+            : lsp.TextEdit.replace(range.replacing, insertText || item.label);
+
+        if (!features.completionInsertReplaceSupport && lsp.InsertReplaceEdit.is(item.textEdit)) {
+            item.textEdit = lsp.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
         }
     } else {
         item.insertText = insertText;
@@ -188,21 +187,32 @@ function getFilterText(entry: ts.server.protocol.CompletionEntry, wordRange: lsp
     return insertText;
 }
 
-function getRangeFromReplacementSpan(entry: ts.server.protocol.CompletionEntry, document: LspDocument) {
-    if (!entry.replacementSpan) {
-        return;
+function getRangeFromReplacementSpan(
+    entry: ts.server.protocol.CompletionEntry,
+    optionalReplacementRange: lsp.Range | undefined,
+    position: lsp.Position,
+    document: LspDocument,
+): { inserting?: lsp.Range; replacing: lsp.Range; } | undefined {
+    if (entry.replacementSpan) {
+        // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
+        return {
+            replacing: ensureRangeIsOnSingleLine(Range.fromTextSpan(entry.replacementSpan), document),
+        };
     }
-
-    let replacementSpan = Range.fromTextSpan(entry.replacementSpan);
-
-    if (replacementSpan && replacementSpan.start.line !== replacementSpan.end.line) {
-        replacementSpan = lsp.Range.create(replacementSpan.start, document.getLineEnd(replacementSpan.start.line));
+    if (optionalReplacementRange) {
+        const range = ensureRangeIsOnSingleLine(optionalReplacementRange, document);
+        return {
+            inserting: lsp.Range.create(range.start, position),
+            replacing: ensureRangeIsOnSingleLine(range, document),
+        };
     }
+}
 
-    return {
-        inserting: replacementSpan,
-        replacing: replacementSpan,
-    };
+function ensureRangeIsOnSingleLine(range: lsp.Range, document: LspDocument): lsp.Range {
+    if (range.start.line !== range.end.line) {
+        return lsp.Range.create(range.start, document.getLineEnd(range.start.line));
+    }
+    return range;
 }
 
 function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
