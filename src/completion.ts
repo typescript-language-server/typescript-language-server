@@ -88,11 +88,10 @@ export function asCompletionItem(
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
         item.filterText = dotAccessorContext.text + (insertText || entry.name);
         if (!range) {
-            const replacementRange = optionalReplacementRange;
-            if (replacementRange) {
+            if (optionalReplacementRange) {
                 range = {
                     inserting: dotAccessorContext.range,
-                    replacing: Range.union(dotAccessorContext.range, replacementRange),
+                    replacing: Range.union(dotAccessorContext.range, optionalReplacementRange),
                 };
             } else {
                 range = dotAccessorContext.range;
