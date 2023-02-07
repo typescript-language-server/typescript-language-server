@@ -81,21 +81,14 @@ export function asCompletionItem(
         item.detail = Previewer.plainWithLinks(sourceDisplay, filePathConverter);
     }
     const { line, optionalReplacementRange, isMemberCompletion, dotAccessorContext } = completionContext;
-    let range = getRangeFromReplacementSpan(entry, optionalReplacementRange, position, document);
+    let range = getRangeFromReplacementSpan(entry, optionalReplacementRange, position, document, features);
     let { insertText } = entry;
     item.filterText = getFilterText(entry, optionalReplacementRange, line, insertText);
 
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
         item.filterText = dotAccessorContext.text + (insertText || entry.name);
         if (!range) {
-            if (optionalReplacementRange) {
-                range = {
-                    inserting: dotAccessorContext.range,
-                    replacing: Range.union(dotAccessorContext.range, optionalReplacementRange),
-                };
-            } else {
-                range = { replacing: dotAccessorContext.range };
-            }
+            range = { replacing: dotAccessorContext.range };
             insertText = item.filterText;
         }
     }
@@ -130,21 +123,10 @@ export function asCompletionItem(
         }
     }
 
-    if (!range && optionalReplacementRange) {
-        range = {
-            inserting: lsp.Range.create(optionalReplacementRange.start, position),
-            replacing: optionalReplacementRange,
-        };
-    }
-
     if (range) {
         item.textEdit = range.inserting
             ? lsp.InsertReplaceEdit.create(insertText || item.label, range.inserting, range.replacing)
             : lsp.TextEdit.replace(range.replacing, insertText || item.label);
-
-        if (!features.completionInsertReplaceSupport && lsp.InsertReplaceEdit.is(item.textEdit)) {
-            item.textEdit = lsp.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
-        }
     } else {
         item.insertText = insertText;
     }
@@ -192,6 +174,7 @@ function getRangeFromReplacementSpan(
     optionalReplacementRange: lsp.Range | undefined,
     position: lsp.Position,
     document: LspDocument,
+    features: SupportedFeatures,
 ): { inserting?: lsp.Range; replacing: lsp.Range; } | undefined {
     if (entry.replacementSpan) {
         // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
@@ -199,7 +182,7 @@ function getRangeFromReplacementSpan(
             replacing: ensureRangeIsOnSingleLine(Range.fromTextSpan(entry.replacementSpan), document),
         };
     }
-    if (optionalReplacementRange) {
+    if (features.completionInsertReplaceSupport && optionalReplacementRange) {
         const range = ensureRangeIsOnSingleLine(optionalReplacementRange, document);
         return {
             inserting: lsp.Range.create(range.start, position),

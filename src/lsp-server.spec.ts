@@ -274,19 +274,7 @@ describe('completion', () => {
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'getById');
         expect(completion).toBeDefined();
-        expect(completion!.textEdit).toMatchObject({
-            newText: 'getById',
-            range: {
-                start: {
-                    character: 20,
-                    line: 6,
-                },
-                end: {
-                    character: 23,
-                    line: 6,
-                },
-            },
-        });
+        expect(completion!.textEdit).toBeUndefined();
         localServer.didCloseTextDocument({ textDocument: doc });
         localServer.closeAll();
         localServer.shutdown();
