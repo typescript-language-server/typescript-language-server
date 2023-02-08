@@ -15,7 +15,7 @@ import { TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
 import { toDocumentHighlight, uriToPath, toSymbolKind, toLocation, toSelectionRange, pathToUri, toTextEdit, normalizePath } from './protocol-translation.js';
 import { LspDocuments, LspDocument } from './document.js';
-import { asCompletionItem, asResolvedCompletionItem, getCompletionTriggerCharacter } from './completion.js';
+import { asCompletionItem, asResolvedCompletionItem, CompletionContext, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
@@ -625,13 +625,30 @@ export class LspServer {
             if (!body) {
                 return lsp.CompletionList.create();
             }
-            const { entries, isIncomplete, optionalReplacementSpan } = body;
+            const { entries, isIncomplete, optionalReplacementSpan, isMemberCompletion } = body;
+            const line = document.getLine(params.position.line);
+            let dotAccessorContext: CompletionContext['dotAccessorContext'];
+            if (isMemberCompletion) {
+                const dotMatch = line.slice(0, params.position.character).match(/\??\.\s*$/) || undefined;
+                if (dotMatch) {
+                    const startPosition = lsp.Position.create(params.position.line, params.position.character - dotMatch[0].length);
+                    const range = lsp.Range.create(startPosition, params.position);
+                    const text = document.getText(range);
+                    dotAccessorContext = { range, text };
+                }
+            }
+            const completionContext: CompletionContext = {
+                isMemberCompletion,
+                dotAccessorContext,
+                line,
+                optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
+            };
             const completions: lsp.CompletionItem[] = [];
             for (const entry of entries || []) {
                 if (entry.kind === 'warning') {
                     continue;
                 }
-                const completion = asCompletionItem(entry, optionalReplacementSpan, file, params.position, document, this.documents, completionOptions, this.features);
+                const completion = asCompletionItem(entry, file, params.position, document, this.documents, completionOptions, this.features, completionContext);
                 if (!completion) {
                     continue;
                 }
