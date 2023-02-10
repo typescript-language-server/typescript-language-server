@@ -1483,6 +1483,77 @@ describe('code actions', () => {
         expect(result).toEqual([]);
     });
 
+    it('provides organize imports when there are no errors', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `import { existsSync } from 'fs';
+import { accessSync } from 'fs';
+existsSync('t');
+accessSync('t');`,
+        };
+        server.didOpenTextDocument({
+            textDocument: doc,
+        });
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 0, character: 0 },
+                end: { line: 3, character: 0 },
+            },
+            context: {
+                diagnostics: [],
+                only: [CodeActionKind.SourceOrganizeImportsTs.value],
+            },
+        }))!;
+
+        expect(result).toMatchObject([
+            {
+                kind: CodeActionKind.SourceOrganizeImportsTs.value,
+                title: 'Organize Imports',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: "import { accessSync, existsSync } from 'fs';\n",
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 1,
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 0,
+                                        },
+                                    },
+                                },
+                                {
+                                    newText: '',
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 2,
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 1,
+                                        },
+                                    },
+                                },
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1,
+                            },
+                        },
+                    ],
+                },
+            },
+        ]);
+    });
+
     it('provides "add missing imports" when explicitly requested in only', async () => {
         const doc = {
             uri: uri('bar.ts'),
@@ -1586,83 +1657,6 @@ describe('code actions', () => {
                                         start: {
                                             character: 0,
                                             line: 2,
-                                        },
-                                    },
-                                },
-                            ],
-                            textDocument: {
-                                uri: uri('bar.ts'),
-                                version: 1,
-                            },
-                        },
-                    ],
-                },
-            },
-        ]);
-    });
-
-    it('provides organize imports when explicitly requested in only', async () => {
-        const doc = {
-            uri: uri('bar.ts'),
-            languageId: 'typescript',
-            version: 1,
-            text: `import { existsSync } from 'fs';
-import { accessSync } from 'fs';
-existsSync('t');`,
-        };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-        const result = (await server.codeAction({
-            textDocument: doc,
-            range: {
-                start: { line: 0, character: 0 },
-                end: { line: 3, character: 0 },
-            },
-            context: {
-                diagnostics: [{
-                    range: {
-                        start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 },
-                    },
-                    code: 6133,
-                    message: 'unused arg',
-                }],
-                only: [CodeActionKind.SourceOrganizeImportsTs.value],
-            },
-        }))!;
-
-        expect(result).toMatchObject([
-            {
-                kind: CodeActionKind.SourceOrganizeImportsTs.value,
-                title: 'Organize imports',
-                edit: {
-                    documentChanges: [
-                        {
-                            edits: [
-                                {
-                                    newText: "import { accessSync, existsSync } from 'fs';\n",
-                                    range: {
-                                        end: {
-                                            character: 0,
-                                            line: 1,
-                                        },
-                                        start: {
-                                            character: 0,
-                                            line: 0,
-                                        },
-                                    },
-                                },
-                                {
-                                    newText: '',
-                                    range: {
-                                        end: {
-                                            character: 0,
-                                            line: 2,
-                                        },
-                                        start: {
-                                            character: 0,
-                                            line: 1,
                                         },
                                     },
                                 },

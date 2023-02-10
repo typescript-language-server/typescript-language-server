@@ -20,8 +20,8 @@ import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
-import { provideOrganizeImports } from './organize-imports.js';
-import { CommandTypes, EventTypes, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
+import { organizeImportsCommands, provideOrganizeImports } from './organize-imports.js';
+import { CommandTypes, EventTypes, OrganizeImportsMode, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
@@ -193,6 +193,8 @@ export class LspServer {
                     ? { codeActionKinds: [
                         ...TypeScriptAutoFixProvider.kinds.map(kind => kind.value),
                         CodeActionKind.SourceOrganizeImportsTs.value,
+                        CodeActionKind.SourceRemoveUnusedImportsTs.value,
+                        CodeActionKind.SourceSortImportsTs.value,
                         CodeActionKind.QuickFix.value,
                         CodeActionKind.Refactor.value,
                     ] } : true,
@@ -900,6 +902,7 @@ export class LspServer {
         if (!file) {
             return [];
         }
+        await this.configurationManager.configureGloballyFromDocument(file);
         const fileRangeArgs = Range.toFileRangeRequestArgs(file, params.range);
         const actions: lsp.CodeAction[] = [];
         const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
@@ -910,19 +913,28 @@ export class LspServer {
             actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context, token), fileRangeArgs, this.features));
         }
 
-        // organize import is provided by tsserver for any line, so we only get it if explicitly requested
-        if (kinds?.some(kind => kind.contains(CodeActionKind.SourceOrganizeImportsTs))) {
-            // see this issue for more context about how this argument is used
-            // https://github.com/microsoft/TypeScript/issues/43051
-            const skipDestructiveCodeActions = params.context.diagnostics.some(
-                // assume no severity is an error
-                d => (d.severity ?? 0) <= 2,
-            );
-            const response = await this.getOrganizeImports({
-                scope: { type: 'file', args: fileRangeArgs },
-                skipDestructiveCodeActions,
-            }, token);
-            actions.push(...provideOrganizeImports(response, this.documents));
+        for (const kind of kinds || []) {
+            for (const command of organizeImportsCommands) {
+                console.error({ kinds, command });
+                if (!kind.contains(command.kind) || command.minVersion && this.tspClient.apiVersion.lt(command.minVersion)) {
+                    continue;
+                }
+                // see this issue for more context: https://github.com/microsoft/TypeScript/issues/43051
+                if (command.kind.equals(CodeActionKind.SourceOrganizeImportsTs)
+                    && params.context.diagnostics.some(d => (d.severity ?? 0) <= 2)) {  // assume no severity is an error
+                    continue;
+                }
+                const response = await this.tspClient.request(
+                    CommandTypes.OrganizeImports,
+                    {
+                        scope: { type: 'file', args: fileRangeArgs },
+                        // Deprecated in 4.9; `mode` takes priority.
+                        skipDestructiveCodeActions: command.mode === OrganizeImportsMode.SortAndCombine,
+                        mode: command.mode,
+                    },
+                    token);
+                actions.push(...provideOrganizeImports(command, response, this.documents));
+            }
         }
 
         // TODO: Since we rely on diagnostics pointing at errors in the correct places, we can't proceed if we are not
@@ -959,14 +971,6 @@ export class LspServer {
         };
         try {
             return await this.tspClient.request(CommandTypes.GetApplicableRefactors, args, token);
-        } catch (err) {
-            return undefined;
-        }
-    }
-    protected async getOrganizeImports(args: ts.server.protocol.OrganizeImportsRequestArgs, token?: lsp.CancellationToken): Promise<ts.server.protocol.OrganizeImportsResponse | undefined> {
-        try {
-            await this.configurationManager.configureGloballyFromDocument(args.scope.args.file);
-            return await this.tspClient.request(CommandTypes.OrganizeImports, args, token);
         } catch (err) {
             return undefined;
         }
@@ -1011,7 +1015,7 @@ export class LspServer {
         } else if (arg.command === Commands.CONFIGURE_PLUGIN && arg.arguments) {
             const [pluginName, configuration] = arg.arguments as [string, unknown];
 
-            if (this.tspClient?.apiVersion.gte(API.v314)) {
+            if (this.tspClient.apiVersion.gte(API.v314)) {
                 this.tspClient.executeWithoutWaitingForResponse(
                     CommandTypes.ConfigurePlugin,
                     {

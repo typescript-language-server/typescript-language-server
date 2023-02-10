@@ -13,11 +13,13 @@ export class CodeActionKind {
     public static readonly Refactor = new CodeActionKind(lsp.CodeActionKind.Refactor);
     public static readonly Source = new CodeActionKind(lsp.CodeActionKind.Source);
     public static readonly SourceAddMissingImportsTs = CodeActionKind.Source.append('addMissingImports').append('ts');
-    public static readonly SourceRemoveUnusedTs = CodeActionKind.Source.append('removeUnused').append('ts');
-    public static readonly SourceOrganizeImports = new CodeActionKind(lsp.CodeActionKind.SourceOrganizeImports);
-    public static readonly SourceOrganizeImportsTs = CodeActionKind.SourceOrganizeImports.append('ts');
     public static readonly SourceFixAll = new CodeActionKind(lsp.CodeActionKind.SourceFixAll);
     public static readonly SourceFixAllTs = CodeActionKind.SourceFixAll.append('ts');
+    public static readonly SourceOrganizeImports = new CodeActionKind(lsp.CodeActionKind.SourceOrganizeImports);
+    public static readonly SourceOrganizeImportsTs = CodeActionKind.SourceOrganizeImports.append('ts');
+    public static readonly SourceRemoveUnusedImportsTs = CodeActionKind.Source.append('removeUnusedImports').append('ts');
+    public static readonly SourceRemoveUnusedTs = CodeActionKind.Source.append('removeUnused').append('ts');
+    public static readonly SourceSortImportsTs = CodeActionKind.Source.append('sortImports').append('ts');
 
     constructor(
         public readonly value: string,
