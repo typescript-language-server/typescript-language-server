@@ -58,8 +58,10 @@ export class LspDocument implements TextDocument {
     }
 
     getLineEnd(line: number): lsp.Position {
-        const nextLineOffset = this.getLineOffset(line + 1);
-        return this.positionAt(nextLineOffset - 1);
+        const nextLine = line + 1;
+        const nextLineOffset = this.getLineOffset(nextLine);
+        // If next line doesn't exist then the offset is at the line end already.
+        return this.positionAt(nextLine < this.document.lineCount ? nextLineOffset - 1 : nextLineOffset);
     }
 
     getLineOffset(line: number): number {
