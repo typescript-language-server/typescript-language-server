@@ -307,6 +307,7 @@ export function toSymbolDisplayPartKind(kind: string): ts.SymbolDisplayPartKind 
 
 export interface SupportedFeatures {
     codeActionDisabledSupport?: boolean;
+    completionCommitCharactersSupport?: boolean;
     completionInsertReplaceSupport?: boolean;
     completionLabelDetails?: boolean;
     completionSnippets?: boolean;
