@@ -62,6 +62,7 @@ export function createLspConnection(options: LspConnectionOptions): lsp.Connecti
     connection.languages.inlayHint.on(server.inlayHints.bind(server));
     connection.languages.semanticTokens.on(server.semanticTokensFull.bind(server));
     connection.languages.semanticTokens.onRange(server.semanticTokensRange.bind(server));
+    connection.workspace.onWillRenameFiles(server.willRenameFiles.bind(server));
 
     return connection;
 }

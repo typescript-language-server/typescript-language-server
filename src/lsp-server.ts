@@ -256,6 +256,13 @@ export class LspServer {
                     full: true,
                     range: true,
                 },
+                workspace: {
+                    fileOperations: {
+                        willRename: {
+                            filters: [{ pattern: { glob: '**/*.{ts,js}', matches: 'file' } }],
+                        },
+                    },
+                },
             },
         };
         if (textDocument?.callHierarchy && typescriptVersion.version?.gte(API.v380)) {
@@ -1075,6 +1082,32 @@ export class LspServer {
             edit: { changes },
         });
         return applied;
+    }
+
+    async willRenameFiles(params: lsp.RenameFilesParams, token?: lsp.CancellationToken): Promise<lsp.WorkspaceEdit> {
+        const toTextEdit = (codeEdit: ts.server.protocol.CodeEdit): lsp.TextEdit => {
+            return {
+                range: {
+                    start: Position.fromLocation(codeEdit.start),
+                    end: Position.fromLocation(codeEdit.end),
+                },
+                newText: codeEdit.newText,
+            };
+        };
+
+        const workspaceEdit: lsp.WorkspaceEdit = { changes: {} };
+        for (const rename of params.files) {
+            const codeEdits = await this.getEditsForFileRename(rename.oldUri, rename.newUri, token);
+            for (const codeEdit of codeEdits) {
+                const uri = pathToUri(codeEdit.fileName, this.documents);
+                if (!workspaceEdit.changes) {
+                    workspaceEdit.changes = {};
+                }
+                const textEdits = workspaceEdit.changes[uri] || (workspaceEdit.changes[uri] = []);
+                textEdits.push(...codeEdit.textChanges.map(toTextEdit));
+            }
+        }
+        return workspaceEdit;
     }
 
     protected async applyRenameFile(sourceUri: string, targetUri: string, token?: lsp.CancellationToken): Promise<void> {
