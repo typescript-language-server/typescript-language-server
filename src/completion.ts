@@ -35,7 +35,8 @@ export interface CompletionContext {
 
 export function asCompletionItem(
     entry: ts.server.protocol.CompletionEntry,
-    file: string, position: lsp.Position,
+    file: string,
+    position: lsp.Position,
     document: LspDocument,
     filePathConverter: IFilePathToResourceConverter,
     options: WorkspaceConfigurationCompletionOptions,
@@ -44,10 +45,8 @@ export function asCompletionItem(
 ): lsp.CompletionItem | null {
     const item: lsp.CompletionItem = {
         label: entry.name,
-        ...features.completionLabelDetails ? { labelDetails: entry.labelDetails } : {},
         kind: asCompletionItemKind(entry.kind),
         sortText: entry.sortText,
-        commitCharacters: asCommitCharacters(entry.kind),
         preselect: entry.isRecommended,
         data: {
             file,
@@ -62,6 +61,14 @@ export function asCompletionItem(
             ],
         },
     };
+
+    if (features.completionCommitCharactersSupport) {
+        item.commitCharacters = asCommitCharacters(entry.kind);
+    }
+
+    if (features.completionLabelDetails) {
+        item.labelDetails = entry.labelDetails;
+    }
 
     if (entry.source && entry.hasAction) {
         // De-prioritze auto-imports

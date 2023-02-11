@@ -113,22 +113,26 @@ export class LspServer {
         // Setup supported features.
         const { textDocument } = clientCapabilities;
         if (textDocument) {
-            const completionCapabilities = textDocument.completion;
-            this.features.codeActionDisabledSupport = textDocument.codeAction?.disabledSupport;
-            this.features.definitionLinkSupport = textDocument.definition?.linkSupport && typescriptVersion.version?.gte(API.v270);
-            this.features.completionInsertReplaceSupport = completionCapabilities?.completionItem?.insertReplaceSupport;
-            if (completionCapabilities?.completionItem) {
-                if (this.configurationManager.tsPreferences.useLabelDetailsInCompletionEntries
-                && completionCapabilities.completionItem.labelDetailsSupport
-                && typescriptVersion.version?.gte(API.v470)) {
-                    this.features.completionLabelDetails = true;
+            const { codeAction, completion, definition, publishDiagnostics } = textDocument;
+            if (codeAction) {
+                this.features.codeActionDisabledSupport = codeAction.disabledSupport;
+            }
+            if (completion) {
+                const { completionItem } = completion;
+                if (completionItem) {
+                    const { commitCharactersSupport, insertReplaceSupport, labelDetailsSupport, snippetSupport } = completionItem;
+                    this.features.completionCommitCharactersSupport = commitCharactersSupport;
+                    this.features.completionInsertReplaceSupport = insertReplaceSupport;
+                    this.features.completionSnippets = snippetSupport;
+                    this.features.completionLabelDetails = this.configurationManager.tsPreferences.useLabelDetailsInCompletionEntries
+                        && labelDetailsSupport && typescriptVersion.version?.gte(API.v470);
                 }
-                if (completionCapabilities.completionItem.snippetSupport) {
-                    this.features.completionSnippets = true;
-                }
-                if (textDocument.publishDiagnostics?.tagSupport) {
-                    this.features.diagnosticsTagSupport = true;
-                }
+            }
+            if (definition) {
+                this.features.definitionLinkSupport = definition.linkSupport && typescriptVersion.version?.gte(API.v270);
+            }
+            if (publishDiagnostics) {
+                this.features.diagnosticsTagSupport = Boolean(publishDiagnostics.tagSupport);
             }
         }
 
