@@ -125,7 +125,7 @@ export class LspServer {
                     this.features.completionInsertReplaceSupport = insertReplaceSupport;
                     this.features.completionSnippets = snippetSupport;
                     this.features.completionLabelDetails = this.configurationManager.tsPreferences.useLabelDetailsInCompletionEntries
-                    && labelDetailsSupport && typescriptVersion.version?.gte(API.v470);
+                        && labelDetailsSupport && typescriptVersion.version?.gte(API.v470);
                 }
             }
             if (definition) {
