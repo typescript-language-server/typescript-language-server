@@ -926,22 +926,25 @@ export class LspServer {
 
         for (const kind of kinds || []) {
             for (const command of organizeImportsCommands) {
-                console.error({ kinds, command });
                 if (!kind.contains(command.kind) || command.minVersion && this.tspClient.apiVersion.lt(command.minVersion)) {
                     continue;
                 }
-                // see this issue for more context: https://github.com/microsoft/TypeScript/issues/43051
-                if (command.kind.equals(CodeActionKind.SourceOrganizeImportsTs)
-                    && params.context.diagnostics.some(d => (d.severity ?? 0) <= 2)) {  // assume no severity is an error
-                    continue;
+                let skipDestructiveCodeActions = command.mode === OrganizeImportsMode.SortAndCombine;
+                let mode = command.mode;
+                const isOrganizeImports = command.kind.equals(CodeActionKind.SourceOrganizeImportsTs);
+                if (isOrganizeImports) {
+                    // see this issue for more context on why we override params when document has errors: https://github.com/microsoft/TypeScript/issues/43051
+                    const documentHasErrors = params.context.diagnostics.some(d => (d.severity ?? 0) <= 2);  // Assume no severity is an error.
+                    skipDestructiveCodeActions = documentHasErrors;
+                    mode = OrganizeImportsMode.SortAndCombine;
                 }
                 const response = await this.tspClient.request(
                     CommandTypes.OrganizeImports,
                     {
                         scope: { type: 'file', args: fileRangeArgs },
                         // Deprecated in 4.9; `mode` takes priority.
-                        skipDestructiveCodeActions: command.mode === OrganizeImportsMode.SortAndCombine,
-                        mode: command.mode,
+                        skipDestructiveCodeActions,
+                        mode,
                     },
                     token);
                 actions.push(...provideOrganizeImports(command, response, this.documents));
