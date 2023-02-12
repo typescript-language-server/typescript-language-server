@@ -88,13 +88,11 @@ export function asCompletionItem(
         item.detail = Previewer.plainWithLinks(sourceDisplay, filePathConverter);
     }
 
-    const { line, optionalReplacementRange, isMemberCompletion, dotAccessorContext } = completionContext;
+    const { optionalReplacementRange, isMemberCompletion, dotAccessorContext } = completionContext;
     let range = getRangeFromReplacementSpan(replacementSpan, optionalReplacementRange, position, document, features);
     let { insertText } = entry;
-    item.filterText = getFilterText(entry, optionalReplacementRange, line, insertText);
 
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
-        item.filterText = dotAccessorContext.text + (insertText || item.label);
         if (!range) {
             if (features.completionInsertReplaceSupport && optionalReplacementRange) {
                 range = {
@@ -104,7 +102,7 @@ export function asCompletionItem(
             } else {
                 range = { replace: dotAccessorContext.range };
             }
-            insertText = item.filterText;
+            insertText = dotAccessorContext.text + (insertText || item.label);
         }
     }
 
@@ -169,41 +167,6 @@ function getRangeFromReplacementSpan(
             replace: range,
         };
     }
-}
-
-function getFilterText(entry: ts.server.protocol.CompletionEntry, wordRange: lsp.Range | undefined, line: string, insertText: string | undefined): string | undefined {
-    // Handle private field completions
-    if (entry.name.startsWith('#')) {
-        const wordStart = wordRange ? line.charAt(wordRange.start.character) : undefined;
-        if (insertText) {
-            if (insertText.startsWith('this.#')) {
-                return wordStart === '#' ? insertText : insertText.replace(/&this\.#/, '');
-            } else {
-                return wordStart;
-            }
-        } else {
-            return wordStart === '#' ? undefined : entry.name.replace(/^#/, '');
-        }
-    }
-
-    // For `this.` completions, generally don't set the filter text since we don't want them to be overly prioritized. #74164
-    if (insertText?.startsWith('this.')) {
-        return undefined;
-    }
-
-    // Handle the case:
-    // ```
-    // const xyz = { 'ab c': 1 };
-    // xyz.ab|
-    // ```
-    // In which case we want to insert a bracket accessor but should use `.abc` as the filter text instead of
-    // the bracketed insert text.
-    if (insertText?.startsWith('[')) {
-        return insertText.replace(/^\[['"](.+)[['"]\]$/, '.$1');
-    }
-
-    // In all other cases, fallback to using the insertText
-    return insertText;
 }
 
 function ensureRangeIsOnSingleLine(range: lsp.Range, document: LspDocument): lsp.Range {
