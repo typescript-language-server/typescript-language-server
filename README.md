@@ -344,9 +344,11 @@ implicitProjectConfiguration.target: string;
 
 Server announces support for the following code action kinds:
 
- - `source.addMissingImports.ts` - adds imports for used but not imported symbols
  - `source.fixAll.ts` - despite the name, fixes a couple of specific issues: unreachable code, await in non-async functions, incorrectly implemented interface
  - `source.removeUnused.ts` - removes declared but unused variables
+ - `source.addMissingImports.ts` - adds imports for used but not imported symbols
+ - `source.removeUnusedImports.ts` - removes unused imports
+ - `source.sortImports.ts` - sorts imports
  - `source.organizeImports.ts` - organizes and removes unused imports
 
 This allows editors that support running code actions on save to automatically run fixes associated with those kinds.

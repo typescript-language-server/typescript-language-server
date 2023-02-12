@@ -242,6 +242,12 @@ export enum SymbolDisplayPartKind {
     linkText = 24
 }
 
+export enum OrganizeImportsMode {
+    All = 'All',
+    SortAndCombine = 'SortAndCombine',
+    RemoveUnused = 'RemoveUnused',
+}
+
 // END: Duplicated from typescript/lib/tsserverlibrary.js since we don't want to depend on typescript at runtime
 
 export const enum EventTypes {
