@@ -2184,3 +2184,22 @@ describe('completions without client snippet support', () => {
         );
     });
 });
+
+describe('fileOperations', () => {
+    it('willRenameFiles', async () => {
+        const edit = await server.willRenameFiles({
+            files: [{ oldUri: uri('module1.ts'), newUri: uri('new_module1_name.ts') }],
+        });
+        expect(edit.changes).toBeDefined();
+        expect(Object.keys(edit.changes!)).toHaveLength(1);
+        expect(edit.changes![uri('module2.ts')]).toEqual([
+            {
+                range: {
+                    start:{ line: 0, character: 25 },
+                    end: { line: 0, character: 34 },
+                },
+                newText:'./new_module1_name',
+            },
+        ]);
+    });
+});
