@@ -29,6 +29,7 @@ export enum CommandTypes {
     Close = 'close',
     /** @deprecated Prefer CompletionInfo -- see comment on CompletionsResponse */
     Completions = 'completions',
+    CompletionEntryDetails = 'completionEntryDetails',
     CompletionInfo = 'completionInfo',
     CompletionDetails = 'completionEntryDetails',
     CompileOnSaveAffectedFileList = 'compileOnSaveAffectedFileList',
@@ -250,13 +251,20 @@ export enum OrganizeImportsMode {
 
 // END: Duplicated from typescript/lib/tsserverlibrary.js since we don't want to depend on typescript at runtime
 
-export const enum EventTypes {
-    ConfigFileDiag = 'configFileDiag',
-    SyntaxDiag = 'syntaxDiag',
-    SementicDiag = 'semanticDiag',
-    SuggestionDiag = 'suggestionDiag',
-    ProjectLoadingStart = 'projectLoadingStart',
-    ProjectLoadingFinish = 'projectLoadingFinish',
+export const enum EventName {
+    syntaxDiag = 'syntaxDiag',
+    semanticDiag = 'semanticDiag',
+    suggestionDiag = 'suggestionDiag',
+    configFileDiag = 'configFileDiag',
+    telemetry = 'telemetry',
+    projectLanguageServiceState = 'projectLanguageServiceState',
+    projectsUpdatedInBackground = 'projectsUpdatedInBackground',
+    beginInstallTypes = 'beginInstallTypes',
+    endInstallTypes = 'endInstallTypes',
+    typesInstallerInitializationFailed = 'typesInstallerInitializationFailed',
+    surveyReady = 'surveyReady',
+    projectLoadingStart = 'projectLoadingStart',
+    projectLoadingFinish = 'projectLoadingFinish',
 }
 
 export class KindModifiers {
@@ -365,6 +373,16 @@ interface TsserverOptions {
      * @default 'off'
      */
     trace?: TraceValue;
+    /**
+     * Controls if TypeScript launches a dedicated server to more quickly handle syntax related operations, such as computing diagnostics or code folding.
+     *
+     * Allowed values:
+     *  - auto: Spawn both a full server and a lighter weight server dedicated to syntax operations. The syntax server is used to speed up syntax operations and provide IntelliSense while projects are loading.
+     *  - never: Don't use a dedicated syntax server. Use a single server to handle all IntelliSense operations.
+     *
+     * @default 'auto'
+     */
+    useSyntaxServer?: 'auto' | 'never';
 }
 
 export type TypeScriptInitializeParams = lsp.InitializeParams & {

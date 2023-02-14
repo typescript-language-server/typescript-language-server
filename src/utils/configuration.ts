@@ -56,3 +56,19 @@ export interface TypeScriptServiceConfiguration {
     readonly tsserverLogVerbosity: TsServerLogLevel;
     readonly tsserverPath?: string;
 }
+
+export const enum SyntaxServerConfiguration {
+    Never,
+    Always,  // Unused
+    Auto,
+}
+
+export function toSyntaxServerConfiguration(value?: string): SyntaxServerConfiguration {
+    switch (value) {
+        case 'never': return SyntaxServerConfiguration.Never;
+        // case 'always': return SyntaxServerConfiguration.Always;
+        case 'auto': return SyntaxServerConfiguration.Auto;
+    }
+
+    return SyntaxServerConfiguration.Auto;
+}
