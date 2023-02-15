@@ -374,7 +374,7 @@ interface TsserverOptions {
      */
     trace?: TraceValue;
     /**
-     * Controls if TypeScript launches a dedicated server to more quickly handle syntax related operations, such as computing diagnostics or code folding.
+     * Whether a dedicated server is launched to more quickly handle syntax related operations, such as computing diagnostics or code folding.
      *
      * Allowed values:
      *  - auto: Spawn both a full server and a lighter weight server dedicated to syntax operations. The syntax server is used to speed up syntax operations and provide IntelliSense while projects are loading.
