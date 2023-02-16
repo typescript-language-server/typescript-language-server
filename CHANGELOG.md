@@ -1,6 +1,23 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v3.1.0...v3.2.0) (2023-02-14)
+
+
+### Features
+
+* `source.removeUnusedImports.ts` and `source.sortImports.ts` actions ([#681](https://github.com/typescript-language-server/typescript-language-server/issues/681)) ([a43b2df](https://github.com/typescript-language-server/typescript-language-server/commit/a43b2df471572ca2e25b12899f65fca77853af35))
+* provide filterText property in completions ([#678](https://github.com/typescript-language-server/typescript-language-server/issues/678)) ([af44f8b](https://github.com/typescript-language-server/typescript-language-server/commit/af44f8b1b5a252ca9ba019691ad81dc2e5006468))
+* support `workspace/willRenameFiles` request ([#685](https://github.com/typescript-language-server/typescript-language-server/issues/685)) ([c3f3529](https://github.com/typescript-language-server/typescript-language-server/commit/c3f3529be45a1630fe7903a5af9e732855f2c664))
+
+
+### Bug Fixes
+
+* **completions:** don't set `filterText` after all ([#686](https://github.com/typescript-language-server/typescript-language-server/issues/686)) ([4c5d295](https://github.com/typescript-language-server/typescript-language-server/commit/4c5d295d4f71f6b5d8f2c58e908d5cc79cb9e3d2))
+* **completions:** don't set commitCharacters unless client supports those ([#684](https://github.com/typescript-language-server/typescript-language-server/issues/684)) ([af10a97](https://github.com/typescript-language-server/typescript-language-server/commit/af10a977f38626797dbadca935c71f92556fdb39))
+* **deps:** update devdependency typescript to ^4.9.5 ([#677](https://github.com/typescript-language-server/typescript-language-server/issues/677)) ([916c326](https://github.com/typescript-language-server/typescript-language-server/commit/916c326d576b9f13a05563495dffa27b4d02ee6e))
+* line offset off by one when at the last line ([#683](https://github.com/typescript-language-server/typescript-language-server/issues/683)) ([0db9a5f](https://github.com/typescript-language-server/typescript-language-server/commit/0db9a5faa4bc03560506ffd030e795a35e45e3f8))
+
 ## [3.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v3.0.3...v3.1.0) (2023-01-30)
 
 
