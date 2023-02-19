@@ -11,7 +11,7 @@ import { filePath, readContents, TestLspClient, uri } from './test-utils.js';
 import { CommandTypes } from './ts-protocol.js';
 import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
-import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
+import { SyntaxServerConfiguration, TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
 import { noopLogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 
 const logger = new ConsoleLogger();
@@ -36,6 +36,7 @@ beforeAll(() => {
         logVerbosity: configuration.tsserverLogVerbosity,
         trace: Trace.Off,
         typescriptVersion: bundled!,
+        useSyntaxServer: SyntaxServerConfiguration.Never,
     });
 });
 
@@ -54,14 +55,17 @@ describe('ts server client', () => {
             file: f,
             fileContent: readContents(f),
         });
-        const completions = await server.request(CommandTypes.CompletionInfo, {
+        const response = await server.request(CommandTypes.CompletionInfo, {
             file: f,
             line: 1,
             offset: 0,
             prefix: 'im',
         });
-        expect(completions.body).not.toBeNull();
-        expect(completions.body!.entries[1].name).toBe('import');
+        if (response.type !== 'response') {
+            throw Error('Not a response');
+        }
+        expect(response.body).not.toBeNull();
+        expect(response.body!.entries[1].name).toBe('import');
     });
 
     it('references', async () => {
@@ -70,13 +74,16 @@ describe('ts server client', () => {
             file: f,
             fileContent: readContents(f),
         });
-        const references = await server.request(CommandTypes.References, {
+        const response = await server.request(CommandTypes.References, {
             file: f,
             line: 8,
             offset: 16,
         });
-        expect(references.body).not.toBeNull();
-        expect(references.body!.symbolName).toBe('doStuff');
+        if (response.type !== 'response') {
+            throw Error('Not a response');
+        }
+        expect(response.body).not.toBeNull();
+        expect(response.body!.symbolName).toBe('doStuff');
     });
 
     it('inlayHints', async () => {
@@ -90,7 +97,7 @@ describe('ts server client', () => {
                 includeInlayFunctionLikeReturnTypeHints: true,
             },
         });
-        const inlayHints = await server.request(
+        const response = await server.request(
             CommandTypes.ProvideInlayHints,
             {
                 file: f,
@@ -98,8 +105,11 @@ describe('ts server client', () => {
                 length: 1000,
             },
         );
-        expect(inlayHints.body).not.toBeNull();
-        expect(inlayHints.body![0].text).toBe(': boolean');
+        if (response.type !== 'response') {
+            throw Error('Not a response');
+        }
+        expect(response.body).not.toBeNull();
+        expect(response.body![0].text).toBe(': boolean');
     });
 
     it('documentHighlight', async () => {
@@ -114,6 +124,9 @@ describe('ts server client', () => {
             offset: 16,
             filesToSearch: [f],
         });
+        if (response.type !== 'response') {
+            throw Error('Not a response');
+        }
         expect(response.body).not.toBeNull();
         expect(response.body!.some(({ file }) => file.endsWith('module2.ts'))).toBeTruthy();
         expect(response.body!.some(({ file: file_1 }) => file_1.endsWith('module1.ts'))).toBeFalsy();

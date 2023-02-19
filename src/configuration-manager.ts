@@ -128,7 +128,7 @@ export class ConfigurationManager {
                 autoImportFileExcludePatterns: this.getAutoImportFileExcludePatternsPreference(workspaceFolder),
             },
         };
-        client.executeWithoutWaitingForResponse(CommandTypes.Configure, args);
+        client.request(CommandTypes.Configure, args);
     }
 
     public async configureGloballyFromDocument(filename: string, formattingOptions?: lsp.FormattingOptions): Promise<void> {

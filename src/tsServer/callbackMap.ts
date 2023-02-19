@@ -9,7 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { ServerResponse } from './requests.js';
+import { ServerResponse } from '../typescriptService.js';
 import type { ts } from '../ts-protocol.js';
 
 export interface CallbackItem<R> {

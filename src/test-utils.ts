@@ -65,6 +65,11 @@ const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOption
         jsxAttributeCompletionStyle: 'auto',
         providePrefixAndSuffixTextForRename: true,
     },
+    tsserver: {
+        // With default `auto`, due to dynamic routing, some requests would be routed to syntax server while the project
+        // is loading and return incomplete results so force just a single server for tests.
+        useSyntaxServer: 'never',
+    },
 };
 
 const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {};
