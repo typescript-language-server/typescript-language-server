@@ -325,6 +325,7 @@ export interface SupportedFeatures {
     completionInsertReplaceSupport?: boolean;
     completionLabelDetails?: boolean;
     completionSnippets?: boolean;
+    completionDisableFilterText?: boolean;
     definitionLinkSupport?: boolean;
     diagnosticsTagSupport?: boolean;
 }
@@ -335,6 +336,7 @@ export interface TypeScriptPlugin {
 }
 
 export interface TypeScriptInitializationOptions {
+    completionDisableFilterText?: boolean;
     disableAutomaticTypingAcquisition?: boolean;
     hostInfo?: string;
     locale?: string;

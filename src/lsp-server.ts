@@ -111,6 +111,7 @@ export class LspServer {
         this.configurationManager.mergeTsPreferences(userInitializationOptions.preferences || {});
 
         // Setup supported features.
+        this.features.completionDisableFilterText = userInitializationOptions.completionDisableFilterText ?? false;
         const { textDocument } = clientCapabilities;
         if (textDocument) {
             const { codeAction, completion, definition, publishDiagnostics } = textDocument;
