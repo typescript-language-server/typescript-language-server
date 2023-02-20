@@ -74,16 +74,17 @@ typescript-language-server --stdio
 
 The language server accepts various settings through the `initializationOptions` object passed through the `initialize` request. Refer to your LSP client's documentation on how to set these. Here is the list of supported options:
 
-| Setting           | Type     | Description                                                                                                                                                                                                                                                          |
-|:------------------|:---------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| hostInfo          | string   | Information about the host, for example `"Emacs 24.4"` or `"Sublime Text v3075"`. **Default**: `undefined`                                                                                                                                                           |
+| Setting           | Type     | Description                                                                           |
+|:------------------|:---------|:--------------------------------------------------------------------------------------|
+| hostInfo          | string   | Information about the host, for example `"Emacs 24.4"` or `"Sublime Text v3075"`. **Default**: `undefined` |
+| completionDisableFilterText  | boolean | Don't set `filterText` property on completion items. **Default**: `false` |
 | disableAutomaticTypingAcquisition | boolean | Disables tsserver from automatically fetching missing type definitions (`@types` packages) for external modules. |
 | maxTsServerMemory | number   | The maximum size of the V8's old memory section in megabytes (for example `4096` means 4GB). The default value is dynamically configured by Node so can differ per system. Increase for very big projects that exceed allowed memory usage. **Default**: `undefined` |
 | npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
 | locale            | string   | The locale to use to show error messages. |
-| plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: []                                                                                                                                                         |
-| preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more info.                                                                                                                              |
-| tsserver          | object   | Options related to the `tsserver` process. See below for more info.                                                                                                                              |
+| plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: [] |
+| preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more |
+| tsserver          | object   | Options related to the `tsserver` process. See below for more |
 
 The `tsserver` setting specifies additional options related to the internal `tsserver` process, like tracing and logging.
 
