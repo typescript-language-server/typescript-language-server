@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.3.0](https://github.com/typescript-language-server/typescript-language-server/compare/v3.2.0...v3.3.0) (2023-02-20)
+
+
+### Features
+
+* start separate tsServer instance for semantic requests ([#688](https://github.com/typescript-language-server/typescript-language-server/issues/688)) ([fa65b84](https://github.com/typescript-language-server/typescript-language-server/commit/fa65b847f4a87672cc28302f38fd86e8f56d6112))
+
+
+### Bug Fixes
+
+* **completions:** include `filterText` property by default ([#693](https://github.com/typescript-language-server/typescript-language-server/issues/693)) ([c07426a](https://github.com/typescript-language-server/typescript-language-server/commit/c07426adc8b079273c267e18d11993d53d482886))
+
 ## [3.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v3.1.0...v3.2.0) (2023-02-14)
 
 
