@@ -55,6 +55,22 @@ export interface TypeScriptServiceConfiguration {
     readonly lspClient: LspClient;
     readonly tsserverLogVerbosity: TsServerLogLevel;
     readonly tsserverPath?: string;
+    // readonly locale: string | null;
+    // readonly globalTsdk: string | null;
+    // readonly localTsdk: string | null;
+    // readonly npmLocation: string | null;
+    // readonly tsServerLogLevel: TsServerLogLevel;
+    // readonly tsServerPluginPaths: readonly string[];
+    // readonly implicitProjectConfiguration: ImplicitProjectConfiguration;
+    // readonly disableAutomaticTypeAcquisition: boolean;
+    // readonly useSyntaxServer: SyntaxServerConfiguration;
+    // readonly enableProjectWideIntellisenseOnWeb: boolean;
+    // readonly enableProjectDiagnostics: boolean;
+    // readonly maxTsServerMemory: number;
+    // readonly enablePromptUseWorkspaceTsdk: boolean;
+    // readonly watchOptions: Proto.WatchOptions | undefined;
+    // readonly includePackageJsonAutoImports: 'auto' | 'on' | 'off' | undefined;
+    // readonly enableTsServerTracing: boolean;
 }
 
 export const enum SyntaxServerConfiguration {

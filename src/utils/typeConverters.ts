@@ -37,6 +37,10 @@ export namespace Range {
         endOffset: range.end.character + 1,
     });
 
+    export function isEqual(one: lsp.Range, other: lsp.Range): boolean {
+        return Position.isEqual(one.start, other.start) && Position.isEqual(one.end, other.end);
+    }
+
     export function intersection(one: lsp.Range, other: lsp.Range): lsp.Range | undefined {
         const start = Position.Max(other.start, one.start);
         const end = Position.Min(other.end, one.end);
@@ -114,6 +118,11 @@ export namespace Position {
         }
         return result;
     }
+
+    export function isEqual(one: lsp.Position, other: lsp.Position): boolean {
+        return one.line === other.line && one.character === other.character;
+    }
+
     export function isAfter(one: lsp.Position, other: lsp.Position): boolean {
         return !isBeforeOrEqual(one, other);
     }

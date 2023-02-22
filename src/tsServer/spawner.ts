@@ -16,8 +16,7 @@ import { Logger, LogLevel } from '../utils/logger.js';
 import type { TspClientOptions } from '../tsp-client.js';
 import { nodeRequestCancellerFactory } from './cancellation.js';
 import type { ILogDirectoryProvider } from './logDirectoryProvider.js';
-import { GetErrRoutingTsServer, ITypeScriptServer, SingleTsServer, SyntaxRoutingTsServer, TsServerDelegate, TsServerProcessKind } from './server.js';
-import { NodeTsServerProcessFactory } from './serverProcess.js';
+import { GetErrRoutingTsServer, ITypeScriptServer, SingleTsServer, SyntaxRoutingTsServer, TsServerDelegate, TsServerProcessFactory, TsServerProcessKind } from './server.js';
 import type Tracer from './tracer.js';
 import type { TypeScriptVersion } from './versionProvider.js';
 import { SyntaxServerConfiguration, TsServerLogLevel } from '../utils/configuration.js';
@@ -42,6 +41,7 @@ export class TypeScriptServerSpawner {
         private readonly _logDirectoryProvider: ILogDirectoryProvider,
         private readonly _logger: Logger,
         private readonly _tracer: Tracer,
+        private readonly _factory: TsServerProcessFactory,
     ) { }
 
     public spawn(
@@ -118,7 +118,6 @@ export class TypeScriptServerSpawner {
         version: TypeScriptVersion,
         configuration: TspClientOptions,
     ): ITypeScriptServer {
-        const processFactory = new NodeTsServerProcessFactory();
         const canceller = nodeRequestCancellerFactory.create(kind, this._tracer);
         const { args, tsServerLogFile } = this.getTsServerArgs(kind, configuration, this._apiVersion, canceller.cancellationPipeName);
 
@@ -130,7 +129,7 @@ export class TypeScriptServerSpawner {
             }
         }
 
-        const tsProcess = processFactory.fork(version, args, kind, configuration);
+        const tsProcess = this._factory.fork(version, args, kind, configuration);
         this._logger.log('Starting tsserver');
         return new SingleTsServer(
             kind,

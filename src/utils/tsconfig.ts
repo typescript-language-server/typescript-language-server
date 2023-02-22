@@ -13,6 +13,11 @@ import type { WorkspaceConfigurationImplicitProjectConfigurationOptions } from '
 import { ModuleKind, ModuleResolutionKind, ScriptTarget, JsxEmit } from '../ts-protocol.js';
 import type { ts } from '../ts-protocol.js';
 
+export const enum ProjectType {
+    TypeScript,
+    JavaScript,
+}
+
 const DEFAULT_PROJECT_CONFIG: ts.server.protocol.ExternalProjectCompilerOptions = Object.freeze({
     module: ModuleKind.ESNext,
     moduleResolution: ModuleResolutionKind.Node,
@@ -20,13 +25,17 @@ const DEFAULT_PROJECT_CONFIG: ts.server.protocol.ExternalProjectCompilerOptions 
     jsx: JsxEmit.React,
 });
 
-export function getInferredProjectCompilerOptions(
+export function inferredProjectCompilerOptions(
+    projectType: ProjectType,
     workspaceConfig: WorkspaceConfigurationImplicitProjectConfigurationOptions,
 ): ts.server.protocol.ExternalProjectCompilerOptions {
     const projectConfig = { ...DEFAULT_PROJECT_CONFIG };
 
-    if (workspaceConfig.checkJs) {
+    if (serviceConfig.implicitProjectConfiguration.checkJs) {
         projectConfig.checkJs = true;
+        if (projectType === ProjectType.TypeScript) {
+            projectConfig.allowJs = true;
+        }
     }
 
     if (workspaceConfig.experimentalDecorators) {
@@ -49,7 +58,9 @@ export function getInferredProjectCompilerOptions(
         projectConfig.target = workspaceConfig.target as ts.server.protocol.ScriptTarget;
     }
 
-    projectConfig.sourceMap = true;
+    if (projectType === ProjectType.TypeScript) {
+        projectConfig.sourceMap = true;
+    }
 
     return projectConfig;
 }

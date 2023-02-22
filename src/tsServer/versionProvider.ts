@@ -16,6 +16,7 @@ import which from 'which';
 import { pkgUpSync } from 'pkg-up';
 import API from '../utils/api.js';
 import { findPathToModule } from '../utils/modules-resolver.js';
+import { TypeScriptServiceConfiguration } from '../utils/configuration.js';
 import type { Logger } from '../utils/logger.js';
 
 export const enum TypeScriptVersionSource {
@@ -97,6 +98,16 @@ export class TypeScriptVersion {
         this.logger.log(`Resolved TypeScript version to "${desc.version}"`);
         return API.fromVersionString(desc.version);
     }
+}
+
+export interface ITypeScriptVersionProvider {
+    updateConfiguration(configuration: TypeScriptServiceConfiguration): void;
+
+    readonly defaultVersion: TypeScriptVersion;
+    readonly globalVersion: TypeScriptVersion | undefined;
+    readonly localVersion: TypeScriptVersion | undefined;
+    readonly localVersions: readonly TypeScriptVersion[];
+    readonly bundledVersion: TypeScriptVersion;
 }
 
 export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib'];

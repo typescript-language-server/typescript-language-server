@@ -12,7 +12,8 @@ import { pathToUri, toDiagnostic } from './protocol-translation.js';
 import { SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import { LspDocuments } from './document.js';
-import { DiagnosticKind, TspClient } from './tsp-client.js';
+import { DiagnosticKind } from './features/diagnostics.js';
+import { TspClient } from './tsp-client.js';
 import { ClientCapability } from './typescriptService.js';
 
 class FileDiagnostics {
