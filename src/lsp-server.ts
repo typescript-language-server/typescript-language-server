@@ -149,6 +149,7 @@ export class LspServer {
             logDirectoryProvider: new LogDirectoryProvider(this.getLogDirectoryPath(userInitializationOptions)),
             logVerbosity: tsserverLogVerbosity ?? this.options.tsserverLogVerbosity,
             disableAutomaticTypingAcquisition,
+            enableProjectDiagnostics: userInitializationOptions.tsserver?.enableProjectDiagnostics ?? false,
             maxTsServerMemory,
             npmLocation,
             locale,

@@ -10,7 +10,6 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { CancellationToken } from 'vscode-jsonrpc';
 import { RequestItem, RequestQueue, RequestQueueingType } from './requestQueue.js';
 import { ServerResponse, ServerType, TypeScriptRequestTypes } from '../typescriptService.js';
 import { CommandTypes, EventName, ts } from '../ts-protocol.js';
@@ -50,7 +49,7 @@ export interface ITypeScriptServer {
      * @return A list of all execute requests. If there are multiple entries, the first item is the primary
      * request while the rest are secondary ones.
      */
-    executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined>;
+    executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: lsp.CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined>;
 
     dispose(): void;
 }
@@ -232,7 +231,7 @@ export class SingleTsServer implements ITypeScriptServer {
         }
     }
 
-    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: lsp.CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         const request = this._requestQueue.createRequest(command, args);
         const requestInfo: RequestItem = {
             request,
@@ -314,7 +313,7 @@ export class SingleTsServer implements ITypeScriptServer {
 
 interface ExecuteInfo {
     readonly isAsync: boolean;
-    readonly token?: CancellationToken;
+    readonly token?: lsp.CancellationToken;
     readonly expectsResult: boolean;
     readonly lowPriority?: boolean;
     readonly executionTarget?: ExecutionTarget;
@@ -348,7 +347,7 @@ class RequestRouter {
             const requestStates: RequestState.State[] = this.servers.map(() => RequestState.Unresolved);
 
             // Also make sure we never cancel requests to just one server
-            let token: CancellationToken | undefined = undefined;
+            let token: lsp.CancellationToken | undefined = undefined;
             if (executeInfo.token) {
                 const source = new lsp.CancellationTokenSource();
                 executeInfo.token.onCancellationRequested(() => {
@@ -401,6 +400,97 @@ class RequestRouter {
         }
 
         throw new Error(`Could not find server for command: '${command}'`);
+    }
+}
+
+export class GetErrRoutingTsServer implements ITypeScriptServer {
+    private static readonly diagnosticEvents = new Set<string>([
+        EventName.configFileDiag,
+        EventName.syntaxDiag,
+        EventName.semanticDiag,
+        EventName.suggestionDiag,
+    ]);
+
+    private readonly getErrServer: ITypeScriptServer;
+    private readonly mainServer: ITypeScriptServer;
+    private readonly router: RequestRouter;
+    private readonly _eventHandlers = new Set<OnEventHandler>();
+    private readonly _exitHandlers = new Set<OnExitHandler>();
+    private readonly _errorHandlers = new Set<OnErrorHandler>();
+
+    public constructor(
+        servers: { getErr: ITypeScriptServer; primary: ITypeScriptServer; },
+        delegate: TsServerDelegate,
+    ) {
+        this.getErrServer = servers.getErr;
+        this.mainServer = servers.primary;
+
+        this.router = new RequestRouter(
+            [
+                { server: this.getErrServer, canRun: (command) => ['geterr', 'geterrForProject'].includes(command) },
+                { server: this.mainServer, canRun: undefined /* gets all other commands */ },
+            ],
+            delegate);
+
+        this.getErrServer.onEvent(event => {
+            if (GetErrRoutingTsServer.diagnosticEvents.has(event.event)) {
+                this._eventHandlers.forEach(handler => handler(event));
+            }
+            // Ignore all other events
+        });
+        this.mainServer.onEvent(event => {
+            if (!GetErrRoutingTsServer.diagnosticEvents.has(event.event)) {
+                this._eventHandlers.forEach(handler => handler(event));
+            }
+            // Ignore all other events
+        });
+
+        this.getErrServer.onError(event => {
+            this._errorHandlers.forEach(handler => handler(event));
+        });
+        this.mainServer.onError(event => {
+            this._errorHandlers.forEach(handler => handler(event));
+        });
+
+        this.mainServer.onExit(event => {
+            this._exitHandlers.forEach(handler => handler(event));
+            this.getErrServer.kill();
+        });
+    }
+
+    public onEvent(handler: OnEventHandler): void {
+        this._eventHandlers.add(handler);
+    }
+
+    public onExit(handler: OnExitHandler): void {
+        this._exitHandlers.add(handler);
+    }
+
+    public onError(handler: OnErrorHandler): void {
+        this._errorHandlers.add(handler);
+    }
+
+    public onStdErr(_handler: OnStdErrHandler): void {
+    }
+
+    public get tsServerLogFile(): string | undefined {
+        return this.mainServer.tsServerLogFile;
+    }
+
+    public dispose(): void {
+        this._eventHandlers.clear();
+        this._exitHandlers.clear();
+        this._errorHandlers.clear();
+    }
+
+    public kill(): void {
+        this.dispose();
+        this.getErrServer.kill();
+        this.mainServer.kill();
+    }
+
+    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: lsp.CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+        return this.router.execute(command, args, executeInfo);
     }
 }
 
@@ -556,7 +646,7 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
         this.semanticServer.kill();
     }
 
-    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: lsp.CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         return this.router.execute(command, args, executeInfo);
     }
 }

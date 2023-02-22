@@ -11,7 +11,6 @@
 
 import { URI } from 'vscode-uri';
 import type lsp from 'vscode-languageserver';
-import type { CancellationToken } from 'vscode-jsonrpc';
 import { Logger, PrefixingLogger } from './utils/logger.js';
 import API from './utils/api.js';
 import { CommandTypes, EventName } from './ts-protocol.js';
@@ -25,6 +24,7 @@ import Tracer, { Trace } from './tsServer/tracer.js';
 import type { TypeScriptVersion, TypeScriptVersionSource } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
 import { SyntaxServerConfiguration, TsServerLogLevel } from './utils/configuration.js';
+import * as fileSchemes from './utils/fileSchemes.js';
 
 namespace ServerState {
     export const enum Type {
@@ -129,6 +129,7 @@ export interface TspClientOptions {
     logVerbosity: TsServerLogLevel;
     logDirectoryProvider: ILogDirectoryProvider;
     disableAutomaticTypingAcquisition?: boolean;
+    enableProjectDiagnostics: boolean;
     maxTsServerMemory?: number;
     npmLocation?: string;
     locale?: string;
@@ -183,7 +184,7 @@ export class TspClient {
 
         switch (capability) {
             case ClientCapability.Semantic: {
-                return ['file', 'untitled'].includes(resource.scheme);
+                return fileSchemes.semanticSupportedSchemes.includes(resource.scheme);
             }
             case ClientCapability.Syntax:
             case ClientCapability.EnhancedSyntax: {
@@ -298,14 +299,14 @@ export class TspClient {
         this.executeWithoutWaitingForResponse(command, args);
     }
 
-    public requestGeterr(args: ts.server.protocol.GeterrRequestArgs, token: CancellationToken): Promise<any> {
+    public requestGeterr(args: ts.server.protocol.GeterrRequestArgs, token: lsp.CancellationToken): Promise<any> {
         return this.executeAsync(CommandTypes.Geterr, args, token);
     }
 
     public request<K extends keyof StandardTsServerRequests>(
         command: K,
         args: StandardTsServerRequests[K][0],
-        token?: CancellationToken,
+        token?: lsp.CancellationToken,
         config?: ExecConfig,
     ): Promise<ServerResponse.Response<StandardTsServerRequests[K][1]>> {
         return this.execute(command, args, token, config);
@@ -313,7 +314,7 @@ export class TspClient {
 
     // Low-level API.
 
-    public execute(command: keyof TypeScriptRequestTypes, args: any, token?: CancellationToken, config?: ExecConfig): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
+    public execute(command: keyof TypeScriptRequestTypes, args: any, token?: lsp.CancellationToken, config?: ExecConfig): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
         let executions: Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> | undefined;
 
         // if (config?.cancelOnResourceChange) {
@@ -377,7 +378,7 @@ export class TspClient {
     public executeAsync<K extends keyof AsyncTsServerRequests>(
         command: K,
         args: AsyncTsServerRequests[K][0],
-        token: CancellationToken,
+        token: lsp.CancellationToken,
     ): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
         return this.executeImpl(command, args, {
             isAsync: true,
@@ -386,7 +387,7 @@ export class TspClient {
         })[0]!;
     }
 
-    private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; requireSemantic?: boolean; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: lsp.CancellationToken; expectsResult: boolean; lowPriority?: boolean; requireSemantic?: boolean; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         const serverState = this.serverState;
         if (serverState.type === ServerState.Type.Running) {
             return serverState.server.executeImpl(command, args, executeInfo);

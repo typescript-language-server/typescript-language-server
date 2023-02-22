@@ -349,10 +349,17 @@ export interface TypeScriptInitializationOptions {
 
 interface TsserverOptions {
     /**
+     * (Experimental) Enables project wide error reporting.
+     *
+     * @default false
+     */
+    enableProjectDiagnostics?: boolean;
+    /**
      * The path to the directory where the `tsserver` log files will be created.
      * If not provided, the log files will be created within the workspace, inside the `.log` directory.
      * If no workspace root is provided when initializating the server and no custom path is specified then
      * the logs will not be created.
+     *
      * @default undefined
      */
     logDirectory?: string;
@@ -372,6 +379,7 @@ interface TsserverOptions {
     /**
      * The verbosity of logging the tsserver communication through the LSP messages.
      * This doesn't affect the file logging.
+     *
      * @default 'off'
      */
     trace?: TraceValue;

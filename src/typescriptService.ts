@@ -9,10 +9,16 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { URI } from 'vscode-uri';
+import { URI as Uri } from 'vscode-uri';
+import * as lsp from 'vscode-languageserver';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import BufferSyncSupport from './tsServer/bufferSyncSupport.js';
 import { CommandTypes } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import { ExecutionTarget } from './tsServer/server.js';
+import { TypeScriptVersion } from './tsServer/versionProvider.js';
+import API from './utils/api.js';
+import { TypeScriptServiceConfiguration } from './utils/configuration.js';
 
 export enum ServerType {
     Syntax = 'syntax',
@@ -32,7 +38,7 @@ export namespace ServerResponse {
 export type ExecConfig = {
     readonly lowPriority?: boolean;
     readonly nonRecoverable?: boolean;
-    readonly cancelOnResourceChange?: URI;
+    readonly cancelOnResourceChange?: Uri;
     readonly executionTarget?: ExecutionTarget;
 };
 
@@ -63,6 +69,77 @@ export class ClientCapabilities {
     public has(capability: ClientCapability): boolean {
         return this.capabilities.has(capability);
     }
+}
+
+export interface ITypeScriptServiceClient {
+
+    /**
+     * Convert a (VS Code) resource to a path that TypeScript server understands.
+     */
+    toTsFilePath(resource: Uri): string | undefined;
+
+    /**
+     * Convert a path to a resource.
+     */
+    toResource(filepath: string): Uri;
+
+    /**
+     * Tries to ensure that a vscode document is open on the TS server.
+     *
+     * @return The normalized path or `undefined` if the document is not open on the server.
+     */
+    toOpenTsFilePath(document: TextDocument, options?: {
+        suppressAlertOnFailure?: boolean;
+    }): string | undefined;
+
+    /**
+     * Checks if `resource` has a given capability.
+     */
+    hasCapabilityForResource(resource: Uri, capability: ClientCapability): boolean;
+
+    getWorkspaceRootForResource(resource: Uri): string | undefined;
+
+    readonly onTsServerStarted: vscode.Event<{ version: TypeScriptVersion; usedApiVersion: API; }>;
+    readonly onProjectLanguageServiceStateChanged: vscode.Event<ts.server.protocol.ProjectLanguageServiceStateEventBody>;
+    readonly onDidBeginInstallTypings: vscode.Event<ts.server.protocol.BeginInstallTypesEventBody>;
+    readonly onDidEndInstallTypings: vscode.Event<ts.server.protocol.EndInstallTypesEventBody>;
+    readonly onTypesInstallerInitializationFailed: vscode.Event<ts.server.protocol.TypesInstallerInitializationFailedEventBody>;
+
+    readonly capabilities: ClientCapabilities;
+    readonly onDidChangeCapabilities: vscode.Event<void>;
+
+    onReady(f: () => void): Promise<void>;
+
+    showVersionPicker(): void;
+
+    readonly apiVersion: API;
+
+    // readonly pluginManager: PluginManager;
+    readonly configuration: TypeScriptServiceConfiguration;
+    readonly bufferSyncSupport: BufferSyncSupport;
+
+    execute<K extends keyof StandardTsServerRequests>(
+        command: K,
+        args: StandardTsServerRequests[K][0],
+        token: lsp.CancellationToken,
+        config?: ExecConfig
+    ): Promise<ServerResponse.Response<StandardTsServerRequests[K][1]>>;
+
+    executeWithoutWaitingForResponse<K extends keyof NoResponseTsServerRequests>(
+        command: K,
+        args: NoResponseTsServerRequests[K][0]
+    ): void;
+
+    executeAsync<K extends keyof AsyncTsServerRequests>(
+        command: K,
+        args: AsyncTsServerRequests[K][0],
+        token: lsp.CancellationToken
+    ): Promise<ServerResponse.Response<ts.server.protocol.Response>>;
+
+    /**
+     * Cancel on going geterr requests and re-queue them after `f` has been evaluated.
+     */
+    interruptGetErr<R>(f: () => R): R;
 }
 
 export interface StandardTsServerRequests {

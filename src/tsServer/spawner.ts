@@ -16,7 +16,7 @@ import { Logger, LogLevel } from '../utils/logger.js';
 import type { TspClientOptions } from '../tsp-client.js';
 import { nodeRequestCancellerFactory } from './cancellation.js';
 import type { ILogDirectoryProvider } from './logDirectoryProvider.js';
-import { ITypeScriptServer, SingleTsServer, SyntaxRoutingTsServer, TsServerDelegate, TsServerProcessKind } from './server.js';
+import { GetErrRoutingTsServer, ITypeScriptServer, SingleTsServer, SyntaxRoutingTsServer, TsServerDelegate, TsServerProcessKind } from './server.js';
 import { NodeTsServerProcessFactory } from './serverProcess.js';
 import type Tracer from './tracer.js';
 import type { TypeScriptVersion } from './versionProvider.js';
@@ -52,12 +52,13 @@ export class TypeScriptServerSpawner {
     ): ITypeScriptServer {
         let primaryServer: ITypeScriptServer;
         const serverType = this.getCompositeServerType(version, capabilities, configuration);
+        const shouldUseSeparateDiagnosticsServer = configuration.enableProjectDiagnostics;
 
         switch (serverType) {
             case CompositeServerType.SeparateSyntax:
             case CompositeServerType.DynamicSeparateSyntax:
             {
-                const enableDynamicRouting = serverType === CompositeServerType.DynamicSeparateSyntax;
+                const enableDynamicRouting = !shouldUseSeparateDiagnosticsServer && serverType === CompositeServerType.DynamicSeparateSyntax;
                 primaryServer = new SyntaxRoutingTsServer({
                     syntax: this.spawnTsServer(TsServerProcessKind.Syntax, version, configuration),
                     semantic: this.spawnTsServer(TsServerProcessKind.Semantic, version, configuration),
@@ -74,6 +75,13 @@ export class TypeScriptServerSpawner {
                 primaryServer = this.spawnTsServer(TsServerProcessKind.Syntax, version, configuration);
                 break;
             }
+        }
+
+        if (shouldUseSeparateDiagnosticsServer) {
+            return new GetErrRoutingTsServer({
+                getErr: this.spawnTsServer(TsServerProcessKind.Diagnostics, version, configuration),
+                primary: primaryServer,
+            }, delegate);
         }
 
         return primaryServer;
