@@ -90,37 +90,6 @@ export function getDignosticsKind(event: ts.server.protocol.Event): DiagnosticKi
     throw new Error('Unknown dignostics kind');
 }
 
-class ServerInitializingIndicator {
-    private _loadingProjectName?: string;
-    private _task?: Promise<lsp.WorkDoneProgressReporter>;
-
-    constructor(private lspClient: LspClient) {}
-
-    public reset(): void {
-        if (this._task) {
-            const task = this._task;
-            this._task = undefined;
-            task.then(reporter => reporter.done());
-        }
-    }
-
-    public startedLoadingProject(projectName: string): void {
-        // TS projects are loaded sequentially. Cancel existing task because it should always be resolved before
-        // the incoming project loading task is.
-        this.reset();
-
-        this._loadingProjectName = projectName;
-        this._task = this.lspClient.createProgressReporter();
-        this._task.then(reporter => reporter.begin('Initializing JS/TS language features…'));
-    }
-
-    public finishedLoadingProject(projectName: string): void {
-        if (this._loadingProjectName === projectName) {
-            this.reset();
-        }
-    }
-}
-
 export interface TspClientOptions {
     lspClient: LspClient;
     trace: Trace;
