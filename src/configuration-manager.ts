@@ -71,6 +71,7 @@ export interface WorkspaceConfigurationLanguageOptions {
 export interface WorkspaceConfigurationImplicitProjectConfigurationOptions {
     checkJs?: boolean;
     experimentalDecorators?: boolean;
+    moduleDetection?: string;
     module?: string;
     strictFunctionTypes?: boolean;
     strictNullChecks?: boolean;

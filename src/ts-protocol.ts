@@ -123,6 +123,12 @@ export enum ModuleKind {
     ESNext = 'ESNext'
 }
 
+export enum ModuleDetectionKind {
+    auto = 'auto',
+    legacy = 'legacy',
+    force = 'force'
+}
+
 export enum ModuleResolutionKind {
     Classic = 'Classic',
     Node = 'Node'
