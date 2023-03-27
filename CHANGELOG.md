@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.3.1](https://github.com/typescript-language-server/typescript-language-server/compare/v3.3.0...v3.3.1) (2023-03-27)
+
+
+### Bug Fixes
+
+* don't report InternalError on tsserver error response ([#709](https://github.com/typescript-language-server/typescript-language-server/issues/709)) ([3e63165](https://github.com/typescript-language-server/typescript-language-server/commit/3e6316546eb5c8b6fd2fb8c26c88b7b6a6331472))
+
 ## [3.3.0](https://github.com/typescript-language-server/typescript-language-server/compare/v3.2.0...v3.3.0) (2023-02-20)
 
 
