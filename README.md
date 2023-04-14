@@ -208,6 +208,7 @@ interface UserPreferences {
     lazyConfiguredProjectsFromExternalProject: boolean;
     /**
      * Indicates whether imports should be organized in a case-insensitive manner.
+     *
      * Default: `"auto"`.
      */
     organizeImportsIgnoreCase: "auto" | boolean;
