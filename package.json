@@ -27,6 +27,7 @@
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
     "compile": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript",
     "watch": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript --watch",
+    "size": "yarn build && yarn size-limit",
     "postversion": "git push --follow-tags",
     "prepare": "cd test-data/jsx && yarn"
   },
@@ -46,6 +47,7 @@
     "@rollup/plugin-node-resolve": "^15.0.2",
     "@rollup/plugin-terser": "^0.4.1",
     "@rollup/plugin-typescript": "^11.1.0",
+    "@size-limit/file": "^8.2.4",
     "@types/deepmerge": "^2.2.0",
     "@types/fs-extra": "^11.0.1",
     "@types/jest": "^29.5.0",
@@ -69,6 +71,7 @@
     "rimraf": "^5.0.0",
     "rollup": "^3.20.2",
     "semver": "^7.4.0",
+    "size-limit": "^8.2.4",
     "source-map-support": "^0.5.21",
     "tempy": "^3.0.0",
     "ts-jest": "^29.1.0",
