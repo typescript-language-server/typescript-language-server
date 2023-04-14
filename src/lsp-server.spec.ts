@@ -8,7 +8,7 @@
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
+import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer } from './test-utils.js';
 import { Commands } from './commands.js';
 import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
@@ -699,7 +699,7 @@ describe('completion', () => {
                     detail: '(x)',
                 },
                 kind: lsp.CompletionItemKind.Method,
-                insertText: toPlatformEOL('bar(x) {\n    $0\n},'),
+                insertText: 'bar(x) {\n    $0\n},',
             },
         );
     });
