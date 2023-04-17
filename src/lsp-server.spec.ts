@@ -1217,6 +1217,32 @@ describe('formatting', () => {
         expect('function foo()\n{\n\t// some code\n}').toBe(result);
     });
 
+    it('considers last character in the file', async () => {
+        const text = 'const first = 1;\nconst second = 2';
+        const textDocument = {
+            uri: uriString, languageId, version, text,
+        };
+        server.didOpenTextDocument({ textDocument });
+
+        server.updateWorkspaceSettings({
+            typescript: {
+                format: {
+                    semicolons: SemicolonPreference.Insert,
+                },
+            },
+        });
+
+        const edits = await server.documentFormatting({
+            textDocument,
+            options: {
+                tabSize: 4,
+                insertSpaces: true,
+            },
+        });
+        const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        expect('const first = 1;\nconst second = 2;').toBe(result);
+    });
+
     it('selected range', async () => {
         const text = 'function foo() {\nconst first = 1;\nconst second = 2;\nconst val = foo( "something" );\n//const fourth = 4;\n}';
         const textDocument = {
