@@ -198,14 +198,16 @@ export class LspServer {
                     resolveProvider: true,
                 },
                 codeActionProvider: clientCapabilities.textDocument?.codeAction?.codeActionLiteralSupport
-                    ? { codeActionKinds: [
-                        ...TypeScriptAutoFixProvider.kinds.map(kind => kind.value),
-                        CodeActionKind.SourceOrganizeImportsTs.value,
-                        CodeActionKind.SourceRemoveUnusedImportsTs.value,
-                        CodeActionKind.SourceSortImportsTs.value,
-                        CodeActionKind.QuickFix.value,
-                        CodeActionKind.Refactor.value,
-                    ] } : true,
+                    ? {
+                        codeActionKinds: [
+                            ...TypeScriptAutoFixProvider.kinds.map(kind => kind.value),
+                            CodeActionKind.SourceOrganizeImportsTs.value,
+                            CodeActionKind.SourceRemoveUnusedImportsTs.value,
+                            CodeActionKind.SourceSortImportsTs.value,
+                            CodeActionKind.QuickFix.value,
+                            CodeActionKind.Refactor.value,
+                        ],
+                    } : true,
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
@@ -805,14 +807,15 @@ export class LspServer {
         const formatOptions = params.options;
         await this.configurationManager.configureGloballyFromDocument(file, formatOptions);
 
+        const document = this.documents.get(file);
+        if (!document) {
+            throw new Error(`The document should be opened for formatting', file: ${file}`);
+        }
+
         const response = await this.tspClient.request(
             CommandTypes.Format,
             {
-                file,
-                line: 1,
-                offset: 1,
-                endLine: Number.MAX_SAFE_INTEGER,
-                endOffset: Number.MAX_SAFE_INTEGER,
+                ...Range.toFormattingRequestArgs(file, document.getFullRange()),
                 options: formatOptions,
             },
             token,
@@ -836,11 +839,7 @@ export class LspServer {
         const response = await this.tspClient.request(
             CommandTypes.Format,
             {
-                file,
-                line: params.range.start.line + 1,
-                offset: params.range.start.character + 1,
-                endLine: params.range.end.line + 1,
-                endOffset: params.range.end.character + 1,
+                ...Range.toFormattingRequestArgs(file, params.range),
                 options: formatOptions,
             },
             token,
@@ -1351,7 +1350,7 @@ export class LspServer {
         return this.getSemanticTokens(doc, file, start, end, token);
     }
 
-    async getSemanticTokens(doc: LspDocument, file: string, startOffset: number, endOffset: number, token?: lsp.CancellationToken) : Promise<lsp.SemanticTokens> {
+    async getSemanticTokens(doc: LspDocument, file: string, startOffset: number, endOffset: number, token?: lsp.CancellationToken): Promise<lsp.SemanticTokens> {
         const response = await this.tspClient.request(
             CommandTypes.EncodedSemanticClassificationsFull,
             {

@@ -73,6 +73,13 @@ export class LspDocument implements TextDocument {
         return lsp.Position.create(line, 0);
     }
 
+    getFullRange(): lsp.Range {
+        return lsp.Range.create(
+            lsp.Position.create(0, 0),
+            this.getLineEnd(Math.max(this.lineCount - 1, 0)),
+        );
+    }
+
     applyEdit(version: number, change: lsp.TextDocumentContentChangeEvent): void {
         const content = this.getText();
         let newContent = change.text;
