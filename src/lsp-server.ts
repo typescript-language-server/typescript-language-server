@@ -663,6 +663,8 @@ export class LspServer {
             optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
         };
         const completions: lsp.CompletionItem[] = [];
+        const logLargeCompletionProviders = entries.length > 5000;
+        const largeCompletionsMap = new Map<string, number>();
         for (const entry of entries || []) {
             if (entry.kind === 'warning') {
                 continue;
@@ -672,6 +674,20 @@ export class LspServer {
                 continue;
             }
             completions.push(completion);
+            if (logLargeCompletionProviders) {
+                const source = entry.source || '[no module]';
+                const count = largeCompletionsMap.get(source) || 0;
+                largeCompletionsMap.set(source, count + 1);
+            }
+        }
+        if (logLargeCompletionProviders) {
+            const largeCompletionsList: [string, number][] = [];
+            for (const [key, count] of largeCompletionsMap.entries()) {
+                largeCompletionsList.push([key, count]);
+            }
+            largeCompletionsList.sort((a, b) => b[1] - a[1]).splice(100);
+            const table = largeCompletionsList.map(([key, count]) => `  ${key}: ${count}`).join('\n');
+            this.logger.warn(`Total completions count: ${entries.length}. Modules contributing most completions:\n${table}`);
         }
         return lsp.CompletionList.create(completions, isIncomplete);
     }
