@@ -10,6 +10,7 @@
  */
 
 import type lsp from 'vscode-languageserver';
+import { ResponseError } from 'vscode-languageserver';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { DiagnosticKind, DiagnosticsManager } from './features/diagnostics.js';
@@ -709,13 +710,17 @@ export default class TypeScriptServiceClient extends Disposable implements IType
         return this.executeAsync(CommandTypes.Geterr, args, token);
     }
 
-    public request<K extends keyof StandardTsServerRequests>(
+    public async request<K extends keyof StandardTsServerRequests>(
         command: K,
         args: StandardTsServerRequests[K][0],
         token?: lsp.CancellationToken,
         config?: ExecConfig,
     ): Promise<ServerResponse.Response<StandardTsServerRequests[K][1]>> {
-        return this.execute(command, args, token, config);
+        try {
+            return await this.execute(command, args, token, config);
+        } catch (error) {
+            throw new ResponseError(1, (error as Error).message);
+        }
     }
 
     // High-level API END

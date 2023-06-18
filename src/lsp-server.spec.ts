@@ -8,7 +8,7 @@
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
+import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer } from './test-utils.js';
 import { Commands } from './commands.js';
 import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
@@ -699,7 +699,7 @@ describe('completion', () => {
                     detail: '(x)',
                 },
                 kind: lsp.CompletionItemKind.Method,
-                insertText: toPlatformEOL('bar(x) {\n    $0\n},'),
+                insertText: 'bar(x) {\n    $0\n},',
             },
         );
     });
@@ -1215,6 +1215,32 @@ describe('formatting', () => {
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
         expect('function foo()\n{\n\t// some code\n}').toBe(result);
+    });
+
+    it('considers last character in the file', async () => {
+        const text = 'const first = 1;\nconst second = 2';
+        const textDocument = {
+            uri: uriString, languageId, version, text,
+        };
+        server.didOpenTextDocument({ textDocument });
+
+        server.updateWorkspaceSettings({
+            typescript: {
+                format: {
+                    semicolons: SemicolonPreference.Insert,
+                },
+            },
+        });
+
+        const edits = await server.documentFormatting({
+            textDocument,
+            options: {
+                tabSize: 4,
+                insertSpaces: true,
+            },
+        });
+        const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        expect('const first = 1;\nconst second = 2;').toBe(result);
     });
 
     it('selected range', async () => {

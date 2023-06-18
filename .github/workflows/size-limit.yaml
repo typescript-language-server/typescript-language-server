@@ -1,0 +1,35 @@
+---
+name: size
+
+on:
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  size:
+    name: Size Check
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      CI_JOB_NUMBER: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
+      - name: yarn install
+        run: yarn
+      - name: build
+        run: yarn build
+      - name: Check bundle sizes
+        uses: andresz1/size-limit-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          build_script: size
