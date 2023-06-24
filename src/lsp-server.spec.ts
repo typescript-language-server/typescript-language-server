@@ -2223,3 +2223,24 @@ describe('fileOperations', () => {
         ]);
     });
 });
+
+describe('linked editing', () => {
+    it('simple test', async () => {
+        const textDocument = {
+            uri: uri('foo.tsx'),
+            languageId: 'typescriptreact',
+            version: 1,
+            text: 'let bar = <div></div>',
+        };
+        server.didOpenTextDocument({ textDocument });
+        const position = positionAfter(textDocument, '<div');
+        const linedEditRanges = await server.linkedEditingRange({
+            textDocument,
+            position,
+        });
+        expect(linedEditRanges?.ranges).toStrictEqual([
+            { start: { line: 0, character: 11 }, end: { line: 0, character: 14 } },
+            { start: { line: 0, character: 17 }, end: { line: 0, character: 20 } },
+        ]);
+    });
+});
