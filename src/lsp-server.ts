@@ -1312,17 +1312,15 @@ export class LspServer {
             params.textDocument.uri, params.range, this.documents, this.tspClient, this.options.lspClient, this.configurationManager, token);
     }
 
-    async linkedEditingRange(params: lsp.LinkedEditingRangeParams, token?: lsp.CancellationToken): Promise<lsp.LinkedEditingRanges> {
+    async linkedEditingRange(params: lsp.LinkedEditingRangeParams, token?: lsp.CancellationToken): Promise<lsp.LinkedEditingRanges | null> {
         const file = uriToPath(params.textDocument.uri);
         if (!file) {
-            return { ranges: [] };
+            return null;
         }
         const args = Position.toFileLocationRequestArgs(file, params.position);
         const response = await this.tspClient.request(CommandTypes.LinkedEditingRange, args, token);
         if (response.type !== 'response' || !response.body) {
-            return {
-                ranges: [],
-            };
+            return null;
         }
         return {
             ranges: response.body.ranges.map(Range.fromTextSpan),
