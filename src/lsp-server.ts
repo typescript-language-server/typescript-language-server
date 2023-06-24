@@ -1319,9 +1319,14 @@ export class LspServer {
         }
         const args = Position.toFileLocationRequestArgs(file, params.position);
         const response = await this.tspClient.request(CommandTypes.LinkedEditingRange, args, token);
+        if (response.type !== 'response' || !response.body) {
+            return {
+                ranges: [],
+            };
+        }
         return {
-            ranges: response.body?.ranges.map(Range.fromTextSpan) ?? [],
-            wordPattern: response.body?.wordPattern,
+            ranges: response.body.ranges.map(Range.fromTextSpan),
+            wordPattern: response.body.wordPattern,
         };
     }
 
