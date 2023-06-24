@@ -56,6 +56,7 @@ export interface TypeScriptRequestTypes {
     [CommandTypes.GetSupportedCodeFixes]: [null, ts.server.protocol.GetSupportedCodeFixesResponse];
     [CommandTypes.Implementation]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ImplementationResponse];
     [CommandTypes.JsxClosingTag]: [ts.server.protocol.JsxClosingTagRequestArgs, ts.server.protocol.JsxClosingTagResponse];
+    [CommandTypes.LinkedEditingRange]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.LinkedEditingRangeResponse];
     [CommandTypes.Navto]: [ts.server.protocol.NavtoRequestArgs, ts.server.protocol.NavtoResponse];
     [CommandTypes.NavTree]: [ts.server.protocol.FileRequestArgs, ts.server.protocol.NavTreeResponse];
     [CommandTypes.Open]: [ts.server.protocol.OpenRequestArgs, null];
