@@ -46,12 +46,6 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<ts.server.protocol.UserPreferences>
     provideRefactorNotApplicableReason: true,
     quotePreference: 'auto',
     useLabelDetailsInCompletionEntries: true,
-    organizeImportsIgnoreCase: 'auto',
-    organizeImportsCollation: 'ordinal',
-    organizeImportsCollationLocale: 'en',
-    organizeImportsNumericCollation: false,
-    organizeImportsAccentCollation: true,
-    organizeImportsCaseFirst: false,
 };
 
 const DEFAULT_IMPLICIT_PROJECT_CONFIGURATION: Required<WorkspaceConfigurationImplicitProjectConfigurationOptions> = {
