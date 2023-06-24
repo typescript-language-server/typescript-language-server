@@ -5,7 +5,6 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { platform } from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -65,6 +64,11 @@ const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOption
         jsxAttributeCompletionStyle: 'auto',
         providePrefixAndSuffixTextForRename: true,
     },
+    tsserver: {
+        // With default `auto`, due to dynamic routing, some requests would be routed to syntax server while the project
+        // is loading and return incomplete results so force just a single server for tests.
+        useSyntaxServer: 'never',
+    },
 };
 
 const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {};
@@ -111,13 +115,6 @@ export function positionAfter(document: lsp.TextDocumentItem, match: string): ls
 
 export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp.Position {
     return positionAt(document, document.text.lastIndexOf(match));
-}
-
-export function toPlatformEOL(text: string): string {
-    if (platform() === 'win32') {
-        return text.replace(/(?!\r)\n/g, '\r\n');
-    }
-    return text;
 }
 
 export class TestLspClient implements LspClient {

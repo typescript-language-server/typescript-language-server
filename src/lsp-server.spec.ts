@@ -8,7 +8,7 @@
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, toPlatformEOL } from './test-utils.js';
+import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer } from './test-utils.js';
 import { Commands } from './commands.js';
 import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
@@ -699,7 +699,7 @@ describe('completion', () => {
                     detail: '(x)',
                 },
                 kind: lsp.CompletionItemKind.Method,
-                insertText: toPlatformEOL('bar(x) {\n    $0\n},'),
+                insertText: 'bar(x) {\n    $0\n},',
             },
         );
     });
@@ -1217,6 +1217,32 @@ describe('formatting', () => {
         expect('function foo()\n{\n\t// some code\n}').toBe(result);
     });
 
+    it('considers last character in the file', async () => {
+        const text = 'const first = 1;\nconst second = 2';
+        const textDocument = {
+            uri: uriString, languageId, version, text,
+        };
+        server.didOpenTextDocument({ textDocument });
+
+        server.updateWorkspaceSettings({
+            typescript: {
+                format: {
+                    semicolons: SemicolonPreference.Insert,
+                },
+            },
+        });
+
+        const edits = await server.documentFormatting({
+            textDocument,
+            options: {
+                tabSize: 4,
+                insertSpaces: true,
+            },
+        });
+        const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
+        expect('const first = 1;\nconst second = 2;').toBe(result);
+    });
+
     it('selected range', async () => {
         const text = 'function foo() {\nconst first = 1;\nconst second = 2;\nconst val = foo( "something" );\n//const fourth = 4;\n}';
         const textDocument = {
@@ -1483,6 +1509,77 @@ describe('code actions', () => {
         expect(result).toEqual([]);
     });
 
+    it('provides organize imports when there are no errors', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `import { existsSync } from 'fs';
+import { accessSync } from 'fs';
+existsSync('t');
+accessSync('t');`,
+        };
+        server.didOpenTextDocument({
+            textDocument: doc,
+        });
+        const result = (await server.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 0, character: 0 },
+                end: { line: 3, character: 0 },
+            },
+            context: {
+                diagnostics: [],
+                only: [CodeActionKind.SourceOrganizeImportsTs.value],
+            },
+        }))!;
+
+        expect(result).toMatchObject([
+            {
+                kind: CodeActionKind.SourceOrganizeImportsTs.value,
+                title: 'Organize Imports',
+                edit: {
+                    documentChanges: [
+                        {
+                            edits: [
+                                {
+                                    newText: "import { accessSync, existsSync } from 'fs';\n",
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 1,
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 0,
+                                        },
+                                    },
+                                },
+                                {
+                                    newText: '',
+                                    range: {
+                                        end: {
+                                            character: 0,
+                                            line: 2,
+                                        },
+                                        start: {
+                                            character: 0,
+                                            line: 1,
+                                        },
+                                    },
+                                },
+                            ],
+                            textDocument: {
+                                uri: uri('bar.ts'),
+                                version: 1,
+                            },
+                        },
+                    ],
+                },
+            },
+        ]);
+    });
+
     it('provides "add missing imports" when explicitly requested in only', async () => {
         const doc = {
             uri: uri('bar.ts'),
@@ -1586,83 +1683,6 @@ describe('code actions', () => {
                                         start: {
                                             character: 0,
                                             line: 2,
-                                        },
-                                    },
-                                },
-                            ],
-                            textDocument: {
-                                uri: uri('bar.ts'),
-                                version: 1,
-                            },
-                        },
-                    ],
-                },
-            },
-        ]);
-    });
-
-    it('provides organize imports when explicitly requested in only', async () => {
-        const doc = {
-            uri: uri('bar.ts'),
-            languageId: 'typescript',
-            version: 1,
-            text: `import { existsSync } from 'fs';
-import { accessSync } from 'fs';
-existsSync('t');`,
-        };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-        const result = (await server.codeAction({
-            textDocument: doc,
-            range: {
-                start: { line: 0, character: 0 },
-                end: { line: 3, character: 0 },
-            },
-            context: {
-                diagnostics: [{
-                    range: {
-                        start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 },
-                    },
-                    code: 6133,
-                    message: 'unused arg',
-                }],
-                only: [CodeActionKind.SourceOrganizeImportsTs.value],
-            },
-        }))!;
-
-        expect(result).toMatchObject([
-            {
-                kind: CodeActionKind.SourceOrganizeImportsTs.value,
-                title: 'Organize imports',
-                edit: {
-                    documentChanges: [
-                        {
-                            edits: [
-                                {
-                                    newText: "import { accessSync, existsSync } from 'fs';\n",
-                                    range: {
-                                        end: {
-                                            character: 0,
-                                            line: 1,
-                                        },
-                                        start: {
-                                            character: 0,
-                                            line: 0,
-                                        },
-                                    },
-                                },
-                                {
-                                    newText: '',
-                                    range: {
-                                        end: {
-                                            character: 0,
-                                            line: 2,
-                                        },
-                                        start: {
-                                            character: 0,
-                                            line: 1,
                                         },
                                     },
                                 },
@@ -2182,5 +2202,24 @@ describe('completions without client snippet support', () => {
                 kind: 2,
             },
         );
+    });
+});
+
+describe('fileOperations', () => {
+    it('willRenameFiles', async () => {
+        const edit = await server.willRenameFiles({
+            files: [{ oldUri: uri('module1.ts'), newUri: uri('new_module1_name.ts') }],
+        });
+        expect(edit.changes).toBeDefined();
+        expect(Object.keys(edit.changes!)).toHaveLength(1);
+        expect(edit.changes![uri('module2.ts')]).toEqual([
+            {
+                range: {
+                    start:{ line: 0, character: 25 },
+                    end: { line: 0, character: 34 },
+                },
+                newText:'./new_module1_name',
+            },
+        ]);
     });
 });

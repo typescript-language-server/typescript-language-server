@@ -74,16 +74,17 @@ typescript-language-server --stdio
 
 The language server accepts various settings through the `initializationOptions` object passed through the `initialize` request. Refer to your LSP client's documentation on how to set these. Here is the list of supported options:
 
-| Setting           | Type     | Description                                                                                                                                                                                                                                                          |
-|:------------------|:---------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| hostInfo          | string   | Information about the host, for example `"Emacs 24.4"` or `"Sublime Text v3075"`. **Default**: `undefined`                                                                                                                                                           |
+| Setting           | Type     | Description                                                                           |
+|:------------------|:---------|:--------------------------------------------------------------------------------------|
+| hostInfo          | string   | Information about the host, for example `"Emacs 24.4"` or `"Sublime Text v3075"`. **Default**: `undefined` |
+| completionDisableFilterText  | boolean | Don't set `filterText` property on completion items. **Default**: `false` |
 | disableAutomaticTypingAcquisition | boolean | Disables tsserver from automatically fetching missing type definitions (`@types` packages) for external modules. |
 | maxTsServerMemory | number   | The maximum size of the V8's old memory section in megabytes (for example `4096` means 4GB). The default value is dynamically configured by Node so can differ per system. Increase for very big projects that exceed allowed memory usage. **Default**: `undefined` |
 | npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
 | locale            | string   | The locale to use to show error messages. |
-| plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: []                                                                                                                                                         |
-| preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more info.                                                                                                                              |
-| tsserver          | object   | Options related to the `tsserver` process. See below for more info.                                                                                                                              |
+| plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: [] |
+| preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more |
+| tsserver          | object   | Options related to the `tsserver` process. See below for more |
 
 The `tsserver` setting specifies additional options related to the internal `tsserver` process, like tracing and logging.
 
@@ -118,6 +119,16 @@ interface TsserverOptions {
      * @default 'off'
      */
     trace?: 'off' | 'messages' | 'verbose';
+    /**
+     * Whether a dedicated server is launched to more quickly handle syntax related operations, such as computing diagnostics or code folding.
+     *
+     * Allowed values:
+     *  - auto: Spawn both a full server and a lighter weight server dedicated to syntax operations. The syntax server is used to speed up syntax operations and provide IntelliSense while projects are loading.
+     *  - never: Don't use a dedicated syntax server. Use a single server to handle all IntelliSense operations.
+     *
+     * @default 'auto'
+     */
+    useSyntaxServer?: 'auto' | 'never';
 }
 ```
 
@@ -195,6 +206,61 @@ interface UserPreferences {
     importModuleSpecifierEnding: "auto" | "minimal" | "index" | "js";
     allowTextChangesInNewFiles: boolean;
     lazyConfiguredProjectsFromExternalProject: boolean;
+    /**
+     * Indicates whether imports should be organized in a case-insensitive manner.
+     *
+     * Default: `"auto"`.
+     */
+    organizeImportsIgnoreCase: "auto" | boolean;
+    /**
+     * Indicates whether imports should be organized via an "ordinal" (binary) comparison using the numeric value
+     * of their code points, or via "unicode" collation (via the
+     * [Unicode Collation Algorithm](https://unicode.org/reports/tr10/#Scope)) using rules associated with the locale
+     * specified in {@link organizeImportsCollationLocale}.
+     *
+     * Default: `"ordinal"`.
+     */
+    organizeImportsCollation: "ordinal" | "unicode";
+    /**
+     * Indicates the locale to use for "unicode" collation. If not specified, the locale `"en"` is used as an invariant
+     * for the sake of consistent sorting. Use `"auto"` to use the detected UI locale.
+     *
+     * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
+     *
+     * Default: `"en"`
+     */
+    organizeImportsCollationLocale: string;
+    /**
+     * Indicates whether numeric collation should be used for digit sequences in strings. When `true`, will collate
+     * strings such that `a1z < a2z < a100z`. When `false`, will collate strings such that `a1z < a100z < a2z`.
+     *
+     * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
+     *
+     * Default: `false`
+     */
+    organizeImportsNumericCollation: boolean;
+    /**
+     * Indicates whether accents and other diacritic marks are considered unequal for the purpose of collation. When
+     * `true`, characters with accents and other diacritics will be collated in the order defined by the locale specified
+     * in {@link organizeImportsCollationLocale}.
+     *
+     * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
+     *
+     * Default: `true`
+     */
+    organizeImportsAccentCollation: boolean;
+    /**
+     * Indicates whether upper case or lower case should sort first. When `false`, the default order for the locale
+     * specified in {@link organizeImportsCollationLocale} is used.
+     *
+     * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`. This preference is also
+     * ignored if we are using case-insensitive sorting, which occurs when {@link organizeImportsIgnoreCase} is `true`,
+     * or if {@link organizeImportsIgnoreCase} is `"auto"` and the auto-detected case sensitivity is determined to be
+     * case-insensitive.
+     *
+     * Default: `false`
+     */
+    organizeImportsCaseFirst: "upper" | "lower" | false;
     providePrefixAndSuffixTextForRename: boolean;
     provideRefactorNotApplicableReason: boolean;
     allowRenameOfImportPath: boolean;
@@ -344,9 +410,11 @@ implicitProjectConfiguration.target: string;
 
 Server announces support for the following code action kinds:
 
- - `source.addMissingImports.ts` - adds imports for used but not imported symbols
  - `source.fixAll.ts` - despite the name, fixes a couple of specific issues: unreachable code, await in non-async functions, incorrectly implemented interface
  - `source.removeUnused.ts` - removes declared but unused variables
+ - `source.addMissingImports.ts` - adds imports for used but not imported symbols
+ - `source.removeUnusedImports.ts` - removes unused imports
+ - `source.sortImports.ts` - sorts imports
  - `source.organizeImports.ts` - organizes and removes unused imports
 
 This allows editors that support running code actions on save to automatically run fixes associated with those kinds.

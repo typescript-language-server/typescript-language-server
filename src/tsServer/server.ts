@@ -9,10 +9,11 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import * as lsp from 'vscode-languageserver';
 import { CancellationToken } from 'vscode-jsonrpc';
 import { RequestItem, RequestQueue, RequestQueueingType } from './requestQueue.js';
-import { ServerResponse, ServerType, TypeScriptRequestTypes } from './requests.js';
-import type { ts } from '../ts-protocol.js';
+import { ServerResponse, ServerType, TypeScriptRequestTypes } from '../typescriptService.js';
+import { CommandTypes, EventName, ts } from '../ts-protocol.js';
 import type { TspClientOptions } from '../tsp-client.js';
 import { OngoingRequestCanceller } from './cancellation.js';
 import { CallbackMap } from './callbackMap.js';
@@ -54,6 +55,10 @@ export interface ITypeScriptServer {
     dispose(): void;
 }
 
+export interface TsServerDelegate {
+    onFatalError(command: string, error: Error): void;
+}
+
 export const enum TsServerProcessKind {
     Main = 'main',
     Syntax = 'syntax',
@@ -81,7 +86,7 @@ export interface TsServerProcess {
     kill(): void;
 }
 
-export class ProcessBasedTsServer implements ITypeScriptServer {
+export class SingleTsServer implements ITypeScriptServer {
     private readonly _requestQueue = new RequestQueue();
     private readonly _callbacks = new CallbackMap<ts.server.protocol.Response>();
     private readonly _pendingResponses = new Set<number>();
@@ -233,7 +238,7 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
             request,
             expectsResponse: executeInfo.expectsResult,
             isAsync: executeInfo.isAsync,
-            queueingType: ProcessBasedTsServer.getQueueingType(command, executeInfo.lowPriority),
+            queueingType: SingleTsServer.getQueueingType(command, executeInfo.lowPriority),
         };
         let result: Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined;
         if (executeInfo.expectsResult) {
@@ -300,9 +305,276 @@ export class ProcessBasedTsServer implements ITypeScriptServer {
         command: string,
         lowPriority?: boolean,
     ): RequestQueueingType {
-        if (ProcessBasedTsServer.fenceCommands.has(command)) {
+        if (SingleTsServer.fenceCommands.has(command)) {
             return RequestQueueingType.Fence;
         }
         return lowPriority ? RequestQueueingType.LowPriority : RequestQueueingType.Normal;
     }
+}
+
+interface ExecuteInfo {
+    readonly isAsync: boolean;
+    readonly token?: CancellationToken;
+    readonly expectsResult: boolean;
+    readonly lowPriority?: boolean;
+    readonly executionTarget?: ExecutionTarget;
+}
+
+class RequestRouter {
+    private static readonly sharedCommands = new Set<keyof TypeScriptRequestTypes>([
+        CommandTypes.Change,
+        CommandTypes.Close,
+        CommandTypes.Open,
+        CommandTypes.UpdateOpen,
+        CommandTypes.Configure,
+    ]);
+
+    constructor(
+        private readonly servers: ReadonlyArray<{
+            readonly server: ITypeScriptServer;
+            canRun?(command: keyof TypeScriptRequestTypes, executeInfo: ExecuteInfo): boolean;
+        }>,
+        private readonly delegate: TsServerDelegate,
+    ) { }
+
+    public execute(
+        command: keyof TypeScriptRequestTypes,
+        args: any,
+        executeInfo: ExecuteInfo,
+    ): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+        if (RequestRouter.sharedCommands.has(command) && typeof executeInfo.executionTarget === 'undefined') {
+            // Dispatch shared commands to all servers but use first one as the primary response
+
+            const requestStates: RequestState.State[] = this.servers.map(() => RequestState.Unresolved);
+
+            // Also make sure we never cancel requests to just one server
+            let token: CancellationToken | undefined = undefined;
+            if (executeInfo.token) {
+                const source = new lsp.CancellationTokenSource();
+                executeInfo.token.onCancellationRequested(() => {
+                    if (requestStates.some(state => state === RequestState.Resolved)) {
+                        // Don't cancel.
+                        // One of the servers completed this request so we don't want to leave the other
+                        // in a different state.
+                        return;
+                    }
+                    source.cancel();
+                });
+                token = source.token;
+            }
+
+            const allRequests: Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> = [];
+
+            for (let serverIndex = 0; serverIndex < this.servers.length; ++serverIndex) {
+                const server = this.servers[serverIndex].server;
+
+                const request = server.executeImpl(command, args, { ...executeInfo, token })[0];
+                allRequests.push(request);
+                if (request) {
+                    request
+                        .then(result => {
+                            requestStates[serverIndex] = RequestState.Resolved;
+                            const erroredRequest = requestStates.find(state => state.type === RequestState.Type.Errored) as RequestState.Errored | undefined;
+                            if (erroredRequest) {
+                                // We've gone out of sync
+                                this.delegate.onFatalError(command, erroredRequest.err);
+                            }
+                            return result;
+                        }, err => {
+                            requestStates[serverIndex] = new RequestState.Errored(err);
+                            if (requestStates.some(state => state === RequestState.Resolved)) {
+                                // We've gone out of sync
+                                this.delegate.onFatalError(command, err);
+                            }
+                            throw err;
+                        });
+                }
+            }
+
+            return allRequests;
+        }
+
+        for (const { canRun, server } of this.servers) {
+            if (!canRun || canRun(command, executeInfo)) {
+                return server.executeImpl(command, args, executeInfo);
+            }
+        }
+
+        throw new Error(`Could not find server for command: '${command}'`);
+    }
+}
+
+export class SyntaxRoutingTsServer implements ITypeScriptServer {
+    /**
+     * Commands that should always be run on the syntax server.
+     */
+    private static readonly syntaxAlwaysCommands = new Set<keyof TypeScriptRequestTypes>([
+        CommandTypes.NavTree,
+        CommandTypes.GetOutliningSpans,
+        CommandTypes.JsxClosingTag,
+        CommandTypes.SelectionRange,
+        CommandTypes.Format,
+        CommandTypes.Formatonkey,
+        CommandTypes.DocCommentTemplate,
+    ]);
+
+    /**
+     * Commands that should always be run on the semantic server.
+     */
+    private static readonly semanticCommands = new Set<keyof TypeScriptRequestTypes>([
+        CommandTypes.Geterr,
+        CommandTypes.GeterrForProject,
+        CommandTypes.ProjectInfo,
+        CommandTypes.ConfigurePlugin,
+    ]);
+
+    /**
+     * Commands that can be run on the syntax server but would benefit from being upgraded to the semantic server.
+     */
+    private static readonly syntaxAllowedCommands = new Set<keyof TypeScriptRequestTypes>([
+        CommandTypes.CompletionEntryDetails,
+        CommandTypes.CompletionInfo,
+        CommandTypes.Definition,
+        CommandTypes.DefinitionAndBoundSpan,
+        CommandTypes.DocumentHighlights,
+        CommandTypes.Implementation,
+        CommandTypes.Navto,
+        CommandTypes.Quickinfo,
+        CommandTypes.References,
+        CommandTypes.Rename,
+        CommandTypes.SignatureHelp,
+    ]);
+
+    private readonly syntaxServer: ITypeScriptServer;
+    private readonly semanticServer: ITypeScriptServer;
+    private readonly router: RequestRouter;
+
+    private _projectLoading = true;
+    private readonly _eventHandlers = new Set<OnEventHandler>();
+    private readonly _exitHandlers = new Set<OnExitHandler>();
+    private readonly _errorHandlers = new Set<OnErrorHandler>();
+
+    public constructor(
+        servers: { syntax: ITypeScriptServer; semantic: ITypeScriptServer; },
+        delegate: TsServerDelegate,
+        enableDynamicRouting: boolean,
+    ) {
+        this.syntaxServer = servers.syntax;
+        this.semanticServer = servers.semantic;
+
+        this.router = new RequestRouter(
+            [
+                {
+                    server: this.syntaxServer,
+                    canRun: (command, execInfo) => {
+                        switch (execInfo.executionTarget) {
+                            case ExecutionTarget.Semantic:
+                                return false;
+                            case ExecutionTarget.Syntax:
+                                return true;
+                        }
+
+                        if (SyntaxRoutingTsServer.syntaxAlwaysCommands.has(command)) {
+                            return true;
+                        }
+                        if (SyntaxRoutingTsServer.semanticCommands.has(command)) {
+                            return false;
+                        }
+                        if (enableDynamicRouting && this.projectLoading && SyntaxRoutingTsServer.syntaxAllowedCommands.has(command)) {
+                            return true;
+                        }
+                        return false;
+                    },
+                }, {
+                    server: this.semanticServer,
+                    canRun: undefined, /* gets all other commands */
+                },
+            ],
+            delegate);
+
+        this.syntaxServer.onEvent(event => {
+            this._eventHandlers.forEach(handler => handler(event));
+        });
+
+        this.semanticServer.onEvent(event => {
+            switch (event.event) {
+                case EventName.projectLoadingStart:
+                    this._projectLoading = true;
+                    break;
+
+                case EventName.projectLoadingFinish:
+                case EventName.semanticDiag:
+                case EventName.syntaxDiag:
+                case EventName.suggestionDiag:
+                case EventName.configFileDiag:
+                    this._projectLoading = false;
+                    break;
+            }
+            this._eventHandlers.forEach(handler => handler(event));
+        });
+
+        this.semanticServer.onExit(event => {
+            this._exitHandlers.forEach(handler => handler(event));
+            this.syntaxServer.kill();
+        });
+
+        this.semanticServer.onError(event => this._errorHandlers.forEach(handler => handler(event)));
+    }
+
+    private get projectLoading() {
+        return this._projectLoading;
+    }
+
+    public dispose(): void {
+        this._eventHandlers.clear();
+        this._exitHandlers.clear();
+        this._errorHandlers.clear();
+    }
+
+    public onEvent(handler: OnEventHandler): void {
+        this._eventHandlers.add(handler);
+    }
+
+    public onExit(handler: OnExitHandler): void {
+        this._exitHandlers.add(handler);
+    }
+
+    public onError(handler: OnErrorHandler): void {
+        this._errorHandlers.add(handler);
+    }
+
+    public onStdErr(_handler: OnStdErrHandler): void {
+    }
+
+    public get tsServerLogFile(): string | undefined {
+        return this.semanticServer.tsServerLogFile;
+    }
+
+    public kill(): void {
+        this.dispose();
+        this.syntaxServer.kill();
+        this.semanticServer.kill();
+    }
+
+    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+        return this.router.execute(command, args, executeInfo);
+    }
+}
+
+namespace RequestState {
+    export const enum Type { Unresolved, Resolved, Errored }
+
+    export const Unresolved = { type: Type.Unresolved } as const;
+
+    export const Resolved = { type: Type.Resolved } as const;
+
+    export class Errored {
+        readonly type = Type.Errored;
+
+        constructor(
+            public readonly err: Error,
+        ) { }
+    }
+
+    export type State = typeof Unresolved | typeof Resolved | Errored;
 }

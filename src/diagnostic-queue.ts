@@ -9,13 +9,14 @@ import * as lsp from 'vscode-languageserver';
 import debounce from 'p-debounce';
 import { Logger } from './utils/logger.js';
 import { pathToUri, toDiagnostic } from './protocol-translation.js';
-import { EventTypes } from './ts-protocol.js';
+import { SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import { LspDocuments } from './document.js';
-import { SupportedFeatures } from './ts-protocol.js';
+import { DiagnosticKind, TspClient } from './tsp-client.js';
+import { ClientCapability } from './typescriptService.js';
 
 class FileDiagnostics {
-    private readonly diagnosticsPerKind = new Map<EventTypes, ts.server.protocol.Diagnostic[]>();
+    private readonly diagnosticsPerKind = new Map<DiagnosticKind, ts.server.protocol.Diagnostic[]>();
 
     constructor(
         protected readonly uri: string,
@@ -24,7 +25,7 @@ class FileDiagnostics {
         protected readonly features: SupportedFeatures,
     ) { }
 
-    update(kind: EventTypes, diagnostics: ts.server.protocol.Diagnostic[]): void {
+    update(kind: DiagnosticKind, diagnostics: ts.server.protocol.Diagnostic[]): void {
         this.diagnosticsPerKind.set(kind, diagnostics);
         this.firePublishDiagnostics();
     }
@@ -53,22 +54,19 @@ export class DiagnosticEventQueue {
         protected readonly documents: LspDocuments,
         protected readonly features: SupportedFeatures,
         protected readonly logger: Logger,
+        private readonly tspClient: TspClient,
     ) { }
 
-    updateDiagnostics(kind: EventTypes, event: ts.server.protocol.DiagnosticEvent): void {
-        if (!event.body) {
-            this.logger.error(`Received empty ${event.event} diagnostics.`);
+    updateDiagnostics(kind: DiagnosticKind, file: string, diagnostics: ts.server.protocol.Diagnostic[]): void {
+        if (kind !== DiagnosticKind.Syntax && !this.tspClient.hasCapabilityForResource(this.documents.toResource(file), ClientCapability.Semantic)) {
             return;
         }
-        const { file } = event.body;
-        let { diagnostics } = event.body;
 
         if (this.ignoredDiagnosticCodes.size) {
             diagnostics = diagnostics.filter(diagnostic => !this.isDiagnosticIgnored(diagnostic));
         }
         const uri = pathToUri(file, this.documents);
-        const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(
-            uri, this.publishDiagnostics, this.documents, this.features);
+        const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.documents, this.features);
         diagnosticsForFile.update(kind, diagnostics);
         this.diagnostics.set(uri, diagnosticsForFile);
     }

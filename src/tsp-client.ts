@@ -9,21 +9,87 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { URI } from 'vscode-uri';
+import { ResponseError } from 'vscode-languageserver';
 import type lsp from 'vscode-languageserver';
 import type { CancellationToken } from 'vscode-jsonrpc';
 import { Logger, PrefixingLogger } from './utils/logger.js';
 import API from './utils/api.js';
-import { CommandTypes, EventTypes } from './ts-protocol.js';
+import { CommandTypes, EventName } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
-import { ExecConfig, ServerResponse, TypeScriptRequestTypes } from './tsServer/requests.js';
+import { AsyncTsServerRequests, ClientCapabilities, ClientCapability, ExecConfig, NoResponseTsServerRequests, ServerResponse, StandardTsServerRequests, TypeScriptRequestTypes } from './typescriptService.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
 import { TypeScriptServerError } from './tsServer/serverError.js';
 import { TypeScriptServerSpawner } from './tsServer/spawner.js';
 import Tracer, { Trace } from './tsServer/tracer.js';
 import type { TypeScriptVersion, TypeScriptVersionSource } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
-import type { TsServerLogLevel } from './utils/configuration.js';
+import { SyntaxServerConfiguration, TsServerLogLevel } from './utils/configuration.js';
+
+namespace ServerState {
+    export const enum Type {
+        None,
+        Running,
+        Errored
+    }
+
+    export const None = { type: Type.None } as const;
+
+    export class Running {
+        readonly type = Type.Running;
+
+        constructor(
+            public readonly server: ITypeScriptServer,
+
+            /**
+             * API version obtained from the version picker after checking the corresponding path exists.
+             */
+            public readonly apiVersion: API,
+
+            /**
+             * Version reported by currently-running tsserver.
+             */
+            public tsserverVersion: string | undefined,
+            public languageServiceEnabled: boolean,
+        ) { }
+
+        // public readonly toCancelOnResourceChange = new Set<ToCancelOnResourceChanged>();
+
+        updateTsserverVersion(tsserverVersion: string): void {
+            this.tsserverVersion = tsserverVersion;
+        }
+
+        updateLanguageServiceEnabled(enabled: boolean): void {
+            this.languageServiceEnabled = enabled;
+        }
+    }
+
+    export class Errored {
+        readonly type = Type.Errored;
+        constructor(
+            public readonly error: Error,
+            public readonly tsServerLogFile: string | undefined,
+        ) { }
+    }
+
+    export type State = typeof None | Running | Errored;
+}
+
+export const enum DiagnosticKind {
+    Syntax,
+    Semantic,
+    Suggestion,
+}
+
+export function getDignosticsKind(event: ts.server.protocol.Event): DiagnosticKind {
+    switch (event.event) {
+        case 'syntaxDiag': return DiagnosticKind.Syntax;
+        case 'semanticDiag': return DiagnosticKind.Semantic;
+        case 'suggestionDiag': return DiagnosticKind.Suggestion;
+    }
+    throw new Error('Unknown dignostics kind');
+}
 
 class ServerInitializingIndicator {
     private _loadingProjectName?: string;
@@ -32,13 +98,10 @@ class ServerInitializingIndicator {
     constructor(private lspClient: LspClient) {}
 
     public reset(): void {
-        if (this._loadingProjectName) {
-            this._loadingProjectName = undefined;
-            if (this._task) {
-                const task = this._task;
-                this._task = undefined;
-                task.then(reporter => reporter.done());
-            }
+        if (this._task) {
+            const task = this._task;
+            this._task = undefined;
+            task.then(reporter => reporter.done());
         }
     }
 
@@ -74,12 +137,13 @@ export interface TspClientOptions {
     pluginProbeLocations?: string[];
     onEvent?: (event: ts.server.protocol.Event) => void;
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
+    useSyntaxServer: SyntaxServerConfiguration;
 }
 
 export class TspClient {
     public apiVersion: API;
     public typescriptVersionSource: TypeScriptVersionSource;
-    private primaryTsServer: ITypeScriptServer | null = null;
+    private serverState: ServerState.State = ServerState.None;
     private logger: Logger;
     private tsserverLogger: Logger;
     private loadingIndicator: ServerInitializingIndicator;
@@ -94,11 +158,49 @@ export class TspClient {
         this.tracer = new Tracer(this.tsserverLogger, options.trace);
     }
 
+    public get capabilities(): ClientCapabilities {
+        if (this.options.useSyntaxServer === SyntaxServerConfiguration.Always) {
+            return new ClientCapabilities(
+                ClientCapability.Syntax,
+                ClientCapability.EnhancedSyntax);
+        }
+
+        if (this.apiVersion.gte(API.v400)) {
+            return new ClientCapabilities(
+                ClientCapability.Syntax,
+                ClientCapability.EnhancedSyntax,
+                ClientCapability.Semantic);
+        }
+
+        return new ClientCapabilities(
+            ClientCapability.Syntax,
+            ClientCapability.Semantic);
+    }
+
+    public hasCapabilityForResource(resource: URI, capability: ClientCapability): boolean {
+        if (!this.capabilities.has(capability)) {
+            return false;
+        }
+
+        switch (capability) {
+            case ClientCapability.Semantic: {
+                return ['file', 'untitled'].includes(resource.scheme);
+            }
+            case ClientCapability.Syntax:
+            case ClientCapability.EnhancedSyntax: {
+                return true;
+            }
+        }
+    }
+
     start(): boolean {
         const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, this.options.logDirectoryProvider, this.logger, this.tracer);
-        const tsServer = tsServerSpawner.spawn(this.options.typescriptVersion, this.options);
+        const tsServer = tsServerSpawner.spawn(this.options.typescriptVersion, this.capabilities, this.options, {
+            onFatalError: (command, err) => this.fatalError(command, err),
+        });
+        this.serverState = new ServerState.Running(tsServer, this.apiVersion, undefined, true);
         tsServer.onExit((data: TypeScriptServerExitEvent) => {
-            this.primaryTsServer = null;
+            this.serverState = ServerState.None;
             this.shutdown();
             this.tsserverLogger.error(`Exited. Code: ${data.code}. Signal: ${data.signal}`);
             if (this.options.onExit) {
@@ -111,35 +213,40 @@ export class TspClient {
             }
         });
         tsServer.onError((err: Error) => {
+            this.serverState = new ServerState.Errored(err, tsServer.tsServerLogFile);
             if (err) {
                 this.tsserverLogger.error('Exited with error. Error message is: {0}', err.message || err.name);
             }
             this.serviceExited();
         });
         tsServer.onEvent(event => this.dispatchEvent(event));
-        this.primaryTsServer = tsServer;
+        if (this.apiVersion.gte(API.v300) && this.capabilities.has(ClientCapability.Semantic)) {
+            this.loadingIndicator.startedLoadingProject('');
+        }
         return true;
     }
 
     private serviceExited(): void {
-        this.primaryTsServer = null;
+        if (this.serverState.type === ServerState.Type.Running) {
+            this.serverState.server.kill();
+        }
         this.loadingIndicator.reset();
     }
 
     private dispatchEvent(event: ts.server.protocol.Event) {
         switch (event.event) {
-            case EventTypes.SyntaxDiag:
-            case EventTypes.SementicDiag:
-            case EventTypes.SuggestionDiag: {
+            case EventName.syntaxDiag:
+            case EventName.semanticDiag:
+            case EventName.suggestionDiag: {
                 // This event also roughly signals that projects have been loaded successfully (since the TS server is synchronous)
                 this.loadingIndicator.reset();
                 this.options.onEvent?.(event);
                 break;
             }
-            // case EventTypes.ConfigFileDiag:
+            // case EventName.ConfigFileDiag:
             //     this._onConfigDiagnosticsReceived.fire(event as ts.server.protocol.ConfigFileDiagnosticEvent);
             //     break;
-            // case EventTypes.projectLanguageServiceState: {
+            // case EventName.projectLanguageServiceState: {
             //     const body = (event as ts.server.protocol.ProjectLanguageServiceStateEvent).body!;
             //     if (this.serverState.type === ServerState.Type.Running) {
             //         this.serverState.updateLanguageServiceEnabled(body.languageServiceEnabled);
@@ -147,38 +254,40 @@ export class TspClient {
             //     this._onProjectLanguageServiceStateChanged.fire(body);
             //     break;
             // }
-            // case EventTypes.projectsUpdatedInBackground: {
-            //     this.loadingIndicator.reset();
-            //     const body = (event as ts.server.protocol.ProjectsUpdatedInBackgroundEvent).body;
-            //     const resources = body.openFiles.map(file => this.toResource(file));
-            //     this.bufferSyncSupport.getErr(resources);
-            //     break;
-            // }
-            // case EventTypes.beginInstallTypes:
+            case EventName.projectsUpdatedInBackground: {
+                this.loadingIndicator.reset();
+
+                // const body = (event as ts.server.protocol.ProjectsUpdatedInBackgroundEvent).body;
+                // const resources = body.openFiles.map(file => this.toResource(file));
+                // this.bufferSyncSupport.getErr(resources);
+                break;
+            }
+            // case EventName.beginInstallTypes:
             //     this._onDidBeginInstallTypings.fire((event as ts.server.protocol.BeginInstallTypesEvent).body);
             //     break;
-            // case EventTypes.endInstallTypes:
+            // case EventName.endInstallTypes:
             //     this._onDidEndInstallTypings.fire((event as ts.server.protocol.EndInstallTypesEvent).body);
             //     break;
-            // case EventTypes.typesInstallerInitializationFailed:
+            // case EventName.typesInstallerInitializationFailed:
             //     this._onTypesInstallerInitializationFailed.fire((event as ts.server.protocol.TypesInstallerInitializationFailedEvent).body);
             //     break;
-            case EventTypes.ProjectLoadingStart:
+            case EventName.projectLoadingStart:
                 this.loadingIndicator.startedLoadingProject((event as ts.server.protocol.ProjectLoadingStartEvent).body.projectName);
                 break;
-            case EventTypes.ProjectLoadingFinish:
+            case EventName.projectLoadingFinish:
                 this.loadingIndicator.finishedLoadingProject((event as ts.server.protocol.ProjectLoadingFinishEvent).body.projectName);
                 break;
         }
     }
 
-    shutdown(): void {
+    public shutdown(): void {
         if (this.loadingIndicator) {
             this.loadingIndicator.reset();
         }
-        if (this.primaryTsServer) {
-            this.primaryTsServer.kill();
+        if (this.serverState.type === ServerState.Type.Running) {
+            this.serverState.server.kill();
         }
+        this.serverState = ServerState.None;
     }
 
     // High-level API.
@@ -186,7 +295,7 @@ export class TspClient {
     public notify(command: CommandTypes.Open, args: ts.server.protocol.OpenRequestArgs): void;
     public notify(command: CommandTypes.Close, args: ts.server.protocol.FileRequestArgs): void;
     public notify(command: CommandTypes.Change, args: ts.server.protocol.ChangeRequestArgs): void;
-    public notify(command: keyof TypeScriptRequestTypes, args: any): void {
+    public notify(command: keyof NoResponseTsServerRequests, args: any): void {
         this.executeWithoutWaitingForResponse(command, args);
     }
 
@@ -194,13 +303,17 @@ export class TspClient {
         return this.executeAsync(CommandTypes.Geterr, args, token);
     }
 
-    public request<K extends keyof TypeScriptRequestTypes>(
+    public async request<K extends keyof StandardTsServerRequests>(
         command: K,
-        args: TypeScriptRequestTypes[K][0],
+        args: StandardTsServerRequests[K][0],
         token?: CancellationToken,
         config?: ExecConfig,
-    ): Promise<TypeScriptRequestTypes[K][1]> {
-        return this.execute(command, args, token, config);
+    ): Promise<ServerResponse.Response<StandardTsServerRequests[K][1]>> {
+        try {
+            return await this.execute(command, args, token, config);
+        } catch (error) {
+            throw new ResponseError(1, (error as Error).message);
+        }
     }
 
     // Low-level API.
@@ -255,7 +368,10 @@ export class TspClient {
         return executions[0]!;
     }
 
-    public executeWithoutWaitingForResponse(command: keyof TypeScriptRequestTypes, args: any): void {
+    public executeWithoutWaitingForResponse<K extends keyof NoResponseTsServerRequests>(
+        command: K,
+        args: NoResponseTsServerRequests[K][0],
+    ): void {
         this.executeImpl(command, args, {
             isAsync: false,
             token: undefined,
@@ -263,7 +379,11 @@ export class TspClient {
         });
     }
 
-    public executeAsync(command: keyof TypeScriptRequestTypes, args: ts.server.protocol.GeterrRequestArgs, token: CancellationToken): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
+    public executeAsync<K extends keyof AsyncTsServerRequests>(
+        command: K,
+        args: AsyncTsServerRequests[K][0],
+        token: CancellationToken,
+    ): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
         return this.executeImpl(command, args, {
             isAsync: true,
             token,
@@ -272,8 +392,9 @@ export class TspClient {
     }
 
     private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; requireSemantic?: boolean; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
-        if (this.primaryTsServer) {
-            return this.primaryTsServer.executeImpl(command, args, executeInfo);
+        const serverState = this.serverState;
+        if (serverState.type === ServerState.Type.Running) {
+            return serverState.server.executeImpl(command, args, executeInfo);
         } else {
             return [Promise.resolve(ServerResponse.NoServer)];
         }
@@ -285,11 +406,12 @@ export class TspClient {
             this.tsserverLogger.error(error.serverErrorText);
         }
 
-        if (this.primaryTsServer) {
+        if (this.serverState.type === ServerState.Type.Running) {
             this.logger.info('Killing TS Server');
-            this.primaryTsServer.kill();
+            const logfile = this.serverState.server.tsServerLogFile;
+            this.serverState.server.kill();
             if (error instanceof TypeScriptServerError) {
-                this.primaryTsServer = null;
+                this.serverState = new ServerState.Errored(error, logfile);
             }
         }
     }

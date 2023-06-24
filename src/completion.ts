@@ -91,10 +91,15 @@ export function asCompletionItem(
     const { line, optionalReplacementRange, isMemberCompletion, dotAccessorContext } = completionContext;
     let range = getRangeFromReplacementSpan(replacementSpan, optionalReplacementRange, position, document, features);
     let { insertText } = entry;
-    item.filterText = getFilterText(entry, optionalReplacementRange, line, insertText);
+    if (!features.completionDisableFilterText) {
+        item.filterText = getFilterText(entry, optionalReplacementRange, line, insertText);
+    }
 
     if (isMemberCompletion && dotAccessorContext && !entry.isSnippet) {
-        item.filterText = dotAccessorContext.text + (insertText || item.label);
+        const newInsertText = dotAccessorContext.text + (insertText || item.label);
+        if (!features.completionDisableFilterText) {
+            item.filterText = newInsertText;
+        }
         if (!range) {
             if (features.completionInsertReplaceSupport && optionalReplacementRange) {
                 range = {
@@ -104,7 +109,7 @@ export function asCompletionItem(
             } else {
                 range = { replace: dotAccessorContext.range };
             }
-            insertText = item.filterText;
+            insertText = newInsertText;
         }
     }
 

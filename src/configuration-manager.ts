@@ -36,6 +36,12 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<ts.server.protocol.UserPreferences>
     includePackageJsonAutoImports: 'auto',
     jsxAttributeCompletionStyle: 'auto',
     lazyConfiguredProjectsFromExternalProject: false,
+    organizeImportsAccentCollation: true,
+    organizeImportsCaseFirst: false,
+    organizeImportsCollation: 'ordinal',
+    organizeImportsCollationLocale: 'en',
+    organizeImportsIgnoreCase: 'auto',
+    organizeImportsNumericCollation: false,
     providePrefixAndSuffixTextForRename: true,
     provideRefactorNotApplicableReason: true,
     quotePreference: 'auto',
@@ -134,7 +140,7 @@ export class ConfigurationManager {
                 autoImportFileExcludePatterns: this.getAutoImportFileExcludePatternsPreference(workspaceFolder),
             },
         };
-        client.executeWithoutWaitingForResponse(CommandTypes.Configure, args);
+        client.request(CommandTypes.Configure, args);
     }
 
     public async configureGloballyFromDocument(filename: string, formattingOptions?: lsp.FormattingOptions): Promise<void> {

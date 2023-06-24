@@ -3,16 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 /*
- * Copyright (C) 2022 TypeFox and others.
+ * Copyright (C) 2023 TypeFox and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
 import { URI } from 'vscode-uri';
-import { CommandTypes } from '../ts-protocol.js';
-import type { ts } from '../ts-protocol.js';
-import { ExecutionTarget } from './server.js';
+import { CommandTypes } from './ts-protocol.js';
+import type { ts } from './ts-protocol.js';
+import { ExecutionTarget } from './tsServer/server.js';
 
 export enum ServerType {
     Syntax = 'syntax',
@@ -29,15 +29,47 @@ export namespace ServerResponse {
     export type Response<T extends ts.server.protocol.Response> = T | Cancelled | typeof NoContent | typeof NoServer;
 }
 
-export interface TypeScriptRequestTypes {
+export type ExecConfig = {
+    readonly lowPriority?: boolean;
+    readonly nonRecoverable?: boolean;
+    readonly cancelOnResourceChange?: URI;
+    readonly executionTarget?: ExecutionTarget;
+};
+
+export enum ClientCapability {
+    /**
+     * Basic syntax server. All clients should support this.
+     */
+    Syntax,
+
+    /**
+     * Advanced syntax server that can provide single file IntelliSense.
+     */
+    EnhancedSyntax,
+
+    /**
+     * Complete, multi-file semantic server
+     */
+    Semantic,
+}
+
+export class ClientCapabilities {
+    private readonly capabilities: ReadonlySet<ClientCapability>;
+
+    constructor(...capabilities: ClientCapability[]) {
+        this.capabilities = new Set(capabilities);
+    }
+
+    public has(capability: ClientCapability): boolean {
+        return this.capabilities.has(capability);
+    }
+}
+
+export interface StandardTsServerRequests {
     [CommandTypes.ApplyCodeActionCommand]: [ts.server.protocol.ApplyCodeActionCommandRequestArgs, ts.server.protocol.ApplyCodeActionCommandResponse];
-    [CommandTypes.Change]: [ts.server.protocol.ChangeRequestArgs, null];
-    [CommandTypes.Close]: [ts.server.protocol.FileRequestArgs, null];
-    [CommandTypes.CompilerOptionsForInferredProjects]: [ts.server.protocol.SetCompilerOptionsForInferredProjectsArgs, ts.server.protocol.SetCompilerOptionsForInferredProjectsResponse];
     [CommandTypes.CompletionDetails]: [ts.server.protocol.CompletionDetailsRequestArgs, ts.server.protocol.CompletionDetailsResponse];
     [CommandTypes.CompletionInfo]: [ts.server.protocol.CompletionsRequestArgs, ts.server.protocol.CompletionInfoResponse];
     [CommandTypes.Configure]: [ts.server.protocol.ConfigureRequestArguments, ts.server.protocol.ConfigureResponse];
-    [CommandTypes.ConfigurePlugin]: [ts.server.protocol.ConfigurePluginRequestArguments, ts.server.protocol.ConfigurePluginResponse];
     [CommandTypes.Definition]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.DefinitionResponse];
     [CommandTypes.DefinitionAndBoundSpan]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.DefinitionInfoAndBoundSpanResponse];
     [CommandTypes.DocCommentTemplate]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.DocCommandTemplateResponse];
@@ -51,7 +83,6 @@ export interface TypeScriptRequestTypes {
     [CommandTypes.GetCombinedCodeFix]: [ts.server.protocol.GetCombinedCodeFixRequestArgs, ts.server.protocol.GetCombinedCodeFixResponse];
     [CommandTypes.GetEditsForFileRename]: [ts.server.protocol.GetEditsForFileRenameRequestArgs, ts.server.protocol.GetEditsForFileRenameResponse];
     [CommandTypes.GetEditsForRefactor]: [ts.server.protocol.GetEditsForRefactorRequestArgs, ts.server.protocol.GetEditsForRefactorResponse];
-    [CommandTypes.Geterr]: [ts.server.protocol.GeterrRequestArgs, any];
     [CommandTypes.GetOutliningSpans]: [ts.server.protocol.FileRequestArgs, ts.server.protocol.OutliningSpansResponse];
     [CommandTypes.GetSupportedCodeFixes]: [null, ts.server.protocol.GetSupportedCodeFixesResponse];
     [CommandTypes.Implementation]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ImplementationResponse];
@@ -59,7 +90,6 @@ export interface TypeScriptRequestTypes {
     [CommandTypes.LinkedEditingRange]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.LinkedEditingRangeResponse];
     [CommandTypes.Navto]: [ts.server.protocol.NavtoRequestArgs, ts.server.protocol.NavtoResponse];
     [CommandTypes.NavTree]: [ts.server.protocol.FileRequestArgs, ts.server.protocol.NavTreeResponse];
-    [CommandTypes.Open]: [ts.server.protocol.OpenRequestArgs, null];
     [CommandTypes.OrganizeImports]: [ts.server.protocol.OrganizeImportsRequestArgs, ts.server.protocol.OrganizeImportsResponse];
     [CommandTypes.PrepareCallHierarchy]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.PrepareCallHierarchyResponse];
     [CommandTypes.ProvideCallHierarchyIncomingCalls]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ProvideCallHierarchyIncomingCallsResponse];
@@ -75,10 +105,17 @@ export interface TypeScriptRequestTypes {
     [CommandTypes.UpdateOpen]: [ts.server.protocol.UpdateOpenRequestArgs, ts.server.protocol.Response];
 }
 
-export type ExecConfig = {
-    readonly lowPriority?: boolean;
-    readonly nonRecoverable?: boolean;
-    readonly cancelOnResourceChange?: URI;
-    readonly executionTarget?: ExecutionTarget;
-};
+export interface NoResponseTsServerRequests {
+    [CommandTypes.Change]: [ts.server.protocol.ChangeRequestArgs, null];
+    [CommandTypes.Close]: [ts.server.protocol.FileRequestArgs, null];
+    [CommandTypes.CompilerOptionsForInferredProjects]: [ts.server.protocol.SetCompilerOptionsForInferredProjectsArgs, ts.server.protocol.SetCompilerOptionsForInferredProjectsResponse];
+    [CommandTypes.ConfigurePlugin]: [ts.server.protocol.ConfigurePluginRequestArguments, ts.server.protocol.ConfigurePluginResponse];
+    [CommandTypes.Open]: [ts.server.protocol.OpenRequestArgs, null];
+}
 
+export interface AsyncTsServerRequests {
+    [CommandTypes.Geterr]: [ts.server.protocol.GeterrRequestArgs, ts.server.protocol.Response];
+    [CommandTypes.GeterrForProject]: [ts.server.protocol.GeterrForProjectRequestArgs, ts.server.protocol.Response];
+}
+
+export type TypeScriptRequestTypes = StandardTsServerRequests & NoResponseTsServerRequests & AsyncTsServerRequests;
