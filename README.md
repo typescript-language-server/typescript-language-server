@@ -592,6 +592,7 @@ The `$/typescriptVersion` notification params include two properties:
 - [x] textDocument/formatting
 - [x] textDocument/hover
 - [x] textDocument/inlayHint (no support for `inlayHint/resolve` or `workspace/inlayHint/refresh`)
+- [x] textDocument/linkedEditingRange
 - [x] textDocument/prepareCallHierarchy
 - [x] callHierarchy/incomingCalls
 - [x] callHierarchy/outgoingCalls
