@@ -22,6 +22,7 @@ export namespace TypeScriptRenameRequest {
 
 export enum CommandTypes {
     JsxClosingTag = 'jsxClosingTag',
+    LinkedEditingRange = 'linkedEditingRange',
     Brace = 'brace',
     BraceCompletion = 'braceCompletion',
     GetSpanOfEnclosingComment = 'getSpanOfEnclosingComment',

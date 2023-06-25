@@ -226,6 +226,7 @@ export class LspServer {
                 },
                 hoverProvider: true,
                 inlayHintProvider: true,
+                linkedEditingRangeProvider: false,
                 renameProvider: prepareSupport ? { prepareProvider: true } : true,
                 referencesProvider: true,
                 selectionRangeProvider: true,
@@ -282,6 +283,9 @@ export class LspServer {
         };
         if (textDocument?.callHierarchy && typescriptVersion.version?.gte(API.v380)) {
             initializeResult.capabilities.callHierarchyProvider = true;
+        }
+        if (textDocument?.linkedEditingRange && typescriptVersion.version?.gte(API.v510)) {
+            initializeResult.capabilities.linkedEditingRangeProvider = true;
         }
         this.logger.log('onInitialize result', initializeResult);
         return initializeResult;
@@ -1306,6 +1310,22 @@ export class LspServer {
     async inlayHints(params: lsp.InlayHintParams, token?: lsp.CancellationToken): Promise<lsp.InlayHint[] | undefined> {
         return await TypeScriptInlayHintsProvider.provideInlayHints(
             params.textDocument.uri, params.range, this.documents, this.tspClient, this.options.lspClient, this.configurationManager, token);
+    }
+
+    async linkedEditingRange(params: lsp.LinkedEditingRangeParams, token?: lsp.CancellationToken): Promise<lsp.LinkedEditingRanges | null> {
+        const file = uriToPath(params.textDocument.uri);
+        if (!file) {
+            return null;
+        }
+        const args = Position.toFileLocationRequestArgs(file, params.position);
+        const response = await this.tspClient.request(CommandTypes.LinkedEditingRange, args, token);
+        if (response.type !== 'response' || !response.body) {
+            return null;
+        }
+        return {
+            ranges: response.body.ranges.map(Range.fromTextSpan),
+            wordPattern: response.body.wordPattern,
+        };
     }
 
     async semanticTokensFull(params: lsp.SemanticTokensParams, token?: lsp.CancellationToken): Promise<lsp.SemanticTokens> {
