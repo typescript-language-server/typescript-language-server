@@ -11,6 +11,8 @@
 
 /* eslint-disable @typescript-eslint/no-unnecessary-qualifier */
 
+import path from 'path';
+import fs from 'fs-extra';
 import lsp from 'vscode-languageserver';
 import type { LspClient } from '../lsp-client.js';
 
@@ -180,6 +182,82 @@ export class ConsoleLogger implements Logger {
     }
 }
 
+export class FileLogger implements Logger {
+    private logFile: fs.WriteStream;
+
+    constructor(
+        private logDirectory: string,
+        private level: lsp.MessageType,
+    ) {
+        console.error('Resolved logDirectory', path.resolve(this.logDirectory));
+        if (!fs.pathExistsSync(this.logDirectory)) {
+            fs.mkdirSync(this.logDirectory);
+        }
+        this.logFile = fs.createWriteStream(path.join(this.logDirectory, 'debug.log'), { flags : 'w' });
+    }
+
+    private sendMessage(severity: lsp.MessageType, args: any[], options?: { overrideLevel?: boolean; }): void {
+        if (this.level >= severity || options?.overrideLevel) {
+            const [prefix, firstArg, ...rest] = this.toStrings(...args);
+            this.logFile.write(`${prefix} ${firstArg}`);
+            if (rest !== undefined) {
+                this.logFile.write(`\n${rest.join('\n')}`);
+            }
+            this.logFile.write('\n\n');
+        }
+    }
+
+    private toStrings(...args: any[]): string[] {
+        return args.map(a => {
+            const out = typeof a === 'string' ? a : JSON.stringify(a, null, 2);
+            if (out && out.length > 1000) {
+                return `<trimmed> ${out.slice(0, 1000)}...`;
+            }
+            return out;
+        });
+    }
+
+    error(...args: any[]): void {
+        this.sendMessage(lsp.MessageType.Error, args);
+    }
+
+    warn(...args: any[]): void {
+        this.sendMessage(lsp.MessageType.Warning, args);
+    }
+
+    info(...args: any[]): void {
+        this.sendMessage(lsp.MessageType.Info, args);
+    }
+
+    log(...args: any[]): void {
+        this.sendMessage(lsp.MessageType.Log, args);
+    }
+
+    logIgnoringVerbosity(level: LogLevel, ...args: any[]): void {
+        this.sendMessage(this.logLevelToLspMessageType(level), args, { overrideLevel: true });
+    }
+
+    trace(level: TraceLevel, message: string, data?: any): void {
+        this.logIgnoringVerbosity(LogLevel.Log, `[${level}  - ${now()}] ${message}`);
+        if (data) {
+            this.logIgnoringVerbosity(LogLevel.Log, data2String(data));
+        }
+    }
+
+    private logLevelToLspMessageType(level: LogLevel): lsp.MessageType {
+        switch (level) {
+            case LogLevel.Log:
+                return lsp.MessageType.Log;
+            case LogLevel.Info:
+                return lsp.MessageType.Info;
+            case LogLevel.Warning:
+                return lsp.MessageType.Warning;
+            case LogLevel.Error:
+                return lsp.MessageType.Error;
+        }
+    }
+}
+
 export class PrefixingLogger implements Logger {
     constructor(
         private logger: Logger,
@@ -207,10 +285,7 @@ export class PrefixingLogger implements Logger {
     }
 
     trace(level: TraceLevel, message: string, data?: any): void {
-        this.logIgnoringVerbosity(LogLevel.Log, this.prefix, `[${level}  - ${now()}] ${message}`);
-        if (data) {
-            this.logIgnoringVerbosity(LogLevel.Log, this.prefix, data2String(data));
-        }
+        this.logIgnoringVerbosity(LogLevel.Log, `[${level}  - ${now()}] ${message}`, data ? data2String(data) : undefined);
     }
 }
 

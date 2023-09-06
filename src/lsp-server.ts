@@ -961,6 +961,7 @@ export class LspServer {
             }
         }
 
+        this.logger.log(`codeAction returned with ${actions.length} actions`);
         return actions;
     }
     protected async getCodeFixes(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, token?: lsp.CancellationToken): Promise<ts.server.protocol.CodeFixResponse | undefined> {

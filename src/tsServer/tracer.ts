@@ -68,7 +68,7 @@ export default class Tracer {
         if (this.trace === Trace.Verbose && response.body) {
             data = `Result: ${JSON.stringify(response.body, null, 4)}`;
         }
-        this.logTrace(serverId, `Response received: ${response.command} (${response.request_seq}). Request took ${Date.now() - meta.queuingStartTime} ms. Success: ${response.success} ${!response.success ? `. Message: ${response.message}` : ''}`, data);
+        this.logTrace(serverId, `Response received: ${response.command} (${response.request_seq}). Request took ${Date.now() - meta.queuingStartTime} ms. Success: ${response.success}${!response.success ? `. Message: ${response.message}` : ''}`, data);
     }
 
     public traceRequestCompleted(serverId: string, command: string, request_seq: number, meta: RequestExecutionMetadata): any {

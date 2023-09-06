@@ -21,6 +21,7 @@ const program = new Command('typescript-language-server')
     .option('--tsserver-log-verbosity <tsserverLogVerbosity>', '[deprecated] Specify a tsserver log verbosity (terse, normal, verbose). Defaults to `normal`.' +
       ' example: --tsserver-log-verbosity verbose')
     .option('--tsserver-path <path>', '[deprecated] Specify path to tsserver.js or the lib directory. example: --tsserver-path=/Users/me/typescript/lib/tsserver.js')
+    .option('--log-directory <path>', 'Directory for LSP logs')
     .parse(process.argv);
 
 const options = program.opts();
@@ -37,5 +38,6 @@ if (options.logLevel) {
 createLspConnection({
     cmdLineTsserverPath: options.tsserverPath as string,
     cmdLineTsserverLogVerbosity: TsServerLogLevel.fromString(options.tsserverLogVerbosity),
+    logDirectory: options.logDirectory,
     showMessageLevel: logLevel as lsp.MessageType,
 }).listen();
