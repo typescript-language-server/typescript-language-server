@@ -149,6 +149,8 @@ export enum ScriptElementKind {
     enumMemberElement = 'enum member',
     variableElement = 'var',
     localVariableElement = 'local var',
+    variableUsingElement = 'using',
+    variableAwaitUsingElement = 'await using',
     functionElement = 'function',
     localFunctionElement = 'local function',
     memberFunctionElement = 'method',
