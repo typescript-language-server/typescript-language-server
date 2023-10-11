@@ -8,14 +8,15 @@
 /**
  * **IMPORTANT** this module should not depend on `vscode-languageserver` only protocol and types
  */
-import lsp from 'vscode-languageserver-protocol';
+import { RequestType } from 'vscode-languageserver-protocol';
+import type lsp from 'vscode-languageserver-protocol';
 import type ts from 'typescript/lib/tsserverlibrary.js';
 import type { TraceValue } from './tsServer/tracer.js';
 
 export type { ts };
 
 export namespace TypeScriptRenameRequest {
-    export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
+    export const type = new RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
 }
 
 // START: Duplicated from typescript/lib/tsserverlibrary.js since we don't want to depend on typescript at runtime
