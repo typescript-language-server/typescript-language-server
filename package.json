@@ -47,7 +47,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.5",
-    "@size-limit/file": "^8.2.6",
+    "@size-limit/file": "^9.0.0",
     "@types/deepmerge": "^2.2.0",
     "@types/fs-extra": "^11.0.2",
     "@types/jest": "^29.5.5",
