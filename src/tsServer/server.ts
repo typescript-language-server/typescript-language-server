@@ -432,7 +432,7 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
      * Commands that can be run on the syntax server but would benefit from being upgraded to the semantic server.
      */
     private static readonly syntaxAllowedCommands = new Set<keyof TypeScriptRequestTypes>([
-        CommandTypes.CompletionEntryDetails,
+        CommandTypes.CompletionDetails,
         CommandTypes.CompletionInfo,
         CommandTypes.Definition,
         CommandTypes.DefinitionAndBoundSpan,

@@ -31,7 +31,6 @@ export enum CommandTypes {
     Close = 'close',
     /** @deprecated Prefer CompletionInfo -- see comment on CompletionsResponse */
     Completions = 'completions',
-    CompletionEntryDetails = 'completionEntryDetails',
     CompletionInfo = 'completionInfo',
     CompletionDetails = 'completionEntryDetails',
     CompileOnSaveAffectedFileList = 'compileOnSaveAffectedFileList',
