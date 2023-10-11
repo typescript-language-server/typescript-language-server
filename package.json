@@ -10,7 +10,7 @@
   },
   "type": "module",
   "engines": {
-    "node": ">=14.17"
+    "node": ">=18"
   },
   "files": [
     "lib"
