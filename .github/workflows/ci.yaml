@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        node-version: [16.x, 18.x]
+        node-version: [18.x, 20.x]
     runs-on: ${{ matrix.os }}
     env:
       CI: true
@@ -33,5 +33,5 @@ jobs:
       - name: Unittest
         run: yarn test
       - name: Lint
-        if: ${{ matrix.node-version == '16.x' }}
+        if: ${{ matrix.node-version == '18.x' }}
         run: yarn lint
