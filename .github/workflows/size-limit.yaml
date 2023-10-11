@@ -16,9 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup node
         uses: actions/setup-node@v3
         with:

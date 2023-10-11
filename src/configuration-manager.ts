@@ -34,6 +34,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<ts.server.protocol.UserPreferences>
     includeInlayVariableTypeHints: false,
     includeInlayVariableTypeHintsWhenTypeMatchesName: false,
     includePackageJsonAutoImports: 'auto',
+    interactiveInlayHints: true,
     jsxAttributeCompletionStyle: 'auto',
     lazyConfiguredProjectsFromExternalProject: false,
     organizeImportsAccentCollation: true,

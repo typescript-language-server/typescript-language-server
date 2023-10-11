@@ -274,17 +274,18 @@ function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
         case ScriptElementKind.keyword:
             return lsp.CompletionItemKind.Keyword;
         case ScriptElementKind.constElement:
-            return lsp.CompletionItemKind.Constant;
         case ScriptElementKind.letElement:
         case ScriptElementKind.variableElement:
         case ScriptElementKind.localVariableElement:
         case ScriptElementKind.alias:
+        case ScriptElementKind.parameterElement:
             return lsp.CompletionItemKind.Variable;
         case ScriptElementKind.memberVariableElement:
         case ScriptElementKind.memberGetAccessorElement:
         case ScriptElementKind.memberSetAccessorElement:
             return lsp.CompletionItemKind.Field;
         case ScriptElementKind.functionElement:
+        case ScriptElementKind.localFunctionElement:
             return lsp.CompletionItemKind.Function;
         case ScriptElementKind.memberFunctionElement:
         case ScriptElementKind.constructSignatureElement:
@@ -293,6 +294,8 @@ function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
             return lsp.CompletionItemKind.Method;
         case ScriptElementKind.enumElement:
             return lsp.CompletionItemKind.Enum;
+        case ScriptElementKind.enumMemberElement:
+            return lsp.CompletionItemKind.EnumMember;
         case ScriptElementKind.moduleElement:
         case ScriptElementKind.externalModuleName:
             return lsp.CompletionItemKind.Module;
@@ -302,6 +305,7 @@ function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
         case ScriptElementKind.interfaceElement:
             return lsp.CompletionItemKind.Interface;
         case ScriptElementKind.warning:
+            return lsp.CompletionItemKind.Text;
         case ScriptElementKind.scriptElement:
             return lsp.CompletionItemKind.File;
         case ScriptElementKind.directory:

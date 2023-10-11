@@ -14,13 +14,13 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        node-version: [16.x, 18.x]
+        node-version: [18.x, 20.x]
     runs-on: ${{ matrix.os }}
     env:
       CI: true
     name: ${{ matrix.os }} (Node.js ${{ matrix.node-version }})
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup node
         uses: actions/setup-node@v3
         with:
@@ -33,5 +33,5 @@ jobs:
       - name: Unittest
         run: yarn test
       - name: Lint
-        if: ${{ matrix.node-version == '16.x' }}
+        if: ${{ matrix.node-version == '18.x' }}
         run: yarn lint
