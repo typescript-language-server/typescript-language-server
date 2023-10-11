@@ -15,7 +15,7 @@ import { getDignosticsKind, TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
 import { toDocumentHighlight, uriToPath, toSymbolKind, toLocation, toSelectionRange, pathToUri, toTextEdit, normalizePath } from './protocol-translation.js';
 import { LspDocuments, LspDocument } from './document.js';
-import { asCompletionItem, asResolvedCompletionItem, CompletionContext, getCompletionTriggerCharacter } from './completion.js';
+import { asCompletionItems, asResolvedCompletionItem, CompletionContext, CompletionDataCache, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
@@ -46,6 +46,7 @@ export class LspServer {
     private initializeParams: TypeScriptInitializeParams | null = null;
     private diagnosticQueue?: DiagnosticEventQueue;
     private configurationManager: ConfigurationManager;
+    private completionDataCache = new CompletionDataCache();
     private logger: Logger;
     private workspaceRoot: string | undefined;
     private typeScriptAutoFixProvider: TypeScriptAutoFixProvider | null = null;
@@ -617,10 +618,6 @@ export class LspServer {
         return !!documentSymbol && !!documentSymbol.hierarchicalDocumentSymbolSupport;
     }
 
-    /*
-     * implemented based on
-     * https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/completions.ts
-     */
     async completion(params: lsp.CompletionParams, token?: lsp.CancellationToken): Promise<lsp.CompletionList | null> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('completion', params, file);
@@ -632,6 +629,8 @@ export class LspServer {
         if (!document) {
             throw new Error(`The document should be opened for completion, file: ${file}`);
         }
+
+        this.completionDataCache.reset();
 
         const completionOptions = this.configurationManager.workspaceConfiguration.completions || {};
 
@@ -666,22 +665,13 @@ export class LspServer {
             line,
             optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
         };
-        const completions: lsp.CompletionItem[] = [];
-        for (const entry of entries || []) {
-            if (entry.kind === 'warning') {
-                continue;
-            }
-            const completion = asCompletionItem(entry, file, params.position, document, this.documents, completionOptions, this.features, completionContext);
-            if (!completion) {
-                continue;
-            }
-            completions.push(completion);
-        }
+        const completions = asCompletionItems(entries, this.completionDataCache, file, params.position, document, this.documents, completionOptions, this.features, completionContext);
         return lsp.CompletionList.create(completions, isIncomplete);
     }
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
+        item.data = item.data?.cacheId !== undefined ? this.completionDataCache.get(item.data.cacheId) : item.data;
         const document = item.data?.file ? this.documents.get(item.data.file) : undefined;
         await this.configurationManager.configureGloballyFromDocument(item.data.file);
         const response = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data, token));
