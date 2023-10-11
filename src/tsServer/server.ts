@@ -10,7 +10,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { CancellationToken } from 'vscode-jsonrpc';
+import type { CancellationToken } from 'vscode-jsonrpc';
 import { RequestItem, RequestQueue, RequestQueueingType } from './requestQueue.js';
 import { ServerResponse, ServerType, TypeScriptRequestTypes } from '../typescriptService.js';
 import { CommandTypes, EventName, ts } from '../ts-protocol.js';

@@ -78,6 +78,7 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
+    "vscode-jsonrpc": "^8.2.0",
     "vscode-languageserver": "^8.1.0",
     "vscode-languageserver-protocol": "^3.17.3",
     "vscode-languageserver-textdocument": "1.0.11",
