@@ -5,7 +5,8 @@
 /**
  * Helpers for converting FROM LanguageServer types language-server ts types
  */
-import * as lsp from 'vscode-languageserver-protocol';
+import { Range as LspRange, Location as LspLocation } from 'vscode-languageserver-protocol';
+import type * as lsp from 'vscode-languageserver-protocol';
 import type { ts } from '../ts-protocol.js';
 
 export namespace Range {
@@ -17,7 +18,7 @@ export namespace Range {
     });
 
     export const fromLocations = (start: ts.server.protocol.Location, end: ts.server.protocol.Location): lsp.Range =>
-        lsp.Range.create(
+        LspRange.create(
             Math.max(0, start.line - 1), Math.max(start.offset - 1, 0),
             Math.max(0, end.line - 1), Math.max(0, end.offset - 1));
 
@@ -46,13 +47,13 @@ export namespace Range {
             //          |----|
             return undefined;
         }
-        return lsp.Range.create(start, end);
+        return LspRange.create(start, end);
     }
 
     export function union(one: lsp.Range, other: lsp.Range): lsp.Range {
         const start = Position.Min(other.start, one.start);
         const end = Position.Max(other.end, one.end);
-        return lsp.Range.create(start, end);
+        return LspRange.create(start, end);
     }
 }
 
@@ -130,5 +131,5 @@ export namespace Position {
 
 export namespace Location {
     export const fromTextSpan = (resource: lsp.DocumentUri, tsTextSpan: ts.server.protocol.TextSpan): lsp.Location =>
-        lsp.Location.create(resource, Range.fromTextSpan(tsTextSpan));
+        LspLocation.create(resource, Range.fromTextSpan(tsTextSpan));
 }

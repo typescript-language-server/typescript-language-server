@@ -15,7 +15,7 @@ import { getDignosticsKind, TspClient } from './tsp-client.js';
 import { DiagnosticEventQueue } from './diagnostic-queue.js';
 import { toDocumentHighlight, uriToPath, toSymbolKind, toLocation, toSelectionRange, pathToUri, toTextEdit, normalizePath } from './protocol-translation.js';
 import { LspDocuments, LspDocument } from './document.js';
-import { asCompletionItem, asResolvedCompletionItem, CompletionContext, getCompletionTriggerCharacter } from './completion.js';
+import { asCompletionItems, asResolvedCompletionItem, CompletionContext, CompletionDataCache, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
 import { provideQuickFix } from './quickfix.js';
@@ -46,6 +46,7 @@ export class LspServer {
     private initializeParams: TypeScriptInitializeParams | null = null;
     private diagnosticQueue?: DiagnosticEventQueue;
     private configurationManager: ConfigurationManager;
+    private completionDataCache = new CompletionDataCache();
     private logger: Logger;
     private workspaceRoot: string | undefined;
     private typeScriptAutoFixProvider: TypeScriptAutoFixProvider | null = null;
@@ -226,6 +227,7 @@ export class LspServer {
                 },
                 hoverProvider: true,
                 inlayHintProvider: true,
+                linkedEditingRangeProvider: false,
                 renameProvider: prepareSupport ? { prepareProvider: true } : true,
                 referencesProvider: true,
                 selectionRangeProvider: true,
@@ -282,6 +284,9 @@ export class LspServer {
         };
         if (textDocument?.callHierarchy && typescriptVersion.version?.gte(API.v380)) {
             initializeResult.capabilities.callHierarchyProvider = true;
+        }
+        if (textDocument?.linkedEditingRange && typescriptVersion.version?.gte(API.v510)) {
+            initializeResult.capabilities.linkedEditingRangeProvider = true;
         }
         this.logger.log('onInitialize result', initializeResult);
         return initializeResult;
@@ -613,10 +618,6 @@ export class LspServer {
         return !!documentSymbol && !!documentSymbol.hierarchicalDocumentSymbolSupport;
     }
 
-    /*
-     * implemented based on
-     * https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/completions.ts
-     */
     async completion(params: lsp.CompletionParams, token?: lsp.CancellationToken): Promise<lsp.CompletionList | null> {
         const file = uriToPath(params.textDocument.uri);
         this.logger.log('completion', params, file);
@@ -628,6 +629,8 @@ export class LspServer {
         if (!document) {
             throw new Error(`The document should be opened for completion, file: ${file}`);
         }
+
+        this.completionDataCache.reset();
 
         const completionOptions = this.configurationManager.workspaceConfiguration.completions || {};
 
@@ -662,38 +665,36 @@ export class LspServer {
             line,
             optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
         };
-        const completions: lsp.CompletionItem[] = [];
-        const logLargeCompletionProviders = entries.length > 5000;
-        const largeCompletionsMap = new Map<string, number>();
-        for (const entry of entries || []) {
-            if (entry.kind === 'warning') {
-                continue;
-            }
-            const completion = asCompletionItem(entry, file, params.position, document, this.documents, completionOptions, this.features, completionContext);
-            if (!completion) {
-                continue;
-            }
-            completions.push(completion);
-            if (logLargeCompletionProviders) {
-                const source = entry.source || '[no module]';
+        const completions = asCompletionItems(entries, this.completionDataCache, file, params.position, document, this.documents, completionOptions, this.features, completionContext);
+
+        if (entries.length > 5000) {
+            const largeCompletionsMap = new Map<string, number>();
+            for (const entry of entries) {
+                if (!entry.source) {
+                    continue;
+                }
+
+                const { source } = entry;
                 const count = largeCompletionsMap.get(source) || 0;
                 largeCompletionsMap.set(source, count + 1);
             }
-        }
-        if (logLargeCompletionProviders) {
+
             const largeCompletionsList: [string, number][] = [];
             for (const [key, count] of largeCompletionsMap.entries()) {
                 largeCompletionsList.push([key, count]);
             }
+
             largeCompletionsList.sort((a, b) => b[1] - a[1]).splice(100);
             const table = largeCompletionsList.map(([key, count]) => `  ${key}: ${count}`).join('\n');
             this.logger.warn(`Total completions count: ${entries.length}. Modules contributing most completions:\n${table}`);
         }
+
         return lsp.CompletionList.create(completions, isIncomplete);
     }
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
         this.logger.log('completion/resolve', item);
+        item.data = item.data?.cacheId !== undefined ? this.completionDataCache.get(item.data.cacheId) : item.data;
         const document = item.data?.file ? this.documents.get(item.data.file) : undefined;
         await this.configurationManager.configureGloballyFromDocument(item.data.file);
         const response = await this.interuptDiagnostics(() => this.tspClient.request(CommandTypes.CompletionDetails, item.data, token));
@@ -1322,6 +1323,22 @@ export class LspServer {
     async inlayHints(params: lsp.InlayHintParams, token?: lsp.CancellationToken): Promise<lsp.InlayHint[] | undefined> {
         return await TypeScriptInlayHintsProvider.provideInlayHints(
             params.textDocument.uri, params.range, this.documents, this.tspClient, this.options.lspClient, this.configurationManager, token);
+    }
+
+    async linkedEditingRange(params: lsp.LinkedEditingRangeParams, token?: lsp.CancellationToken): Promise<lsp.LinkedEditingRanges | null> {
+        const file = uriToPath(params.textDocument.uri);
+        if (!file) {
+            return null;
+        }
+        const args = Position.toFileLocationRequestArgs(file, params.position);
+        const response = await this.tspClient.request(CommandTypes.LinkedEditingRange, args, token);
+        if (response.type !== 'response' || !response.body) {
+            return null;
+        }
+        return {
+            ranges: response.body.ranges.map(Range.fromTextSpan),
+            wordPattern: response.body.wordPattern,
+        };
     }
 
     async semanticTokensFull(params: lsp.SemanticTokensParams, token?: lsp.CancellationToken): Promise<lsp.SemanticTokens> {

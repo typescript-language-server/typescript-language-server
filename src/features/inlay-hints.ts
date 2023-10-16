@@ -17,7 +17,8 @@ import { CommandTypes } from '../ts-protocol.js';
 import type { ts } from '../ts-protocol.js';
 import type { TspClient } from '../tsp-client.js';
 import type { LspClient } from '../lsp-client.js';
-import { Position } from '../utils/typeConverters.js';
+import { IFilePathToResourceConverter } from '../utils/previewer.js';
+import { Location, Position } from '../utils/typeConverters.js';
 import { uriToPath } from '../protocol-translation.js';
 
 export class TypeScriptInlayHintsProvider {
@@ -68,12 +69,29 @@ export class TypeScriptInlayHintsProvider {
         return response.body.map<lsp.InlayHint>(hint => {
             const inlayHint = lsp.InlayHint.create(
                 Position.fromLocation(hint.position),
-                hint.text,
+                TypeScriptInlayHintsProvider.convertInlayHintText(hint, documents),
                 fromProtocolInlayHintKind(hint.kind));
             hint.whitespaceBefore && (inlayHint.paddingLeft = true);
             hint.whitespaceAfter && (inlayHint.paddingRight = true);
             return inlayHint;
         });
+    }
+
+    private static convertInlayHintText(
+        tsHint: ts.server.protocol.InlayHintItem,
+        filePathConverter: IFilePathToResourceConverter,
+    ): string | lsp.InlayHintLabelPart[] {
+        if (tsHint.displayParts) {
+            return tsHint.displayParts.map((part): lsp.InlayHintLabelPart => {
+                const out = lsp.InlayHintLabelPart.create(part.text);
+                if (part.span) {
+                    out.location = Location.fromTextSpan(filePathConverter.toResource(part.span.file).toString(), part.span);
+                }
+                return out;
+            });
+        }
+
+        return tsHint.text;
     }
 }
 

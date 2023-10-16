@@ -1374,7 +1374,8 @@ describe('code actions', () => {
             },
         }))!;
 
-        expect(result).toHaveLength(2);
+        // 1 quickfix + 2 refactorings
+        expect(result).toHaveLength(3);
         const quickFixDiagnostic = result.find(diagnostic => diagnostic.kind === 'quickfix');
         expect(quickFixDiagnostic).toBeDefined();
         expect(quickFixDiagnostic).toMatchObject({
@@ -1412,9 +1413,9 @@ describe('code actions', () => {
             },
             kind: 'quickfix',
         });
-        const refactorDiagnostic = result.find(diagnostic => diagnostic.kind === 'refactor');
-        expect(refactorDiagnostic).toBeDefined();
-        expect(refactorDiagnostic).toMatchObject({
+        const refactorAction = result.find(diagnostic => diagnostic.kind === 'refactor');
+        expect(refactorAction).toBeDefined();
+        expect(refactorAction).toMatchObject({
             title: 'Convert parameters to destructured object',
             command: {
                 title: 'Convert parameters to destructured object',
@@ -1432,6 +1433,27 @@ describe('code actions', () => {
                 ],
             },
             kind: 'refactor',
+        });
+        const refactorMoveAction = result.find(diagnostic => diagnostic.kind === 'refactor.move');
+        expect(refactorMoveAction).toBeDefined();
+        expect(refactorMoveAction).toMatchObject({
+            title: 'Move to a new file',
+            command: {
+                title: 'Move to a new file',
+                command: '_typescript.applyRefactoring',
+                arguments: [
+                    {
+                        file: filePath('bar.ts'),
+                        startLine: 2,
+                        startOffset: 26,
+                        endLine: 2,
+                        endOffset: 50,
+                        refactor: 'Move to a new file',
+                        action: 'Move to a new file',
+                    },
+                ],
+            },
+            kind: 'refactor.move',
         });
     });
 
@@ -1459,6 +1481,25 @@ describe('code actions', () => {
         }))!;
 
         expect(result).toMatchObject([
+            {
+                title: 'Move to a new file',
+                kind: 'refactor.move',
+                command: {
+                    title: 'Move to a new file',
+                    command: '_typescript.applyRefactoring',
+                    arguments: [
+                        {
+                            file: filePath('bar.ts'),
+                            startLine: 2,
+                            startOffset: 26,
+                            endLine: 2,
+                            endOffset: 50,
+                            refactor: 'Move to a new file',
+                            action: 'Move to a new file',
+                        },
+                    ],
+                },
+            },
             {
                 command: {
                     arguments: [
@@ -2220,6 +2261,27 @@ describe('fileOperations', () => {
                 },
                 newText:'./new_module1_name',
             },
+        ]);
+    });
+});
+
+describe('linked editing', () => {
+    it('simple test', async () => {
+        const textDocument = {
+            uri: uri('foo.tsx'),
+            languageId: 'typescriptreact',
+            version: 1,
+            text: 'let bar = <div></div>',
+        };
+        server.didOpenTextDocument({ textDocument });
+        const position = positionAfter(textDocument, '<div');
+        const linedEditRanges = await server.linkedEditingRange({
+            textDocument,
+            position,
+        });
+        expect(linedEditRanges?.ranges).toStrictEqual([
+            { start: { line: 0, character: 11 }, end: { line: 0, character: 14 } },
+            { start: { line: 0, character: 17 }, end: { line: 0, character: 20 } },
         ]);
     });
 });

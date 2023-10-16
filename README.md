@@ -209,7 +209,7 @@ interface UserPreferences {
     /**
      * Indicates whether imports should be organized in a case-insensitive manner.
      *
-     * Default: `"auto"`.
+     * @default "auto".
      */
     organizeImportsIgnoreCase: "auto" | boolean;
     /**
@@ -218,7 +218,7 @@ interface UserPreferences {
      * [Unicode Collation Algorithm](https://unicode.org/reports/tr10/#Scope)) using rules associated with the locale
      * specified in {@link organizeImportsCollationLocale}.
      *
-     * Default: `"ordinal"`.
+     * @default "ordinal".
      */
     organizeImportsCollation: "ordinal" | "unicode";
     /**
@@ -227,7 +227,7 @@ interface UserPreferences {
      *
      * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
      *
-     * Default: `"en"`
+     * @default "en"
      */
     organizeImportsCollationLocale: string;
     /**
@@ -236,7 +236,7 @@ interface UserPreferences {
      *
      * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
      *
-     * Default: `false`
+     * @default false
      */
     organizeImportsNumericCollation: boolean;
     /**
@@ -246,7 +246,7 @@ interface UserPreferences {
      *
      * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
      *
-     * Default: `true`
+     * @default true
      */
     organizeImportsAccentCollation: boolean;
     /**
@@ -258,7 +258,7 @@ interface UserPreferences {
      * or if {@link organizeImportsIgnoreCase} is `"auto"` and the auto-detected case sensitivity is determined to be
      * case-insensitive.
      *
-     * Default: `false`
+     * @default false
      */
     organizeImportsCaseFirst: "upper" | "lower" | false;
     providePrefixAndSuffixTextForRename: boolean;
@@ -273,6 +273,11 @@ interface UserPreferences {
      * @since 4.5.2
      * @default 'auto'
      */
+    /**
+     * @since 5.2.2
+     * @default true
+     */
+    interactiveInlayHints: true,
     jsxAttributeCompletionStyle: "auto" | "braces" | "none";
     displayPartsForJSDoc: boolean;
     generateReturnInDocTemplate: boolean;
@@ -309,6 +314,7 @@ From the `preferences` options listed above, this server explicilty sets the fol
     includeCompletionsWithObjectLiteralMethodSnippets: true,
     includeCompletionsWithInsertText: true,
     includeCompletionsWithSnippetText: true,
+    interactiveInlayHints: true,
     jsxAttributeCompletionStyle: "auto",
     providePrefixAndSuffixTextForRename: true,
     provideRefactorNotApplicableReason: true,
@@ -592,6 +598,7 @@ The `$/typescriptVersion` notification params include two properties:
 - [x] textDocument/formatting
 - [x] textDocument/hover
 - [x] textDocument/inlayHint (no support for `inlayHint/resolve` or `workspace/inlayHint/refresh`)
+- [x] textDocument/linkedEditingRange
 - [x] textDocument/prepareCallHierarchy
 - [x] callHierarchy/incomingCalls
 - [x] callHierarchy/outgoingCalls

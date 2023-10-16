@@ -33,8 +33,54 @@ export interface CompletionContext {
     readonly optionalReplacementRange: lsp.Range | undefined;
 }
 
-export function asCompletionItem(
+export class CompletionDataCache {
+    private store = new Map<number, ts.server.protocol.CompletionDetailsRequestArgs>;
+    private lastCacheId = 0;
+
+    public reset(): void {
+        this.lastCacheId = 0;
+        this.store.clear();
+    }
+
+    public add(data: ts.server.protocol.CompletionDetailsRequestArgs): number {
+        const cacheId = ++this.lastCacheId;
+        this.store.set(cacheId, data);
+        return cacheId;
+    }
+
+    public get(cacheId: number): ts.server.protocol.CompletionDetailsRequestArgs | undefined {
+        return this.store.get(cacheId);
+    }
+}
+
+export function asCompletionItems(
+    entries: readonly ts.server.protocol.CompletionEntry[],
+    completionDataCache: CompletionDataCache,
+    file: string,
+    position: lsp.Position,
+    document: LspDocument,
+    filePathConverter: IFilePathToResourceConverter,
+    options: WorkspaceConfigurationCompletionOptions,
+    features: SupportedFeatures,
+    completionContext: CompletionContext,
+): lsp.CompletionItem[] {
+    const completions: lsp.CompletionItem[] = [];
+    for (const entry of entries) {
+        if (entry.kind === 'warning') {
+            continue;
+        }
+        const completion = asCompletionItem(entry, completionDataCache, file, position, document, filePathConverter, options, features, completionContext);
+        if (!completion) {
+            continue;
+        }
+        completions.push(completion);
+    }
+    return completions;
+}
+
+function asCompletionItem(
     entry: ts.server.protocol.CompletionEntry,
+    completionDataCache: CompletionDataCache,
     file: string,
     position: lsp.Position,
     document: LspDocument,
@@ -43,22 +89,26 @@ export function asCompletionItem(
     features: SupportedFeatures,
     completionContext: CompletionContext,
 ): lsp.CompletionItem | null {
+    const cacheId = completionDataCache.add({
+        file,
+        line: position.line + 1,
+        offset: position.character + 1,
+        entryNames: [
+            entry.source || entry.data ? {
+                name: entry.name,
+                source: entry.source,
+                data: entry.data,
+            } : entry.name,
+        ],
+    });
+
     const item: lsp.CompletionItem = {
         label: entry.name,
         kind: asCompletionItemKind(entry.kind),
         sortText: entry.sortText,
         preselect: entry.isRecommended,
         data: {
-            file,
-            line: position.line + 1,
-            offset: position.character + 1,
-            entryNames: [
-                entry.source || entry.data ? {
-                    name: entry.name,
-                    source: entry.source,
-                    data: entry.data,
-                } : entry.name,
-            ],
+            cacheId,
         },
     };
 
@@ -224,17 +274,18 @@ function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
         case ScriptElementKind.keyword:
             return lsp.CompletionItemKind.Keyword;
         case ScriptElementKind.constElement:
-            return lsp.CompletionItemKind.Constant;
         case ScriptElementKind.letElement:
         case ScriptElementKind.variableElement:
         case ScriptElementKind.localVariableElement:
         case ScriptElementKind.alias:
+        case ScriptElementKind.parameterElement:
             return lsp.CompletionItemKind.Variable;
         case ScriptElementKind.memberVariableElement:
         case ScriptElementKind.memberGetAccessorElement:
         case ScriptElementKind.memberSetAccessorElement:
             return lsp.CompletionItemKind.Field;
         case ScriptElementKind.functionElement:
+        case ScriptElementKind.localFunctionElement:
             return lsp.CompletionItemKind.Function;
         case ScriptElementKind.memberFunctionElement:
         case ScriptElementKind.constructSignatureElement:
@@ -243,6 +294,8 @@ function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
             return lsp.CompletionItemKind.Method;
         case ScriptElementKind.enumElement:
             return lsp.CompletionItemKind.Enum;
+        case ScriptElementKind.enumMemberElement:
+            return lsp.CompletionItemKind.EnumMember;
         case ScriptElementKind.moduleElement:
         case ScriptElementKind.externalModuleName:
             return lsp.CompletionItemKind.Module;
@@ -252,6 +305,7 @@ function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
         case ScriptElementKind.interfaceElement:
             return lsp.CompletionItemKind.Interface;
         case ScriptElementKind.warning:
+            return lsp.CompletionItemKind.Text;
         case ScriptElementKind.scriptElement:
             return lsp.CompletionItemKind.File;
         case ScriptElementKind.directory:

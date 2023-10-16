@@ -8,20 +8,22 @@
 /**
  * **IMPORTANT** this module should not depend on `vscode-languageserver` only protocol and types
  */
-import lsp from 'vscode-languageserver-protocol';
+import { RequestType } from 'vscode-languageserver-protocol';
+import type lsp from 'vscode-languageserver-protocol';
 import type ts from 'typescript/lib/tsserverlibrary.js';
 import type { TraceValue } from './tsServer/tracer.js';
 
 export type { ts };
 
 export namespace TypeScriptRenameRequest {
-    export const type = new lsp.RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
+    export const type = new RequestType<lsp.TextDocumentPositionParams, void, void>('_typescript.rename');
 }
 
 // START: Duplicated from typescript/lib/tsserverlibrary.js since we don't want to depend on typescript at runtime
 
 export enum CommandTypes {
     JsxClosingTag = 'jsxClosingTag',
+    LinkedEditingRange = 'linkedEditingRange',
     Brace = 'brace',
     BraceCompletion = 'braceCompletion',
     GetSpanOfEnclosingComment = 'getSpanOfEnclosingComment',
@@ -29,7 +31,6 @@ export enum CommandTypes {
     Close = 'close',
     /** @deprecated Prefer CompletionInfo -- see comment on CompletionsResponse */
     Completions = 'completions',
-    CompletionEntryDetails = 'completionEntryDetails',
     CompletionInfo = 'completionInfo',
     CompletionDetails = 'completionEntryDetails',
     CompileOnSaveAffectedFileList = 'compileOnSaveAffectedFileList',
@@ -148,6 +149,8 @@ export enum ScriptElementKind {
     enumMemberElement = 'enum member',
     variableElement = 'var',
     localVariableElement = 'local var',
+    variableUsingElement = 'using',
+    variableAwaitUsingElement = 'await using',
     functionElement = 'function',
     localFunctionElement = 'local function',
     memberFunctionElement = 'method',
