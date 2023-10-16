@@ -32,26 +32,26 @@ export class SourceDefinitionCommand {
         token?: lsp.CancellationToken,
     ): Promise<lsp.Location[] | void> {
         if (tspClient.apiVersion.lt(SourceDefinitionCommand.minVersion)) {
-            lspClient.showErrorMessage('Go to Source Definition failed. Requires TypeScript 4.7+.');
+            lspClient.showWarningMessage('Go to Source Definition failed. Requires TypeScript 4.7+.');
             return;
         }
 
         if (!position || typeof position.character !== 'number' || typeof position.line !== 'number') {
-            lspClient.showErrorMessage('Go to Source Definition failed. Invalid position.');
+            lspClient.showWarningMessage('Go to Source Definition failed. Invalid position.');
             return;
         }
 
         let file: string | undefined;
 
         if (!uri || typeof uri !== 'string' || !(file = uriToPath(uri))) {
-            lspClient.showErrorMessage('Go to Source Definition failed. No resource provided.');
+            lspClient.showWarningMessage('Go to Source Definition failed. No resource provided.');
             return;
         }
 
         const document = documents.get(file);
 
         if (!document) {
-            lspClient.showErrorMessage('Go to Source Definition failed. File not opened in the editor.');
+            lspClient.showWarningMessage('Go to Source Definition failed. File not opened in the editor.');
             return;
         }
 
@@ -62,7 +62,7 @@ export class SourceDefinitionCommand {
         }, async () => {
             const response = await tspClient.request(CommandTypes.FindSourceDefinition, args, token);
             if (response.type !== 'response' || !response.body) {
-                lspClient.showErrorMessage('No source definitions found.');
+                lspClient.showWarningMessage('No source definitions found.');
                 return;
             }
             return response.body.map(reference => toLocation(reference, documents));

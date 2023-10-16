@@ -668,28 +668,32 @@ export class LspServer {
         const completions = asCompletionItems(entries, this.completionDataCache, file, params.position, document, this.documents, completionOptions, this.features, completionContext);
 
         if (entries.length > 5000) {
-            const largeCompletionsMap = new Map<string, number>();
-            for (const entry of entries) {
-                if (!entry.source) {
-                    continue;
-                }
-
-                const { source } = entry;
-                const count = largeCompletionsMap.get(source) || 0;
-                largeCompletionsMap.set(source, count + 1);
-            }
-
-            const largeCompletionsList: [string, number][] = [];
-            for (const [key, count] of largeCompletionsMap.entries()) {
-                largeCompletionsList.push([key, count]);
-            }
-
-            largeCompletionsList.sort((a, b) => b[1] - a[1]).splice(100);
-            const table = largeCompletionsList.map(([key, count]) => `  ${key}: ${count}`).join('\n');
-            this.logger.warn(`Total completions count: ${entries.length}. Modules contributing most completions:\n${table}`);
+            setImmediate(() => this.triggerSlowCompletionsWarning(entries));
         }
 
         return lsp.CompletionList.create(completions, isIncomplete);
+    }
+
+    private triggerSlowCompletionsWarning(entries: readonly ts.server.protocol.CompletionEntry[]): void {
+        const largeCompletionsMap = new Map<string, number>();
+        for (const entry of entries) {
+            if (!entry.source) {
+                continue;
+            }
+
+            const { source } = entry;
+            const count = largeCompletionsMap.get(source) || 0;
+            largeCompletionsMap.set(source, count + 1);
+        }
+
+        const largeCompletionsList: [string, number][] = [];
+        for (const [key, count] of largeCompletionsMap.entries()) {
+            largeCompletionsList.push([key, count]);
+        }
+
+        largeCompletionsList.sort((a, b) => b[1] - a[1]).splice(25);
+        const table = largeCompletionsList.map(([key, count]) => `  ${key}: ${count}`).join('\n');
+        this.options.lspClient.showWarningMessage(`Completion request took a long time (over xxxx ms).\n\nTotal completions count: ${entries.length}.\n\nModules contributing most completions:\n${table}`);
     }
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
