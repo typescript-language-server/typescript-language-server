@@ -1,6 +1,29 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v3.3.2...v4.0.0) (2023-10-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* require node 18+
+
+### Features
+
+* add support for textDocument/linkedEditingRange ([#732](https://github.com/typescript-language-server/typescript-language-server/issues/732)) ([983a692](https://github.com/typescript-language-server/typescript-language-server/commit/983a6923114c39d638e0c7d419ae16e8bca8985c))
+
+
+### Bug Fixes
+
+* **deps:** update devdependency typescript to ^5.1.3 ([#727](https://github.com/typescript-language-server/typescript-language-server/issues/727)) ([af477a2](https://github.com/typescript-language-server/typescript-language-server/commit/af477a2acacced85b52ca1fdb967f17228496c30))
+* **deps:** update devdependency typescript to ^5.2.2 ([#737](https://github.com/typescript-language-server/typescript-language-server/issues/737)) ([0fff121](https://github.com/typescript-language-server/typescript-language-server/commit/0fff121490f255c42c4f78d6c3cdb7d37668cbed))
+* **perf:** cache completion data on the server to avoid serialization ([#768](https://github.com/typescript-language-server/typescript-language-server/issues/768)) ([d7b4c77](https://github.com/typescript-language-server/typescript-language-server/commit/d7b4c77b6d71e81210623d17a80c0838681de3ca))
+
+
+### Refactors
+
+* require node 18+ ([1df5a28](https://github.com/typescript-language-server/typescript-language-server/commit/1df5a283e3803e6f2e60579dff0fd4289543b2b2))
+
 ## [3.3.2](https://github.com/typescript-language-server/typescript-language-server/compare/v3.3.1...v3.3.2) (2023-04-17)
 
 
