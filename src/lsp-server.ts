@@ -40,6 +40,8 @@ import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 import { ConfigurationManager } from './configuration-manager.js';
 
+const LARGE_NUMBER_OF_COMPLETIONS_WARNING_TRIGGER = 10000;
+
 export class LspServer {
     private _tspClient: TspClient | null = null;
     private hasShutDown = false;
@@ -667,14 +669,14 @@ export class LspServer {
         };
         const completions = asCompletionItems(entries, this.completionDataCache, file, params.position, document, this.documents, completionOptions, this.features, completionContext);
 
-        if (entries.length > 5000) {
-            setImmediate(() => this.triggerSlowCompletionsWarning(entries));
+        if (entries.length > LARGE_NUMBER_OF_COMPLETIONS_WARNING_TRIGGER) {
+            setImmediate(() => this.triggerLargeNumberOfCompletionsWarning(entries));
         }
 
         return lsp.CompletionList.create(completions, isIncomplete);
     }
 
-    private triggerSlowCompletionsWarning(entries: readonly ts.server.protocol.CompletionEntry[]): void {
+    private triggerLargeNumberOfCompletionsWarning(entries: readonly ts.server.protocol.CompletionEntry[]): void {
         const largeCompletionsMap = new Map<string, number>();
         for (const entry of entries) {
             if (!entry.source) {
@@ -693,7 +695,7 @@ export class LspServer {
 
         largeCompletionsList.sort((a, b) => b[1] - a[1]).splice(25);
         const table = largeCompletionsList.map(([key, count]) => `  ${key}: ${count}`).join('\n');
-        this.options.lspClient.showWarningMessage(`Completion request took a long time (over xxxx ms).\n\nTotal completions count: ${entries.length}.\n\nModules contributing most completions:\n${table}`);
+        this.options.lspClient.showWarningMessage(`Large number (${entries.length}) of completions received.\n\nModules contributing most completions:\nConsider ignoring the biggest offenders with the \`autoImportFileExcludePatterns\` option. ${table}`);
     }
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
