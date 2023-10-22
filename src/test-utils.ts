@@ -143,7 +143,7 @@ export class TestLspClient implements LspClient {
         return this.options.publishDiagnostics(args);
     }
 
-    showErrorMessage(message: string): void {
+    showWarningMessage(message: string): void {
         this.logger.error(`[showErrorMessage] ${message}`);
     }
 

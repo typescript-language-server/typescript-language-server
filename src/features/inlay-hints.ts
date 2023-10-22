@@ -34,21 +34,21 @@ export class TypeScriptInlayHintsProvider {
         token?: lsp.CancellationToken,
     ): Promise<lsp.InlayHint[]> {
         if (tspClient.apiVersion.lt(TypeScriptInlayHintsProvider.minVersion)) {
-            lspClient.showErrorMessage('Inlay Hints request failed. Requires TypeScript 4.4+.');
+            lspClient.showWarningMessage('Inlay Hints request failed. Requires TypeScript 4.4+.');
             return [];
         }
 
         const file = uriToPath(uri);
 
         if (!file) {
-            lspClient.showErrorMessage('Inlay Hints request failed. No resource provided.');
+            lspClient.showWarningMessage('Inlay Hints request failed. No resource provided.');
             return [];
         }
 
         const document = documents.get(file);
 
         if (!document) {
-            lspClient.showErrorMessage('Inlay Hints request failed. File not opened in the editor.');
+            lspClient.showWarningMessage('Inlay Hints request failed. File not opened in the editor.');
             return [];
         }
 
