@@ -266,6 +266,11 @@ interface UserPreferences {
     allowRenameOfImportPath: boolean;
     includePackageJsonAutoImports: "auto" | "on" | "off";
     /**
+     * @since 5.2.2
+     * @default true
+     */
+    interactiveInlayHints: true,
+    /**
      * Preferred style for JSX attribute completions:
      * - `"auto"` - Insert `={}` or `=\"\"` after attribute names based on the prop type.
      * - `"braces"` - Insert `={}` after attribute names.
@@ -273,11 +278,6 @@ interface UserPreferences {
      * @since 4.5.2
      * @default 'auto'
      */
-    /**
-     * @since 5.2.2
-     * @default true
-     */
-    interactiveInlayHints: true,
     jsxAttributeCompletionStyle: "auto" | "braces" | "none";
     displayPartsForJSDoc: boolean;
     generateReturnInDocTemplate: boolean;
