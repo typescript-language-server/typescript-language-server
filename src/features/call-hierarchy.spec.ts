@@ -55,13 +55,13 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-    server.closeAll();
-    // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+    server.closeAllForTesting();
+    // "closeAllForTesting" triggers final publishDiagnostics with an empty list so clear last.
     diagnostics.clear();
 });
 
 afterAll(() => {
-    server.closeAll();
+    server.closeAllForTesting();
     server.shutdown();
 });
 

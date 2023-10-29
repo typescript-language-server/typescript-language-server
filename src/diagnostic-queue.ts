@@ -8,11 +8,10 @@
 import * as lsp from 'vscode-languageserver';
 import debounce from 'p-debounce';
 import { Logger } from './utils/logger.js';
-import { pathToUri, toDiagnostic } from './protocol-translation.js';
+import { toDiagnostic } from './protocol-translation.js';
 import { SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
-import { LspDocuments } from './document.js';
-import { DiagnosticKind, TspClient } from './tsp-client.js';
+import { DiagnosticKind, type TsClient } from './ts-client.js';
 import { ClientCapability } from './typescriptService.js';
 
 class FileDiagnostics {
@@ -21,7 +20,7 @@ class FileDiagnostics {
     constructor(
         protected readonly uri: string,
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
-        protected readonly documents: LspDocuments,
+        protected readonly client: TsClient,
         protected readonly features: SupportedFeatures,
     ) { }
 
@@ -38,7 +37,7 @@ class FileDiagnostics {
         const result: lsp.Diagnostic[] = [];
         for (const diagnostics of this.diagnosticsPerKind.values()) {
             for (const diagnostic of diagnostics) {
-                result.push(toDiagnostic(diagnostic, this.documents, this.features));
+                result.push(toDiagnostic(diagnostic, this.client, this.features));
             }
         }
         return result;
@@ -51,22 +50,22 @@ export class DiagnosticEventQueue {
 
     constructor(
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
-        protected readonly documents: LspDocuments,
+        protected readonly client: TsClient,
         protected readonly features: SupportedFeatures,
         protected readonly logger: Logger,
-        private readonly tspClient: TspClient,
+        private readonly tsClient: TsClient,
     ) { }
 
     updateDiagnostics(kind: DiagnosticKind, file: string, diagnostics: ts.server.protocol.Diagnostic[]): void {
-        if (kind !== DiagnosticKind.Syntax && !this.tspClient.hasCapabilityForResource(this.documents.toResource(file), ClientCapability.Semantic)) {
+        if (kind !== DiagnosticKind.Syntax && !this.tsClient.hasCapabilityForResource(this.tsClient.toResource(file), ClientCapability.Semantic)) {
             return;
         }
 
         if (this.ignoredDiagnosticCodes.size) {
             diagnostics = diagnostics.filter(diagnostic => !this.isDiagnosticIgnored(diagnostic));
         }
-        const uri = pathToUri(file, this.documents);
-        const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.documents, this.features);
+        const uri = this.tsClient.toResource(file).toString();
+        const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.client, this.features);
         diagnosticsForFile.update(kind, diagnostics);
         this.diagnostics.set(uri, diagnosticsForFile);
     }
@@ -76,7 +75,7 @@ export class DiagnosticEventQueue {
     }
 
     public getDiagnosticsForFile(file: string): lsp.Diagnostic[] {
-        const uri = pathToUri(file, this.documents);
+        const uri = this.tsClient.toResource(file).toString();
         return this.diagnostics.get(uri)?.getDiagnostics() || [];
     }
 

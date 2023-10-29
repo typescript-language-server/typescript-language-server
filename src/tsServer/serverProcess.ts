@@ -14,7 +14,7 @@ import path from 'node:path';
 import type { Readable } from 'node:stream';
 import { TsServerProcess, TsServerProcessFactory, TsServerProcessKind } from './server.js';
 import type { ts } from '../ts-protocol.js';
-import type { TspClientOptions } from '../tsp-client.js';
+import type { TsClientOptions } from '../ts-client.js';
 import API from '../utils/api.js';
 import type { TypeScriptVersion } from './versionProvider.js';
 
@@ -23,7 +23,7 @@ export class NodeTsServerProcessFactory implements TsServerProcessFactory {
         version: TypeScriptVersion,
         args: readonly string[],
         kind: TsServerProcessKind,
-        configuration: TspClientOptions,
+        configuration: TsClientOptions,
     ): TsServerProcess {
         const tsServerPath = version.tsServerPath;
         const useIpc = version.version?.gte(API.v490);
@@ -53,7 +53,7 @@ function generatePatchedEnv(env: any, modulePath: string): any {
     return newEnv;
 }
 
-function getExecArgv(kind: TsServerProcessKind, configuration: TspClientOptions): string[] {
+function getExecArgv(kind: TsServerProcessKind, configuration: TsClientOptions): string[] {
     const args: string[] = [];
     const debugPort = getDebugPort(kind);
     if (debugPort) {

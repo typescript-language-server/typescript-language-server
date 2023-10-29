@@ -11,14 +11,14 @@ import { fileURLToPath } from 'node:url';
 import deepmerge from 'deepmerge';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { WorkspaceConfiguration } from './configuration-manager.js';
-import { normalizePath, pathToUri } from './protocol-translation.js';
+import { URI } from 'vscode-uri';
+import { WorkspaceConfiguration } from './features/fileConfigurationManager.js';
 import { TypeScriptInitializationOptions } from './ts-protocol.js';
 import { LspClient, WithProgressOptions } from './lsp-client.js';
 import { LspServer } from './lsp-server.js';
 import { ConsoleLogger, LogLevel } from './utils/logger.js';
 import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
-import { TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
+import { TsServerLogLevel } from './utils/configuration.js';
 
 const CONSOLE_LOG_LEVEL = LogLevel.fromString(process.env.CONSOLE_LOG_LEVEL);
 export const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -75,11 +75,11 @@ const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {};
 
 export function uri(...components: string[]): string {
     const resolved = filePath(...components);
-    return pathToUri(resolved, undefined);
+    return URI.file(resolved).toString();
 }
 
 export function filePath(...components: string[]): string {
-    return normalizePath(path.resolve(PACKAGE_ROOT, 'test-data', ...components));
+    return URI.file(path.resolve(PACKAGE_ROOT, 'test-data', ...components)).fsPath;
 }
 
 export function readContents(path: string): string {
@@ -192,15 +192,12 @@ interface TestLspServerOptions {
 export async function createServer(options: TestLspServerOptions): Promise<TestLspServer> {
     const logger = new ConsoleLogger(CONSOLE_LOG_LEVEL);
     const lspClient = new TestLspClient(options, logger);
-    const serverOptions: TypeScriptServiceConfiguration = {
+    const typescriptVersionProvider = new TypeScriptVersionProvider(undefined, logger);
+    const bundled = typescriptVersionProvider.bundledVersion();
+    const server = new TestLspServer({
         logger,
         lspClient,
         tsserverLogVerbosity: TsServerLogLevel.Off,
-    };
-    const typescriptVersionProvider = new TypeScriptVersionProvider(serverOptions.tsserverPath, logger);
-    const bundled = typescriptVersionProvider.bundledVersion();
-    const server = new TestLspServer({
-        ...serverOptions,
         tsserverPath: bundled!.tsServerPath,
     });
 

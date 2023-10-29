@@ -13,7 +13,7 @@ import path from 'node:path';
 import API from '../utils/api.js';
 import { ClientCapabilities, ClientCapability, ServerType } from '../typescriptService.js';
 import { Logger, LogLevel } from '../utils/logger.js';
-import type { TspClientOptions } from '../tsp-client.js';
+import type { TsClientOptions } from '../ts-client.js';
 import { nodeRequestCancellerFactory } from './cancellation.js';
 import type { ILogDirectoryProvider } from './logDirectoryProvider.js';
 import { ITypeScriptServer, SingleTsServer, SyntaxRoutingTsServer, TsServerDelegate, TsServerProcessKind } from './server.js';
@@ -47,7 +47,7 @@ export class TypeScriptServerSpawner {
     public spawn(
         version: TypeScriptVersion,
         capabilities: ClientCapabilities,
-        configuration: TspClientOptions,
+        configuration: TsClientOptions,
         delegate: TsServerDelegate,
     ): ITypeScriptServer {
         let primaryServer: ITypeScriptServer;
@@ -82,7 +82,7 @@ export class TypeScriptServerSpawner {
     private getCompositeServerType(
         version: TypeScriptVersion,
         capabilities: ClientCapabilities,
-        configuration: TspClientOptions,
+        configuration: TsClientOptions,
     ): CompositeServerType {
         if (!capabilities.has(ClientCapability.Semantic)) {
             return CompositeServerType.SyntaxOnly;
@@ -108,7 +108,7 @@ export class TypeScriptServerSpawner {
     private spawnTsServer(
         kind: TsServerProcessKind,
         version: TypeScriptVersion,
-        configuration: TspClientOptions,
+        configuration: TsClientOptions,
     ): ITypeScriptServer {
         const processFactory = new NodeTsServerProcessFactory();
         const canceller = nodeRequestCancellerFactory.create(kind, this._tracer);
@@ -149,7 +149,7 @@ export class TypeScriptServerSpawner {
 
     private getTsServerArgs(
         kind: TsServerProcessKind,
-        configuration: TspClientOptions,
+        configuration: TsClientOptions,
         // currentVersion: TypeScriptVersion,
         apiVersion: API,
         cancellationPipeName: string | undefined,
@@ -166,11 +166,7 @@ export class TypeScriptServerSpawner {
             }
         }
 
-        if (apiVersion.gte(API.v250)) {
-            args.push('--useInferredProjectPerProjectRoot');
-        } else {
-            args.push('--useSingleInferredProject');
-        }
+        args.push('--useInferredProjectPerProjectRoot');
 
         const { disableAutomaticTypingAcquisition, globalPlugins, locale, npmLocation, pluginProbeLocations } = configuration;
 
@@ -235,7 +231,7 @@ export class TypeScriptServerSpawner {
         return { args, tsServerLogFile, tsServerTraceDirectory };
     }
 
-    private isLoggingEnabled(configuration: TspClientOptions) {
+    private isLoggingEnabled(configuration: TsClientOptions) {
         return configuration.logVerbosity !== TsServerLogLevel.Off;
     }
 }

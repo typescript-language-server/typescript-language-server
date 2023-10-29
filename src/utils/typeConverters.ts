@@ -101,6 +101,9 @@ export namespace Position {
         }
         return one.character < other.character;
     }
+    export function isEqual(one: lsp.Position, other: lsp.Position): boolean {
+        return one.line === other.line && one.character === other.character;
+    }
     export function Max(): undefined;
     export function Max(...positions: lsp.Position[]): lsp.Position;
     export function Max(...positions: lsp.Position[]): lsp.Position | undefined {

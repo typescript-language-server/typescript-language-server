@@ -7,16 +7,16 @@
 
 import * as lsp from 'vscode-languageserver';
 import { LspDocument } from './document.js';
-import { toTextEdit, normalizePath } from './protocol-translation.js';
+import { toTextEdit } from './protocol-translation.js';
 import { Commands } from './commands.js';
-import { TspClient } from './tsp-client.js';
+import { type WorkspaceConfigurationCompletionOptions } from './features/fileConfigurationManager.js';
+import { TsClient } from './ts-client.js';
 import { CommandTypes, KindModifiers, ScriptElementKind, SupportedFeatures, SymbolDisplayPartKind, toSymbolDisplayPartKind } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import * as Previewer from './utils/previewer.js';
 import { IFilePathToResourceConverter } from './utils/previewer.js';
 import SnippetString from './utils/SnippetString.js';
 import { Range, Position } from './utils/typeConverters.js';
-import type { WorkspaceConfigurationCompletionOptions } from './configuration-manager.js';
 
 interface ParameterListParts {
     readonly parts: ReadonlyArray<ts.server.protocol.SymbolDisplayPart>;
@@ -351,7 +351,7 @@ export async function asResolvedCompletionItem(
     item: lsp.CompletionItem,
     details: ts.server.protocol.CompletionEntryDetails,
     document: LspDocument | undefined,
-    client: TspClient,
+    client: TsClient,
     filePathConverter: IFilePathToResourceConverter,
     options: WorkspaceConfigurationCompletionOptions,
     features: SupportedFeatures,
@@ -359,7 +359,11 @@ export async function asResolvedCompletionItem(
     item.detail = asDetail(details, filePathConverter);
     const { documentation, tags } = details;
     item.documentation = Previewer.markdownDocumentation(documentation, tags, filePathConverter);
-    const filepath = normalizePath(item.data.file);
+    const filepath = client.toResource(item.data.file).fsPath;
+    if (!filepath) {
+        return item;
+    }
+
     if (details.codeActions?.length) {
         item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
         item.command = asCommand(details.codeActions, item.data.file);
@@ -377,12 +381,12 @@ export async function asResolvedCompletionItem(
     return item;
 }
 
-async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TspClient, document: LspDocument): Promise<boolean> {
+async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TsClient, document: LspDocument): Promise<boolean> {
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
         const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(filepath, position);
-        const response = await client.request(CommandTypes.Quickinfo, args);
+        const response = await client.execute(CommandTypes.Quickinfo, args);
         if (response.type === 'response' && response.body) {
             switch (response.body.kind) {
                 case 'var':

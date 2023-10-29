@@ -6,69 +6,15 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { URI } from 'vscode-uri';
-import type { LspDocuments } from './document.js';
+import { type TsClient } from './ts-client.js';
 import { HighlightSpanKind, SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import { Position, Range } from './utils/typeConverters.js';
 
-const RE_PATHSEP_WINDOWS = /\\/g;
-
-export function uriToPath(stringUri: string): string | undefined {
-    // Vim may send `zipfile:` URIs which tsserver with Yarn v2+ hook can handle. Keep as-is.
-    // Example: zipfile:///foo/bar/baz.zip::path/to/module
-    if (stringUri.startsWith('zipfile:')) {
-        return stringUri;
-    }
-    const uri = URI.parse(stringUri);
-    if (uri.scheme !== 'file') {
-        return undefined;
-    }
-    return normalizeFsPath(uri.fsPath);
-}
-
-export function pathToUri(filepath: string, documents: LspDocuments | undefined): string {
-    // Yarn v2+ hooks tsserver and sends `zipfile:` URIs for Vim. Keep as-is.
-    // Example: zipfile:///foo/bar/baz.zip::path/to/module
-    if (filepath.startsWith('zipfile:')) {
-        return filepath;
-    }
-    const fileUri = URI.file(filepath);
-    const normalizedFilepath = normalizePath(fileUri.fsPath);
-    const document = documents?.get(normalizedFilepath);
-    return document ? document.uri : fileUri.toString();
-}
-
-/**
- * Normalizes the file system path.
- *
- * On systems other than Windows it should be an no-op.
- *
- * On Windows, an input path in a format like "C:/path/file.ts"
- * will be normalized to "c:/path/file.ts".
- */
-export function normalizePath(filePath: string): string {
-    const fsPath = URI.file(filePath).fsPath;
-    return normalizeFsPath(fsPath);
-}
-
-/**
- * Normalizes the path obtained through the "fsPath" property of the URI module.
- */
-export function normalizeFsPath(fsPath: string): string {
-    return fsPath.replace(RE_PATHSEP_WINDOWS, '/');
-}
-
-function currentVersion(filepath: string, documents: LspDocuments | undefined): number | null {
-    const fileUri = URI.file(filepath);
-    const normalizedFilepath = normalizePath(fileUri.fsPath);
-    const document = documents?.get(normalizedFilepath);
-    return document ? document.version : null;
-}
-
-export function toLocation(fileSpan: ts.server.protocol.FileSpan, documents: LspDocuments | undefined): lsp.Location {
+export function toLocation(fileSpan: ts.server.protocol.FileSpan, client: TsClient): lsp.Location {
+    const uri = client.toResource(fileSpan.file);
     return {
-        uri: pathToUri(fileSpan.file, documents),
+        uri: uri.toString(),
         range: {
             start: Position.fromLocation(fileSpan.start),
             end: Position.fromLocation(fileSpan.end),
@@ -115,7 +61,7 @@ function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     }
 }
 
-export function toDiagnostic(diagnostic: ts.server.protocol.Diagnostic, documents: LspDocuments | undefined, features: SupportedFeatures): lsp.Diagnostic {
+export function toDiagnostic(diagnostic: ts.server.protocol.Diagnostic, client: TsClient, features: SupportedFeatures): lsp.Diagnostic {
     const lspDiagnostic: lsp.Diagnostic = {
         range: {
             start: Position.fromLocation(diagnostic.start),
@@ -125,7 +71,7 @@ export function toDiagnostic(diagnostic: ts.server.protocol.Diagnostic, document
         severity: toDiagnosticSeverity(diagnostic.category),
         code: diagnostic.code,
         source: diagnostic.source || 'typescript',
-        relatedInformation: asRelatedInformation(diagnostic.relatedInformation, documents),
+        relatedInformation: asRelatedInformation(diagnostic.relatedInformation, client),
     };
     if (features.diagnosticsTagSupport) {
         lspDiagnostic.tags = getDiagnosticTags(diagnostic);
@@ -144,7 +90,7 @@ function getDiagnosticTags(diagnostic: ts.server.protocol.Diagnostic): lsp.Diagn
     return tags;
 }
 
-function asRelatedInformation(info: ts.server.protocol.DiagnosticRelatedInformation[] | undefined, documents: LspDocuments | undefined): lsp.DiagnosticRelatedInformation[] | undefined {
+function asRelatedInformation(info: ts.server.protocol.DiagnosticRelatedInformation[] | undefined, client: TsClient): lsp.DiagnosticRelatedInformation[] | undefined {
     if (!info) {
         return undefined;
     }
@@ -153,7 +99,7 @@ function asRelatedInformation(info: ts.server.protocol.DiagnosticRelatedInformat
         const span = item.span;
         if (span) {
             result.push(lsp.DiagnosticRelatedInformation.create(
-                toLocation(span, documents),
+                toLocation(span, client),
                 item.message,
             ));
         }
@@ -178,11 +124,13 @@ export function toTextEdit(edit: ts.server.protocol.CodeEdit): lsp.TextEdit {
     };
 }
 
-export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, documents: LspDocuments | undefined): lsp.TextDocumentEdit {
+export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, client: TsClient): lsp.TextDocumentEdit {
+    const uri = client.toResource(change.fileName);
+    const document = client.toOpenDocument(uri.fsPath);
     return {
         textDocument: {
-            uri: pathToUri(change.fileName, documents),
-            version: currentVersion(change.fileName, documents),
+            uri: uri.toString(),
+            version: document?.version ?? null,
         },
         edits: change.textChanges.map(c => toTextEdit(c)),
     };
@@ -202,9 +150,12 @@ export function toDocumentHighlight(item: ts.server.protocol.DocumentHighlightsI
 
 function toDocumentHighlightKind(kind: HighlightSpanKind): lsp.DocumentHighlightKind {
     switch (kind) {
-        case HighlightSpanKind.definition: return lsp.DocumentHighlightKind.Write;
+        case HighlightSpanKind.definition:
+            return lsp.DocumentHighlightKind.Write;
         case HighlightSpanKind.reference:
-        case HighlightSpanKind.writtenReference: return lsp.DocumentHighlightKind.Read;
-        default: return lsp.DocumentHighlightKind.Text;
+        case HighlightSpanKind.writtenReference:
+            return lsp.DocumentHighlightKind.Read;
+        default:
+            return lsp.DocumentHighlightKind.Text;
     }
 }

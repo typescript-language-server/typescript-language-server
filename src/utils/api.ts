@@ -11,13 +11,6 @@ export default class API {
     }
 
     public static readonly defaultVersion = API.fromSimpleString('1.0.0');
-    public static readonly v240 = API.fromSimpleString('2.4.0');
-    public static readonly v250 = API.fromSimpleString('2.5.0');
-    public static readonly v260 = API.fromSimpleString('2.6.0');
-    public static readonly v270 = API.fromSimpleString('2.7.0');
-    public static readonly v280 = API.fromSimpleString('2.8.0');
-    public static readonly v290 = API.fromSimpleString('2.9.0');
-    public static readonly v291 = API.fromSimpleString('2.9.1');
     public static readonly v300 = API.fromSimpleString('3.0.0');
     public static readonly v310 = API.fromSimpleString('3.1.0');
     public static readonly v314 = API.fromSimpleString('3.1.4');
@@ -38,6 +31,7 @@ export default class API {
     public static readonly v470 = API.fromSimpleString('4.7.0');
     public static readonly v480 = API.fromSimpleString('4.8.0');
     public static readonly v490 = API.fromSimpleString('4.9.0');
+    public static readonly v500 = API.fromSimpleString('5.0.0');
     public static readonly v510 = API.fromSimpleString('5.1.0');
 
     public static fromVersionString(versionString: string): API {

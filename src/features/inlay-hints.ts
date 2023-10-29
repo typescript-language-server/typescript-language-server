@@ -11,57 +11,51 @@
 
 import * as lsp from 'vscode-languageserver';
 import API from '../utils/api.js';
-import type { ConfigurationManager } from '../configuration-manager.js';
-import type { LspDocuments } from '../document.js';
+import type { LspDocument } from '../document.js';
+import FileConfigurationManager from './fileConfigurationManager.js';
 import { CommandTypes } from '../ts-protocol.js';
 import type { ts } from '../ts-protocol.js';
-import type { TspClient } from '../tsp-client.js';
+import type { TsClient } from '../ts-client.js';
 import type { LspClient } from '../lsp-client.js';
 import { IFilePathToResourceConverter } from '../utils/previewer.js';
 import { Location, Position } from '../utils/typeConverters.js';
-import { uriToPath } from '../protocol-translation.js';
 
 export class TypeScriptInlayHintsProvider {
     public static readonly minVersion = API.v440;
 
     public static async provideInlayHints(
-        uri: lsp.DocumentUri,
+        textDocument: lsp.TextDocumentIdentifier,
         range: lsp.Range,
-        documents: LspDocuments,
-        tspClient: TspClient,
+        client: TsClient,
         lspClient: LspClient,
-        configurationManager: ConfigurationManager,
+        fileConfigurationManager: FileConfigurationManager,
         token?: lsp.CancellationToken,
     ): Promise<lsp.InlayHint[]> {
-        if (tspClient.apiVersion.lt(TypeScriptInlayHintsProvider.minVersion)) {
+        if (client.apiVersion.lt(TypeScriptInlayHintsProvider.minVersion)) {
             lspClient.showErrorMessage('Inlay Hints request failed. Requires TypeScript 4.4+.');
             return [];
         }
 
-        const file = uriToPath(uri);
-
-        if (!file) {
-            lspClient.showErrorMessage('Inlay Hints request failed. No resource provided.');
-            return [];
-        }
-
-        const document = documents.get(file);
+        const document = client.toOpenDocument(textDocument.uri);
 
         if (!document) {
             lspClient.showErrorMessage('Inlay Hints request failed. File not opened in the editor.');
             return [];
         }
 
-        if (!areInlayHintsEnabledForFile(configurationManager, file)) {
+        if (!areInlayHintsEnabledForFile(fileConfigurationManager, document)) {
             return [];
         }
 
-        await configurationManager.configureGloballyFromDocument(file);
+        await fileConfigurationManager.ensureConfigurationForDocument(document, token);
+        if (token?.isCancellationRequested) {
+            return [];
+        }
 
         const start = document.offsetAt(range.start);
         const length = document.offsetAt(range.end) - start;
 
-        const response = await tspClient.request(CommandTypes.ProvideInlayHints, { file, start, length }, token);
+        const response = await client.execute(CommandTypes.ProvideInlayHints, { file: document.filepath, start, length }, token);
         if (response.type !== 'response' || !response.success || !response.body) {
             return [];
         }
@@ -69,7 +63,7 @@ export class TypeScriptInlayHintsProvider {
         return response.body.map<lsp.InlayHint>(hint => {
             const inlayHint = lsp.InlayHint.create(
                 Position.fromLocation(hint.position),
-                TypeScriptInlayHintsProvider.convertInlayHintText(hint, documents),
+                TypeScriptInlayHintsProvider.convertInlayHintText(hint, client),
                 fromProtocolInlayHintKind(hint.kind));
             hint.whitespaceBefore && (inlayHint.paddingLeft = true);
             hint.whitespaceAfter && (inlayHint.paddingRight = true);
@@ -95,8 +89,8 @@ export class TypeScriptInlayHintsProvider {
     }
 }
 
-function areInlayHintsEnabledForFile(configurationManager: ConfigurationManager, filename: string) {
-    const preferences = configurationManager.getPreferences(filename);
+function areInlayHintsEnabledForFile(fileConfigurationManager: FileConfigurationManager, document: LspDocument) {
+    const preferences = fileConfigurationManager.getPreferences(document);
 
     // Doesn't need to include `includeInlayVariableTypeHintsWhenTypeMatchesName` and
     // `includeInlayVariableTypeHintsWhenTypeMatchesName` as those depend on other preferences being enabled.

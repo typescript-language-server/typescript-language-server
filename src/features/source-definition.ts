@@ -12,9 +12,8 @@
 import * as lsp from 'vscode-languageserver';
 import API from '../utils/api.js';
 import { Position } from '../utils/typeConverters.js';
-import { toLocation, uriToPath } from '../protocol-translation.js';
-import type { LspDocuments } from '../document.js';
-import type { TspClient } from '../tsp-client.js';
+import { toLocation } from '../protocol-translation.js';
+import type { TsClient } from '../ts-client.js';
 import type { LspClient } from '../lsp-client.js';
 import { CommandTypes } from '../ts-protocol.js';
 
@@ -25,13 +24,12 @@ export class SourceDefinitionCommand {
     public static async execute(
         uri: lsp.DocumentUri | undefined,
         position: lsp.Position | undefined,
-        documents: LspDocuments,
-        tspClient: TspClient,
+        client: TsClient,
         lspClient: LspClient,
         reporter: lsp.WorkDoneProgressReporter,
         token?: lsp.CancellationToken,
     ): Promise<lsp.Location[] | void> {
-        if (tspClient.apiVersion.lt(SourceDefinitionCommand.minVersion)) {
+        if (client.apiVersion.lt(SourceDefinitionCommand.minVersion)) {
             lspClient.showErrorMessage('Go to Source Definition failed. Requires TypeScript 4.7+.');
             return;
         }
@@ -43,12 +41,12 @@ export class SourceDefinitionCommand {
 
         let file: string | undefined;
 
-        if (!uri || typeof uri !== 'string' || !(file = uriToPath(uri))) {
+        if (!uri || typeof uri !== 'string' || !(file = client.toTsFilePath(uri))) {
             lspClient.showErrorMessage('Go to Source Definition failed. No resource provided.');
             return;
         }
 
-        const document = documents.get(file);
+        const document = client.toOpenDocument(file);
 
         if (!document) {
             lspClient.showErrorMessage('Go to Source Definition failed. File not opened in the editor.');
@@ -60,12 +58,12 @@ export class SourceDefinitionCommand {
             message: 'Finding source definitions…',
             reporter,
         }, async () => {
-            const response = await tspClient.request(CommandTypes.FindSourceDefinition, args, token);
+            const response = await client.execute(CommandTypes.FindSourceDefinition, args, token);
             if (response.type !== 'response' || !response.body) {
                 lspClient.showErrorMessage('No source definitions found.');
                 return;
             }
-            return response.body.map(reference => toLocation(reference, documents));
+            return response.body.map(reference => toLocation(reference, client));
         });
     }
 }

@@ -50,7 +50,7 @@ export namespace TsServerLogLevel {
     }
 }
 
-export interface TypeScriptServiceConfiguration {
+export interface LspServerConfiguration {
     readonly logger: Logger;
     readonly lspClient: LspClient;
     readonly tsserverLogVerbosity: TsServerLogLevel;

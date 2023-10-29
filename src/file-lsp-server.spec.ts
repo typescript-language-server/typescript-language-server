@@ -18,11 +18,11 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-    server.closeAll();
+    server.closeAllForTesting();
 });
 
 afterAll(() => {
-    server.closeAll();
+    server.closeAllForTesting();
     server.shutdown();
 });
 

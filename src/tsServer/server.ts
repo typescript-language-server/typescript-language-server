@@ -14,7 +14,7 @@ import type { CancellationToken } from 'vscode-jsonrpc';
 import { RequestItem, RequestQueue, RequestQueueingType } from './requestQueue.js';
 import { ServerResponse, ServerType, TypeScriptRequestTypes } from '../typescriptService.js';
 import { CommandTypes, EventName, ts } from '../ts-protocol.js';
-import type { TspClientOptions } from '../tsp-client.js';
+import type { TsClientOptions } from '../ts-client.js';
 import { OngoingRequestCanceller } from './cancellation.js';
 import { CallbackMap } from './callbackMap.js';
 import { TypeScriptServerError } from './serverError.js';
@@ -71,7 +71,7 @@ export interface TsServerProcessFactory {
         version: TypeScriptVersion,
         args: readonly string[],
         kind: TsServerProcessKind,
-        configuration: TspClientOptions,
+        configuration: TsClientOptions,
     ): TsServerProcess;
 }
 

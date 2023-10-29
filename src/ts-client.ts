@@ -9,23 +9,32 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import path from 'node:path';
 import { URI } from 'vscode-uri';
 import { ResponseError } from 'vscode-languageserver';
 import type lsp from 'vscode-languageserver';
-import type { CancellationToken } from 'vscode-jsonrpc';
-import { Logger, PrefixingLogger } from './utils/logger.js';
-import API from './utils/api.js';
+import { type DocumentUri } from 'vscode-languageserver-textdocument';
+import { type CancellationToken, CancellationTokenSource } from 'vscode-jsonrpc';
+import { type LspDocument, LspDocuments } from './document.js';
+import * as fileSchemes from './configuration/fileSchemes.js';
 import { CommandTypes, EventName } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
-import { AsyncTsServerRequests, ClientCapabilities, ClientCapability, ExecConfig, NoResponseTsServerRequests, ServerResponse, StandardTsServerRequests, TypeScriptRequestTypes } from './typescriptService.js';
+import { AsyncTsServerRequests, ClientCapabilities, ClientCapability, ExecConfig, NoResponseTsServerRequests, ITypeScriptServiceClient, ServerResponse, StandardTsServerRequests, TypeScriptRequestTypes } from './typescriptService.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
 import { TypeScriptServerError } from './tsServer/serverError.js';
 import { TypeScriptServerSpawner } from './tsServer/spawner.js';
 import Tracer, { Trace } from './tsServer/tracer.js';
-import type { TypeScriptVersion, TypeScriptVersionSource } from './tsServer/versionProvider.js';
+import { TypeScriptVersion, TypeScriptVersionSource } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
+import API from './utils/api.js';
 import { SyntaxServerConfiguration, TsServerLogLevel } from './utils/configuration.js';
+import { Logger, PrefixingLogger } from './utils/logger.js';
+
+interface ToCancelOnResourceChanged {
+    readonly resource: string;
+    cancel(): void;
+}
 
 namespace ServerState {
     export const enum Type {
@@ -54,7 +63,7 @@ namespace ServerState {
             public languageServiceEnabled: boolean,
         ) { }
 
-        // public readonly toCancelOnResourceChange = new Set<ToCancelOnResourceChanged>();
+        public readonly toCancelOnResourceChange = new Set<ToCancelOnResourceChanged>();
 
         updateTsserverVersion(tsserverVersion: string): void {
             this.tsserverVersion = tsserverVersion;
@@ -122,11 +131,13 @@ class ServerInitializingIndicator {
     }
 }
 
-export interface TspClientOptions {
-    lspClient: LspClient;
+type WorkspaceFolder = {
+    uri: URI;
+};
+
+export interface TsClientOptions {
     trace: Trace;
     typescriptVersion: TypeScriptVersion;
-    logger: Logger;
     logVerbosity: TsServerLogLevel;
     logDirectoryProvider: ILogDirectoryProvider;
     disableAutomaticTypingAcquisition?: boolean;
@@ -140,26 +151,139 @@ export interface TspClientOptions {
     useSyntaxServer: SyntaxServerConfiguration;
 }
 
-export class TspClient {
-    public apiVersion: API;
-    public typescriptVersionSource: TypeScriptVersionSource;
+export class TsClient implements ITypeScriptServiceClient {
+    public apiVersion: API = API.defaultVersion;
+    public typescriptVersionSource: TypeScriptVersionSource = TypeScriptVersionSource.Bundled;
     private serverState: ServerState.State = ServerState.None;
-    private logger: Logger;
-    private tsserverLogger: Logger;
-    private loadingIndicator: ServerInitializingIndicator;
-    private tracer: Tracer;
+    private projectLoading = true;
+    private readonly lspClient: LspClient;
+    private readonly logger: Logger;
+    private readonly tsserverLogger: Logger;
+    private readonly loadingIndicator: ServerInitializingIndicator;
+    private tracer: Tracer | undefined;
+    private workspaceFolders: WorkspaceFolder[] = [];
+    private readonly documents: LspDocuments;
+    private useSyntaxServer: SyntaxServerConfiguration = SyntaxServerConfiguration.Auto;
+    private onEvent?: (event: ts.server.protocol.Event) => void;
+    private onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
 
-    constructor(private options: TspClientOptions) {
-        this.apiVersion = options.typescriptVersion.version || API.defaultVersion;
-        this.typescriptVersionSource = options.typescriptVersion.source;
-        this.logger = new PrefixingLogger(options.logger, '[tsclient]');
-        this.tsserverLogger = new PrefixingLogger(options.logger, '[tsserver]');
-        this.loadingIndicator = new ServerInitializingIndicator(options.lspClient);
-        this.tracer = new Tracer(this.tsserverLogger, options.trace);
+    constructor(
+        onCaseInsensitiveFileSystem: boolean,
+        logger: Logger,
+        lspClient: LspClient,
+    ) {
+        this.documents = new LspDocuments(this, onCaseInsensitiveFileSystem);
+        this.logger = new PrefixingLogger(logger, '[tsclient]');
+        this.tsserverLogger = new PrefixingLogger(this.logger, '[tsserver]');
+        this.lspClient = lspClient;
+        this.loadingIndicator = new ServerInitializingIndicator(this.lspClient);
+    }
+
+    public openTextDocument(textDocument: lsp.TextDocumentItem): boolean {
+        return this.documents.openTextDocument(textDocument);
+    }
+
+    public onDidCloseTextDocument(textDocument: lsp.TextDocumentIdentifier): void {
+        this.documents.onDidCloseTextDocument(textDocument);
+    }
+
+    public onDidChangeTextDocument(params: lsp.DidChangeTextDocumentParams): void {
+        this.documents.onDidChangeTextDocument(params);
+    }
+
+    public lastFileOrDummy(): string | undefined {
+        return this.documents.files[0] || this.workspaceFolders[0]?.uri.fsPath;
+    }
+
+    public toTsFilePath(stringUri: string): string | undefined {
+        // Vim may send `zipfile:` URIs which tsserver with Yarn v2+ hook can handle. Keep as-is.
+        // Example: zipfile:///foo/bar/baz.zip::path/to/module
+        if (stringUri.startsWith('zipfile:')) {
+            return stringUri;
+        }
+
+        const resource = URI.parse(stringUri);
+
+        if (fileSchemes.disabledSchemes.has(resource.scheme)) {
+            return undefined;
+        }
+
+        if (resource.scheme === fileSchemes.file) {
+            return resource.fsPath;
+        }
+
+        return undefined;
+    }
+
+    public toOpenDocument(textDocumentUri: DocumentUri, options: { suppressAlertOnFailure?: boolean; } = {}): LspDocument | undefined {
+        const filepath = this.toTsFilePath(textDocumentUri);
+        const document = filepath && this.documents.get(filepath);
+        if (!document) {
+            const uri = URI.parse(textDocumentUri);
+            if (!options.suppressAlertOnFailure && !fileSchemes.disabledSchemes.has(uri.scheme)) {
+                console.error(`Unexpected resource ${textDocumentUri}`);
+            }
+            return undefined;
+        }
+        return document;
+    }
+
+    public closeAllDocumentsForTesting(): void {
+        this.documents.closeAllForTesting();
+    }
+
+    public requestDiagnosticsForTesting(): void {
+        this.documents.requestDiagnosticsForTesting();
+    }
+
+    public isProjectLoadingForTesting(): boolean {
+        return this.projectLoading;
+    }
+
+    public hasPendingDiagnostics(resource: URI): boolean {
+        return this.documents.hasPendingDiagnostics(resource);
+    }
+
+    /**
+     * Convert a path to a resource.
+     */
+    public toResource(filepath: string): URI {
+        // Yarn v2+ hooks tsserver and sends `zipfile:` URIs for Vim. Keep as-is.
+        // Example: zipfile:///foo/bar/baz.zip::path/to/module
+        if (filepath.startsWith('zipfile:')) {
+            return URI.parse(filepath);
+        }
+        const fileUri = URI.file(filepath);
+        const document = this.documents.get(fileUri.fsPath);
+        return document ? document.uri : fileUri;
+    }
+
+    public getWorkspaceRootForResource(resource: URI): URI | undefined {
+        // For notebook cells, we need to use the notebook document to look up the workspace
+        // if (resource.scheme === Schemes.notebookCell) {
+        //     for (const notebook of vscode.workspace.notebookDocuments) {
+        //         for (const cell of notebook.getCells()) {
+        //             if (cell.document.uri.toString() === resource.toString()) {
+        //                 resource = notebook.uri;
+        //                 break;
+        //             }
+        //         }
+        //     }
+        // }
+
+        for (const root of this.workspaceFolders.sort((a, b) => a.uri.fsPath.length - b.uri.fsPath.length)) {
+            if (root.uri.scheme === resource.scheme && root.uri.authority === resource.authority) {
+                if (resource.fsPath.startsWith(root.uri.fsPath + path.sep)) {
+                    return root.uri;
+                }
+            }
+        }
+
+        return undefined;
     }
 
     public get capabilities(): ClientCapabilities {
-        if (this.options.useSyntaxServer === SyntaxServerConfiguration.Always) {
+        if (this.useSyntaxServer === SyntaxServerConfiguration.Always) {
             return new ClientCapabilities(
                 ClientCapability.Syntax,
                 ClientCapability.EnhancedSyntax);
@@ -193,9 +317,20 @@ export class TspClient {
         }
     }
 
-    start(): boolean {
-        const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, this.options.logDirectoryProvider, this.logger, this.tracer);
-        const tsServer = tsServerSpawner.spawn(this.options.typescriptVersion, this.capabilities, this.options, {
+    start(
+        workspaceRoot: string | undefined,
+        options: TsClientOptions,
+    ): boolean {
+        this.apiVersion = options.typescriptVersion.version || API.defaultVersion;
+        this.typescriptVersionSource = options.typescriptVersion.source;
+        this.tracer = new Tracer(this.tsserverLogger, options.trace);
+        this.workspaceFolders = workspaceRoot ? [{ uri: URI.file(workspaceRoot) }] : [];
+        this.useSyntaxServer = options.useSyntaxServer;
+        this.onEvent = options.onEvent;
+        this.onExit = options.onExit;
+
+        const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, options.logDirectoryProvider, this.logger, this.tracer);
+        const tsServer = tsServerSpawner.spawn(options.typescriptVersion, this.capabilities, options, {
             onFatalError: (command, err) => this.fatalError(command, err),
         });
         this.serverState = new ServerState.Running(tsServer, this.apiVersion, undefined, true);
@@ -203,9 +338,7 @@ export class TspClient {
             this.serverState = ServerState.None;
             this.shutdown();
             this.tsserverLogger.error(`Exited. Code: ${data.code}. Signal: ${data.signal}`);
-            if (this.options.onExit) {
-                this.options.onExit(data.code, data.signal);
-            }
+            this.onExit?.(data.code, data.signal);
         });
         tsServer.onStdErr((error: string) => {
             if (error) {
@@ -237,10 +370,12 @@ export class TspClient {
         switch (event.event) {
             case EventName.syntaxDiag:
             case EventName.semanticDiag:
-            case EventName.suggestionDiag: {
+            case EventName.suggestionDiag:
+            case EventName.configFileDiag: {
                 // This event also roughly signals that projects have been loaded successfully (since the TS server is synchronous)
+                this.projectLoading = false;
                 this.loadingIndicator.reset();
-                this.options.onEvent?.(event);
+                this.onEvent?.(event);
                 break;
             }
             // case EventName.ConfigFileDiag:
@@ -257,9 +392,9 @@ export class TspClient {
             case EventName.projectsUpdatedInBackground: {
                 this.loadingIndicator.reset();
 
-                // const body = (event as ts.server.protocol.ProjectsUpdatedInBackgroundEvent).body;
-                // const resources = body.openFiles.map(file => this.toResource(file));
-                // this.bufferSyncSupport.getErr(resources);
+                const body = (event as ts.server.protocol.ProjectsUpdatedInBackgroundEvent).body;
+                const resources = body.openFiles.map(file => this.toResource(file));
+                this.documents.getErr(resources);
                 break;
             }
             // case EventName.beginInstallTypes:
@@ -272,9 +407,11 @@ export class TspClient {
             //     this._onTypesInstallerInitializationFailed.fire((event as ts.server.protocol.TypesInstallerInitializationFailedEvent).body);
             //     break;
             case EventName.projectLoadingStart:
+                this.projectLoading = true;
                 this.loadingIndicator.startedLoadingProject((event as ts.server.protocol.ProjectLoadingStartEvent).body.projectName);
                 break;
             case EventName.projectLoadingFinish:
+                this.projectLoading = false;
                 this.loadingIndicator.finishedLoadingProject((event as ts.server.protocol.ProjectLoadingFinishEvent).body.projectName);
                 break;
         }
@@ -292,17 +429,6 @@ export class TspClient {
 
     // High-level API.
 
-    public notify(command: CommandTypes.Open, args: ts.server.protocol.OpenRequestArgs): void;
-    public notify(command: CommandTypes.Close, args: ts.server.protocol.FileRequestArgs): void;
-    public notify(command: CommandTypes.Change, args: ts.server.protocol.ChangeRequestArgs): void;
-    public notify(command: keyof NoResponseTsServerRequests, args: any): void {
-        this.executeWithoutWaitingForResponse(command, args);
-    }
-
-    public requestGeterr(args: ts.server.protocol.GeterrRequestArgs, token: CancellationToken): Promise<any> {
-        return this.executeAsync(CommandTypes.Geterr, args, token);
-    }
-
     public async request<K extends keyof StandardTsServerRequests>(
         command: K,
         args: StandardTsServerRequests[K][0],
@@ -318,32 +444,38 @@ export class TspClient {
 
     // Low-level API.
 
-    public execute(command: keyof TypeScriptRequestTypes, args: any, token?: CancellationToken, config?: ExecConfig): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
+    public execute<K extends keyof StandardTsServerRequests>(
+        command: K,
+        args: StandardTsServerRequests[K][0],
+        token?: CancellationToken,
+        config?: ExecConfig,
+    ): Promise<ServerResponse.Response<StandardTsServerRequests[K][1]>> {
         let executions: Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> | undefined;
 
-        // if (config?.cancelOnResourceChange) {
-        //     if (this.primaryTsServer) {
-        //         const source = new CancellationTokenSource();
-        //         token.onCancellationRequested(() => source.cancel());
+        if (config?.cancelOnResourceChange) {
+            const runningServerState = this.serverState;
+            if (token && runningServerState.type === ServerState.Type.Running) {
+                const source = new CancellationTokenSource();
+                token.onCancellationRequested(() => source.cancel());
 
-        //         const inFlight: ToCancelOnResourceChanged = {
-        //             resource: config.cancelOnResourceChange,
-        //             cancel: () => source.cancel(),
-        //         };
-        //         runningServerState.toCancelOnResourceChange.add(inFlight);
+                const inFlight: ToCancelOnResourceChanged = {
+                    resource: config.cancelOnResourceChange,
+                    cancel: () => source.cancel(),
+                };
+                runningServerState.toCancelOnResourceChange.add(inFlight);
 
-        //         executions = this.executeImpl(command, args, {
-        //             isAsync: false,
-        //             token: source.token,
-        //             expectsResult: true,
-        //             ...config,
-        //         });
-        //         executions[0]!.finally(() => {
-        //             runningServerState.toCancelOnResourceChange.delete(inFlight);
-        //             source.dispose();
-        //         });
-        //     }
-        // }
+                executions = this.executeImpl(command, args, {
+                    isAsync: false,
+                    token: source.token,
+                    expectsResult: true,
+                    ...config,
+                });
+                executions[0]!.finally(() => {
+                    runningServerState.toCancelOnResourceChange.delete(inFlight);
+                    source.dispose();
+                });
+            }
+        }
 
         if (!executions) {
             executions = this.executeImpl(command, args, {
@@ -356,6 +488,10 @@ export class TspClient {
 
         if (config?.nonRecoverable) {
             executions[0]!.catch(err => this.fatalError(command, err));
+        } else {
+            executions[0]!.catch(error => {
+                throw new ResponseError(1, (error as Error).message);
+            });
         }
 
         if (command === CommandTypes.UpdateOpen) {
@@ -390,6 +526,26 @@ export class TspClient {
             expectsResult: true,
         })[0]!;
     }
+
+    public interruptGetErr<R>(f: () => R): R {
+        return this.documents.interruptGetErr(f);
+    }
+
+    public cancelInflightRequestsForResource(resource: URI): void {
+        if (this.serverState.type !== ServerState.Type.Running) {
+            return;
+        }
+
+        for (const request of this.serverState.toCancelOnResourceChange) {
+            if (request.resource === resource.toString()) {
+                request.cancel();
+            }
+        }
+    }
+
+    // public get configuration(): TypeScriptServiceConfiguration {
+    //     return this._configuration;
+    // }
 
     private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; requireSemantic?: boolean; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         const serverState = this.serverState;
