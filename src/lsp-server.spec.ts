@@ -17,9 +17,9 @@ const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 
 let server: TestLspServer;
 
-async function openDocumentAndWaitForProjectLoad(server: TestLspServer, textDocument: lsp.TextDocumentItem): Promise<void> {
+async function openDocumentAndWaitForDiagnostics(server: TestLspServer, textDocument: lsp.TextDocumentItem): Promise<void> {
     server.didOpenTextDocument({ textDocument });
-    await server.waitForTsFinishedProjectLoading();
+    await server.waitForDiagnosticsForFile(textDocument.uri);
 }
 
 beforeAll(async () => {
@@ -53,7 +53,7 @@ describe('completion', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
@@ -77,7 +77,7 @@ describe('completion', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
@@ -118,7 +118,7 @@ describe('completion', () => {
             foo(); // call me
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const pos = position(doc, 'foo(); // call me');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
@@ -142,7 +142,7 @@ describe('completion', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const pos = position(doc, 'foo');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
@@ -157,7 +157,7 @@ describe('completion', () => {
             version: 1,
             text: 'pathex',
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: position(doc, 'ex') });
         expect(proposals).not.toBeNull();
         const pathExistsCompletion = proposals!.items.find(completion => completion.label === 'pathExists');
@@ -179,7 +179,7 @@ describe('completion', () => {
                 foo.i
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.i') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'invalid-identifier-name');
@@ -203,7 +203,7 @@ describe('completion', () => {
                 foo.getById()
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.get') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'getById');
@@ -284,7 +284,7 @@ describe('completion', () => {
             version: 1,
             text: 'import { readFile }',
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -318,7 +318,7 @@ describe('completion', () => {
             version: 1,
             text: 'readFile',
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -334,7 +334,7 @@ describe('completion', () => {
             version: 1,
             text: 'readFile',
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -374,7 +374,7 @@ describe('completion', () => {
             version: 1,
             text: 'readFile',
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -421,7 +421,7 @@ describe('completion', () => {
                 fs.readFile
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -474,7 +474,7 @@ describe('completion', () => {
                 /**/$
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === '$');
@@ -549,7 +549,7 @@ describe('completion', () => {
                 /**/$
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === '$');
@@ -633,7 +633,7 @@ describe('completion', () => {
               test("fs/r")
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({
             textDocument: doc,
             position: positionAfter(doc, 'test("fs/'),
@@ -676,7 +676,7 @@ describe('completion', () => {
               }
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({
             textDocument: doc,
             position: positionAfter(doc, '/*a*/'),
@@ -712,7 +712,7 @@ describe('definition', () => {
             version: 1,
             text: readContents(filePath('source-definition', 'index.ts')),
         };
-        await openDocumentAndWaitForProjectLoad(server, indexDoc);
+        await openDocumentAndWaitForDiagnostics(server, indexDoc);
         const definitions = await server.definition({
             textDocument: indexDoc,
             position: position(indexDoc, 'a/*identifier*/'),
@@ -829,10 +829,7 @@ describe('diagnostics', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 400));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const resultsForFile = diagnostics.get(doc.uri);
         expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
@@ -853,10 +850,7 @@ describe('diagnostics', () => {
         foo();
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const resultsForFile = diagnostics.get(doc.uri);
         expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
@@ -890,11 +884,8 @@ describe('diagnostics', () => {
     }
 `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-        await openDocumentAndWaitForProjectLoad(server, doc2);
-
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc2);
         expect(diagnostics.size).toBe(2);
         const diagnosticsForDoc = diagnostics.get(doc.uri);
         const diagnosticsForDoc2 = diagnostics.get(doc2.uri);
@@ -922,10 +913,7 @@ describe('diagnostics', () => {
                 }
           `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const diagnosticsForThisFile = diagnostics.get(doc.uri);
         expect(diagnosticsForThisFile).toBeDefined();
         const fileDiagnostics = diagnosticsForThisFile!.diagnostics;
@@ -947,7 +935,7 @@ describe('document symbol', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const symbols = await server.documentSymbol({ textDocument: doc });
         expect(`
 Foo
@@ -971,7 +959,7 @@ interface Box {
     scale: number;
 }`,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const symbols = await server.documentSymbol({ textDocument: doc });
         expect(`
 Box
@@ -1000,7 +988,7 @@ Box
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const symbols = await server.documentSymbol({ textDocument: doc }) as lsp.DocumentSymbol[];
         const expectation = `
 Foo
@@ -1046,7 +1034,7 @@ describe('editing', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         server.didChangeTextDocument({
             textDocument: doc,
             contentChanges: [
@@ -1059,8 +1047,7 @@ describe('editing', () => {
                 },
             ],
         });
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await server.waitForDiagnosticsForFile(doc.uri);
         const resultsForFile = diagnostics.get(doc.uri);
         expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
@@ -1080,7 +1067,7 @@ describe('references', () => {
                 foo();
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         // Without declaration/definition.
         const position = lastPosition(doc, 'function foo()');
         let references = await server.references({
@@ -1121,7 +1108,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        await openDocumentAndWaitForProjectLoad(server, textDocument);
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
             textDocument,
             options: {
@@ -1138,7 +1125,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        await openDocumentAndWaitForProjectLoad(server, textDocument);
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
             textDocument,
             options: {
@@ -1155,7 +1142,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        await openDocumentAndWaitForProjectLoad(server, textDocument);
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
             textDocument,
             options: {
@@ -1172,7 +1159,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        await openDocumentAndWaitForProjectLoad(server, textDocument);
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
 
         server.updateWorkspaceSettings({
             typescript: {
@@ -1199,7 +1186,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        await openDocumentAndWaitForProjectLoad(server, textDocument);
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
 
         server.updateWorkspaceSettings({
             typescript: {
@@ -1225,7 +1212,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        await openDocumentAndWaitForProjectLoad(server, textDocument);
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentRangeFormatting({
             textDocument,
             range: {
@@ -1260,7 +1247,7 @@ describe('signatureHelp', () => {
         foo(param1, param2)
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         let result = (await server.signatureHelp({
             textDocument: doc,
             position: position(doc, 'param1'),
@@ -1289,7 +1276,7 @@ describe('signatureHelp', () => {
         foo(param1, param2)
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         let result = await server.signatureHelp({
             textDocument: doc,
             position: position(doc, 'param1'),
@@ -1328,7 +1315,7 @@ describe('code actions', () => {
     };
 
     it('can provide quickfix code actions', async () => {
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1431,7 +1418,7 @@ describe('code actions', () => {
     });
 
     it('can filter quickfix code actions filtered by only', async () => {
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1494,9 +1481,7 @@ describe('code actions', () => {
     });
 
     it('does not provide organize imports when there are errors', async () => {
-        await openDocumentAndWaitForProjectLoad(server, doc);
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1529,7 +1514,7 @@ import { accessSync } from 'fs';
 existsSync('t');
 accessSync('t');`,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1595,9 +1580,7 @@ accessSync('t');`,
             version: 1,
             text: 'existsSync(\'t\');',
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1654,9 +1637,7 @@ accessSync('t');`,
   setTimeout(() => {})
 }`,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1709,9 +1690,7 @@ accessSync('t');`,
             version: 1,
             text: 'import { existsSync } from \'fs\';',
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1770,9 +1749,7 @@ accessSync('t');`,
                 }
             `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-        server.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1828,7 +1805,7 @@ describe('executeCommand', () => {
             version: 1,
             text: 'export function fn(): void {}\nexport function newFn(): void {}',
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const codeActions = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1900,7 +1877,7 @@ describe('executeCommand', () => {
             version: 1,
             text: readContents(filePath('source-definition', 'index.ts')),
         };
-        await openDocumentAndWaitForProjectLoad(server, indexDoc);
+        await openDocumentAndWaitForDiagnostics(server, indexDoc);
         const result: lsp.Location[] | null = await server.executeCommand({
             command: Commands.SOURCE_DEFINITION,
             arguments: [
@@ -1938,7 +1915,7 @@ describe('documentHighlight', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, barDoc);
+        await openDocumentAndWaitForDiagnostics(server, barDoc);
         const fooDoc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -1949,7 +1926,7 @@ describe('documentHighlight', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, fooDoc);
+        await openDocumentAndWaitForDiagnostics(server, fooDoc);
 
         const result = await server.documentHighlight({
             textDocument: fooDoc,
@@ -1987,7 +1964,7 @@ describe('diagnostics (no client support)', () => {
         localServer.shutdown();
     });
 
-    it('diagnostic are not returned', async () => {
+    it('diagnostic are not returned when client does not support publishDiagnostics', async () => {
         const doc = {
             uri: uri('diagnosticsBar.ts'),
             languageId: 'typescript',
@@ -1998,10 +1975,7 @@ describe('diagnostics (no client support)', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
-
-        localServer.requestDiagnosticsForTesting();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(localServer, doc);
         const resultsForFile = diagnostics.get(doc.uri);
         expect(resultsForFile).toBeUndefined();
     });
@@ -2080,7 +2054,7 @@ describe('inlayHints', () => {
         }
       `,
         };
-        await openDocumentAndWaitForProjectLoad(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const inlayHints = await server.inlayHints({ textDocument: doc, range: lsp.Range.create(0, 0, 4, 0) });
         expect(inlayHints).toBeDefined();
         expect(inlayHints).toHaveLength(1);
@@ -2135,7 +2109,7 @@ describe('completions without client snippet support', () => {
             fs.readFile
         `,
         };
-        await openDocumentAndWaitForProjectLoad(localServer, doc);
+        await openDocumentAndWaitForDiagnostics(localServer, doc);
         const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -2222,7 +2196,7 @@ describe('linked editing', () => {
             version: 1,
             text: 'let bar = <div></div>',
         };
-        await openDocumentAndWaitForProjectLoad(server, textDocument);
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const position = positionAfter(textDocument, '<div');
         const linedEditRanges = await server.linkedEditingRange({
             textDocument,

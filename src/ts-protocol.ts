@@ -331,6 +331,7 @@ export interface SupportedFeatures {
     completionSnippets?: boolean;
     completionDisableFilterText?: boolean;
     definitionLinkSupport?: boolean;
+    diagnosticsSupport?: boolean;
     diagnosticsTagSupport?: boolean;
 }
 

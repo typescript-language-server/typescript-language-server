@@ -233,6 +233,10 @@ export class LspDocuments {
         return this._files;
     }
 
+    public get documentsForTesting(): Map<string, LspDocument> {
+        return this.documents;
+    }
+
     public get(file: string): LspDocument | undefined {
         const document = this.documents.get(file);
         if (!document) {
@@ -272,8 +276,8 @@ export class LspDocuments {
         return true;
     }
 
-    public onDidCloseTextDocument(textDocument: lsp.TextDocumentIdentifier): void {
-        const document = this.client.toOpenDocument(textDocument.uri);
+    public onDidCloseTextDocument(uri: lsp.DocumentUri): void {
+        const document = this.client.toOpenDocument(uri);
         if (!document) {
             return;
         }
@@ -285,12 +289,6 @@ export class LspDocuments {
         this.client.cancelInflightRequestsForResource(document.uri);
         this.client.executeWithoutWaitingForResponse(CommandTypes.Close, { file: document.filepath });
         this.requestAllDiagnostics();
-    }
-
-    public closeAllForTesting(): void {
-        for (const document of this.documents.values()) {
-            this.onDidCloseTextDocument({ uri: document.uri.toString() });
-        }
     }
 
     public requestDiagnosticsForTesting(): void {

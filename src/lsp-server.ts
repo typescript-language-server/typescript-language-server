@@ -45,7 +45,7 @@ export class LspServer {
     private tsClient: TsClient;
     private fileConfigurationManager: FileConfigurationManager;
     private initializeParams: TypeScriptInitializeParams | null = null;
-    private diagnosticQueue?: DiagnosticEventQueue;
+    private diagnosticQueue: DiagnosticEventQueue;
     private completionDataCache = new CompletionDataCache();
     private logger: Logger;
     private workspaceRoot: string | undefined;
@@ -58,26 +58,26 @@ export class LspServer {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
         this.tsClient = new TsClient(onCaseInsensitiveFileSystem(), this.logger, options.lspClient);
         this.fileConfigurationManager = new FileConfigurationManager(this.tsClient, onCaseInsensitiveFileSystem());
+        this.diagnosticQueue = new DiagnosticEventQueue(
+            diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
+            this.tsClient,
+            this.features,
+            this.logger,
+        );
     }
 
     closeAllForTesting(): void {
-        this.tsClient.closeAllDocumentsForTesting();
-        this.cachedNavTreeResponse = new CachedResponse<ts.server.protocol.NavTreeResponse>();
+        for (const uri of this.tsClient.documentsForTesting.keys()) {
+            this.closeDocument(uri);
+        }
     }
 
-    requestDiagnosticsForTesting(): void {
-        this.tsClient.requestDiagnosticsForTesting();
-    }
-
-    async waitForTsFinishedProjectLoading(): Promise<void> {
-        return new Promise(resolve => {
-            const interval = setInterval(() => {
-                if (!this.tsClient.isProjectLoadingForTesting()) {
-                    clearInterval(interval);
-                    resolve();
-                }
-            }, 50);
-        });
+    async waitForDiagnosticsForFile(uri: lsp.DocumentUri): Promise<void> {
+        const document = this.tsClient.toOpenDocument(uri);
+        if (!document) {
+            throw new Error(`Document not open: ${uri}`);
+        }
+        await this.diagnosticQueue.waitForDiagnosticsForTesting(document.filepath);
     }
 
     shutdown(): void {
@@ -133,22 +133,13 @@ export class LspServer {
             if (definition) {
                 this.features.definitionLinkSupport = definition.linkSupport;
             }
-            if (publishDiagnostics) {
-                this.features.diagnosticsTagSupport = Boolean(publishDiagnostics.tagSupport);
-            }
+            this.features.diagnosticsSupport = Boolean(publishDiagnostics);
+            this.features.diagnosticsTagSupport = Boolean(publishDiagnostics?.tagSupport);
         }
 
         this.fileConfigurationManager.mergeTsPreferences({
             useLabelDetailsInCompletionEntries: this.features.completionLabelDetails,
         });
-
-        this.diagnosticQueue = new DiagnosticEventQueue(
-            diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
-            this.tsClient,
-            this.features,
-            this.logger,
-            this.tsClient,
-        );
 
         const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver?.logVerbosity);
         const started = this.tsClient.start(
@@ -334,7 +325,7 @@ export class LspServer {
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
         this.fileConfigurationManager.setWorkspaceConfiguration(params.settings || {});
         const ignoredDiagnosticCodes = this.fileConfigurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
-        this.tsClient.interruptGetErr(() => this.diagnosticQueue?.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes));
+        this.tsClient.interruptGetErr(() => this.diagnosticQueue.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes));
     }
 
     didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
@@ -348,17 +339,17 @@ export class LspServer {
     }
 
     didCloseTextDocument(params: lsp.DidCloseTextDocumentParams): void {
-        const document = this.tsClient.toOpenDocument(params.textDocument.uri);
+        this.closeDocument(params.textDocument.uri);
+    }
+
+    private closeDocument(uri: lsp.DocumentUri): void {
+        const document = this.tsClient.toOpenDocument(uri);
         if (!document) {
-            throw new Error(`The document should be opened for formatting', file: ${params.textDocument.uri}`);
+            throw new Error(`The document should be opened for formatting', file: ${uri}`);
         }
         this.cachedNavTreeResponse.onDocumentClose(document);
-        this.tsClient.onDidCloseTextDocument(params.textDocument);
-        // We won't be updating diagnostics anymore for that file, so clear them so we don't leave stale ones.
-        this.options.lspClient.publishDiagnostics({
-            uri: params.textDocument.uri.toString(),
-            diagnostics: [],
-        });
+        this.tsClient.onDidCloseTextDocument(uri);
+        this.diagnosticQueue.onDidCloseFile(document.filepath);
         this.fileConfigurationManager.onDidCloseTextDocument(document.uri);
     }
 
@@ -788,7 +779,7 @@ export class LspServer {
         // In general would be better to replace the whole diagnostics handling logic with the one from
         // bufferSyncSupport.ts in VSCode's typescript language features.
         if (kinds && !this.tsClient.hasPendingDiagnostics(document.uri)) {
-            const diagnostics = this.diagnosticQueue?.getDiagnosticsForFile(document.filepath) || [];
+            const diagnostics = this.diagnosticQueue.getDiagnosticsForFile(document.filepath) || [];
             if (diagnostics.length) {
                 actions.push(...await this.typeScriptAutoFixProvider!.provideCodeActions(kinds, document.filepath, diagnostics));
             }
@@ -1093,7 +1084,7 @@ export class LspServer {
             const diagnosticEvent = event as ts.server.protocol.DiagnosticEvent;
             if (diagnosticEvent.body?.diagnostics) {
                 const { file, diagnostics } = diagnosticEvent.body;
-                this.diagnosticQueue?.updateDiagnostics(getDignosticsKind(event), file, diagnostics);
+                this.diagnosticQueue.updateDiagnostics(getDignosticsKind(event), file, diagnostics);
             }
         }
     }

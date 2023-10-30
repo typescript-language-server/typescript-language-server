@@ -155,7 +155,6 @@ export class TsClient implements ITypeScriptServiceClient {
     public apiVersion: API = API.defaultVersion;
     public typescriptVersionSource: TypeScriptVersionSource = TypeScriptVersionSource.Bundled;
     private serverState: ServerState.State = ServerState.None;
-    private projectLoading = true;
     private readonly lspClient: LspClient;
     private readonly logger: Logger;
     private readonly tsserverLogger: Logger;
@@ -179,12 +178,16 @@ export class TsClient implements ITypeScriptServiceClient {
         this.loadingIndicator = new ServerInitializingIndicator(this.lspClient);
     }
 
+    public get documentsForTesting(): Map<string, LspDocument> {
+        return this.documents.documentsForTesting;
+    }
+
     public openTextDocument(textDocument: lsp.TextDocumentItem): boolean {
         return this.documents.openTextDocument(textDocument);
     }
 
-    public onDidCloseTextDocument(textDocument: lsp.TextDocumentIdentifier): void {
-        this.documents.onDidCloseTextDocument(textDocument);
+    public onDidCloseTextDocument(uri: lsp.DocumentUri): void {
+        this.documents.onDidCloseTextDocument(uri);
     }
 
     public onDidChangeTextDocument(params: lsp.DidChangeTextDocumentParams): void {
@@ -228,16 +231,8 @@ export class TsClient implements ITypeScriptServiceClient {
         return document;
     }
 
-    public closeAllDocumentsForTesting(): void {
-        this.documents.closeAllForTesting();
-    }
-
     public requestDiagnosticsForTesting(): void {
         this.documents.requestDiagnosticsForTesting();
-    }
-
-    public isProjectLoadingForTesting(): boolean {
-        return this.projectLoading;
     }
 
     public hasPendingDiagnostics(resource: URI): boolean {
@@ -373,7 +368,6 @@ export class TsClient implements ITypeScriptServiceClient {
             case EventName.suggestionDiag:
             case EventName.configFileDiag: {
                 // This event also roughly signals that projects have been loaded successfully (since the TS server is synchronous)
-                this.projectLoading = false;
                 this.loadingIndicator.reset();
                 this.onEvent?.(event);
                 break;
@@ -407,11 +401,9 @@ export class TsClient implements ITypeScriptServiceClient {
             //     this._onTypesInstallerInitializationFailed.fire((event as ts.server.protocol.TypesInstallerInitializationFailedEvent).body);
             //     break;
             case EventName.projectLoadingStart:
-                this.projectLoading = true;
                 this.loadingIndicator.startedLoadingProject((event as ts.server.protocol.ProjectLoadingStartEvent).body.projectName);
                 break;
             case EventName.projectLoadingFinish:
-                this.projectLoading = false;
                 this.loadingIndicator.finishedLoadingProject((event as ts.server.protocol.ProjectLoadingFinishEvent).body.projectName);
                 break;
         }
