@@ -360,8 +360,9 @@ export async function asResolvedCompletionItem(
     item.documentation = Previewer.markdownDocumentation(documentation, tags, client);
 
     if (details.codeActions?.length) {
-        item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, document.filepath);
-        item.command = asCommand(details.codeActions, item.data.file);
+        const { additionalTextEdits, command } = getCodeActions(details.codeActions, document.filepath, client);
+        item.additionalTextEdits = additionalTextEdits;
+        item.command = command;
     }
 
     if (document && features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
@@ -490,45 +491,39 @@ function appendJoinedPlaceholders(snippet: SnippetString, parts: ReadonlyArray<t
     }
 }
 
-function asAdditionalTextEdits(codeActions: ts.server.protocol.CodeAction[], filepath: string): lsp.TextEdit[] | undefined {
+function getCodeActions(
+    codeActions: ts.server.protocol.CodeAction[],
+    filepath: string,
+    client: TsClient,
+): {
+        additionalTextEdits: lsp.TextEdit[] | undefined;
+        command: lsp.Command | undefined;
+    } {
     // Try to extract out the additionalTextEdits for the current file.
     const additionalTextEdits: lsp.TextEdit[] = [];
-    for (const tsAction of codeActions) {
-        // Apply all edits in the current file using `additionalTextEdits`
-        if (tsAction.changes) {
-            for (const change of tsAction.changes) {
-                if (change.fileName === filepath) {
-                    for (const textChange of change.textChanges) {
-                        additionalTextEdits.push(toTextEdit(textChange));
-                    }
-                }
-            }
-        }
-    }
-    return additionalTextEdits.length ? additionalTextEdits : undefined;
-}
-
-function asCommand(codeActions: ts.server.protocol.CodeAction[], filepath: string): lsp.Command | undefined {
     let hasRemainingCommandsOrEdits = false;
     for (const tsAction of codeActions) {
         if (tsAction.commands) {
             hasRemainingCommandsOrEdits = true;
-            break;
         }
 
+        // Apply all edits in the current file using `additionalTextEdits`
         if (tsAction.changes) {
             for (const change of tsAction.changes) {
-                if (change.fileName !== filepath) {
+                const tsFileName = client.toResource(change.fileName).fsPath;
+                if (tsFileName === filepath) {
+                    additionalTextEdits.push(...change.textChanges.map(toTextEdit));
+                } else {
                     hasRemainingCommandsOrEdits = true;
-                    break;
                 }
             }
         }
     }
 
+    let command: lsp.Command | undefined = undefined;
     if (hasRemainingCommandsOrEdits) {
         // Create command that applies all edits not in the current file.
-        return {
+        command = {
             title: '',
             command: Commands.APPLY_COMPLETION_CODE_ACTION,
             arguments: [filepath, codeActions.map(codeAction => ({
@@ -538,6 +533,11 @@ function asCommand(codeActions: ts.server.protocol.CodeAction[], filepath: strin
             }))],
         };
     }
+
+    return {
+        command,
+        additionalTextEdits: additionalTextEdits.length ? additionalTextEdits : undefined,
+    };
 }
 
 function asDetail(
