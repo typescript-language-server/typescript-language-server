@@ -342,11 +342,11 @@ export class LspServer {
     }
 
     didCloseTextDocument(params: lsp.DidCloseTextDocumentParams): void {
-        console.error('CLOSING', { uri: params.textDocument.uri });
         this.closeDocument(params.textDocument.uri);
     }
 
     private closeDocument(uri: lsp.DocumentUri): void {
+        console.error('CLOSING', { uri: uri });
         const document = this.tsClient.toOpenDocument(uri);
         if (!document) {
             throw new Error(`The document should be opened for formatting', file: ${uri}`);
@@ -527,6 +527,7 @@ export class LspServer {
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
         item.data = item.data?.cacheId !== undefined ? this.completionDataCache.get(item.data.cacheId) : item.data;
+        console.error('RESOLVE COMPL', item.data?.file);
         const document = item.data?.file ? this.tsClient.toOpenDocument(item.data.file) : undefined;
         if (!document) {
             return item;
