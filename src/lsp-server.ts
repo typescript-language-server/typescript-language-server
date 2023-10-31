@@ -67,8 +67,8 @@ export class LspServer {
     }
 
     closeAllForTesting(): void {
-        for (const uri of this.tsClient.documentsForTesting.keys()) {
-            this.closeDocument(uri);
+        for (const document of this.tsClient.documentsForTesting.values()) {
+            this.closeDocument(document.uri.toString());
         }
     }
 
@@ -349,7 +349,7 @@ export class LspServer {
         console.error('CLOSING', { uri: uri });
         const document = this.tsClient.toOpenDocument(uri);
         if (!document) {
-            throw new Error(`The document should be opened for formatting', file: ${uri}`);
+            throw new Error(`Trying to close not opened document: ${uri}`);
         }
         this.cachedNavTreeResponse.onDocumentClose(document);
         this.tsClient.onDidCloseTextDocument(uri);
