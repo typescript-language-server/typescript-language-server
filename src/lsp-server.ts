@@ -329,16 +329,20 @@ export class LspServer {
     }
 
     didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
+        console.error('OPEN', { uri: params.textDocument.uri });
         if (this.tsClient.toOpenDocument(params.textDocument.uri, { suppressAlertOnFailure: true })) {
             throw new Error(`Can't open already open document: ${params.textDocument.uri}`);
         }
 
         if (!this.tsClient.openTextDocument(params.textDocument)) {
-            this.logger.error(`Cannot open document '${params.textDocument.uri}'.`);
+            throw new Error(`Cannot open document '${params.textDocument.uri}'.`);
         }
+        const document = this.tsClient.toOpenDocument(params.textDocument.uri);
+        console.error('OPENED', { uri: document?.uri, filepath: document?.filepath });
     }
 
     didCloseTextDocument(params: lsp.DidCloseTextDocumentParams): void {
+        console.error('CLOSING', { uri: params.textDocument.uri });
         this.closeDocument(params.textDocument.uri);
     }
 
