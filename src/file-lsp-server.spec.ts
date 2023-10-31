@@ -5,10 +5,9 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { LspServer } from './lsp-server.js';
-import { uri, createServer, lastPosition, filePath, readContents, positionAfter } from './test-utils.js';
+import { uri, createServer, lastPosition, filePath, readContents, positionAfter, openDocumentAndWaitForDiagnostics, TestLspServer } from './test-utils.js';
 
-let server: LspServer;
+let server: TestLspServer;
 
 beforeAll(async () => {
     server = await createServer({
@@ -34,10 +33,7 @@ describe('documentHighlight', () => {
             version: 1,
             text: readContents(filePath('module2.ts')),
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = await server.documentHighlight({
             textDocument: doc,
             position: lastPosition(doc, 'doStuff'),
@@ -54,7 +50,7 @@ describe('completions', () => {
             version: 1,
             text: readContents(filePath('completion.ts')),
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({
             textDocument: doc,
             position: positionAfter(doc, 'doStuff'),
@@ -65,6 +61,5 @@ describe('completions', () => {
         const resolvedCompletion = await server.completionResolve(completion!);
         expect(resolvedCompletion.additionalTextEdits).toBeDefined();
         expect(resolvedCompletion.command).toBeUndefined();
-        server.didCloseTextDocument({ textDocument: doc });
     });
 });

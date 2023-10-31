@@ -73,6 +73,11 @@ const DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS: TypeScriptInitializationOption
 
 const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {};
 
+export async function openDocumentAndWaitForDiagnostics(server: TestLspServer, textDocument: lsp.TextDocumentItem): Promise<void> {
+    server.didOpenTextDocument({ textDocument });
+    await server.waitForDiagnosticsForFile(textDocument.uri);
+}
+
 export function uri(...components: string[]): string {
     const resolved = filePath(...components);
     return URI.file(resolved).toString();

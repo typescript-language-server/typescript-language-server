@@ -6,7 +6,7 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { uri, createServer, TestLspServer, positionAfter, documentFromFile } from '../test-utils.js';
+import { uri, createServer, TestLspServer, positionAfter, documentFromFile, openDocumentAndWaitForDiagnostics } from '../test-utils.js';
 
 const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 let server: TestLspServer;
@@ -70,14 +70,14 @@ describe('call hierarchy', () => {
     const twoDoc = documentFromFile({ path: 'call-hierarchy/two.ts' });
     const threeDoc = documentFromFile({ path: 'call-hierarchy/three.ts' });
 
-    function openDocuments() {
+    async function openDocuments() {
         for (const textDocument of [oneDoc, twoDoc, threeDoc]) {
-            server.didOpenTextDocument({ textDocument });
+            await openDocumentAndWaitForDiagnostics(server, textDocument);
         }
     }
 
     it('incoming calls', async () => {
-        openDocuments();
+        await openDocuments();
         const items = await server.prepareCallHierarchy({
             textDocument: twoDoc,
             position: positionAfter(twoDoc, 'new Three().tada'),
@@ -99,7 +99,7 @@ describe('call hierarchy', () => {
     });
 
     it('outgoing calls', async () => {
-        openDocuments();
+        await openDocuments();
         const items = await server.prepareCallHierarchy({
             textDocument: oneDoc,
             position: positionAfter(oneDoc, 'new Two().callThreeTwice'),

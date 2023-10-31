@@ -8,7 +8,7 @@
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer } from './test-utils.js';
+import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, openDocumentAndWaitForDiagnostics } from './test-utils.js';
 import { Commands } from './commands.js';
 import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
@@ -16,11 +16,6 @@ import { CodeActionKind } from './utils/types.js';
 const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 
 let server: TestLspServer;
-
-async function openDocumentAndWaitForDiagnostics(server: TestLspServer, textDocument: lsp.TextDocumentItem): Promise<void> {
-    server.didOpenTextDocument({ textDocument });
-    await server.waitForDiagnosticsForFile(textDocument.uri);
-}
 
 beforeAll(async () => {
     server = await createServer({
@@ -63,7 +58,6 @@ describe('completion', () => {
         const resolvedItem = await server.completionResolve(item!);
         expect(resolvedItem.deprecated).not.toBeTruthy();
         expect(resolvedItem.detail).toBeDefined();
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('simple JS test', async () => {
@@ -98,7 +92,6 @@ describe('completion', () => {
         }, false);
 
         expect(containsInvalidCompletions).toBe(false);
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('deprecated by JSDoc', async () => {
@@ -128,7 +121,6 @@ describe('completion', () => {
         expect(resolvedItem.detail).toBeDefined();
         expect(Array.isArray(resolvedItem.tags)).toBeTruthy();
         expect(resolvedItem.tags).toContain(lsp.CompletionItemTag.Deprecated);
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('incorrect source location', async () => {
@@ -147,7 +139,6 @@ describe('completion', () => {
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
         expect(proposals?.items).toHaveLength(0);
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('includes completions from global modules', async () => {
@@ -162,7 +153,6 @@ describe('completion', () => {
         expect(proposals).not.toBeNull();
         const pathExistsCompletion = proposals!.items.find(completion => completion.label === 'pathExists');
         expect(pathExistsCompletion).toBeDefined();
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('includes completions with invalid identifier names', async () => {
@@ -186,7 +176,6 @@ describe('completion', () => {
         expect(completion).toBeDefined();
         expect(completion!.textEdit).toBeDefined();
         expect(completion!.textEdit!.newText).toBe('["invalid-identifier-name"]');
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('completions for clients that support insertReplaceSupport', async () => {
@@ -235,7 +224,6 @@ describe('completion', () => {
                 },
             },
         });
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('completions for clients that do not support insertReplaceSupport', async () => {
@@ -308,7 +296,6 @@ describe('completion', () => {
                 },
             },
         }));
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('includes detail field with package name for auto-imports', async () => {
@@ -324,7 +311,6 @@ describe('completion', () => {
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
         expect(completion).toBeDefined();
         expect(completion!.detail).toBe('fs');
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('resolves text edit for auto-import completion', async () => {
@@ -355,7 +341,6 @@ describe('completion', () => {
                 },
             },
         ]);
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('resolves text edit for auto-import completion in right format', async () => {
@@ -395,7 +380,6 @@ describe('completion', () => {
                 },
             },
         ]);
-        server.didCloseTextDocument({ textDocument: doc });
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
@@ -456,7 +440,6 @@ describe('completion', () => {
                 },
             },
         });
-        server.didCloseTextDocument({ textDocument: doc });
         server.updateWorkspaceSettings({
             completions: {
                 completeFunctionCalls: false,
@@ -531,7 +514,6 @@ describe('completion', () => {
                 },
             },
         });
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('provides snippet completions for "$" function when completeFunctionCalls enabled', async () => {
@@ -612,7 +594,6 @@ describe('completion', () => {
                 },
             },
         });
-        server.didCloseTextDocument({ textDocument: doc });
         server.updateWorkspaceSettings({
             completions: {
                 completeFunctionCalls: false,
