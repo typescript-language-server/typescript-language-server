@@ -46,7 +46,7 @@ export class SourceDefinitionCommand {
             return;
         }
 
-        const document = client.toOpenDocument(file);
+        const document = client.toOpenDocument(client.toResource(file).toString());
 
         if (!document) {
             lspClient.showErrorMessage('Go to Source Definition failed. File not opened in the editor.');

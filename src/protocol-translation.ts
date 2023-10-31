@@ -126,7 +126,7 @@ export function toTextEdit(edit: ts.server.protocol.CodeEdit): lsp.TextEdit {
 
 export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, client: TsClient): lsp.TextDocumentEdit {
     const uri = client.toResource(change.fileName);
-    const document = client.toOpenDocument(uri.fsPath);
+    const document = client.toOpenDocument(uri.toString());
     return {
         textDocument: {
             uri: uri.toString(),

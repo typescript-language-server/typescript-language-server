@@ -527,8 +527,8 @@ export class LspServer {
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
         item.data = item.data?.cacheId !== undefined ? this.completionDataCache.get(item.data.cacheId) : item.data;
-        console.error('RESOLVE COMPL', item.data?.file);
-        const document = item.data?.file ? this.tsClient.toOpenDocument(item.data.file) : undefined;
+        const uri = this.tsClient.toResource(item.data.file).toString();
+        const document = item.data?.file ? this.tsClient.toOpenDocument(uri) : undefined;
         if (!document) {
             return item;
         }
@@ -864,7 +864,8 @@ export class LspServer {
             }
         } else if (params.command === Commands.ORGANIZE_IMPORTS && params.arguments) {
             const file = params.arguments[0] as string;
-            const document = this.tsClient.toOpenDocument(this.tsClient.toResource(file).toString());
+            const uri = this.tsClient.toResource(file).toString();
+            const document = this.tsClient.toOpenDocument(uri);
             if (!document) {
                 return;
             }
