@@ -350,29 +350,24 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 export async function asResolvedCompletionItem(
     item: lsp.CompletionItem,
     details: ts.server.protocol.CompletionEntryDetails,
-    document: LspDocument | undefined,
+    document: LspDocument,
     client: TsClient,
-    filePathConverter: IFilePathToResourceConverter,
     options: WorkspaceConfigurationCompletionOptions,
     features: SupportedFeatures,
 ): Promise<lsp.CompletionItem> {
-    item.detail = asDetail(details, filePathConverter);
+    item.detail = asDetail(details, client);
     const { documentation, tags } = details;
-    item.documentation = Previewer.markdownDocumentation(documentation, tags, filePathConverter);
-    const filepath = client.toResource(item.data.file).fsPath;
-    if (!filepath) {
-        return item;
-    }
+    item.documentation = Previewer.markdownDocumentation(documentation, tags, client);
 
     if (details.codeActions?.length) {
-        item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
+        item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, document.filepath);
         item.command = asCommand(details.codeActions, item.data.file);
     }
 
     if (document && features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
         const { line, offset } = item.data;
         const position = Position.fromLocation({ line, offset });
-        const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client, document);
+        const shouldCompleteFunction = await isValidFunctionCompletionContext(position, client, document);
         if (shouldCompleteFunction) {
             createSnippetOfFunctionCall(item, details);
         }
@@ -381,11 +376,11 @@ export async function asResolvedCompletionItem(
     return item;
 }
 
-async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TsClient, document: LspDocument): Promise<boolean> {
+async function isValidFunctionCompletionContext(position: lsp.Position, client: TsClient, document: LspDocument): Promise<boolean> {
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
-        const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(filepath, position);
+        const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(document.filepath, position);
         const response = await client.execute(CommandTypes.Quickinfo, args);
         if (response.type === 'response' && response.body) {
             switch (response.body.kind) {

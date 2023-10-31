@@ -534,7 +534,7 @@ export class LspServer {
         if (response.type !== 'response' || !response.body?.length) {
             return item;
         }
-        return asResolvedCompletionItem(item, response.body[0], document, this.tsClient, this.tsClient, this.fileConfigurationManager.workspaceConfiguration.completions || {}, this.features);
+        return asResolvedCompletionItem(item, response.body[0], document, this.tsClient, this.fileConfigurationManager.workspaceConfiguration.completions || {}, this.features);
     }
 
     async hover(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.Hover | null> {
