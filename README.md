@@ -361,6 +361,11 @@ Some of the preferences can be controlled through the `workspace/didChangeConfig
 [language].inlayHints.includeInlayPropertyDeclarationTypeHints: boolean;
 [language].inlayHints.includeInlayVariableTypeHints: boolean;
 [language].inlayHints.includeInlayVariableTypeHintsWhenTypeMatchesName: boolean;
+// Code Lens preferences
+[language].implementationsCodeLens.enabled: boolean;
+[language].referencesCodeLens.enabled: boolean;
+[language].referencesCodeLens.showOnAllFunctions: boolean;
+
 /**
  * Complete functions with their parameter signature.
  *

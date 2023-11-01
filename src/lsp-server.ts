@@ -25,6 +25,9 @@ import { collectDocumentSymbols, collectSymbolInformation } from './document-sym
 import { fromProtocolCallHierarchyItem, fromProtocolCallHierarchyIncomingCall, fromProtocolCallHierarchyOutgoingCall } from './features/call-hierarchy.js';
 import FileConfigurationManager from './features/fileConfigurationManager.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
+import { CodeLensType, type ReferencesCodeLens } from './features/code-lens/baseCodeLensProvider.js';
+import TypeScriptImplementationsCodeLensProvider from './features/code-lens/implementationsCodeLens.js';
+import { TypeScriptReferencesCodeLensProvider } from './features/code-lens/referencesCodeLens.js';
 import { TypeScriptInlayHintsProvider } from './features/inlay-hints.js';
 import * as SemanticTokens from './features/semantic-tokens.js';
 import { SourceDefinitionCommand } from './features/source-definition.js';
@@ -53,6 +56,8 @@ export class LspServer {
     private features: SupportedFeatures = {};
     // Caching for navTree response shared by multiple requests.
     private cachedNavTreeResponse = new CachedResponse<ts.server.protocol.NavTreeResponse>();
+    private implementationsCodeLensProvider: TypeScriptImplementationsCodeLensProvider | null = null;
+    private referencesCodeLensProvider: TypeScriptReferencesCodeLensProvider | null = null;
 
     constructor(private options: LspServerConfiguration) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
@@ -176,6 +181,7 @@ export class LspServer {
 
         this.typeScriptAutoFixProvider = new TypeScriptAutoFixProvider(this.tsClient);
         this.fileConfigurationManager.setGlobalConfiguration(this.workspaceRoot, hostInfo);
+        this.registerHandlers();
 
         const prepareSupport = textDocument?.rename?.prepareSupport && this.tsClient.apiVersion.gte(API.v310);
         const initializeResult: lsp.InitializeResult = {
@@ -196,6 +202,9 @@ export class LspServer {
                             CodeActionKind.Refactor.value,
                         ],
                     } : true,
+                codeLensProvider: {
+                    resolveProvider: true,
+                },
                 definitionProvider: true,
                 documentFormattingProvider: true,
                 documentRangeFormattingProvider: true,
@@ -277,6 +286,13 @@ export class LspServer {
         }
         this.logger.log('onInitialize result', initializeResult);
         return initializeResult;
+    }
+
+    private registerHandlers(): void {
+        if (this.initializeParams?.capabilities.textDocument?.codeLens) {
+            this.implementationsCodeLensProvider = new TypeScriptImplementationsCodeLensProvider(this.tsClient, this.cachedNavTreeResponse);
+            this.referencesCodeLensProvider = new TypeScriptReferencesCodeLensProvider(this.tsClient, this.cachedNavTreeResponse, this.fileConfigurationManager);
+        }
     }
 
     public initialized(_: lsp.InitializedParams): void {
@@ -973,6 +989,37 @@ export class LspServer {
             return [];
         }
         return response.body;
+    }
+
+    async codeLens(params: lsp.CodeLensParams, token: lsp.CancellationToken): Promise<lsp.CodeLens[]> {
+        if (!this.implementationsCodeLensProvider || !this.referencesCodeLensProvider) {
+            return [];
+        }
+
+        const doc = this.tsClient.toOpenDocument(params.textDocument.uri);
+        if (!doc) {
+            return [];
+        }
+
+        return [
+            ...await this.implementationsCodeLensProvider.provideCodeLenses(doc, token),
+            ...await this.referencesCodeLensProvider.provideCodeLenses(doc, token),
+        ];
+    }
+
+    async codeLensResolve(params: lsp.CodeLens, token: lsp.CancellationToken): Promise<lsp.CodeLens> {
+        if (!this.implementationsCodeLensProvider || !this.referencesCodeLensProvider) {
+            return params;
+        }
+
+        const codeLens = params as ReferencesCodeLens;
+        if (codeLens.data?.type === CodeLensType.Implementation) {
+            return await this.implementationsCodeLensProvider.resolveCodeLens(codeLens, token);
+        } else if (codeLens.data?.type === CodeLensType.Reference) {
+            return await this.referencesCodeLensProvider.resolveCodeLens(codeLens, token);
+        } else {
+            throw new Error('Unexpected CodeLens!');
+        }
     }
 
     async documentHighlight(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.DocumentHighlight[]> {
