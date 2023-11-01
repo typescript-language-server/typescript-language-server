@@ -8,40 +8,63 @@
 import * as lsp from 'vscode-languageserver';
 import debounce from 'p-debounce';
 import { Logger } from './utils/logger.js';
-import { pathToUri, toDiagnostic } from './protocol-translation.js';
+import { toDiagnostic } from './protocol-translation.js';
 import { SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
-import { LspDocuments } from './document.js';
-import { DiagnosticKind, TspClient } from './tsp-client.js';
+import { DiagnosticKind, type TsClient } from './ts-client.js';
 import { ClientCapability } from './typescriptService.js';
 
 class FileDiagnostics {
+    private closed = false;
     private readonly diagnosticsPerKind = new Map<DiagnosticKind, ts.server.protocol.Diagnostic[]>();
+    private readonly firePublishDiagnostics = debounce(() => this.publishDiagnostics(), 50);
 
     constructor(
         protected readonly uri: string,
-        protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
-        protected readonly documents: LspDocuments,
+        protected readonly onPublishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
+        protected readonly client: TsClient,
         protected readonly features: SupportedFeatures,
     ) { }
 
-    update(kind: DiagnosticKind, diagnostics: ts.server.protocol.Diagnostic[]): void {
+    public update(kind: DiagnosticKind, diagnostics: ts.server.protocol.Diagnostic[]): void {
         this.diagnosticsPerKind.set(kind, diagnostics);
         this.firePublishDiagnostics();
     }
-    protected readonly firePublishDiagnostics = debounce(() => {
+
+    private publishDiagnostics() {
+        if (this.closed || !this.features.diagnosticsSupport) {
+            return;
+        }
         const diagnostics = this.getDiagnostics();
-        this.publishDiagnostics({ uri: this.uri, diagnostics });
-    }, 50);
+        this.onPublishDiagnostics({ uri: this.uri, diagnostics });
+    }
 
     public getDiagnostics(): lsp.Diagnostic[] {
         const result: lsp.Diagnostic[] = [];
         for (const diagnostics of this.diagnosticsPerKind.values()) {
             for (const diagnostic of diagnostics) {
-                result.push(toDiagnostic(diagnostic, this.documents, this.features));
+                result.push(toDiagnostic(diagnostic, this.client, this.features));
             }
         }
         return result;
+    }
+
+    public onDidClose(): void {
+        this.publishDiagnostics();
+        this.diagnosticsPerKind.clear();
+        this.closed = true;
+    }
+
+    public async waitForDiagnosticsForTesting(): Promise<void> {
+        return new Promise(resolve => {
+            const interval = setInterval(() => {
+                if (this.diagnosticsPerKind.size === 3) {  // Must include all types of `DiagnosticKind`.
+                    clearInterval(interval);
+                    this.publishDiagnostics();
+                    resolve();
+                }
+            }, 50);
+        });
     }
 }
 
@@ -51,22 +74,21 @@ export class DiagnosticEventQueue {
 
     constructor(
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
-        protected readonly documents: LspDocuments,
+        protected readonly client: TsClient,
         protected readonly features: SupportedFeatures,
         protected readonly logger: Logger,
-        private readonly tspClient: TspClient,
     ) { }
 
     updateDiagnostics(kind: DiagnosticKind, file: string, diagnostics: ts.server.protocol.Diagnostic[]): void {
-        if (kind !== DiagnosticKind.Syntax && !this.tspClient.hasCapabilityForResource(this.documents.toResource(file), ClientCapability.Semantic)) {
+        if (kind !== DiagnosticKind.Syntax && !this.client.hasCapabilityForResource(this.client.toResource(file), ClientCapability.Semantic)) {
             return;
         }
 
         if (this.ignoredDiagnosticCodes.size) {
             diagnostics = diagnostics.filter(diagnostic => !this.isDiagnosticIgnored(diagnostic));
         }
-        const uri = pathToUri(file, this.documents);
-        const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.documents, this.features);
+        const uri = this.client.toResource(file).toString();
+        const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.client, this.features);
         diagnosticsForFile.update(kind, diagnostics);
         this.diagnostics.set(uri, diagnosticsForFile);
     }
@@ -76,8 +98,30 @@ export class DiagnosticEventQueue {
     }
 
     public getDiagnosticsForFile(file: string): lsp.Diagnostic[] {
-        const uri = pathToUri(file, this.documents);
+        const uri = this.client.toResource(file).toString();
         return this.diagnostics.get(uri)?.getDiagnostics() || [];
+    }
+
+    public onDidCloseFile(file: string): void {
+        const uri = this.client.toResource(file).toString();
+        const diagnosticsForFile = this.diagnostics.get(uri);
+        diagnosticsForFile?.onDidClose();
+    }
+
+    /**
+     * A testing function to clear existing file diagnostics, request fresh ones and wait for all to arrive.
+     */
+    public async waitForDiagnosticsForTesting(file: string): Promise<void> {
+        const uri = this.client.toResource(file).toString();
+        let diagnosticsForFile = this.diagnostics.get(uri);
+        if (diagnosticsForFile) {
+            diagnosticsForFile.onDidClose();
+        }
+        diagnosticsForFile = new FileDiagnostics(uri, this.publishDiagnostics, this.client, this.features);
+        this.diagnostics.set(uri, diagnosticsForFile);
+        // Normally diagnostics are delayed by 300ms. This will trigger immediate request.
+        this.client.requestDiagnosticsForTesting();
+        await diagnosticsForFile.waitForDiagnosticsForTesting();
     }
 
     private isDiagnosticIgnored(diagnostic: ts.server.protocol.Diagnostic) : boolean {

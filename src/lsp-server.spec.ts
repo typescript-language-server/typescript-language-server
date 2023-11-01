@@ -8,7 +8,7 @@
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer } from './test-utils.js';
+import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, openDocumentAndWaitForDiagnostics } from './test-utils.js';
 import { Commands } from './commands.js';
 import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
@@ -25,14 +25,14 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-    server.closeAll();
-    // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+    server.closeAllForTesting();
+    // "closeAllForTesting" triggers final publishDiagnostics with an empty list so clear last.
     diagnostics.clear();
     server.workspaceEdits = [];
 });
 
 afterAll(() => {
-    server.closeAll();
+    server.closeAllForTesting();
     server.shutdown();
 });
 
@@ -48,9 +48,7 @@ describe('completion', () => {
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
@@ -60,7 +58,6 @@ describe('completion', () => {
         const resolvedItem = await server.completionResolve(item!);
         expect(resolvedItem.deprecated).not.toBeTruthy();
         expect(resolvedItem.detail).toBeDefined();
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('simple JS test', async () => {
@@ -74,9 +71,7 @@ describe('completion', () => {
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const pos = position(doc, 'console');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
@@ -97,7 +92,6 @@ describe('completion', () => {
         }, false);
 
         expect(containsInvalidCompletions).toBe(false);
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('deprecated by JSDoc', async () => {
@@ -117,9 +111,7 @@ describe('completion', () => {
             foo(); // call me
             `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const pos = position(doc, 'foo(); // call me');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
@@ -129,7 +121,6 @@ describe('completion', () => {
         expect(resolvedItem.detail).toBeDefined();
         expect(Array.isArray(resolvedItem.tags)).toBeTruthy();
         expect(resolvedItem.tags).toContain(lsp.CompletionItemTag.Deprecated);
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('incorrect source location', async () => {
@@ -143,14 +134,11 @@ describe('completion', () => {
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const pos = position(doc, 'foo');
         const proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
         expect(proposals?.items).toHaveLength(0);
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('includes completions from global modules', async () => {
@@ -160,12 +148,11 @@ describe('completion', () => {
             version: 1,
             text: 'pathex',
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: position(doc, 'ex') });
         expect(proposals).not.toBeNull();
         const pathExistsCompletion = proposals!.items.find(completion => completion.label === 'pathExists');
         expect(pathExistsCompletion).toBeDefined();
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('includes completions with invalid identifier names', async () => {
@@ -182,14 +169,13 @@ describe('completion', () => {
                 foo.i
             `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.i') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'invalid-identifier-name');
         expect(completion).toBeDefined();
         expect(completion!.textEdit).toBeDefined();
         expect(completion!.textEdit!.newText).toBe('["invalid-identifier-name"]');
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('completions for clients that support insertReplaceSupport', async () => {
@@ -206,7 +192,7 @@ describe('completion', () => {
                 foo.getById()
             `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '.get') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'getById');
@@ -238,7 +224,6 @@ describe('completion', () => {
                 },
             },
         });
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('completions for clients that do not support insertReplaceSupport', async () => {
@@ -276,7 +261,7 @@ describe('completion', () => {
         expect(completion).toBeDefined();
         expect(completion!.textEdit).toBeUndefined();
         localServer.didCloseTextDocument({ textDocument: doc });
-        localServer.closeAll();
+        localServer.closeAllForTesting();
         localServer.shutdown();
     });
 
@@ -287,7 +272,7 @@ describe('completion', () => {
             version: 1,
             text: 'import { readFile }',
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -311,7 +296,6 @@ describe('completion', () => {
                 },
             },
         }));
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('includes detail field with package name for auto-imports', async () => {
@@ -321,13 +305,12 @@ describe('completion', () => {
             version: 1,
             text: 'readFile',
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
         expect(completion).toBeDefined();
         expect(completion!.detail).toBe('fs');
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('resolves text edit for auto-import completion', async () => {
@@ -337,7 +320,7 @@ describe('completion', () => {
             version: 1,
             text: 'readFile',
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -358,7 +341,6 @@ describe('completion', () => {
                 },
             },
         ]);
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('resolves text edit for auto-import completion in right format', async () => {
@@ -377,7 +359,7 @@ describe('completion', () => {
             version: 1,
             text: 'readFile',
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -398,7 +380,6 @@ describe('completion', () => {
                 },
             },
         ]);
-        server.didCloseTextDocument({ textDocument: doc });
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
@@ -424,7 +405,7 @@ describe('completion', () => {
                 fs.readFile
             `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -459,7 +440,6 @@ describe('completion', () => {
                 },
             },
         });
-        server.didCloseTextDocument({ textDocument: doc });
         server.updateWorkspaceSettings({
             completions: {
                 completeFunctionCalls: false,
@@ -477,7 +457,7 @@ describe('completion', () => {
                 /**/$
             `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === '$');
@@ -534,7 +514,6 @@ describe('completion', () => {
                 },
             },
         });
-        server.didCloseTextDocument({ textDocument: doc });
     });
 
     it('provides snippet completions for "$" function when completeFunctionCalls enabled', async () => {
@@ -552,7 +531,7 @@ describe('completion', () => {
                 /**/$
             `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({ textDocument: doc, position: positionAfter(doc, '/**/') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === '$');
@@ -615,7 +594,6 @@ describe('completion', () => {
                 },
             },
         });
-        server.didCloseTextDocument({ textDocument: doc });
         server.updateWorkspaceSettings({
             completions: {
                 completeFunctionCalls: false,
@@ -636,7 +614,7 @@ describe('completion', () => {
               test("fs/r")
             `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({
             textDocument: doc,
             position: positionAfter(doc, 'test("fs/'),
@@ -679,7 +657,7 @@ describe('completion', () => {
               }
             `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const proposals = await server.completion({
             textDocument: doc,
             position: positionAfter(doc, '/*a*/'),
@@ -715,7 +693,7 @@ describe('definition', () => {
             version: 1,
             text: readContents(filePath('source-definition', 'index.ts')),
         };
-        server.didOpenTextDocument({ textDocument: indexDoc });
+        await openDocumentAndWaitForDiagnostics(server, indexDoc);
         const definitions = await server.definition({
             textDocument: indexDoc,
             position: position(indexDoc, 'a/*identifier*/'),
@@ -757,14 +735,14 @@ describe('definition (definition link supported)', () => {
     });
 
     beforeEach(() => {
-        localServer.closeAll();
-        // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+        localServer.closeAllForTesting();
+        // "closeAllForTesting" triggers final publishDiagnostics with an empty list so clear last.
         diagnostics.clear();
         localServer.workspaceEdits = [];
     });
 
     afterAll(() => {
-        localServer.closeAll();
+        localServer.closeAllForTesting();
         localServer.shutdown();
     });
 
@@ -832,12 +810,7 @@ describe('diagnostics', () => {
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const resultsForFile = diagnostics.get(doc.uri);
         expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
@@ -858,12 +831,7 @@ describe('diagnostics', () => {
         foo();
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const resultsForFile = diagnostics.get(doc.uri);
         expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
@@ -897,15 +865,8 @@ describe('diagnostics', () => {
     }
 `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-        server.didOpenTextDocument({
-            textDocument: doc2,
-        });
-
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
+        await openDocumentAndWaitForDiagnostics(server, doc2);
         expect(diagnostics.size).toBe(2);
         const diagnosticsForDoc = diagnostics.get(doc.uri);
         const diagnosticsForDoc2 = diagnostics.get(doc2.uri);
@@ -933,12 +894,7 @@ describe('diagnostics', () => {
                 }
           `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const diagnosticsForThisFile = diagnostics.get(doc.uri);
         expect(diagnosticsForThisFile).toBeDefined();
         const fileDiagnostics = diagnosticsForThisFile!.diagnostics;
@@ -960,9 +916,7 @@ describe('document symbol', () => {
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const symbols = await server.documentSymbol({ textDocument: doc });
         expect(`
 Foo
@@ -986,9 +940,7 @@ interface Box {
     scale: number;
 }`,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const symbols = await server.documentSymbol({ textDocument: doc });
         expect(`
 Box
@@ -1017,9 +969,7 @@ Box
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const symbols = await server.documentSymbol({ textDocument: doc }) as lsp.DocumentSymbol[];
         const expectation = `
 Foo
@@ -1065,9 +1015,7 @@ describe('editing', () => {
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         server.didChangeTextDocument({
             textDocument: doc,
             contentChanges: [
@@ -1080,8 +1028,7 @@ describe('editing', () => {
                 },
             ],
         });
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await server.waitForDiagnosticsForFile(doc.uri);
         const resultsForFile = diagnostics.get(doc.uri);
         expect(resultsForFile).toBeDefined();
         const fileDiagnostics = resultsForFile!.diagnostics;
@@ -1101,9 +1048,7 @@ describe('references', () => {
                 foo();
             `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         // Without declaration/definition.
         const position = lastPosition(doc, 'function foo()');
         let references = await server.references({
@@ -1144,7 +1089,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        server.didOpenTextDocument({ textDocument });
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
             textDocument,
             options: {
@@ -1161,7 +1106,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        server.didOpenTextDocument({ textDocument });
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
             textDocument,
             options: {
@@ -1178,7 +1123,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        server.didOpenTextDocument({ textDocument });
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
             textDocument,
             options: {
@@ -1195,7 +1140,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        server.didOpenTextDocument({ textDocument });
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
 
         server.updateWorkspaceSettings({
             typescript: {
@@ -1222,7 +1167,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        server.didOpenTextDocument({ textDocument });
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
 
         server.updateWorkspaceSettings({
             typescript: {
@@ -1248,7 +1193,7 @@ describe('formatting', () => {
         const textDocument = {
             uri: uriString, languageId, version, text,
         };
-        server.didOpenTextDocument({ textDocument });
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentRangeFormatting({
             textDocument,
             range: {
@@ -1283,9 +1228,7 @@ describe('signatureHelp', () => {
         foo(param1, param2)
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         let result = (await server.signatureHelp({
             textDocument: doc,
             position: position(doc, 'param1'),
@@ -1314,7 +1257,7 @@ describe('signatureHelp', () => {
         foo(param1, param2)
       `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         let result = await server.signatureHelp({
             textDocument: doc,
             position: position(doc, 'param1'),
@@ -1353,9 +1296,7 @@ describe('code actions', () => {
     };
 
     it('can provide quickfix code actions', async () => {
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1458,9 +1399,7 @@ describe('code actions', () => {
     });
 
     it('can filter quickfix code actions filtered by only', async () => {
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1523,11 +1462,7 @@ describe('code actions', () => {
     });
 
     it('does not provide organize imports when there are errors', async () => {
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1560,9 +1495,7 @@ import { accessSync } from 'fs';
 existsSync('t');
 accessSync('t');`,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1628,11 +1561,7 @@ accessSync('t');`,
             version: 1,
             text: 'existsSync(\'t\');',
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1689,11 +1618,7 @@ accessSync('t');`,
   setTimeout(() => {})
 }`,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1746,11 +1671,7 @@ accessSync('t');`,
             version: 1,
             text: 'import { existsSync } from \'fs\';',
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1809,11 +1730,7 @@ accessSync('t');`,
                 }
             `,
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
-        await server.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const result = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1869,9 +1786,7 @@ describe('executeCommand', () => {
             version: 1,
             text: 'export function fn(): void {}\nexport function newFn(): void {}',
         };
-        server.didOpenTextDocument({
-            textDocument: doc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const codeActions = (await server.codeAction({
             textDocument: doc,
             range: {
@@ -1943,7 +1858,7 @@ describe('executeCommand', () => {
             version: 1,
             text: readContents(filePath('source-definition', 'index.ts')),
         };
-        server.didOpenTextDocument({ textDocument: indexDoc });
+        await openDocumentAndWaitForDiagnostics(server, indexDoc);
         const result: lsp.Location[] | null = await server.executeCommand({
             command: Commands.SOURCE_DEFINITION,
             arguments: [
@@ -1981,9 +1896,7 @@ describe('documentHighlight', () => {
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: barDoc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, barDoc);
         const fooDoc = {
             uri: uri('bar.ts'),
             languageId: 'typescript',
@@ -1994,9 +1907,7 @@ describe('documentHighlight', () => {
         }
       `,
         };
-        server.didOpenTextDocument({
-            textDocument: fooDoc,
-        });
+        await openDocumentAndWaitForDiagnostics(server, fooDoc);
 
         const result = await server.documentHighlight({
             textDocument: fooDoc,
@@ -2023,18 +1934,18 @@ describe('diagnostics (no client support)', () => {
     });
 
     beforeEach(() => {
-        localServer.closeAll();
-        // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+        localServer.closeAllForTesting();
+        // "closeAllForTesting" triggers final publishDiagnostics with an empty list so clear last.
         diagnostics.clear();
         localServer.workspaceEdits = [];
     });
 
     afterAll(() => {
-        localServer.closeAll();
+        localServer.closeAllForTesting();
         localServer.shutdown();
     });
 
-    it('diagnostic tags are not returned', async () => {
+    it('diagnostic are not returned when client does not support publishDiagnostics', async () => {
         const doc = {
             uri: uri('diagnosticsBar.ts'),
             languageId: 'typescript',
@@ -2045,16 +1956,9 @@ describe('diagnostics (no client support)', () => {
         }
       `,
         };
-        localServer.didOpenTextDocument({
-            textDocument: doc,
-        });
-
-        await localServer.requestDiagnostics();
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await openDocumentAndWaitForDiagnostics(localServer, doc);
         const resultsForFile = diagnostics.get(doc.uri);
-        expect(resultsForFile).toBeDefined();
-        expect(resultsForFile!.diagnostics).toHaveLength(1);
-        expect(resultsForFile!.diagnostics[0]).not.toHaveProperty('tags');
+        expect(resultsForFile).toBeUndefined();
     });
 });
 
@@ -2069,14 +1973,14 @@ describe('jsx/tsx project', () => {
     });
 
     beforeEach(() => {
-        localServer.closeAll();
-        // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+        localServer.closeAllForTesting();
+        // "closeAllForTesting" triggers final publishDiagnostics with an empty list so clear last.
         diagnostics.clear();
         localServer.workspaceEdits = [];
     });
 
     afterAll(() => {
-        localServer.closeAll();
+        localServer.closeAllForTesting();
         localServer.shutdown();
     });
 
@@ -2131,7 +2035,7 @@ describe('inlayHints', () => {
         }
       `,
         };
-        server.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(server, doc);
         const inlayHints = await server.inlayHints({ textDocument: doc, range: lsp.Range.create(0, 0, 4, 0) });
         expect(inlayHints).toBeDefined();
         expect(inlayHints).toHaveLength(1);
@@ -2165,14 +2069,14 @@ describe('completions without client snippet support', () => {
     });
 
     beforeEach(() => {
-        localServer.closeAll();
-        // "closeAll" triggers final publishDiagnostics with an empty list so clear last.
+        localServer.closeAllForTesting();
+        // "closeAllForTesting" triggers final publishDiagnostics with an empty list so clear last.
         diagnostics.clear();
         localServer.workspaceEdits = [];
     });
 
     afterAll(() => {
-        localServer.closeAll();
+        localServer.closeAllForTesting();
         localServer.shutdown();
     });
 
@@ -2186,7 +2090,7 @@ describe('completions without client snippet support', () => {
             fs.readFile
         `,
         };
-        localServer.didOpenTextDocument({ textDocument: doc });
+        await openDocumentAndWaitForDiagnostics(localServer, doc);
         const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
@@ -2273,7 +2177,7 @@ describe('linked editing', () => {
             version: 1,
             text: 'let bar = <div></div>',
         };
-        server.didOpenTextDocument({ textDocument });
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
         const position = positionAfter(textDocument, '<div');
         const linedEditRanges = await server.linkedEditingRange({
             textDocument,

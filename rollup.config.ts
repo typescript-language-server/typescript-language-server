@@ -13,7 +13,11 @@ export default defineConfig({
             format: 'es',
             generatedCode: 'es2015',
             plugins: [
-                terser(),
+                terser({
+                    compress: false,
+                    mangle: false,
+                    format: { beautify: true, quote_style: 1, indent_level: 2 },
+                }),
             ],
             sourcemap: true,
         },

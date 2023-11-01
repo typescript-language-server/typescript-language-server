@@ -8,10 +8,10 @@
 import * as lsp from 'vscode-languageserver';
 import { Commands } from './commands.js';
 import { toTextDocumentEdit } from './protocol-translation.js';
+import { type TsClient } from './ts-client.js';
 import type { ts } from './ts-protocol.js';
-import { LspDocuments } from './document.js';
 
-export function provideQuickFix(response: ts.server.protocol.GetCodeFixesResponse | undefined, documents: LspDocuments | undefined): Array<lsp.CodeAction> {
+export function provideQuickFix(response: ts.server.protocol.GetCodeFixesResponse | undefined, client: TsClient): Array<lsp.CodeAction> {
     if (!response?.body) {
         return [];
     }
@@ -20,7 +20,7 @@ export function provideQuickFix(response: ts.server.protocol.GetCodeFixesRespons
         {
             title: fix.description,
             command: Commands.APPLY_WORKSPACE_EDIT,
-            arguments: [{ documentChanges: fix.changes.map(c => toTextDocumentEdit(c, documents)) }],
+            arguments: [{ documentChanges: fix.changes.map(c => toTextDocumentEdit(c, client)) }],
         },
         lsp.CodeActionKind.QuickFix,
     ));

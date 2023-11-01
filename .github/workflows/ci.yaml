@@ -12,6 +12,7 @@ on:
 jobs:
   tests:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
         node-version: [18.x, 20.x]

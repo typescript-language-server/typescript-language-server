@@ -9,24 +9,31 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type { WorkspaceConfigurationImplicitProjectConfigurationOptions } from '../configuration-manager.js';
+import API from './api.js';
+import type { WorkspaceConfigurationImplicitProjectConfigurationOptions } from '../features/fileConfigurationManager.js';
 import { ModuleKind, ModuleResolutionKind, ScriptTarget, JsxEmit } from '../ts-protocol.js';
 import type { ts } from '../ts-protocol.js';
 
-const DEFAULT_PROJECT_CONFIG: ts.server.protocol.ExternalProjectCompilerOptions = Object.freeze({
-    module: ModuleKind.ESNext,
-    moduleResolution: ModuleResolutionKind.Node,
-    target: ScriptTarget.ES2020,
-    jsx: JsxEmit.React,
-});
-
 export function getInferredProjectCompilerOptions(
+    version: API,
     workspaceConfig: WorkspaceConfigurationImplicitProjectConfigurationOptions,
 ): ts.server.protocol.ExternalProjectCompilerOptions {
-    const projectConfig = { ...DEFAULT_PROJECT_CONFIG };
+    const projectConfig: ts.server.protocol.ExternalProjectCompilerOptions = {
+        module: ModuleKind.ESNext,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore ModuleResolutionKind enum doesn't include "Bundler" value in TS
+        moduleResolution: version.gte(API.v500) ? ModuleResolutionKind.Bundler : ModuleResolutionKind.Node,
+        target: ScriptTarget.ES2022,
+        jsx: JsxEmit.React,
+    };
+
+    if (version.gte(API.v500)) {
+        projectConfig.allowImportingTsExtensions = true;
+    }
 
     if (workspaceConfig.checkJs) {
         projectConfig.checkJs = true;
+        projectConfig.allowJs = true;
     }
 
     if (workspaceConfig.experimentalDecorators) {

@@ -11,7 +11,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import { toTextDocumentEdit } from './protocol-translation.js';
-import { LspDocuments } from './document.js';
+import { type TsClient } from './ts-client.js';
 import { OrganizeImportsMode } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import API from './utils/api.js';
@@ -50,7 +50,7 @@ export const organizeImportsCommands = [
     removeUnusedImportsCommand,
 ];
 
-export function provideOrganizeImports(command: OrganizeImportsCommand, response: ts.server.protocol.OrganizeImportsResponse, documents: LspDocuments | undefined): lsp.CodeAction[] {
+export function provideOrganizeImports(command: OrganizeImportsCommand, response: ts.server.protocol.OrganizeImportsResponse, client: TsClient): lsp.CodeAction[] {
     if (!response || response.body.length === 0) {
         return [];
     }
@@ -58,7 +58,7 @@ export function provideOrganizeImports(command: OrganizeImportsCommand, response
     return [
         lsp.CodeAction.create(
             command.title,
-            { documentChanges: response.body.map(edit => toTextDocumentEdit(edit, documents)) },
+            { documentChanges: response.body.map(edit => toTextDocumentEdit(edit, client)) },
             command.kind.value,
         )];
 }

@@ -7,16 +7,16 @@
 
 import * as lsp from 'vscode-languageserver';
 import { LspDocument } from './document.js';
-import { toTextEdit, normalizePath } from './protocol-translation.js';
+import { toTextEdit } from './protocol-translation.js';
 import { Commands } from './commands.js';
-import { TspClient } from './tsp-client.js';
+import { type WorkspaceConfigurationCompletionOptions } from './features/fileConfigurationManager.js';
+import { TsClient } from './ts-client.js';
 import { CommandTypes, KindModifiers, ScriptElementKind, SupportedFeatures, SymbolDisplayPartKind, toSymbolDisplayPartKind } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import * as Previewer from './utils/previewer.js';
 import { IFilePathToResourceConverter } from './utils/previewer.js';
 import SnippetString from './utils/SnippetString.js';
 import { Range, Position } from './utils/typeConverters.js';
-import type { WorkspaceConfigurationCompletionOptions } from './configuration-manager.js';
 
 interface ParameterListParts {
     readonly parts: ReadonlyArray<ts.server.protocol.SymbolDisplayPart>;
@@ -350,25 +350,25 @@ function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
 export async function asResolvedCompletionItem(
     item: lsp.CompletionItem,
     details: ts.server.protocol.CompletionEntryDetails,
-    document: LspDocument | undefined,
-    client: TspClient,
-    filePathConverter: IFilePathToResourceConverter,
+    document: LspDocument,
+    client: TsClient,
     options: WorkspaceConfigurationCompletionOptions,
     features: SupportedFeatures,
 ): Promise<lsp.CompletionItem> {
-    item.detail = asDetail(details, filePathConverter);
+    item.detail = asDetail(details, client);
     const { documentation, tags } = details;
-    item.documentation = Previewer.markdownDocumentation(documentation, tags, filePathConverter);
-    const filepath = normalizePath(item.data.file);
+    item.documentation = Previewer.markdownDocumentation(documentation, tags, client);
+
     if (details.codeActions?.length) {
-        item.additionalTextEdits = asAdditionalTextEdits(details.codeActions, filepath);
-        item.command = asCommand(details.codeActions, item.data.file);
+        const { additionalTextEdits, command } = getCodeActions(details.codeActions, document.filepath, client);
+        item.additionalTextEdits = additionalTextEdits;
+        item.command = command;
     }
 
     if (document && features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
         const { line, offset } = item.data;
         const position = Position.fromLocation({ line, offset });
-        const shouldCompleteFunction = await isValidFunctionCompletionContext(filepath, position, client, document);
+        const shouldCompleteFunction = await isValidFunctionCompletionContext(position, client, document);
         if (shouldCompleteFunction) {
             createSnippetOfFunctionCall(item, details);
         }
@@ -377,12 +377,12 @@ export async function asResolvedCompletionItem(
     return item;
 }
 
-async function isValidFunctionCompletionContext(filepath: string, position: lsp.Position, client: TspClient, document: LspDocument): Promise<boolean> {
+async function isValidFunctionCompletionContext(position: lsp.Position, client: TsClient, document: LspDocument): Promise<boolean> {
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
-        const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(filepath, position);
-        const response = await client.request(CommandTypes.Quickinfo, args);
+        const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(document.filepath, position);
+        const response = await client.execute(CommandTypes.Quickinfo, args);
         if (response.type === 'response' && response.body) {
             switch (response.body.kind) {
                 case 'var':
@@ -491,45 +491,39 @@ function appendJoinedPlaceholders(snippet: SnippetString, parts: ReadonlyArray<t
     }
 }
 
-function asAdditionalTextEdits(codeActions: ts.server.protocol.CodeAction[], filepath: string): lsp.TextEdit[] | undefined {
+function getCodeActions(
+    codeActions: ts.server.protocol.CodeAction[],
+    filepath: string,
+    client: TsClient,
+): {
+        additionalTextEdits: lsp.TextEdit[] | undefined;
+        command: lsp.Command | undefined;
+    } {
     // Try to extract out the additionalTextEdits for the current file.
     const additionalTextEdits: lsp.TextEdit[] = [];
-    for (const tsAction of codeActions) {
-        // Apply all edits in the current file using `additionalTextEdits`
-        if (tsAction.changes) {
-            for (const change of tsAction.changes) {
-                if (change.fileName === filepath) {
-                    for (const textChange of change.textChanges) {
-                        additionalTextEdits.push(toTextEdit(textChange));
-                    }
-                }
-            }
-        }
-    }
-    return additionalTextEdits.length ? additionalTextEdits : undefined;
-}
-
-function asCommand(codeActions: ts.server.protocol.CodeAction[], filepath: string): lsp.Command | undefined {
     let hasRemainingCommandsOrEdits = false;
     for (const tsAction of codeActions) {
         if (tsAction.commands) {
             hasRemainingCommandsOrEdits = true;
-            break;
         }
 
+        // Apply all edits in the current file using `additionalTextEdits`
         if (tsAction.changes) {
             for (const change of tsAction.changes) {
-                if (change.fileName !== filepath) {
+                const tsFileName = client.toResource(change.fileName).fsPath;
+                if (tsFileName === filepath) {
+                    additionalTextEdits.push(...change.textChanges.map(toTextEdit));
+                } else {
                     hasRemainingCommandsOrEdits = true;
-                    break;
                 }
             }
         }
     }
 
+    let command: lsp.Command | undefined = undefined;
     if (hasRemainingCommandsOrEdits) {
         // Create command that applies all edits not in the current file.
-        return {
+        command = {
             title: '',
             command: Commands.APPLY_COMPLETION_CODE_ACTION,
             arguments: [filepath, codeActions.map(codeAction => ({
@@ -539,6 +533,11 @@ function asCommand(codeActions: ts.server.protocol.CodeAction[], filepath: strin
             }))],
         };
     }
+
+    return {
+        command,
+        additionalTextEdits: additionalTextEdits.length ? additionalTextEdits : undefined,
+    };
 }
 
 function asDetail(

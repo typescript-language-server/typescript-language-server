@@ -126,7 +126,8 @@ export enum ModuleKind {
 
 export enum ModuleResolutionKind {
     Classic = 'Classic',
-    Node = 'Node'
+    Node = 'Node',
+    Bundler = 'Bundler'
 }
 
 export enum SemicolonPreference {
@@ -330,6 +331,7 @@ export interface SupportedFeatures {
     completionSnippets?: boolean;
     completionDisableFilterText?: boolean;
     definitionLinkSupport?: boolean;
+    diagnosticsSupport?: boolean;
     diagnosticsTagSupport?: boolean;
 }
 

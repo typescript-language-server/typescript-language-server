@@ -4,11 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as lsp from 'vscode-languageserver';
-import { LspDocuments } from '../document.js';
 import { toTextDocumentEdit } from '../protocol-translation.js';
 import { CommandTypes } from '../ts-protocol.js';
 import type { ts } from '../ts-protocol.js';
-import { TspClient } from '../tsp-client.js';
+import { TsClient } from '../ts-client.js';
 import * as errorCodes from '../utils/errorCodes.js';
 import * as fixNames from '../utils/fixNames.js';
 import { CodeActionKind } from '../utils/types.js';
@@ -21,9 +20,8 @@ interface AutoFix {
 
 async function buildIndividualFixes(
     fixes: readonly AutoFix[],
-    client: TspClient,
+    client: TsClient,
     file: string,
-    documents: LspDocuments,
     diagnostics: readonly lsp.Diagnostic[],
 ): Promise<lsp.TextDocumentEdit[]> {
     const edits: lsp.TextDocumentEdit[] = [];
@@ -38,14 +36,14 @@ async function buildIndividualFixes(
                 errorCodes: [+diagnostic.code!],
             };
 
-            const response = await client.request(CommandTypes.GetCodeFixes, args);
+            const response = await client.execute(CommandTypes.GetCodeFixes, args);
             if (response.type !== 'response') {
                 continue;
             }
 
             const fix = response.body?.find(fix => fix.fixName === fixName);
             if (fix) {
-                edits.push(...fix.changes.map(change => toTextDocumentEdit(change, documents)));
+                edits.push(...fix.changes.map(change => toTextDocumentEdit(change, client)));
                 break;
             }
         }
@@ -55,9 +53,8 @@ async function buildIndividualFixes(
 
 async function buildCombinedFix(
     fixes: readonly AutoFix[],
-    client: TspClient,
+    client: TsClient,
     file: string,
-    documents: LspDocuments,
     diagnostics: readonly lsp.Diagnostic[],
 ): Promise<lsp.TextDocumentEdit[]> {
     const edits: lsp.TextDocumentEdit[] = [];
@@ -72,7 +69,7 @@ async function buildCombinedFix(
                 errorCodes: [+diagnostic.code!],
             };
 
-            const response = await client.request(CommandTypes.GetCodeFixes, args);
+            const response = await client.execute(CommandTypes.GetCodeFixes, args);
             if (response.type !== 'response' || !response.body?.length) {
                 continue;
             }
@@ -83,7 +80,7 @@ async function buildCombinedFix(
             }
 
             if (!fix.fixId) {
-                edits.push(...fix.changes.map(change => toTextDocumentEdit(change, documents)));
+                edits.push(...fix.changes.map(change => toTextDocumentEdit(change, client)));
                 return edits;
             }
 
@@ -95,12 +92,12 @@ async function buildCombinedFix(
                 fixId: fix.fixId,
             };
 
-            const combinedResponse = await client.request(CommandTypes.GetCombinedCodeFix, combinedArgs);
+            const combinedResponse = await client.execute(CommandTypes.GetCombinedCodeFix, combinedArgs);
             if (combinedResponse.type !== 'response' || !combinedResponse.body) {
                 return edits;
             }
 
-            edits.push(...combinedResponse.body.changes.map(change => toTextDocumentEdit(change, documents)));
+            edits.push(...combinedResponse.body.changes.map(change => toTextDocumentEdit(change, client)));
             return edits;
         }
     }
@@ -111,9 +108,8 @@ async function buildCombinedFix(
 
 abstract class SourceAction {
     abstract build(
-        client: TspClient,
+        client: TsClient,
         file: string,
-        documents: LspDocuments,
         diagnostics: readonly lsp.Diagnostic[]
     ): Promise<lsp.CodeAction | null>;
 }
@@ -123,19 +119,18 @@ class SourceFixAll extends SourceAction {
     static readonly kind = CodeActionKind.SourceFixAllTs;
 
     async build(
-        client: TspClient,
+        client: TsClient,
         file: string,
-        documents: LspDocuments,
         diagnostics: readonly lsp.Diagnostic[],
     ): Promise<lsp.CodeAction | null> {
         const edits: lsp.TextDocumentEdit[] = [];
         edits.push(...await buildIndividualFixes([
             { codes: errorCodes.incorrectlyImplementsInterface, fixName: fixNames.classIncorrectlyImplementsInterface },
             { codes: errorCodes.asyncOnlyAllowedInAsyncFunctions, fixName: fixNames.awaitInSyncFunction },
-        ], client, file, documents, diagnostics));
+        ], client, file, diagnostics));
         edits.push(...await buildCombinedFix([
             { codes: errorCodes.unreachableCode, fixName: fixNames.unreachableCode },
-        ], client, file, documents, diagnostics));
+        ], client, file, diagnostics));
         if (!edits.length) {
             return null;
         }
@@ -148,14 +143,13 @@ class SourceRemoveUnused extends SourceAction {
     static readonly kind = CodeActionKind.SourceRemoveUnusedTs;
 
     async build(
-        client: TspClient,
+        client: TsClient,
         file: string,
-        documents: LspDocuments,
         diagnostics: readonly lsp.Diagnostic[],
     ): Promise<lsp.CodeAction | null> {
         const edits = await buildCombinedFix([
             { codes: errorCodes.variableDeclaredButNeverUsed, fixName: fixNames.unusedIdentifier },
-        ], client, file, documents, diagnostics);
+        ], client, file, diagnostics);
         if (!edits.length) {
             return null;
         }
@@ -168,14 +162,13 @@ class SourceAddMissingImports extends SourceAction {
     static readonly kind = CodeActionKind.SourceAddMissingImportsTs;
 
     async build(
-        client: TspClient,
+        client: TsClient,
         file: string,
-        documents: LspDocuments,
         diagnostics: readonly lsp.Diagnostic[],
     ): Promise<lsp.CodeAction | null> {
         const edits = await buildCombinedFix([
             { codes: errorCodes.cannotFindName, fixName: fixNames.fixImport },
-        ], client, file, documents, diagnostics);
+        ], client, file, diagnostics);
         if (!edits.length) {
             return null;
         }
@@ -196,13 +189,17 @@ export class TypeScriptAutoFixProvider {
         return TypeScriptAutoFixProvider.kindProviders.map(provider => provider.kind);
     }
 
-    constructor(private readonly client: TspClient) {}
+    constructor(private readonly client: TsClient) {}
 
-    public async provideCodeActions(kinds: CodeActionKind[], file: string, diagnostics: lsp.Diagnostic[], documents: LspDocuments): Promise<lsp.CodeAction[]> {
+    public async provideCodeActions(
+        kinds: CodeActionKind[],
+        file: string,
+        diagnostics: lsp.Diagnostic[],
+    ): Promise<lsp.CodeAction[]> {
         const results: Promise<lsp.CodeAction | null>[] = [];
         for (const provider of TypeScriptAutoFixProvider.kindProviders) {
             if (kinds.some(kind => kind.contains(provider.kind))) {
-                results.push((new provider).build(this.client, file, documents, diagnostics));
+                results.push((new provider).build(this.client, file, diagnostics));
             }
         }
         return (await Promise.all(results)).flatMap(result => result || []);

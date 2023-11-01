@@ -5,14 +5,15 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { TspClient } from './tsp-client.js';
+import { TsClient } from './ts-client.js';
 import { ConsoleLogger } from './utils/logger.js';
 import { filePath, readContents, TestLspClient, uri } from './test-utils.js';
 import { CommandTypes } from './ts-protocol.js';
 import { Trace } from './tsServer/tracer.js';
 import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
-import { SyntaxServerConfiguration, TsServerLogLevel, TypeScriptServiceConfiguration } from './utils/configuration.js';
+import { SyntaxServerConfiguration, TsServerLogLevel } from './utils/configuration.js';
 import { noopLogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
+import { onCaseInsensitiveFileSystem } from './utils/fs.js';
 
 const logger = new ConsoleLogger();
 const lspClientOptions = {
@@ -20,24 +21,12 @@ const lspClientOptions = {
     publishDiagnostics: () => { },
 };
 const lspClient = new TestLspClient(lspClientOptions, logger);
-const configuration: TypeScriptServiceConfiguration = {
-    logger,
-    lspClient,
-    tsserverLogVerbosity: TsServerLogLevel.Off,
-};
-const typescriptVersionProvider = new TypeScriptVersionProvider(configuration.tsserverPath, logger);
+const typescriptVersionProvider = new TypeScriptVersionProvider(undefined, logger);
 const bundled = typescriptVersionProvider.bundledVersion();
-let server: TspClient;
+let server: TsClient;
 
 beforeAll(() => {
-    server = new TspClient({
-        ...configuration,
-        logDirectoryProvider: noopLogDirectoryProvider,
-        logVerbosity: configuration.tsserverLogVerbosity,
-        trace: Trace.Off,
-        typescriptVersion: bundled!,
-        useSyntaxServer: SyntaxServerConfiguration.Never,
-    });
+    server = new TsClient(onCaseInsensitiveFileSystem(), logger, lspClient);
 });
 
 afterAll(() => {
@@ -46,16 +35,25 @@ afterAll(() => {
 
 describe('ts server client', () => {
     beforeAll(() => {
-        server.start();
+        server.start(
+            undefined,
+            {
+                logDirectoryProvider: noopLogDirectoryProvider,
+                logVerbosity: TsServerLogLevel.Off,
+                trace: Trace.Off,
+                typescriptVersion: bundled!,
+                useSyntaxServer: SyntaxServerConfiguration.Never,
+            },
+        );
     });
 
     it('completion', async () => {
         const f = filePath('module2.ts');
-        server.notify(CommandTypes.Open, {
+        server.executeWithoutWaitingForResponse(CommandTypes.Open, {
             file: f,
             fileContent: readContents(f),
         });
-        const response = await server.request(CommandTypes.CompletionInfo, {
+        const response = await server.execute(CommandTypes.CompletionInfo, {
             file: f,
             line: 1,
             offset: 0,
@@ -70,11 +68,11 @@ describe('ts server client', () => {
 
     it('references', async () => {
         const f = filePath('module2.ts');
-        server.notify(CommandTypes.Open, {
+        server.executeWithoutWaitingForResponse(CommandTypes.Open, {
             file: f,
             fileContent: readContents(f),
         });
-        const response = await server.request(CommandTypes.References, {
+        const response = await server.execute(CommandTypes.References, {
             file: f,
             line: 8,
             offset: 16,
@@ -88,16 +86,16 @@ describe('ts server client', () => {
 
     it('inlayHints', async () => {
         const f = filePath('module2.ts');
-        server.notify(CommandTypes.Open, {
+        server.executeWithoutWaitingForResponse(CommandTypes.Open, {
             file: f,
             fileContent: readContents(f),
         });
-        await server.request(CommandTypes.Configure, {
+        await server.execute(CommandTypes.Configure, {
             preferences: {
                 includeInlayFunctionLikeReturnTypeHints: true,
             },
         });
-        const response = await server.request(
+        const response = await server.execute(
             CommandTypes.ProvideInlayHints,
             {
                 file: f,
@@ -114,11 +112,11 @@ describe('ts server client', () => {
 
     it('documentHighlight', async () => {
         const f = filePath('module2.ts');
-        server.notify(CommandTypes.Open, {
+        server.executeWithoutWaitingForResponse(CommandTypes.Open, {
             file: f,
             fileContent: readContents(f),
         });
-        const response = await server.request(CommandTypes.DocumentHighlights, {
+        const response = await server.execute(CommandTypes.DocumentHighlights, {
             file: f,
             line: 8,
             offset: 16,
