@@ -326,7 +326,6 @@ describe('completion', () => {
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
         expect(completion).toBeDefined();
         const resolvedItem = await server.completionResolve(completion!);
-        console.error(JSON.stringify(resolvedItem.additionalTextEdits));
         expect(resolvedItem.additionalTextEdits).toMatchObject([
             {
                 newText: 'import { readFile } from "fs";\n\n',
