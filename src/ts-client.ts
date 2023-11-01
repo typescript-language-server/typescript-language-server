@@ -419,23 +419,6 @@ export class TsClient implements ITypeScriptServiceClient {
         this.serverState = ServerState.None;
     }
 
-    // High-level API.
-
-    public async request<K extends keyof StandardTsServerRequests>(
-        command: K,
-        args: StandardTsServerRequests[K][0],
-        token?: CancellationToken,
-        config?: ExecConfig,
-    ): Promise<ServerResponse.Response<StandardTsServerRequests[K][1]>> {
-        try {
-            return await this.execute(command, args, token, config);
-        } catch (error) {
-            throw new ResponseError(1, (error as Error).message);
-        }
-    }
-
-    // Low-level API.
-
     public execute<K extends keyof StandardTsServerRequests>(
         command: K,
         args: StandardTsServerRequests[K][0],
@@ -480,10 +463,6 @@ export class TsClient implements ITypeScriptServiceClient {
 
         if (config?.nonRecoverable) {
             executions[0]!.catch(err => this.fatalError(command, err));
-        } else {
-            executions[0]!.catch(error => {
-                throw new ResponseError(1, (error as Error).message);
-            });
         }
 
         if (command === CommandTypes.UpdateOpen) {
@@ -493,7 +472,9 @@ export class TsClient implements ITypeScriptServiceClient {
             });
         }
 
-        return executions[0]!;
+        return executions[0]!.catch(error => {
+            throw new ResponseError(1, (error as Error).message);
+        });
     }
 
     public executeWithoutWaitingForResponse<K extends keyof NoResponseTsServerRequests>(
