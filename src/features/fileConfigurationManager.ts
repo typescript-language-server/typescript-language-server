@@ -282,6 +282,9 @@ export default class FileConfigurationManager {
         if (opts.indentSize === undefined) {
             opts.indentSize = formattingOptions?.tabSize;
         }
+        if (opts.newLineCharacter === undefined) {
+            opts.newLineCharacter = '\n';
+        }
 
         return opts;
     }
