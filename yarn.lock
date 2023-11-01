@@ -1446,10 +1446,10 @@
   dependencies:
     "@sinonjs/commons" "^3.0.0"
 
-"@size-limit/file@^9.0.0":
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/@size-limit/file/-/file-9.0.0.tgz#eed5415f5bcc8407979e47ffa49ffaf12d2d2378"
-  integrity sha512-oM2UaH2FRq4q22k+R+P6xCpzET10T94LFdSjb9svVu/vOD7NaB9LGcG6se8TW1BExXiyXO4GEhLsBt3uMKM3qA==
+"@size-limit/file@^10.0.2":
+  version "10.0.2"
+  resolved "https://registry.yarnpkg.com/@size-limit/file/-/file-10.0.2.tgz#98fa5726e45d0e22a2e29cbf2cdba9476be08ce7"
+  integrity sha512-27jzgQtER/2WP4+ciLe8aExkceSfqQFSDEbFVhXnbpFvQBqGZ7uEQG9bDX7a5VGxTdMtGwzZndMsCOlinmLzSg==
   dependencies:
     semver "7.5.4"
 
