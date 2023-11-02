@@ -11,6 +11,7 @@
 
 import type * as lsp from 'vscode-languageserver-protocol';
 import { Range as LspRange, CodeLens } from 'vscode-languageserver-protocol';
+import FileConfigurationManager from '../fileConfigurationManager.js';
 import type { LspDocument } from '../../document.js';
 import { CachedResponse } from '../../tsServer/cachedResponse.js';
 import type { ts } from '../../ts-protocol.js';
@@ -26,9 +27,8 @@ export enum CodeLensType {
 
 export interface ReferencesCodeLens extends CodeLens {
     data?: {
-        document: string;
-        file: string;
         type: CodeLensType;
+        uri: string;
     };
 }
 
@@ -49,9 +49,16 @@ export abstract class TypeScriptBaseCodeLensProvider {
     public constructor(
         protected client: ITypeScriptServiceClient,
         private readonly cachedResponse: CachedResponse<ts.server.protocol.NavTreeResponse>,
+        protected fileConfigurationManager: FileConfigurationManager,
     ) { }
 
     async provideCodeLenses(document: LspDocument, token: lsp.CancellationToken): Promise<ReferencesCodeLens[]> {
+        const configuration = this.fileConfigurationManager.getWorkspacePreferencesForFile(document);
+        if (this.type === CodeLensType.Implementation && !configuration.implementationsCodeLens?.enabled
+            || this.type === CodeLensType.Reference && !configuration.referencesCodeLens?.enabled) {
+            return [];
+        }
+
         const response = await this.cachedResponse.execute(
             document,
             () => this.client.execute(CommandTypes.NavTree, { file: document.filepath }, token),
@@ -62,7 +69,7 @@ export abstract class TypeScriptBaseCodeLensProvider {
 
         const referenceableSpans: lsp.Range[] = [];
         response.body?.childItems?.forEach(item => this.walkNavTree(document, item, undefined, referenceableSpans));
-        return referenceableSpans.map(span => CodeLens.create(span, { file: document.filepath, document: document.uri.toString(), type: this.type }));
+        return referenceableSpans.map(span => CodeLens.create(span, { uri: document.uri.toString(), type: this.type }));
     }
 
     protected abstract extractSymbol(

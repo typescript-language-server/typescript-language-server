@@ -10,34 +10,32 @@
  *--------------------------------------------------------------------------------------------*/
 
 import type * as lsp from 'vscode-languageserver-protocol';
-import { CachedResponse } from '../../tsServer/cachedResponse.js';
 import type { LspDocument } from '../../document.js';
 import { CommandTypes, ScriptElementKind, type ts } from '../../ts-protocol.js';
 import { ExecutionTarget } from '../../tsServer/server.js';
 import * as typeConverters from '../../utils/typeConverters.js';
-import { type ITypeScriptServiceClient } from '../../typescriptService.js';
 import { CodeLensType, ReferencesCodeLens, TypeScriptBaseCodeLensProvider, getSymbolRange } from './baseCodeLensProvider.js';
-import FileConfigurationManager from '../fileConfigurationManager.js';
 
 export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLensProvider {
     protected get type(): CodeLensType {
         return CodeLensType.Reference;
     }
 
-    public constructor(
-        client: ITypeScriptServiceClient,
-        protected _cachedResponse: CachedResponse<ts.server.protocol.NavTreeResponse>,
-        protected fileConfigurationManager: FileConfigurationManager,
-    ) {
-        super(client, _cachedResponse);
-    }
-
     public async resolveCodeLens(codeLens: ReferencesCodeLens, token: lsp.CancellationToken): Promise<lsp.CodeLens> {
-        const args = typeConverters.Position.toFileLocationRequestArgs(codeLens.data!.file, codeLens.range.start);
+        const document = this.client.toOpenDocument(codeLens.data!.uri);
+        if (!document) {
+            return codeLens;
+        }
+
+        if (!this.fileConfigurationManager.getWorkspacePreferencesForFile(document).referencesCodeLens?.enabled) {
+            return codeLens;
+        }
+
+        const args = typeConverters.Position.toFileLocationRequestArgs(document.filepath, codeLens.range.start);
         const response = await this.client.execute(CommandTypes.References, args, token, {
             lowPriority: true,
             executionTarget: ExecutionTarget.Semantic,
-            cancelOnResourceChange: codeLens.data!.document,
+            cancelOnResourceChange: codeLens.data!.uri,
         });
         if (response.type !== 'response' || !response.body) {
             codeLens.command = response.type === 'cancelled'
@@ -54,7 +52,7 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
         codeLens.command = {
             title: this.getCodeLensLabel(locations),
             command: locations.length ? 'editor.action.showReferences' : '',
-            arguments: [codeLens.data!.document, codeLens.range.start, locations],
+            arguments: [codeLens.data!.uri, codeLens.range.start, locations],
         };
         return codeLens;
     }

@@ -25,8 +25,17 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
         codeLens: ReferencesCodeLens,
         token: lsp.CancellationToken,
     ): Promise<ReferencesCodeLens> {
-        const args = typeConverters.Position.toFileLocationRequestArgs(codeLens.data!.file, codeLens.range.start);
-        const response = await this.client.execute(CommandTypes.Implementation, args, token, { lowPriority: true, cancelOnResourceChange: codeLens.data!.document });
+        const document = this.client.toOpenDocument(codeLens.data!.uri);
+        if (!document) {
+            return codeLens;
+        }
+
+        if (!this.fileConfigurationManager.getWorkspacePreferencesForFile(document).implementationsCodeLens?.enabled) {
+            return codeLens;
+        }
+
+        const args = typeConverters.Position.toFileLocationRequestArgs(document.filepath, codeLens.range.start);
+        const response = await this.client.execute(CommandTypes.Implementation, args, token, { lowPriority: true, cancelOnResourceChange: codeLens.data!.uri });
         if (response.type !== 'response' || !response.body) {
             codeLens.command = response.type === 'cancelled'
                 ? TypeScriptBaseCodeLensProvider.cancelledCommand
@@ -45,7 +54,7 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
                                         Position.create(reference.start.line, 0))))
             // Exclude original from implementations
             .filter(location =>
-                !(location.uri.toString() === codeLens.data!.document &&
+                !(location.uri.toString() === codeLens.data!.uri &&
                     location.range.start.line === codeLens.range.start.line &&
                     location.range.start.character === codeLens.range.start.character));
 
@@ -57,7 +66,7 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
         return {
             title: this.getTitle(locations),
             command: locations.length ? 'editor.action.showReferences' : '',
-            arguments: [codeLens.data!.document, codeLens.range.start, locations],
+            arguments: [codeLens.data!.uri, codeLens.range.start, locations],
         };
     }
 

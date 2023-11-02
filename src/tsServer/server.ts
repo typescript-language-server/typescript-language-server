@@ -437,7 +437,8 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
         CommandTypes.Definition,
         CommandTypes.DefinitionAndBoundSpan,
         CommandTypes.DocumentHighlights,
-        CommandTypes.Implementation,
+        // reports incorrect count of implemenations during early init - https://github.com/microsoft/vscode/issues/197286
+        // CommandTypes.Implementation,
         CommandTypes.Navto,
         CommandTypes.Quickinfo,
         CommandTypes.References,
