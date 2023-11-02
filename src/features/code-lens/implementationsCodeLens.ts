@@ -64,7 +64,7 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
     private getTitle(locations: Location[]): string {
         return locations.length === 1
             ? '1 implementation'
-            : `${0} implementations`;
+            : `${locations.length} implementations`;
     }
 
     protected extractSymbol(
