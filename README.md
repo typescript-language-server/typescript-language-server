@@ -61,14 +61,8 @@ typescript-language-server --stdio
     -V, --version                          output the version number
     --stdio                                use stdio (required option)
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
-    --tsserver-log-verbosity <verbosity>   [deprecated] Specify tsserver log verbosity (off, terse, normal, verbose). Defaults to `normal`. example: --tsserver-log-verbosity=verbose
-    --tsserver-path <path>                 [deprecated] Specify path to tsserver directory. example: --tsserver-path=/Users/me/typescript/lib/
     -h, --help                             output usage information
 ```
-
-> The `--tsserver-log-verbosity` and `--tsserver-path` options are deprecated and it is recommended to pass those through corresponding `tsserver.*` `initializationOptions` instead.
-
-> Note: The path passed to `--tsserver-path` should be a path to the `[...]/typescript/lib/tssserver.js` file or to the `[...]/typescript/lib/` directory and not to the shell script `[...]/node_modules/.bin/tsserver`. Though for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script.
 
 ## initializationOptions
 
@@ -110,6 +104,10 @@ interface TsserverOptions {
     logVerbosity?: 'off' | 'terse' | 'normal' | 'requestTime' | 'verbose';
     /**
      * The path to the `tsserver.js` file or the typescript lib directory. For example: `/Users/me/typescript/lib/tsserver.js`.
+     *
+     * Note: The path should point at the `[...]/typescript/lib/tssserver.js` file or the `[...]/typescript/lib/` directory
+     * and not the shell script (`[...]/node_modules/.bin/tsserver`) but for backward-compatibility reasons, the server will try
+     * to do the right thing even when passed a path to the shell script.
      */
     path?: string;
     /**
