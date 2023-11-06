@@ -17,8 +17,6 @@ import { TypeScriptInitializationOptions } from './ts-protocol.js';
 import { LspClient, WithProgressOptions } from './lsp-client.js';
 import { LspServer } from './lsp-server.js';
 import { ConsoleLogger, LogLevel } from './utils/logger.js';
-import { TypeScriptVersionProvider } from './tsServer/versionProvider.js';
-import { TsServerLogLevel } from './utils/configuration.js';
 
 const CONSOLE_LOG_LEVEL = LogLevel.fromString(process.env.CONSOLE_LOG_LEVEL);
 export const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -204,7 +202,6 @@ export class TestLspServer extends LspServer {
 
 interface TestLspServerOptions {
     rootUri: string | null;
-    tsserverLogVerbosity?: TsServerLogLevel;
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
     clientCapabilitiesOverride?: lsp.ClientCapabilities;
 }
@@ -212,13 +209,9 @@ interface TestLspServerOptions {
 export async function createServer(options: TestLspServerOptions): Promise<TestLspServer> {
     const logger = new ConsoleLogger(CONSOLE_LOG_LEVEL);
     const lspClient = new TestLspClient(options, logger);
-    const typescriptVersionProvider = new TypeScriptVersionProvider(undefined, logger);
-    const bundled = typescriptVersionProvider.bundledVersion();
     const server = new TestLspServer({
         logger,
         lspClient,
-        tsserverLogVerbosity: TsServerLogLevel.Off,
-        tsserverPath: bundled!.tsServerPath,
     });
 
     lspClient.addApplyWorkspaceEditListener(args => {

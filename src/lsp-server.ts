@@ -153,7 +153,7 @@ export class LspServer {
                 trace: Trace.fromString(tsserver?.trace || 'off'),
                 typescriptVersion,
                 logDirectoryProvider: new LogDirectoryProvider(this.getLogDirectoryPath(userInitializationOptions)),
-                logVerbosity: tsserverLogVerbosity ?? this.options.tsserverLogVerbosity,
+                logVerbosity: tsserverLogVerbosity ?? TsServerLogLevel.Off,
                 disableAutomaticTypingAcquisition,
                 maxTsServerMemory,
                 npmLocation,
@@ -304,7 +304,7 @@ export class LspServer {
     }
 
     private findTypescriptVersion(userTsserverPath: string | undefined): TypeScriptVersion | null {
-        const typescriptVersionProvider = new TypeScriptVersionProvider(userTsserverPath || this.options.tsserverPath, this.logger);
+        const typescriptVersionProvider = new TypeScriptVersionProvider(userTsserverPath, this.logger);
         // User-provided tsserver path.
         const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
         if (userSettingVersion) {

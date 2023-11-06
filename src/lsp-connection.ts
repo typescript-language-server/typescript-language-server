@@ -9,11 +9,8 @@ import lsp from 'vscode-languageserver/node.js';
 import { LspClientLogger } from './utils/logger.js';
 import { LspServer } from './lsp-server.js';
 import { LspClientImpl } from './lsp-client.js';
-import type { TsServerLogLevel } from './utils/configuration.js';
 
 export interface LspConnectionOptions {
-    cmdLineTsserverPath: string;
-    cmdLineTsserverLogVerbosity: TsServerLogLevel;
     showMessageLevel: lsp.MessageType;
 }
 
@@ -24,8 +21,6 @@ export function createLspConnection(options: LspConnectionOptions): lsp.Connecti
     const server: LspServer = new LspServer({
         logger,
         lspClient,
-        tsserverPath: options.cmdLineTsserverPath,
-        tsserverLogVerbosity: options.cmdLineTsserverLogVerbosity,
     });
 
     connection.onInitialize(server.initialize.bind(server));
