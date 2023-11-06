@@ -295,7 +295,7 @@ yarn watch
 
 ### Publishing
 
-New version of the package is published automatically on pushing new tag to the upstream repo.
+The project uses https://github.com/google-github-actions/release-please-action Github action to automatically release new version on merging a release PR.
 
 [npm-version-src]: https://img.shields.io/npm/dt/typescript-language-server.svg?style=flat-square
 [npm-version-href]: https://npmjs.com/package/typescript-language-server
