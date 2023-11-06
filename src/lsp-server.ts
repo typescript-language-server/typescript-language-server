@@ -146,7 +146,7 @@ export class LspServer {
             useLabelDetailsInCompletionEntries: this.features.completionLabelDetails,
         });
 
-        const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver?.logVerbosity);
+        const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver.logVerbosity);
         const started = this.tsClient.start(
             this.workspaceRoot,
             {
