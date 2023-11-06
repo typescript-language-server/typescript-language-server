@@ -25,6 +25,7 @@ export const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 const DEFAULT_TEST_CLIENT_CAPABILITIES: lsp.ClientCapabilities = {
     textDocument: {
+        codeLens: {},
         completion: {
             completionItem: {
                 insertReplaceSupport: true,
@@ -122,6 +123,20 @@ export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp
     return positionAt(document, document.text.lastIndexOf(match));
 }
 
+export function range(document: lsp.TextDocumentItem, match: string): lsp.Range {
+    return lsp.Range.create(
+        position(document, match),
+        positionAfter(document, match),
+    );
+}
+
+export function lastRange(document: lsp.TextDocumentItem, match: string): lsp.Range {
+    return lsp.Range.create(
+        lastPosition(document, match),
+        positionAt(document, document.text.lastIndexOf(match) + match.length),
+    );
+}
+
 export class TestLspClient implements LspClient {
     private workspaceEditsListener: ((args: lsp.ApplyWorkspaceEditParams) => void) | null = null;
 
@@ -189,7 +204,7 @@ export class TestLspServer extends LspServer {
 
 interface TestLspServerOptions {
     rootUri: string | null;
-    tsserverLogVerbosity?: string;
+    tsserverLogVerbosity?: TsServerLogLevel;
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
     clientCapabilitiesOverride?: lsp.ClientCapabilities;
 }

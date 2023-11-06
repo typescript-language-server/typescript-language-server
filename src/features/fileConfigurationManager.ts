@@ -88,6 +88,13 @@ export interface WorkspaceConfiguration {
 export interface WorkspaceConfigurationLanguageOptions {
     format?: ts.server.protocol.FormatCodeSettings;
     inlayHints?: TypeScriptInlayHintsPreferences;
+    implementationsCodeLens?: {
+        enabled?: boolean;
+    };
+    referencesCodeLens?: {
+        enabled?: boolean;
+        showOnAllFunctions?: boolean;
+    };
 }
 
 export interface WorkspaceConfigurationImplicitProjectConfigurationOptions {

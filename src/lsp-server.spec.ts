@@ -8,7 +8,7 @@
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, openDocumentAndWaitForDiagnostics } from './test-utils.js';
+import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, openDocumentAndWaitForDiagnostics, range, lastRange } from './test-utils.js';
 import { Commands } from './commands.js';
 import { SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
@@ -2000,6 +2000,240 @@ describe('jsx/tsx project', () => {
         const item = completion!.items.find(i => i.label === 'title');
         expect(item).toBeDefined();
         expect(item?.insertTextFormat).toBe(2);
+    });
+});
+
+describe('codeLens', () => {
+    beforeAll(async () => {
+        server.updateWorkspaceSettings({
+            typescript: {
+                implementationsCodeLens: {
+                    enabled: true,
+                },
+                referencesCodeLens: {
+                    enabled: true,
+                    showOnAllFunctions: true,
+                },
+            },
+        });
+    });
+
+    afterAll(() => {
+        server.updateWorkspaceSettings({
+            typescript: {
+                implementationsCodeLens: {
+                    enabled: false,
+                },
+                referencesCodeLens: {
+                    enabled: false,
+                    showOnAllFunctions: false,
+                },
+            },
+        });
+    });
+
+    it('shows code lenses', async () => {
+        const doc = {
+            uri: uri('module.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                interface Pet {
+                    name: string;
+                }
+
+                function getPet(): Pet {
+                    return {
+                        name: 'dog',
+                    };
+                }
+
+                export const pet = getPet();
+            `,
+        };
+        await openDocumentAndWaitForDiagnostics(server, doc);
+        const codeLenses = await server.codeLens({ textDocument: doc }, lsp.CancellationToken.None);
+        expect(codeLenses).toBeDefined();
+        expect(codeLenses).toHaveLength(5);
+        expect(codeLenses).toMatchObject([
+            {
+                range: range(doc, 'Pet'),
+                data: {
+                    uri: doc.uri,
+                    type: 1,
+                },
+            },
+            {
+                range: {
+                    start: {
+                        line: 5,
+                        character: 25,
+                    },
+                    end: {
+                        line: 5,
+                        character: 31,
+                    },
+                },
+                data: {
+                    uri: doc.uri,
+                    type: 0,
+                },
+            },
+            {
+                range: range(doc, 'pet'),
+                data: {
+                    uri: doc.uri,
+                    type: 0,
+                },
+            },
+            {
+                range: range(doc, 'Pet'),
+                data: {
+                    uri: doc.uri,
+                    type: 0,
+                },
+            },
+            {
+                range: range(doc, 'name'),
+                data: {
+                    uri: doc.uri,
+                    type: 0,
+                },
+            },
+        ]);
+
+        const resolvedCodeLenses = await Promise.all(codeLenses.map(codeLens => server.codeLensResolve(codeLens, lsp.CancellationToken.None)));
+        expect(resolvedCodeLenses).toMatchObject([
+            {
+                command: {
+                    title: '1 implementation',
+                    command: 'editor.action.showReferences',
+                    arguments: [
+                        doc.uri,
+                        position(doc, 'Pet'),
+                        [
+                            {
+                                uri: doc.uri,
+                                range: {
+                                    start: {
+                                        line: 6,
+                                        character: 27,
+                                    },
+                                    end: {
+                                        line: 7,
+                                        character: 0,
+                                    },
+                                },
+                            },
+                        ],
+                    ],
+                },
+            },
+            {
+                command: {
+                    title: '1 reference',
+                    command: 'editor.action.showReferences',
+                    arguments: [
+                        doc.uri,
+                        position(doc, 'getPet'),
+                        [
+                            {
+                                uri: doc.uri,
+                                range: lastRange(doc, 'getPet'),
+                            },
+                        ],
+                    ],
+                },
+            },
+            {
+                command: {
+                    title: '0 references',
+                    command: '',
+                    arguments: [
+                        doc.uri,
+                        position(doc, 'pet'),
+                        [],
+                    ],
+                },
+            },
+            {
+                command: {
+                    title: '1 reference',
+                    command: 'editor.action.showReferences',
+                    arguments: [
+                        doc.uri,
+                        position(doc, 'Pet'),
+                        [
+                            {
+                                uri: doc.uri,
+                                range: {
+                                    start: {
+                                        line: 5,
+                                        character: 35,
+                                    },
+                                    end: {
+                                        line: 5,
+                                        character: 38,
+                                    },
+                                },
+                            },
+                        ],
+                    ],
+                },
+            },
+            {
+                command: {
+                    title: '1 reference',
+                    command: 'editor.action.showReferences',
+                    arguments: [
+                        doc.uri,
+                        position(doc, 'name'),
+                        [
+                            {
+                                uri: doc.uri,
+                                range: {
+                                    start: {
+                                        line: 7,
+                                        character: 24,
+                                    },
+                                    end: {
+                                        line: 7,
+                                        character: 28,
+                                    },
+                                },
+                            },
+                        ],
+                    ],
+                },
+            },
+        ]);
+    });
+});
+
+describe('codeLens disabled', () => {
+    it('does not show code lenses', async () => {
+        const doc = {
+            uri: uri('module.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                interface Pet {
+                    name: string;
+                }
+
+                function getPet(): Pet {
+                    return {
+                        name: 'dog',
+                    };
+                }
+
+                export const pet = getPet();
+            `,
+        };
+        await openDocumentAndWaitForDiagnostics(server, doc);
+        const codeLenses = await server.codeLens({ textDocument: doc }, lsp.CancellationToken.None);
+        expect(codeLenses).toBeDefined();
+        expect(codeLenses).toHaveLength(0);
     });
 });
 
