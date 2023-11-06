@@ -15,6 +15,7 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
 - [Installing](#installing)
 - [Running the language server](#running-the-language-server)
 - [CLI Options](#cli-options)
+- [Configuration](#configuration)
 - [Features](#features)
     - [Code actions on save](#code-actions-on-save)
     - [Workspace commands \(`workspace/executeCommand`\)](#workspace-commands-workspaceexecutecommand)
@@ -62,6 +63,10 @@ typescript-language-server --stdio
     --log-level <log-level>                A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `3`.
     -h, --help                             output usage information
 ```
+
+## Configuration
+
+See [configuration documentation](./docs/configuration.md).
 
 ## Features
 
