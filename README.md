@@ -29,7 +29,6 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
     - [Code Lenses \(`textDocument/codeLens`\)](#code-lenses-textdocumentcodelens)
     - [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
     - [TypeScript Version Notification](#typescript-version-notification)
-- [Supported Protocol features](#supported-protocol-features)
 - [Development](#development)
     - [Build](#build)
     - [Test](#test)
@@ -272,35 +271,6 @@ The `$/typescriptVersion` notification params include two properties:
 
  - `version` - a semantic version (for example `4.8.4`)
  - `source` - a string specifying whether used TypeScript version comes from the local workspace (`workspace`), is explicitly specified through a `initializationOptions.tsserver.path` setting (`user-setting`) or was bundled with the server (`bundled`)
-
-## Supported Protocol features
-
-- [x] textDocument/codeAction
-- [x] textDocument/completion (incl. `completion/resolve`)
-- [x] textDocument/definition
-- [x] textDocument/didChange (incremental)
-- [x] textDocument/didClose
-- [x] textDocument/didOpen
-- [x] textDocument/didSave
-- [x] textDocument/documentHighlight
-- [x] textDocument/documentSymbol
-- [x] textDocument/executeCommand
-- [x] textDocument/formatting
-- [x] textDocument/hover
-- [x] textDocument/inlayHint (no support for `inlayHint/resolve` or `workspace/inlayHint/refresh`)
-- [x] textDocument/linkedEditingRange
-- [x] textDocument/prepareCallHierarchy
-- [x] callHierarchy/incomingCalls
-- [x] callHierarchy/outgoingCalls
-- [x] textDocument/prepareRename
-- [x] textDocument/rangeFormatting
-- [x] textDocument/references
-- [x] textDocument/rename
-- [x] textDocument/selectionRange
-- [x] textDocument/signatureHelp
-- [x] workspace/symbol
-- [x] workspace/didChangeConfiguration
-- [x] workspace/executeCommand
 
 ## Development
 
