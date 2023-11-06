@@ -15,6 +15,7 @@ import type { LspDocument } from '../../document.js';
 import { CommandTypes, ScriptElementKind, type ts } from '../../ts-protocol.js';
 import * as typeConverters from '../../utils/typeConverters.js';
 import { CodeLensType, ReferencesCodeLens, TypeScriptBaseCodeLensProvider, getSymbolRange } from './baseCodeLensProvider.js';
+import { ExecutionTarget } from '../../tsServer/server.js';
 
 export default class TypeScriptImplementationsCodeLensProvider extends TypeScriptBaseCodeLensProvider {
     protected get type(): CodeLensType {
@@ -35,7 +36,11 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
         }
 
         const args = typeConverters.Position.toFileLocationRequestArgs(document.filepath, codeLens.range.start);
-        const response = await this.client.execute(CommandTypes.Implementation, args, token, { lowPriority: true, cancelOnResourceChange: codeLens.data!.uri });
+        const response = await this.client.execute(CommandTypes.Implementation, args, token, {
+            lowPriority: true,
+            executionTarget: ExecutionTarget.Semantic,
+            cancelOnResourceChange: codeLens.data!.uri,
+        });
         if (response.type !== 'response' || !response.body) {
             codeLens.command = response.type === 'cancelled'
                 ? TypeScriptBaseCodeLensProvider.cancelledCommand
