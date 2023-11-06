@@ -28,17 +28,17 @@ The language server accepts various settings through the `initializationOptions`
 
 Specifies additional options related to the internal `tsserver` process, like tracing and logging:
 
-  - **logDirectory** [string] The path to the directory where the `tsserver` log files will be created. If not provided, the log files will be created within the workspace, inside the `.log` directory. If no workspace root is provided when initializating the server and no custom path is specified then the logs will not be created. **Default**: `undefined`
+**logDirectory** [string] The path to the directory where the `tsserver` log files will be created. If not provided, the log files will be created within the workspace, inside the `.log` directory. If no workspace root is provided when initializating the server and no custom path is specified then the logs will not be created. **Default**: `undefined`
 
-  - **logVerbosity** [string] Verbosity of the information logged into the `tsserver` log files. Log levels from least to most amount of details: `'off'`, `'terse'`, `'normal'`, `'requestTime`', `'verbose'`. **Default**: `'off'`
+**logVerbosity** [string] Verbosity of the information logged into the `tsserver` log files. Log levels from least to most amount of details: `'off'`, `'terse'`, `'normal'`, `'requestTime`', `'verbose'`. **Default**: `'off'`
 
-  - **path** [string] The path to the `tsserver.js` file or the typescript lib directory. For example: `/Users/me/typescript/lib/tsserver.js`. Note: The path should point at the `[...]/typescript/lib/tssserver.js` file or the `[...]/typescript/lib/` directory and not the shell script (`[...]/node_modules/.bin/tsserver`) but for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script. **Default**: `undefined`
+**path** [string] The path to the `tsserver.js` file or the typescript lib directory. For example: `/Users/me/typescript/lib/tsserver.js`. Note: The path should point at the `[...]/typescript/lib/tssserver.js` file or the `[...]/typescript/lib/` directory and not the shell script (`[...]/node_modules/.bin/tsserver`) but for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script. **Default**: `undefined`
 
-  - **trace** [string] The verbosity of logging of the tsserver communication. Delivered through the LSP messages and not related to file logging. Allowed values are: `'off'`, `'messages'`, `'verbose'`. **Default**: `'off'`
+**trace** [string] The verbosity of logging of the tsserver communication. Delivered through the LSP messages and not related to file logging. Allowed values are: `'off'`, `'messages'`, `'verbose'`. **Default**: `'off'`
 
-  - **useSyntaxServer** [string] Whether a dedicated server is launched to more quickly handle syntax related operations, such as computing diagnostics or code folding. **Default**: `'auto'`. Allowed values:
-    - `'auto'`: Spawn both a full server and a lighter weight server dedicated to syntax operations. The syntax server is used to speed up syntax operations and provide IntelliSense while projects are loading.
-    - `'never'`: Don't use a dedicated syntax server. Use a single server to handle all IntelliSense operations.
+**useSyntaxServer** [string] Whether a dedicated server is launched to more quickly handle syntax related operations, such as computing diagnostics or code folding. **Default**: `'auto'`. Allowed values:
+  - `'auto'`: Spawn both a full server and a lighter weight server dedicated to syntax operations. The syntax server is used to speed up syntax operations and provide IntelliSense while projects are loading.
+  - `'never'`: Don't use a dedicated syntax server. Use a single server to handle all IntelliSense operations.
 
 ### `preferences` options
 
