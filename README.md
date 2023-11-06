@@ -15,20 +15,19 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
 - [Installing](#installing)
 - [Running the language server](#running-the-language-server)
 - [CLI Options](#cli-options)
-- [initializationOptions](#initializationoptions)
-- [workspace/didChangeConfiguration](#workspacedidchangeconfiguration)
-- [Code actions on save](#code-actions-on-save)
-- [Workspace commands \(`workspace/executeCommand`\)](#workspace-commands-workspaceexecutecommand)
-    - [Go to Source Definition](#go-to-source-definition)
-    - [Apply Workspace Edits](#apply-workspace-edits)
-    - [Apply Code Action](#apply-code-action)
-    - [Apply Refactoring](#apply-refactoring)
-    - [Organize Imports](#organize-imports)
-    - [Rename File](#rename-file)
-    - [Configure plugin](#configure-plugin)
-- [Code Lenses \(`textDocument/codeLens`\)](#code-lenses-textdocumentcodelens)
-- [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
-- [TypeScript Version Notification](#typescript-version-notification)
+- [Features](#features)
+    - [Code actions on save](#code-actions-on-save)
+    - [Workspace commands \(`workspace/executeCommand`\)](#workspace-commands-workspaceexecutecommand)
+        - [Go to Source Definition](#go-to-source-definition)
+        - [Apply Workspace Edits](#apply-workspace-edits)
+        - [Apply Code Action](#apply-code-action)
+        - [Apply Refactoring](#apply-refactoring)
+        - [Organize Imports](#organize-imports)
+        - [Rename File](#rename-file)
+        - [Configure plugin](#configure-plugin)
+    - [Code Lenses \(`textDocument/codeLens`\)](#code-lenses-textdocumentcodelens)
+    - [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
+    - [TypeScript Version Notification](#typescript-version-notification)
 - [Supported Protocol features](#supported-protocol-features)
 - [Development](#development)
     - [Build](#build)
@@ -64,358 +63,9 @@ typescript-language-server --stdio
     -h, --help                             output usage information
 ```
 
-## initializationOptions
+## Features
 
-The language server accepts various settings through the `initializationOptions` object passed through the `initialize` request. Refer to your LSP client's documentation on how to set these. Here is the list of supported options:
-
-| Setting           | Type     | Description                                                                           |
-|:------------------|:---------|:--------------------------------------------------------------------------------------|
-| hostInfo          | string   | Information about the host, for example `"Emacs 24.4"` or `"Sublime Text v3075"`. **Default**: `undefined` |
-| completionDisableFilterText  | boolean | Don't set `filterText` property on completion items. **Default**: `false` |
-| disableAutomaticTypingAcquisition | boolean | Disables tsserver from automatically fetching missing type definitions (`@types` packages) for external modules. |
-| maxTsServerMemory | number   | The maximum size of the V8's old memory section in megabytes (for example `4096` means 4GB). The default value is dynamically configured by Node so can differ per system. Increase for very big projects that exceed allowed memory usage. **Default**: `undefined` |
-| npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
-| locale            | string   | The locale to use to show error messages. |
-| plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: [] |
-| preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more |
-| tsserver          | object   | Options related to the `tsserver` process. See below for more |
-
-The `tsserver` setting specifies additional options related to the internal `tsserver` process, like tracing and logging.
-
-```ts
-interface TsserverOptions {
-    /**
-     * The path to the directory where the `tsserver` log files will be created.
-     * If not provided, the log files will be created within the workspace, inside the `.log` directory.
-     * If no workspace root is provided when initializating the server and no custom path is specified then
-     * the logs will not be created.
-     *
-     * @default undefined
-     */
-    logDirectory?: string;
-    /**
-     * Verbosity of the information logged into the `tsserver` log files.
-     *
-     * Log levels from least to most amount of details: `'terse'`, `'normal'`, `'requestTime`', `'verbose'`.
-     * Enabling particular level also enables all lower levels.
-     *
-     * @default 'off'
-     */
-    logVerbosity?: 'off' | 'terse' | 'normal' | 'requestTime' | 'verbose';
-    /**
-     * The path to the `tsserver.js` file or the typescript lib directory. For example: `/Users/me/typescript/lib/tsserver.js`.
-     *
-     * Note: The path should point at the `[...]/typescript/lib/tssserver.js` file or the `[...]/typescript/lib/` directory
-     * and not the shell script (`[...]/node_modules/.bin/tsserver`) but for backward-compatibility reasons, the server will try
-     * to do the right thing even when passed a path to the shell script.
-     */
-    path?: string;
-    /**
-     * The verbosity of logging of the tsserver communication.
-     * Delivered through the LSP messages and not related to file logging.
-     *
-     * @default 'off'
-     */
-    trace?: 'off' | 'messages' | 'verbose';
-    /**
-     * Whether a dedicated server is launched to more quickly handle syntax related operations, such as computing diagnostics or code folding.
-     *
-     * Allowed values:
-     *  - auto: Spawn both a full server and a lighter weight server dedicated to syntax operations. The syntax server is used to speed up syntax operations and provide IntelliSense while projects are loading.
-     *  - never: Don't use a dedicated syntax server. Use a single server to handle all IntelliSense operations.
-     *
-     * @default 'auto'
-     */
-    useSyntaxServer?: 'auto' | 'never';
-}
-```
-
-The `preferences` object is an object specifying preferences for the internal `tsserver` process. Those options depend on the version of Typescript used but at the time of writing Typescript v4.4.3 contains these options:
-
-```ts
-interface UserPreferences {
-    /**
-     * Glob patterns of files to exclude from auto imports. Requires using TypeScript 4.8 or newer in the workspace.
-     * Relative paths are resolved relative to the workspace root.
-     * @since 4.8.2
-     */
-    autoImportFileExcludePatterns: [],
-    disableSuggestions: boolean;
-    quotePreference: "auto" | "double" | "single";
-    /**
-     * If enabled, TypeScript will search through all external modules' exports and add them to the completions list.
-     * This affects lone identifier completions but not completions on the right hand side of `obj.`.
-     */
-    includeCompletionsForModuleExports: boolean;
-    /**
-     * Enables auto-import-style completions on partially-typed import statements. E.g., allows
-     * `import write|` to be completed to `import { writeFile } from "fs"`.
-     */
-    includeCompletionsForImportStatements: boolean;
-    /**
-     * Allows completions to be formatted with snippet text, indicated by `CompletionItem["isSnippet"]`.
-     */
-    includeCompletionsWithSnippetText: boolean;
-    /**
-     * If enabled, the completion list will include completions with invalid identifier names.
-     * For those entries, The `insertText` and `replacementSpan` properties will be set to change from `.x` property access to `["x"]`.
-     */
-    includeCompletionsWithInsertText: boolean;
-    /**
-     * Unless this option is `false`, or `includeCompletionsWithInsertText` is not enabled,
-     * member completion lists triggered with `.` will include entries on potentially-null and potentially-undefined
-     * values, with insertion text to replace preceding `.` tokens with `?.`.
-     */
-    includeAutomaticOptionalChainCompletions: boolean;
-    /**
-     * If enabled, completions for class members (e.g. methods and properties) will include
-     * a whole declaration for the member.
-     * E.g., `class A { f| }` could be completed to `class A { foo(): number {} }`, instead of
-     * `class A { foo }`.
-     * @since 4.5.2
-     * @default true
-     */
-    includeCompletionsWithClassMemberSnippets: boolean;
-    /**
-     * If enabled, object literal methods will have a method declaration completion entry in addition
-     * to the regular completion entry containing just the method name.
-     * E.g., `const objectLiteral: T = { f| }` could be completed to `const objectLiteral: T = { foo(): void {} }`,
-     * in addition to `const objectLiteral: T = { foo }`.
-     * @since 4.7.2
-     * @default true
-     */
-    includeCompletionsWithObjectLiteralMethodSnippets: boolean;
-    /**
-     * Indicates whether {@link CompletionEntry.labelDetails completion entry label details} are supported.
-     * If not, contents of `labelDetails` may be included in the {@link CompletionEntry.name} property.
-     * Only supported if the client supports `textDocument.completion.completionItem.labelDetailsSupport` capability
-     * and a compatible TypeScript version is used.
-     * @since 4.7.2
-     * @default true
-     */
-    useLabelDetailsInCompletionEntries: boolean;
-    /**
-     * Allows import module names to be resolved in the initial completions request.
-     * @default false
-     */
-    allowIncompleteCompletions: boolean;
-    importModuleSpecifierPreference: "shortest" | "project-relative" | "relative" | "non-relative";
-    /** Determines whether we import `foo/index.ts` as "foo", "foo/index", or "foo/index.js" */
-    importModuleSpecifierEnding: "auto" | "minimal" | "index" | "js";
-    allowTextChangesInNewFiles: boolean;
-    lazyConfiguredProjectsFromExternalProject: boolean;
-    /**
-     * Indicates whether imports should be organized in a case-insensitive manner.
-     *
-     * @default "auto".
-     */
-    organizeImportsIgnoreCase: "auto" | boolean;
-    /**
-     * Indicates whether imports should be organized via an "ordinal" (binary) comparison using the numeric value
-     * of their code points, or via "unicode" collation (via the
-     * [Unicode Collation Algorithm](https://unicode.org/reports/tr10/#Scope)) using rules associated with the locale
-     * specified in {@link organizeImportsCollationLocale}.
-     *
-     * @default "ordinal".
-     */
-    organizeImportsCollation: "ordinal" | "unicode";
-    /**
-     * Indicates the locale to use for "unicode" collation. If not specified, the locale `"en"` is used as an invariant
-     * for the sake of consistent sorting. Use `"auto"` to use the detected UI locale.
-     *
-     * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
-     *
-     * @default "en"
-     */
-    organizeImportsCollationLocale: string;
-    /**
-     * Indicates whether numeric collation should be used for digit sequences in strings. When `true`, will collate
-     * strings such that `a1z < a2z < a100z`. When `false`, will collate strings such that `a1z < a100z < a2z`.
-     *
-     * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
-     *
-     * @default false
-     */
-    organizeImportsNumericCollation: boolean;
-    /**
-     * Indicates whether accents and other diacritic marks are considered unequal for the purpose of collation. When
-     * `true`, characters with accents and other diacritics will be collated in the order defined by the locale specified
-     * in {@link organizeImportsCollationLocale}.
-     *
-     * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`.
-     *
-     * @default true
-     */
-    organizeImportsAccentCollation: boolean;
-    /**
-     * Indicates whether upper case or lower case should sort first. When `false`, the default order for the locale
-     * specified in {@link organizeImportsCollationLocale} is used.
-     *
-     * This preference is ignored if {@link organizeImportsCollation} is not `"unicode"`. This preference is also
-     * ignored if we are using case-insensitive sorting, which occurs when {@link organizeImportsIgnoreCase} is `true`,
-     * or if {@link organizeImportsIgnoreCase} is `"auto"` and the auto-detected case sensitivity is determined to be
-     * case-insensitive.
-     *
-     * @default false
-     */
-    organizeImportsCaseFirst: "upper" | "lower" | false;
-    providePrefixAndSuffixTextForRename: boolean;
-    provideRefactorNotApplicableReason: boolean;
-    allowRenameOfImportPath: boolean;
-    includePackageJsonAutoImports: "auto" | "on" | "off";
-    /**
-     * @since 5.2.2
-     * @default true
-     */
-    interactiveInlayHints: true,
-    /**
-     * Preferred style for JSX attribute completions:
-     * - `"auto"` - Insert `={}` or `=\"\"` after attribute names based on the prop type.
-     * - `"braces"` - Insert `={}` after attribute names.
-     * - `"none"` - Only insert attribute names.
-     * @since 4.5.2
-     * @default 'auto'
-     */
-    jsxAttributeCompletionStyle: "auto" | "braces" | "none";
-    displayPartsForJSDoc: boolean;
-    generateReturnInDocTemplate: boolean;
-
-    includeInlayParameterNameHints: "none" | "literals" | "all";
-    includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
-    includeInlayFunctionParameterTypeHints: boolean,
-    includeInlayVariableTypeHints: boolean;
-    /**
-     * When disabled then type hints on variables whose name is identical to the type name won't be shown. Requires using TypeScript 4.8+ in the workspace.
-     * @since 4.8.2
-     * @default false
-     */
-    includeInlayVariableTypeHintsWhenTypeMatchesName: boolean;
-    includeInlayPropertyDeclarationTypeHints: boolean;
-    includeInlayFunctionLikeReturnTypeHints: boolean;
-    includeInlayEnumMemberValueHints: boolean;
-}
-```
-
-From the `preferences` options listed above, this server explicilty sets the following options (all other options use their default values):
-
-```js
-{
-    allowIncompleteCompletions: true,
-    allowRenameOfImportPath: true,
-    allowTextChangesInNewFiles: true,
-    displayPartsForJSDoc: true,
-    generateReturnInDocTemplate: true,
-    includeAutomaticOptionalChainCompletions: true,
-    includeCompletionsForImportStatements: true,
-    includeCompletionsForModuleExports: true,
-    includeCompletionsWithClassMemberSnippets: true,
-    includeCompletionsWithObjectLiteralMethodSnippets: true,
-    includeCompletionsWithInsertText: true,
-    includeCompletionsWithSnippetText: true,
-    interactiveInlayHints: true,
-    jsxAttributeCompletionStyle: "auto",
-    providePrefixAndSuffixTextForRename: true,
-    provideRefactorNotApplicableReason: true,
-}
-```
-
-## workspace/didChangeConfiguration
-
-Some of the preferences can be controlled through the `workspace/didChangeConfiguration` notification. Below is a list of supported options that can be passed. Note that the settings are specified separately for the typescript and javascript files so `[language]` can be either `javascript` or `typescript`.
-
-```ts
-// Formatting preferences
-[language].format.baseIndentSize: number;
-[language].format.convertTabsToSpaces: boolean;
-[language].format.indentSize: number;
-[language].format.indentStyle: 'None' | 'Block' | 'Smart';
-[language].format.insertSpaceAfterCommaDelimiter: boolean;
-[language].format.insertSpaceAfterConstructor: boolean;
-[language].format.insertSpaceAfterFunctionKeywordForAnonymousFunctions: boolean;
-[language].format.insertSpaceAfterKeywordsInControlFlowStatements: boolean;
-[language].format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces: boolean;
-[language].format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces: boolean;
-[language].format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: boolean;
-[language].format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets: boolean;
-[language].format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis: boolean;
-[language].format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces: boolean;
-[language].format.insertSpaceAfterSemicolonInForStatements: boolean;
-[language].format.insertSpaceAfterTypeAssertion: boolean;
-[language].format.insertSpaceBeforeAndAfterBinaryOperators: boolean;
-[language].format.insertSpaceBeforeFunctionParenthesis: boolean;
-[language].format.insertSpaceBeforeTypeAnnotation: boolean;
-[language].format.newLineCharacter: string;
-[language].format.placeOpenBraceOnNewLineForControlBlocks: boolean;
-[language].format.placeOpenBraceOnNewLineForFunctions: boolean;
-[language].format.semicolons: 'ignore' | 'insert' | 'remove';
-[language].format.tabSize: number;
-[language].format.trimTrailingWhitespace: boolean;
-// Inlay Hints preferences
-[language].inlayHints.includeInlayEnumMemberValueHints: boolean;
-[language].inlayHints.includeInlayFunctionLikeReturnTypeHints: boolean;
-[language].inlayHints.includeInlayFunctionParameterTypeHints: boolean;
-[language].inlayHints.includeInlayParameterNameHints: 'none' | 'literals' | 'all';
-[language].inlayHints.includeInlayParameterNameHintsWhenArgumentMatchesName: boolean;
-[language].inlayHints.includeInlayPropertyDeclarationTypeHints: boolean;
-[language].inlayHints.includeInlayVariableTypeHints: boolean;
-[language].inlayHints.includeInlayVariableTypeHintsWhenTypeMatchesName: boolean;
-// Code Lens preferences
-[language].implementationsCodeLens.enabled: boolean;
-[language].referencesCodeLens.enabled: boolean;
-[language].referencesCodeLens.showOnAllFunctions: boolean;
-
-/**
- * Complete functions with their parameter signature.
- *
- * This functionality relies on LSP client resolving the completion using the `completionItem/resolve` call. If the
- * client can't do that before inserting the completion then it's not safe to enable it as it will result in some
- * completions having a snippet type without actually being snippets, which can then cause problems when inserting them.
- *
- * @default false
- */
-completions.completeFunctionCalls: boolean;
-// Diagnostics code to be omitted when reporting diagnostics.
-// See https://github.com/microsoft/TypeScript/blob/master/src/compiler/diagnosticMessages.json for a full list of valid codes.
-diagnostics.ignoredCodes: number[];
-/**
- * Enable/disable semantic checking of JavaScript files. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
- *
- * @default false
- */
-implicitProjectConfiguration.checkJs: boolean;
-/**
- * Enable/disable `experimentalDecorators` in JavaScript files that are not part of a project. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
- *
- * @default false
- */
-implicitProjectConfiguration.experimentalDecorators: boolean;
-/**
- * Sets the module system for the program. See more: https://www.typescriptlang.org/tsconfig#module.
- *
- * @default 'ESNext'
- */
-implicitProjectConfiguration.module: string;
-/**
- * Enable/disable [strict function types](https://www.typescriptlang.org/tsconfig#strictFunctionTypes) in JavaScript and TypeScript files that are not part of a project. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
- *
- * @default true
- */
-implicitProjectConfiguration.strictFunctionTypes: boolean;
-/**
- * Enable/disable [strict null checks](https://www.typescriptlang.org/tsconfig#strictNullChecks) in JavaScript and TypeScript files that are not part of a project. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
- *
- * @default true
- */
-implicitProjectConfiguration.strictNullChecks: boolean;
-/**
- * Set target JavaScript language version for emitted JavaScript and include library declarations. See more: https://www.typescriptlang.org/tsconfig#target.
- *
- * @default 'ES2020'
- */
-implicitProjectConfiguration.target: string;
-```
-
-## Code actions on save
+### Code actions on save
 
 Server announces support for the following code action kinds:
 
@@ -440,7 +90,7 @@ The user can enable it with a setting similar to (can vary per-editor):
 }
 ```
 
-## Workspace commands (`workspace/executeCommand`)
+### Workspace commands (`workspace/executeCommand`)
 
 See [LSP specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand).
 
@@ -448,7 +98,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 
 `lsp` refers to the language server protocol types, `tsp` refers to the typescript server protocol types.
 
-### Go to Source Definition
+#### Go to Source Definition
 
 - Request:
     ```ts
@@ -467,7 +117,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 
 (This command is supported from Typescript 4.7.)
 
-### Apply Workspace Edits
+#### Apply Workspace Edits
 
 - Request:
     ```ts
@@ -481,7 +131,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     lsp.ApplyWorkspaceEditResult
     ```
 
-### Apply Code Action
+#### Apply Code Action
 
 - Request:
     ```ts
@@ -497,7 +147,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     void
     ```
 
-### Apply Refactoring
+#### Apply Refactoring
 
 - Request:
     ```ts
@@ -513,7 +163,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     void
     ```
 
-### Organize Imports
+#### Organize Imports
 
 - Request:
     ```ts
@@ -530,7 +180,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     void
     ```
 
-### Rename File
+#### Rename File
 
 - Request:
     ```ts
@@ -546,7 +196,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     void
     ```
 
-### Configure plugin
+#### Configure plugin
 
 - Request:
     ```ts
@@ -560,9 +210,9 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     void
     ```
 
-## Code Lenses (`textDocument/codeLens`)
+### Code Lenses (`textDocument/codeLens`)
 
-Code lenses can be enabled using the `implementationsCodeLens` and `referencesCodeLens` [workspace configuration options](#workspacedidchangeconfiguration).
+Code lenses can be enabled using the `implementationsCodeLens` and `referencesCodeLens` [workspace configuration options](/docs/configuration.md/#workspacedidchangeconfiguration).
 
 Code lenses provide a count of **references** and/or **implemenations** for symbols in the document. For clients that support it it's also possible to click on those to navigate to the relevant locations in the the project. Do note that clicking those trigger a `editor.action.showReferences` command which is something that client needs to have explicit support for. Many do by default but some don't. An example command will look like this:
 
@@ -592,7 +242,7 @@ command: {
 }
 ```
 
-## Inlay hints (`textDocument/inlayHint`)
+### Inlay hints (`textDocument/inlayHint`)
 
 For the request to return any results, some or all of the following options need to be enabled through `preferences`:
 
@@ -609,7 +259,7 @@ export interface InlayHintsOptions extends UserPreferences {
 }
 ```
 
-## TypeScript Version Notification
+### TypeScript Version Notification
 
 Right after initializing, the server sends a custom `$/typescriptVersion` notification that carries information about the version of TypeScript that is utilized by the server. The editor can then display that information in the UI.
 
