@@ -1,15 +1,14 @@
-[![Build Status](https://travis-ci.org/theia-ide/typescript-language-server.svg?branch=master)](https://travis-ci.org/theia-ide/typescript-language-server)
-[![Discord](https://img.shields.io/discord/873659987413573634)](https://discord.gg/AC7Vs6hwFa)
+[![Discord][discord-src]][discord-href]
+[![npm version][npm-version-src]][npm-version-href]
+[![npm downloads][npm-downloads-src]][npm-downloads-href]
 
 # TypeScript Language Server
 
 [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) implementation for TypeScript wrapping `tsserver`.
 
-[![https://nodei.co/npm/typescript-language-server.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/typescript-language-server.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/typescript-language-server)
+Based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server and originally maintained by [TypeFox](https://typefox.io).
 
-Based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server and originally maintained by [TypeFox](https://typefox.io)
-
-Maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you
+Maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you.
 
 <!-- MarkdownTOC -->
 
@@ -27,6 +26,7 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
     - [Organize Imports](#organize-imports)
     - [Rename File](#rename-file)
     - [Configure plugin](#configure-plugin)
+- [Code Lenses \(`textDocument/codeLens`\)](#code-lenses-textdocumentcodelens)
 - [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
 - [TypeScript Version Notification](#typescript-version-notification)
 - [Supported Protocol features](#supported-protocol-features)
@@ -562,6 +562,38 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     void
     ```
 
+## Code Lenses (`textDocument/codeLens`)
+
+Code lenses can be enabled using the `implementationsCodeLens` and `referencesCodeLens` [workspace configuration options](#workspacedidchangeconfiguration).
+
+Code lenses provide a count of **references** and/or **implemenations** for symbols in the document. For clients that support it it's also possible to click on those to navigate to the relevant locations in the the project. Do note that clicking those trigger a `editor.action.showReferences` command which is something that client needs to have explicit support for. Many do by default but some don't. An example command will look like this:
+
+```ts
+command: {
+    title: '1 reference',
+    command: 'editor.action.showReferences',
+    arguments: [
+        'file://project/foo.ts',    // URI
+        { line: 1, character: 1 },  // Position
+        [                           // A list of Location objects.
+            {
+                uri: 'file://project/bar.ts',
+                range: {
+                    start: {
+                        line: 7,
+                        character: 24,
+                    },
+                    end: {
+                        line: 7,
+                        character: 28,
+                    },
+                },
+            },
+        ],
+    ],
+}
+```
+
 ## Inlay hints (`textDocument/inlayHint`)
 
 For the request to return any results, some or all of the following options need to be enabled through `preferences`:
@@ -641,3 +673,10 @@ yarn watch
 ### Publishing
 
 New version of the package is published automatically on pushing new tag to the upstream repo.
+
+[npm-version-src]: https://img.shields.io/npm/dt/typescript-language-server.svg?style=flat-square
+[npm-version-href]: https://npmjs.com/package/typescript-language-server
+[npm-downloads-src]: https://img.shields.io/npm/v/typescript-language-server/latest.svg?style=flat-square
+[npm-downloads-href]: https://npmjs.com/package/typescript-language-server
+[discord-src]: https://img.shields.io/discord/873659987413573634?style=flat-square
+[discord-href]: https://discord.gg/AC7Vs6hwFa
