@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.0.0...v4.1.0) (2023-11-08)
+
+
+### Features
+
+* support code lens for references and implementations ([#785](https://github.com/typescript-language-server/typescript-language-server/issues/785)) ([ae058c2](https://github.com/typescript-language-server/typescript-language-server/commit/ae058c22a4900913e9516c0e3c0c46bbd741760c))
+
+
+### Refactors
+
+* port ITypeScriptServiceClient ([#782](https://github.com/typescript-language-server/typescript-language-server/issues/782)) ([ab22e52](https://github.com/typescript-language-server/typescript-language-server/commit/ab22e521615a455026625bad179298087149ccb4))
+* remove deprecated CLI options ([#790](https://github.com/typescript-language-server/typescript-language-server/issues/790)) ([cadf374](https://github.com/typescript-language-server/typescript-language-server/commit/cadf3748a8e0de7655260ddeb1ffb30888723aaf))
+
 ## [4.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v3.3.2...v4.0.0) (2023-10-20)
 
 
