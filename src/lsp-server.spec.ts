@@ -2423,3 +2423,24 @@ describe('linked editing', () => {
         ]);
     });
 });
+
+describe('handles invalid languageId', () => {
+    it('simple test', async () => {
+        const textDocument = {
+            uri: uri('foo.tsx'),
+            languageId: 'tsx',
+            version: 1,
+            text: 'let bar = <div></div>',
+        };
+        await openDocumentAndWaitForDiagnostics(server, textDocument);
+        const position = positionAfter(textDocument, '<div');
+        const linedEditRanges = await server.linkedEditingRange({
+            textDocument,
+            position,
+        });
+        expect(linedEditRanges?.ranges).toStrictEqual([
+            { start: { line: 0, character: 11 }, end: { line: 0, character: 14 } },
+            { start: { line: 0, character: 17 }, end: { line: 0, character: 20 } },
+        ]);
+    });
+});

@@ -171,7 +171,7 @@ export class TsClient implements ITypeScriptServiceClient {
         logger: Logger,
         lspClient: LspClient,
     ) {
-        this.documents = new LspDocuments(this, onCaseInsensitiveFileSystem);
+        this.documents = new LspDocuments(this, lspClient, onCaseInsensitiveFileSystem);
         this.logger = new PrefixingLogger(logger, '[tsclient]');
         this.tsserverLogger = new PrefixingLogger(this.logger, '[tsserver]');
         this.lspClient = lspClient;

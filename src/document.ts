@@ -5,10 +5,12 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { extname } from 'node:path';
 import { URI } from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as languageModeIds from './configuration/languageIds.js';
+import { LspClient } from './lsp-client.js';
 import { CommandTypes, type ts } from './ts-protocol.js';
 import { ClientCapability, type ITypeScriptServiceClient } from './typescriptService.js';
 import API from './utils/api.js';
@@ -22,6 +24,24 @@ function mode2ScriptKind(mode: string): ts.server.protocol.ScriptKindName | unde
         case languageModeIds.typescriptreact: return 'TSX';
         case languageModeIds.javascript: return 'JS';
         case languageModeIds.javascriptreact: return 'JSX';
+    }
+    return undefined;
+}
+
+/**
+ * @deprecated Remove in next major.
+ */
+function getModeFromFileUri(uri: string): string | undefined {
+    const extension = extname(uri).toUpperCase();
+    switch (extension) {
+        case '.TS':
+            return languageModeIds.typescript;
+        case '.TSX':
+            return languageModeIds.typescriptreact;
+        case '.JS':
+            return languageModeIds.javascript;
+        case '.JSX':
+            return languageModeIds.javascriptreact;
     }
     return undefined;
 }
@@ -203,6 +223,7 @@ export class LspDocument {
 
 export class LspDocuments {
     private readonly client: ITypeScriptServiceClient;
+    private readonly lspClient: LspClient;
 
     private _validateJavaScript = true;
     private _validateTypeScript = true;
@@ -216,9 +237,11 @@ export class LspDocuments {
 
     constructor(
         client: ITypeScriptServiceClient,
+        lspClient: LspClient,
         onCaseInsensitiveFileSystem: boolean,
     ) {
         this.client = client;
+        this.lspClient = lspClient;
         this.modeIds = new Set<string>(languageModeIds.jsTsLanguageModes);
 
         const pathNormalizer = (path: URI) => this.client.toTsFilePath(path.toString());
@@ -251,7 +274,16 @@ export class LspDocuments {
 
     public openTextDocument(textDocument: lsp.TextDocumentItem): boolean {
         if (!this.modeIds.has(textDocument.languageId)) {
-            return false;
+            const detectedLanguageId = getModeFromFileUri(textDocument.uri);
+            if (detectedLanguageId) {
+                this.lspClient.logMessage({
+                    type: lsp.MessageType.Warning,
+                    message: `Invalid langaugeId "${textDocument.languageId}" provided for uri "${textDocument.uri}". Correcting to "${detectedLanguageId}"`,
+                });
+                textDocument.languageId = detectedLanguageId;
+            } else {
+                return false;
+            }
         }
         const resource = textDocument.uri;
         const filepath = this.client.toTsFilePath(resource);

@@ -350,7 +350,7 @@ export class LspServer {
         }
 
         if (!this.tsClient.openTextDocument(params.textDocument)) {
-            throw new Error(`Cannot open document '${params.textDocument.uri}'.`);
+            throw new Error(`Cannot open document '${params.textDocument.uri}' (languageId: ${params.textDocument.languageId}).`);
         }
     }
 
