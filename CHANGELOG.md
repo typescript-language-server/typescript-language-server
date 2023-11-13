@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.1.1](https://github.com/typescript-language-server/typescript-language-server/compare/v4.1.0...v4.1.1) (2023-11-13)
+
+
+### Bug Fixes
+
+* try to infer languageId from extension when invalid provided ([#799](https://github.com/typescript-language-server/typescript-language-server/issues/799)) ([994186e](https://github.com/typescript-language-server/typescript-language-server/commit/994186e629494545f855d0859f5a058529e64c95))
+
 ## [4.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.0.0...v4.1.0) (2023-11-08)
 
 
