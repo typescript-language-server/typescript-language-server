@@ -127,7 +127,7 @@ export enum ModuleKind {
 export enum ModuleResolutionKind {
     Classic = 'Classic',
     Node = 'Node',
-    Bundler = 'Bundler'
+    // Bundler = 'Bundler'
 }
 
 export enum SemicolonPreference {

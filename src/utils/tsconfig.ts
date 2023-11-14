@@ -20,9 +20,7 @@ export function getInferredProjectCompilerOptions(
 ): ts.server.protocol.ExternalProjectCompilerOptions {
     const projectConfig: ts.server.protocol.ExternalProjectCompilerOptions = {
         module: ModuleKind.ESNext,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore ModuleResolutionKind enum doesn't include "Bundler" value in TS
-        moduleResolution: version.gte(API.v500) ? ModuleResolutionKind.Bundler : ModuleResolutionKind.Node,
+        moduleResolution: ModuleResolutionKind.Node,
         target: ScriptTarget.ES2022,
         jsx: JsxEmit.React,
     };
