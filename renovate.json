@@ -41,6 +41,14 @@
       }
     },
     {
+      "groupName": "size-limit",
+      "matchPackagePatterns": ["^@?size-limit"],
+      "matchFiles": ["package.json"],
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
       "groupName": "TypeScript",
       "matchPackageNames": ["typescript"],
       "matchFiles": ["package.json"],
