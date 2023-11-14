@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.1.2](https://github.com/typescript-language-server/typescript-language-server/compare/v4.1.1...v4.1.2) (2023-11-14)
+
+
+### Bug Fixes
+
+* avoid triggering unhandled exception when tsserver crashes ([#805](https://github.com/typescript-language-server/typescript-language-server/issues/805)) ([d537b08](https://github.com/typescript-language-server/typescript-language-server/commit/d537b08597d3d1b4e5b78e0e39bf0ba22f9a9dd1))
+* revert to `Node` value for `moduleResolution` in implicit config ([#804](https://github.com/typescript-language-server/typescript-language-server/issues/804)) ([97c1794](https://github.com/typescript-language-server/typescript-language-server/commit/97c1794be311a2b327f07801119c76d616802ab5))
+
 ## [4.1.1](https://github.com/typescript-language-server/typescript-language-server/compare/v4.1.0...v4.1.1) (2023-11-13)
 
 
