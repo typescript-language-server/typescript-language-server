@@ -445,10 +445,12 @@ export class TsClient implements ITypeScriptServiceClient {
                     expectsResult: true,
                     ...config,
                 });
-                executions[0]!.finally(() => {
-                    runningServerState.toCancelOnResourceChange.delete(inFlight);
-                    source.dispose();
-                });
+                executions[0]!
+                    .catch(() => {})
+                    .finally(() => {
+                        runningServerState.toCancelOnResourceChange.delete(inFlight);
+                        source.dispose();
+                    });
             }
         }
 
