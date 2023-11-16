@@ -271,15 +271,18 @@ export class LspServer {
                         willRename: {
                             filters: [
                                 {
-                                    scheme: "file",
+                                    scheme: 'file',
                                     pattern: {
-                                        glob: "**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}",
-                                        matches: "file",
+                                        glob: '**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}',
+                                        matches: 'file',
                                     },
                                 },
                                 {
-                                    scheme: "file",
-                                    pattern: { glob: "**", matches: "folder" },
+                                    scheme: 'file',
+                                    pattern: {
+                                        glob: '**',
+                                        matches: 'folder',
+                                    },
                                 },
                             ],
                         },
