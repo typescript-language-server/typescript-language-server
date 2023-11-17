@@ -269,10 +269,22 @@ export class LspServer {
                 workspace: {
                     fileOperations: {
                         willRename: {
-                            filters: [{
-                                scheme: 'file',
-                                pattern: { glob: '**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', matches: 'file' },
-                            }],
+                            filters: [
+                                {
+                                    scheme: 'file',
+                                    pattern: {
+                                        glob: '**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}',
+                                        matches: 'file',
+                                    },
+                                },
+                                {
+                                    scheme: 'file',
+                                    pattern: {
+                                        glob: '**',
+                                        matches: 'folder',
+                                    },
+                                },
+                            ],
                         },
                     },
                 },

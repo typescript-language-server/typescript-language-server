@@ -2385,12 +2385,14 @@ describe('completions without client snippet support', () => {
 });
 
 describe('fileOperations', () => {
-    it('willRenameFiles', async () => {
+    it('willRenameFiles - rename file', async () => {
+        // TODO: This test depends on ensureConfigurationForDocument being executed first (even for a different file).
         const edit = await server.willRenameFiles({
             files: [{ oldUri: uri('module1.ts'), newUri: uri('new_module1_name.ts') }],
         });
         expect(edit.changes).toBeDefined();
         expect(Object.keys(edit.changes!)).toHaveLength(1);
+        // module2 imports from renamed file
         expect(edit.changes![uri('module2.ts')]).toEqual([
             {
                 range: {
@@ -2398,6 +2400,25 @@ describe('fileOperations', () => {
                     end: { line: 0, character: 34 },
                 },
                 newText:'./new_module1_name',
+            },
+        ]);
+    });
+
+    it('willRenameFiles - rename directory', async () => {
+        // TODO: This test depends on ensureConfigurationForDocument being executed (even for a different file).
+        const edit = await server.willRenameFiles({
+            files: [{ oldUri: uri('rename1'), newUri: uri('rename2') }],
+        });
+        expect(edit.changes).toBeDefined();
+        expect(Object.keys(edit.changes!)).toHaveLength(1);
+        // module3 imports from renamed directory
+        expect(edit.changes![uri('module3.ts')]).toEqual([
+            {
+                range: {
+                    start:{ line: 0, character: 31 },
+                    end: { line: 0, character: 44 },
+                },
+                newText:'./rename2/var',
             },
         ]);
     });
