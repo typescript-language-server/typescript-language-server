@@ -102,6 +102,8 @@ Specifies preferences for the internal `tsserver` process. Those options depend 
 
 **displayPartsForJSDoc** [boolean] **Default**: `true`
 
+**excludeLibrarySymbolsInNavTo** [boolean] **Default**: `true`
+
 **generateReturnInDocTemplate** [boolean] **Default**: `true`
 
 **includeInlayParameterNameHints** [string] Supported values: `'none'`, `'literals'`, `'all'`. **Default**: `'none'`

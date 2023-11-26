@@ -30,6 +30,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<ts.server.protocol.UserPreferences>
     disableLineTextInReferences: true,
     disableSuggestions: false,
     displayPartsForJSDoc: true,
+    excludeLibrarySymbolsInNavTo: true,
     generateReturnInDocTemplate: true,
     importModuleSpecifierEnding: 'auto',
     importModuleSpecifierPreference: 'shortest',
