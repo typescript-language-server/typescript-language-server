@@ -8,6 +8,9 @@
   "meteor": {
     "enabled": false
   },
+  "postUpdateOptions": [
+    "yarnDedupeFewer"
+  ],
   "rangeStrategy": "bump",
   "npm": {
     "commitMessageTopic": "{{prettyDepType}} {{depName}}"
