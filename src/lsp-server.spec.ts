@@ -2274,7 +2274,10 @@ describe('inlayHints', () => {
         expect(inlayHints).toBeDefined();
         expect(inlayHints).toHaveLength(1);
         expect(inlayHints![0]).toMatchObject({
-            label: ': number',
+            label: [
+                { value: ': ' },
+                { value: 'number' },
+            ],
             position: { line: 1, character: 29 },
             kind: lsp.InlayHintKind.Type,
             paddingLeft: true,
