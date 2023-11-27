@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.1.3](https://github.com/typescript-language-server/typescript-language-server/compare/v4.1.2...v4.1.3) (2023-11-27)
+
+
+### Bug Fixes
+
+* add folder filter in server capabilities for `willRename` ([#814](https://github.com/typescript-language-server/typescript-language-server/issues/814)) ([fe3d21b](https://github.com/typescript-language-server/typescript-language-server/commit/fe3d21b159dfa0204da7f94aac04459b1bd4ea88))
+* **deps:** update devdependency typescript to ^5.3.2 ([#820](https://github.com/typescript-language-server/typescript-language-server/issues/820)) ([5eeb20c](https://github.com/typescript-language-server/typescript-language-server/commit/5eeb20c78b676c527c3b558bfbaa60e4de1db83f))
+
 ## [4.1.2](https://github.com/typescript-language-server/typescript-language-server/compare/v4.1.1...v4.1.2) (2023-11-14)
 
 
