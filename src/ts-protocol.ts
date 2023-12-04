@@ -375,6 +375,12 @@ interface TsserverOptions {
      */
     path?: string;
     /**
+     * The fallback path to the `tsserver.js` file or the typescript lib directory. For example: `/Users/me/typescript/lib/tsserver.js`.
+     *
+     * This path gets used when `.path` isn't set or valid, and detecting the file from the current active workspace fails.
+     */
+    fallbackPath?: string;
+    /**
      * The verbosity of logging the tsserver communication through the LSP messages.
      * This doesn't affect the file logging.
      * @default 'off'
