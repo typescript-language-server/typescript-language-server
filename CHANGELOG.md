@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.1.3...v4.2.0) (2023-12-09)
+
+
+### Features
+
+* add tsserver.fallbackPath to initialization options ([#831](https://github.com/typescript-language-server/typescript-language-server/issues/831)) ([9253dd8](https://github.com/typescript-language-server/typescript-language-server/commit/9253dd8eb9ba8b0d8dcfb5fbe1533e7609c040d4))
+
+
+### Bug Fixes
+
+* **deps:** update devdependency typescript to ^5.3.3 ([#832](https://github.com/typescript-language-server/typescript-language-server/issues/832)) ([9e1744c](https://github.com/typescript-language-server/typescript-language-server/commit/9e1744c1dea0493ce76b8cce8a55e2d514b9250b))
+
 ## [4.1.3](https://github.com/typescript-language-server/typescript-language-server/compare/v4.1.2...v4.1.3) (2023-11-27)
 
 
