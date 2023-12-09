@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import * as lsp from 'vscode-languageserver';
 import { uri, createServer, TestLspServer, positionAfter, documentFromFile, openDocumentAndWaitForDiagnostics } from '../test-utils.js';
 

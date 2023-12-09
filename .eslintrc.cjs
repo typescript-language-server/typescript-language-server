@@ -126,10 +126,8 @@ module.exports = {
         {
             files: ['**/*.spec.*'],
             extends: [
-                'plugin:jest/recommended',
-                'plugin:jest/style',
+                'plugin:vitest/all',
             ],
-            rules: {},
         },
     ],
 };

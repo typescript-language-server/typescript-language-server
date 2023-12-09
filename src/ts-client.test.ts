@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { TsClient } from './ts-client.js';
 import { ConsoleLogger } from './utils/logger.js';
 import { filePath, readContents, TestLspClient, uri } from './test-utils.js';

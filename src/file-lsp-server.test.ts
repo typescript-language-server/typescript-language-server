@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { uri, createServer, lastPosition, filePath, readContents, positionAfter, openDocumentAndWaitForDiagnostics, TestLspServer } from './test-utils.js';
 
 let server: TestLspServer;

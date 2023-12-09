@@ -9,6 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { describe, it, expect } from 'vitest';
 import { URI } from 'vscode-uri';
 import type { ts } from '../ts-protocol.js';
 import { IFilePathToResourceConverter, markdownDocumentation, plainWithLinks, tagsMarkdownPreview } from './previewer.js';
