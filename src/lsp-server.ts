@@ -107,7 +107,7 @@ export class LspServer {
             pluginProbeLocations.push(plugin.location);
         }
 
-        const typescriptVersion = this.findTypescriptVersion(tsserver?.path);
+        const typescriptVersion = this.findTypescriptVersion(tsserver?.path, tsserver?.fallbackPath);
         if (typescriptVersion) {
             this.options.lspClient.logMessage({ type: lsp.MessageType.Info, message: `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"` });
         } else {
@@ -315,7 +315,7 @@ export class LspServer {
         });
     }
 
-    private findTypescriptVersion(userTsserverPath: string | undefined): TypeScriptVersion | null {
+    private findTypescriptVersion(userTsserverPath: string | undefined, fallbackTsserverPath: string | undefined): TypeScriptVersion | null {
         const typescriptVersionProvider = new TypeScriptVersionProvider(userTsserverPath, this.logger);
         // User-provided tsserver path.
         const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
@@ -332,6 +332,16 @@ export class LspServer {
                 return workspaceVersion;
             }
         }
+
+        const fallbackVersionProvider = new TypeScriptVersionProvider(fallbackTsserverPath, this.logger);
+        const fallbackSettingVersion = fallbackVersionProvider.getUserSettingVersion();
+        if (fallbackSettingVersion) {
+            if (fallbackSettingVersion.isValid) {
+                return fallbackSettingVersion;
+            }
+            this.logger.logIgnoringVerbosity(LogLevel.Warning, `Typescript specified through fallback setting ignored due to invalid path "${fallbackSettingVersion.path}"`);
+        }
+
         // Bundled version
         const bundledVersion = typescriptVersionProvider.bundledVersion();
         if (bundledVersion?.isValid) {
