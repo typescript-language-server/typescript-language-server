@@ -28,7 +28,7 @@ The language server accepts various settings through the `initializationOptions`
 
 Accepts a list of `tsserver` (typescript) plugins.
 The `name` and the `location` are required. The `location` is a path to the package or a directory in which `tsserver` will try to import the plugin `name` using Node's `require` API.
-The `languages` property specifying which extra language IDs the language server should accept. This is required if plugin enables support for language IDs that this server does not support by default (so other than `typescript`, `typescriptreact`, `javascript`, `javascriptreact`). It's an optional property and only affects which file types the language server allows to be opened and not the `tsserver` itself.
+The `languages` property specifies which extra language IDs the language server should accept. This is required when plugin enables support for language IDs that this server does not support by default (so other than `typescript`, `typescriptreact`, `javascript`, `javascriptreact`). It's an optional property and only affects which file types the language server allows to be opened and do not concern the `tsserver` itself.
 
 ### `tsserver` options
 
