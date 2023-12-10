@@ -228,7 +228,7 @@ export class LspDocuments {
     private _validateJavaScript = true;
     private _validateTypeScript = true;
 
-    private readonly modeIds: Set<string>;
+    private modeIds: Set<string> = new Set();
     private readonly _files: string[] = [];
     private readonly documents = new Map<string, LspDocument>();
     private readonly pendingDiagnostics: PendingDiagnostics;
@@ -242,11 +242,14 @@ export class LspDocuments {
     ) {
         this.client = client;
         this.lspClient = lspClient;
-        this.modeIds = new Set<string>(languageModeIds.jsTsLanguageModes);
 
         const pathNormalizer = (path: URI) => this.client.toTsFilePath(path.toString());
         this.pendingDiagnostics = new PendingDiagnostics(pathNormalizer, { onCaseInsensitiveFileSystem });
         this.diagnosticDelayer = new Delayer<any>(300);
+    }
+
+    public initialize(allModeIds: readonly string[]): void {
+        this.modeIds = new Set<string>(allModeIds);
     }
 
     /**

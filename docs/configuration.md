@@ -20,9 +20,15 @@ The language server accepts various settings through the `initializationOptions`
 | maxTsServerMemory | number   | The maximum size of the V8's old memory section in megabytes (for example `4096` means 4GB). The default value is dynamically configured by Node so can differ per system. Increase for very big projects that exceed allowed memory usage. **Default**: `undefined` |
 | npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
 | locale            | string   | The locale to use to show error messages. |
-| plugins           | object[] | An array of `{ name: string, location: string }` objects for registering a Typescript plugins. **Default**: [] |
+| plugins           | object[] | An array of `{ name: string, location: string, languages?: string[] }` objects for registering a Typescript plugins. **Default**: [] |
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more |
 | tsserver          | object   | Options related to the `tsserver` process. See below for more |
+
+### `plugins` option
+
+Accepts a list of `tsserver` (typescript) plugins.
+The `name` and the `location` are required. The `location` is a path to the package or a directory in which `tsserver` will try to import the plugin `name` using Node's `require` API.
+The `languages` property specifying which extra language IDs the language server should accept. This is required if plugin enables support for language IDs that this server does not support by default (so other than `typescript`, `typescriptreact`, `javascript`, `javascriptreact`). It's an optional property and only affects which file types the language server allows to be opened and not the `tsserver` itself.
 
 ### `tsserver` options
 

@@ -337,6 +337,7 @@ export interface SupportedFeatures {
 
 export interface TypeScriptPlugin {
     name: string;
+    languages?: ReadonlyArray<string>;
     location: string;
 }
 
@@ -347,7 +348,7 @@ export interface TypeScriptInitializationOptions {
     locale?: string;
     maxTsServerMemory?: number;
     npmLocation?: string;
-    plugins: TypeScriptPlugin[];
+    plugins?: TypeScriptPlugin[];
     preferences?: ts.server.protocol.UserPreferences;
     tsserver?: TsserverOptions;
 }

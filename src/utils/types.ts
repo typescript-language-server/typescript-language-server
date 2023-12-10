@@ -3,7 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import type { URI } from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
+
+export type WorkspaceFolder = {
+    uri: URI;
+};
 
 export class CodeActionKind {
     private static readonly sep = '.';

@@ -15,6 +15,7 @@ import { type DocumentUri } from 'vscode-languageserver-textdocument';
 import type { LspDocument } from './document.js';
 import { CommandTypes } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
+import { PluginManager } from './tsServer/plugins.js';
 import { ExecutionTarget } from './tsServer/server.js';
 import API from './utils/api.js';
 
@@ -111,7 +112,7 @@ export interface ITypeScriptServiceClient {
 
     readonly apiVersion: API;
 
-    // readonly pluginManager: PluginManager;
+    readonly pluginManager: PluginManager;
     // readonly configuration: TypeScriptServiceConfiguration;
     // readonly bufferSyncSupport: BufferSyncSupport;
     // readonly telemetryReporter: TelemetryReporter;

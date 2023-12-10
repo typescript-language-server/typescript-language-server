@@ -40,6 +40,7 @@ describe('ts server client', () => {
             {
                 logDirectoryProvider: noopLogDirectoryProvider,
                 logVerbosity: TsServerLogLevel.Off,
+                plugins: [],
                 trace: Trace.Off,
                 typescriptVersion: bundled!,
                 useSyntaxServer: SyntaxServerConfiguration.Never,
