@@ -124,12 +124,17 @@ module.exports = {
             },
         },
         {
-            files: ['**/*.spec.*'],
+            files: ['**/*.test.*'],
             extends: [
-                'plugin:jest/recommended',
-                'plugin:jest/style',
+                'plugin:vitest/all',
             ],
-            rules: {},
+            rules: {
+                'vitest/max-expects': 'off',
+                'vitest/no-conditional-in-test': 'off',
+                'vitest/no-conditional-tests': 'off',
+                'vitest/no-hooks': 'off',
+                'vitest/require-top-level-describe': 'off',
+            },
         },
     ],
 };

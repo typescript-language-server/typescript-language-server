@@ -1,7 +1,6 @@
 {
     "include": [
         "src/**/*.ts",
-        "jest.config.ts",
         "rollup.config.ts",
     ],
     "compilerOptions": {

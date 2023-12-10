@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { TsClient } from './ts-client.js';
 import { ConsoleLogger } from './utils/logger.js';
 import { filePath, readContents, TestLspClient, uri } from './test-utils.js';
@@ -23,18 +24,12 @@ const lspClientOptions = {
 const lspClient = new TestLspClient(lspClientOptions, logger);
 const typescriptVersionProvider = new TypeScriptVersionProvider(undefined, logger);
 const bundled = typescriptVersionProvider.bundledVersion();
-let server: TsClient;
-
-beforeAll(() => {
-    server = new TsClient(onCaseInsensitiveFileSystem(), logger, lspClient);
-});
-
-afterAll(() => {
-    server.shutdown();
-});
 
 describe('ts server client', () => {
+    let server: TsClient;
+
     beforeAll(() => {
+        server = new TsClient(onCaseInsensitiveFileSystem(), logger, lspClient);
         server.start(
             undefined,
             {
@@ -45,6 +40,10 @@ describe('ts server client', () => {
                 useSyntaxServer: SyntaxServerConfiguration.Never,
             },
         );
+    });
+
+    afterAll(() => {
+        server.shutdown();
     });
 
     it('completion', async () => {
@@ -59,6 +58,7 @@ describe('ts server client', () => {
             offset: 0,
             prefix: 'im',
         });
+        expect(response.type).toBe('response');
         if (response.type !== 'response') {
             throw Error('Not a response');
         }
@@ -77,6 +77,7 @@ describe('ts server client', () => {
             line: 8,
             offset: 16,
         });
+        expect(response.type).toBe('response');
         if (response.type !== 'response') {
             throw Error('Not a response');
         }
@@ -103,6 +104,7 @@ describe('ts server client', () => {
                 length: 1000,
             },
         );
+        expect(response.type).toBe('response');
         if (response.type !== 'response') {
             throw Error('Not a response');
         }
@@ -122,6 +124,7 @@ describe('ts server client', () => {
             offset: 16,
             filesToSearch: [f],
         });
+        expect(response.type).toBe('response');
         if (response.type !== 'response') {
             throw Error('Not a response');
         }
