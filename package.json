@@ -19,14 +19,13 @@
     "typescript-language-server": "./lib/cli.mjs"
   },
   "scripts": {
+    "dev": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript --watch",
+    "build": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript",
     "clean": "rimraf lib *.tsbuildinfo",
     "test": "cross-env CONSOLE_LOG_LEVEL=warning vitest",
     "test:commit": "cross-env CONSOLE_LOG_LEVEL=warning vitest run",
     "lint": "eslint --ext \".js,.ts\" src",
     "fix": "eslint --ext \".js,.ts\" --fix src",
-    "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
-    "compile": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript",
-    "watch": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript --watch",
     "size": "yarn build && yarn size-limit",
     "postversion": "git push --follow-tags",
     "prepare": "cd test-data/jsx && yarn"
@@ -36,7 +35,7 @@
   ],
   "husky": {
     "hooks": {
-      "pre-commit": "yarn lint && yarn test:commit && yarn build",
+      "pre-commit": "concurrently -n build,lint,test \"yarn build\" \"yarn lint\" \"yarn test:commit\"",
       "post-merge": "yarn"
     }
   },
