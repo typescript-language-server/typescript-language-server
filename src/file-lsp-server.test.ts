@@ -5,27 +5,28 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { uri, createServer, lastPosition, filePath, readContents, positionAfter, openDocumentAndWaitForDiagnostics, TestLspServer } from './test-utils.js';
 
 let server: TestLspServer;
 
-beforeAll(async () => {
-    server = await createServer({
-        rootUri: uri(),
-        publishDiagnostics: () => { },
-    });
-});
-
-beforeEach(() => {
-    server.closeAllForTesting();
-});
-
-afterAll(() => {
-    server.closeAllForTesting();
-    server.shutdown();
-});
-
 describe('documentHighlight', () => {
+    beforeAll(async () => {
+        server = await createServer({
+            rootUri: uri(),
+            publishDiagnostics: () => { },
+        });
+    });
+
+    beforeEach(() => {
+        server.closeAllForTesting();
+    });
+
+    afterAll(() => {
+        server.closeAllForTesting();
+        server.shutdown();
+    });
+
     it('simple test', async () => {
         const doc = {
             uri: uri('module2.ts'),
@@ -43,6 +44,22 @@ describe('documentHighlight', () => {
 });
 
 describe('completions', () => {
+    beforeAll(async () => {
+        server = await createServer({
+            rootUri: uri(),
+            publishDiagnostics: () => { },
+        });
+    });
+
+    beforeEach(() => {
+        server.closeAllForTesting();
+    });
+
+    afterAll(() => {
+        server.closeAllForTesting();
+        server.shutdown();
+    });
+
     it('receives completion that auto-imports from another module', async () => {
         const doc = {
             uri: uri('completion.ts'),

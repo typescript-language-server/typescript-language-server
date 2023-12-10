@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -91,7 +92,7 @@ describe('completion', () => {
                 (current.kind !== lsp.CompletionItemKind.Function && current.kind !== lsp.CompletionItemKind.Method);
         }, false);
 
-        expect(containsInvalidCompletions).toBe(false);
+        expect(containsInvalidCompletions).toBeFalsy();
     });
 
     it('deprecated by JSDoc', async () => {
@@ -277,7 +278,7 @@ describe('completion', () => {
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
         expect(completion).toBeDefined();
-        expect(completion).toEqual(expect.objectContaining({
+        expect(completion).toStrictEqual(expect.objectContaining({
             label: 'readFile',
             kind: lsp.CompletionItemKind.Function,
             insertTextFormat: lsp.InsertTextFormat.Snippet,
@@ -838,10 +839,10 @@ describe('diagnostics', () => {
         expect(fileDiagnostics).toHaveLength(2);
         const unusedDiagnostic = fileDiagnostics.find(d => d.code === 6133);
         expect(unusedDiagnostic).toBeDefined();
-        expect(unusedDiagnostic!.tags).toEqual([lsp.DiagnosticTag.Unnecessary]);
+        expect(unusedDiagnostic!.tags).toStrictEqual([lsp.DiagnosticTag.Unnecessary]);
         const deprecatedDiagnostic = fileDiagnostics.find(d => d.code === 6387);
         expect(deprecatedDiagnostic).toBeDefined();
-        expect(deprecatedDiagnostic!.tags).toEqual([lsp.DiagnosticTag.Deprecated]);
+        expect(deprecatedDiagnostic!.tags).toStrictEqual([lsp.DiagnosticTag.Deprecated]);
     });
 
     it('multiple files test', async () => {
@@ -1482,7 +1483,7 @@ describe('code actions', () => {
             },
         }))!;
 
-        expect(result).toEqual([]);
+        expect(result).toStrictEqual([]);
     });
 
     it('provides organize imports when there are no errors', async () => {
@@ -2396,7 +2397,7 @@ describe('fileOperations', () => {
         expect(edit.changes).toBeDefined();
         expect(Object.keys(edit.changes!)).toHaveLength(1);
         // module2 imports from renamed file
-        expect(edit.changes![uri('module2.ts')]).toEqual([
+        expect(edit.changes![uri('module2.ts')]).toStrictEqual([
             {
                 range: {
                     start:{ line: 0, character: 25 },
@@ -2415,7 +2416,7 @@ describe('fileOperations', () => {
         expect(edit.changes).toBeDefined();
         expect(Object.keys(edit.changes!)).toHaveLength(1);
         // module3 imports from renamed directory
-        expect(edit.changes![uri('module3.ts')]).toEqual([
+        expect(edit.changes![uri('module3.ts')]).toStrictEqual([
             {
                 range: {
                     start:{ line: 0, character: 31 },
