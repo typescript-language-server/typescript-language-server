@@ -124,10 +124,17 @@ module.exports = {
             },
         },
         {
-            files: ['**/*.spec.*'],
+            files: ['**/*.test.*'],
             extends: [
                 'plugin:vitest/all',
             ],
+            rules: {
+                'vitest/max-expects': 'off',
+                'vitest/no-conditional-in-test': 'off',
+                'vitest/no-conditional-tests': 'off',
+                'vitest/no-hooks': 'off',
+                'vitest/require-top-level-describe': 'off',
+            },
         },
     ],
 };

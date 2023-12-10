@@ -10,23 +10,23 @@ import { uri, createServer, lastPosition, filePath, readContents, positionAfter,
 
 let server: TestLspServer;
 
-beforeAll(async () => {
-    server = await createServer({
-        rootUri: uri(),
-        publishDiagnostics: () => { },
-    });
-});
-
-beforeEach(() => {
-    server.closeAllForTesting();
-});
-
-afterAll(() => {
-    server.closeAllForTesting();
-    server.shutdown();
-});
-
 describe('documentHighlight', () => {
+    beforeAll(async () => {
+        server = await createServer({
+            rootUri: uri(),
+            publishDiagnostics: () => { },
+        });
+    });
+
+    beforeEach(() => {
+        server.closeAllForTesting();
+    });
+
+    afterAll(() => {
+        server.closeAllForTesting();
+        server.shutdown();
+    });
+
     it('simple test', async () => {
         const doc = {
             uri: uri('module2.ts'),
@@ -44,6 +44,22 @@ describe('documentHighlight', () => {
 });
 
 describe('completions', () => {
+    beforeAll(async () => {
+        server = await createServer({
+            rootUri: uri(),
+            publishDiagnostics: () => { },
+        });
+    });
+
+    beforeEach(() => {
+        server.closeAllForTesting();
+    });
+
+    afterAll(() => {
+        server.closeAllForTesting();
+        server.shutdown();
+    });
+
     it('receives completion that auto-imports from another module', async () => {
         const doc = {
             uri: uri('completion.ts'),

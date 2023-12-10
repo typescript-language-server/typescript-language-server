@@ -48,25 +48,25 @@ function callsToString(item: CallHierarchyItemWithChildren, indentLevel: number,
     }
 }
 
-beforeAll(async () => {
-    server = await createServer({
-        rootUri: uri(),
-        publishDiagnostics: args => diagnostics.set(args.uri, args),
-    });
-});
-
-beforeEach(() => {
-    server.closeAllForTesting();
-    // "closeAllForTesting" triggers final publishDiagnostics with an empty list so clear last.
-    diagnostics.clear();
-});
-
-afterAll(() => {
-    server.closeAllForTesting();
-    server.shutdown();
-});
-
 describe('call hierarchy', () => {
+    beforeAll(async () => {
+        server = await createServer({
+            rootUri: uri(),
+            publishDiagnostics: args => diagnostics.set(args.uri, args),
+        });
+    });
+
+    beforeEach(() => {
+        server.closeAllForTesting();
+        // "closeAllForTesting" triggers final publishDiagnostics with an empty list so clear last.
+        diagnostics.clear();
+    });
+
+    afterAll(() => {
+        server.closeAllForTesting();
+        server.shutdown();
+    });
+
     const oneDoc = documentFromFile({ path: 'call-hierarchy/one.ts' });
     const twoDoc = documentFromFile({ path: 'call-hierarchy/two.ts' });
     const threeDoc = documentFromFile({ path: 'call-hierarchy/three.ts' });
@@ -91,7 +91,7 @@ describe('call hierarchy', () => {
             const incomingCalls = await getIncomingCalls(server, item);
             callsToString(incomingCalls, 0, lines);
         }
-        expect(lines.join('\n')).toEqual(`
+        expect(lines.join('\n')).toStrictEqual(`
 -|> tada (symbol: three.ts#2)
   -|> callThreeTwice (symbol: two.ts#3)
     -|> main (symbol: one.ts#2)
@@ -113,7 +113,7 @@ describe('call hierarchy', () => {
             const outgoingCalls = await getOutgoingCalls(server, item);
             callsToString(outgoingCalls, 0, lines);
         }
-        expect(lines.join('\n')).toEqual(`
+        expect(lines.join('\n')).toStrictEqual(`
 -|> callThreeTwice (symbol: two.ts#3)
   -|> tada (symbol: three.ts#2)
     -|> print (symbol: three.ts#6)
