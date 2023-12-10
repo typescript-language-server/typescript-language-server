@@ -31,8 +31,8 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
     - [TypeScript Version Notification](#typescript-version-notification)
 - [Development](#development)
     - [Build](#build)
+    - [Dev](#dev)
     - [Test](#test)
-    - [Watch](#watch)
     - [Publishing](#publishing)
 
 <!-- /MarkdownTOC -->
@@ -277,21 +277,23 @@ The `$/typescriptVersion` notification params include two properties:
 ### Build
 
 ```sh
-yarn
+yarn build
+```
+
+### Dev
+
+Build and rebuild on change.
+
+```sh
+yarn dev
 ```
 
 ### Test
 
- - `yarn test` - run all tests
- - `yarn test:watch` - run all tests and enable watch mode for developing
+ - `yarn test` - run all tests in watch mode for developing
+ - `yarn test:commit` - run all tests once
 
 By default only console logs of level `warning` and higher are printed to the console. You can override the `CONSOLE_LOG_LEVEL` level in `package.json` to either `log`, `info`, `warning` or `error` to log other levels.
-
-### Watch
-
-```sh
-yarn watch
-```
 
 ### Publishing
 
