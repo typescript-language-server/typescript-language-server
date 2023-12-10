@@ -20,8 +20,8 @@
   },
   "scripts": {
     "clean": "rimraf lib *.tsbuildinfo",
-    "test": "CONSOLE_LOG_LEVEL=warning vitest",
-    "test:commit": "CONSOLE_LOG_LEVEL=warning vitest run",
+    "test": "cross-env CONSOLE_LOG_LEVEL=warning vitest",
+    "test:commit": "cross-env CONSOLE_LOG_LEVEL=warning vitest run",
     "lint": "eslint --ext \".js,.ts\" src",
     "fix": "eslint --ext \".js,.ts\" --fix src",
     "build": "concurrently -n compile,lint -c blue,green \"yarn compile\" \"yarn lint\"",
@@ -54,6 +54,7 @@
     "@typescript-eslint/parser": "^6.13.2",
     "commander": "^11.1.0",
     "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
     "deepmerge": "^4.3.1",
     "eslint": "^8.55.0",
     "eslint-plugin-vitest": "^0.3.13",
