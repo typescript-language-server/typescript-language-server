@@ -17,10 +17,12 @@ import { type DocumentUri } from 'vscode-languageserver-textdocument';
 import { type CancellationToken, CancellationTokenSource } from 'vscode-jsonrpc';
 import { type LspDocument, LspDocuments } from './document.js';
 import * as fileSchemes from './configuration/fileSchemes.js';
+import * as languageModeIds from './configuration/languageIds.js';
 import { CommandTypes, EventName } from './ts-protocol.js';
-import type { ts } from './ts-protocol.js';
+import type { TypeScriptPlugin, ts } from './ts-protocol.js';
 import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { AsyncTsServerRequests, ClientCapabilities, ClientCapability, ExecConfig, NoResponseTsServerRequests, ITypeScriptServiceClient, ServerResponse, StandardTsServerRequests, TypeScriptRequestTypes } from './typescriptService.js';
+import { PluginManager } from './tsServer/plugins.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
 import { TypeScriptServerError } from './tsServer/serverError.js';
 import { TypeScriptServerSpawner } from './tsServer/spawner.js';
@@ -30,6 +32,7 @@ import type { LspClient } from './lsp-client.js';
 import API from './utils/api.js';
 import { SyntaxServerConfiguration, TsServerLogLevel } from './utils/configuration.js';
 import { Logger, PrefixingLogger } from './utils/logger.js';
+import type { WorkspaceFolder } from './utils/types.js';
 
 interface ToCancelOnResourceChanged {
     readonly resource: string;
@@ -131,10 +134,6 @@ class ServerInitializingIndicator {
     }
 }
 
-type WorkspaceFolder = {
-    uri: URI;
-};
-
 export interface TsClientOptions {
     trace: Trace;
     typescriptVersion: TypeScriptVersion;
@@ -144,8 +143,7 @@ export interface TsClientOptions {
     maxTsServerMemory?: number;
     npmLocation?: string;
     locale?: string;
-    globalPlugins?: string[];
-    pluginProbeLocations?: string[];
+    plugins: TypeScriptPlugin[];
     onEvent?: (event: ts.server.protocol.Event) => void;
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
     useSyntaxServer: SyntaxServerConfiguration;
@@ -154,6 +152,7 @@ export interface TsClientOptions {
 export class TsClient implements ITypeScriptServiceClient {
     public apiVersion: API = API.defaultVersion;
     public typescriptVersionSource: TypeScriptVersionSource = TypeScriptVersionSource.Bundled;
+    public readonly pluginManager: PluginManager;
     private serverState: ServerState.State = ServerState.None;
     private readonly lspClient: LspClient;
     private readonly logger: Logger;
@@ -171,6 +170,7 @@ export class TsClient implements ITypeScriptServiceClient {
         logger: Logger,
         lspClient: LspClient,
     ) {
+        this.pluginManager = new PluginManager();
         this.documents = new LspDocuments(this, lspClient, onCaseInsensitiveFileSystem);
         this.logger = new PrefixingLogger(logger, '[tsclient]');
         this.tsserverLogger = new PrefixingLogger(this.logger, '[tsserver]');
@@ -312,6 +312,12 @@ export class TsClient implements ITypeScriptServiceClient {
         }
     }
 
+    public configurePlugin(pluginName: string, configuration: unknown): void {
+        if (this.apiVersion.gte(API.v314)) {
+            this.executeWithoutWaitingForResponse(CommandTypes.ConfigurePlugin, { pluginName, configuration });
+        }
+    }
+
     start(
         workspaceRoot: string | undefined,
         options: TsClientOptions,
@@ -323,9 +329,15 @@ export class TsClient implements ITypeScriptServiceClient {
         this.useSyntaxServer = options.useSyntaxServer;
         this.onEvent = options.onEvent;
         this.onExit = options.onExit;
+        this.pluginManager.setPlugins(options.plugins);
+        const modeIds: string[] = [
+            ...languageModeIds.jsTsLanguageModes,
+            ...this.pluginManager.plugins.flatMap(x => x.languages),
+        ];
+        this.documents.initialize(modeIds);
 
         const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, options.logDirectoryProvider, this.logger, this.tracer);
-        const tsServer = tsServerSpawner.spawn(options.typescriptVersion, this.capabilities, options, {
+        const tsServer = tsServerSpawner.spawn(options.typescriptVersion, this.capabilities, options, this.pluginManager, {
             onFatalError: (command, err) => this.fatalError(command, err),
         });
         this.serverState = new ServerState.Running(tsServer, this.apiVersion, undefined, true);

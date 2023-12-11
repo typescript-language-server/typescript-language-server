@@ -95,17 +95,7 @@ export class LspServer {
         this.workspaceRoot = this.initializeParams.rootUri ? URI.parse(this.initializeParams.rootUri).fsPath : this.initializeParams.rootPath || undefined;
 
         const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
-        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale, tsserver } = userInitializationOptions;
-        const { plugins }: TypeScriptInitializationOptions = {
-            plugins: userInitializationOptions.plugins || [],
-        };
-
-        const globalPlugins: string[] = [];
-        const pluginProbeLocations: string[] = [];
-        for (const plugin of plugins) {
-            globalPlugins.push(plugin.name);
-            pluginProbeLocations.push(plugin.location);
-        }
+        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale, plugins, tsserver } = userInitializationOptions;
 
         const typescriptVersion = this.findTypescriptVersion(tsserver?.path, tsserver?.fallbackPath);
         if (typescriptVersion) {
@@ -158,8 +148,7 @@ export class LspServer {
                 maxTsServerMemory,
                 npmLocation,
                 locale,
-                globalPlugins,
-                pluginProbeLocations,
+                plugins: plugins || [],
                 onEvent: this.onTsEvent.bind(this),
                 onExit: (exitCode, signal) => {
                     this.shutdown();
@@ -886,16 +875,7 @@ export class LspServer {
             }
         } else if (params.command === Commands.CONFIGURE_PLUGIN && params.arguments) {
             const [pluginName, configuration] = params.arguments as [string, unknown];
-
-            if (this.tsClient.apiVersion.gte(API.v314)) {
-                this.tsClient.executeWithoutWaitingForResponse(
-                    CommandTypes.ConfigurePlugin,
-                    {
-                        configuration,
-                        pluginName,
-                    },
-                );
-            }
+            this.tsClient.configurePlugin(pluginName, configuration);
         } else if (params.command === Commands.ORGANIZE_IMPORTS && params.arguments) {
             const file = params.arguments[0] as string;
             const uri = this.tsClient.toResource(file).toString();

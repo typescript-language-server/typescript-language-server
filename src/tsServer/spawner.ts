@@ -16,6 +16,7 @@ import { Logger, LogLevel } from '../utils/logger.js';
 import type { TsClientOptions } from '../ts-client.js';
 import { nodeRequestCancellerFactory } from './cancellation.js';
 import type { ILogDirectoryProvider } from './logDirectoryProvider.js';
+import type { PluginManager } from './plugins.js';
 import { ITypeScriptServer, SingleTsServer, SyntaxRoutingTsServer, TsServerDelegate, TsServerProcessKind } from './server.js';
 import { NodeTsServerProcessFactory } from './serverProcess.js';
 import type Tracer from './tracer.js';
@@ -48,6 +49,7 @@ export class TypeScriptServerSpawner {
         version: TypeScriptVersion,
         capabilities: ClientCapabilities,
         configuration: TsClientOptions,
+        pluginManager: PluginManager,
         delegate: TsServerDelegate,
     ): ITypeScriptServer {
         let primaryServer: ITypeScriptServer;
@@ -59,19 +61,19 @@ export class TypeScriptServerSpawner {
             {
                 const enableDynamicRouting = serverType === CompositeServerType.DynamicSeparateSyntax;
                 primaryServer = new SyntaxRoutingTsServer({
-                    syntax: this.spawnTsServer(TsServerProcessKind.Syntax, version, configuration),
-                    semantic: this.spawnTsServer(TsServerProcessKind.Semantic, version, configuration),
+                    syntax: this.spawnTsServer(TsServerProcessKind.Syntax, version, configuration, pluginManager),
+                    semantic: this.spawnTsServer(TsServerProcessKind.Semantic, version, configuration, pluginManager),
                 }, delegate, enableDynamicRouting);
                 break;
             }
             case CompositeServerType.Single:
             {
-                primaryServer = this.spawnTsServer(TsServerProcessKind.Main, version, configuration);
+                primaryServer = this.spawnTsServer(TsServerProcessKind.Main, version, configuration, pluginManager);
                 break;
             }
             case CompositeServerType.SyntaxOnly:
             {
-                primaryServer = this.spawnTsServer(TsServerProcessKind.Syntax, version, configuration);
+                primaryServer = this.spawnTsServer(TsServerProcessKind.Syntax, version, configuration, pluginManager);
                 break;
             }
         }
@@ -109,10 +111,11 @@ export class TypeScriptServerSpawner {
         kind: TsServerProcessKind,
         version: TypeScriptVersion,
         configuration: TsClientOptions,
+        pluginManager: PluginManager,
     ): ITypeScriptServer {
         const processFactory = new NodeTsServerProcessFactory();
         const canceller = nodeRequestCancellerFactory.create(kind, this._tracer);
-        const { args, tsServerLogFile } = this.getTsServerArgs(kind, configuration, this._apiVersion, canceller.cancellationPipeName);
+        const { args, tsServerLogFile } = this.getTsServerArgs(kind, configuration, this._apiVersion, pluginManager, canceller.cancellationPipeName);
 
         if (this.isLoggingEnabled(configuration)) {
             if (tsServerLogFile) {
@@ -152,6 +155,7 @@ export class TypeScriptServerSpawner {
         configuration: TsClientOptions,
         // currentVersion: TypeScriptVersion,
         apiVersion: API,
+        pluginManager: PluginManager,
         cancellationPipeName: string | undefined,
     ): { args: string[]; tsServerLogFile: string | undefined; tsServerTraceDirectory: string | undefined; } {
         const args: string[] = [];
@@ -168,7 +172,7 @@ export class TypeScriptServerSpawner {
 
         args.push('--useInferredProjectPerProjectRoot');
 
-        const { disableAutomaticTypingAcquisition, globalPlugins, locale, npmLocation, pluginProbeLocations } = configuration;
+        const { disableAutomaticTypingAcquisition, locale, npmLocation } = configuration;
 
         if (disableAutomaticTypingAcquisition || kind === TsServerProcessKind.Syntax || kind === TsServerProcessKind.Diagnostics) {
             args.push('--disableAutomaticTypingAcquisition');
@@ -197,26 +201,19 @@ export class TypeScriptServerSpawner {
         //         args.push('--traceDirectory', tsServerTraceDirectory);
         //     }
         // }
-        // const pluginPaths = this._pluginPathsProvider.getPluginPaths();
-        // if (pluginManager.plugins.length) {
-        //     args.push('--globalPlugins', pluginManager.plugins.map(x => x.name).join(','));
-        //     const isUsingBundledTypeScriptVersion = currentVersion.path === this._versionProvider.defaultVersion.path;
-        //     for (const plugin of pluginManager.plugins) {
-        //         if (isUsingBundledTypeScriptVersion || plugin.enableForWorkspaceTypeScriptVersions) {
-        //             pluginPaths.push(isWeb() ? plugin.uri.toString() : plugin.uri.fsPath);
-        //         }
-        //     }
-        // }
-        // if (pluginPaths.length !== 0) {
-        //     args.push('--pluginProbeLocations', pluginPaths.join(','));
-        // }
 
-        if (globalPlugins?.length) {
-            args.push('--globalPlugins', globalPlugins.join(','));
+        const pluginPaths: string[] = [];
+
+        if (pluginManager.plugins.length) {
+            args.push('--globalPlugins', pluginManager.plugins.map(x => x.name).join(','));
+
+            for (const plugin of pluginManager.plugins) {
+                pluginPaths.push(plugin.uri.fsPath);
+            }
         }
 
-        if (pluginProbeLocations?.length) {
-            args.push('--pluginProbeLocations', pluginProbeLocations.join(','));
+        if (pluginPaths.length !== 0) {
+            args.push('--pluginProbeLocations', pluginPaths.join(','));
         }
 
         if (npmLocation) {
