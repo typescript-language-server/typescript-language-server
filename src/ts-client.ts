@@ -360,9 +360,6 @@ export class TsClient implements ITypeScriptServiceClient {
             this.serviceExited();
         });
         tsServer.onEvent(event => this.dispatchEvent(event));
-        if (this.apiVersion.gte(API.v300) && this.capabilities.has(ClientCapability.Semantic)) {
-            this.loadingIndicator.startedLoadingProject('');
-        }
         return true;
     }
 
