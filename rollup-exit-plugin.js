@@ -1,3 +1,5 @@
+import whyIsNodeRunning from 'why-is-node-running';
+
 let runningBundles = 0;
 
 /**
@@ -28,7 +30,8 @@ export const rollupForceExit = (name, maxWaitTime = 60) => {
                     this.info(
                         `${name}: Rollup is now done, but did not exit before ${maxWaitTime} seconds, force exiting...`,
                     );
-                    process.exit(0);
+                    whyIsNodeRunning();
+                    setTimeout(() => process.exit(0));
                 } else {
                     this.info(
                         `${name}: Rollup is still working on another build process, waiting for ${runningBundles} running bundle(s) before force exit`,
