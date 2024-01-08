@@ -27,6 +27,6 @@ export default defineConfig({
         commonJS(),
         resolve(),
         typescript(),
-        rollupForceExit('rollup-build2', 5),
+        rollupForceExit('rollup-build', 5),
     ],
 });
