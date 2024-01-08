@@ -3,6 +3,7 @@ import terser from '@rollup/plugin-terser';
 import resolve from '@rollup/plugin-node-resolve';
 import commonJS from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
+import { rollupForceExit } from './rollup-exit-plugin.js';
 
 export default defineConfig({
     input: 'src/cli.ts',
@@ -26,5 +27,6 @@ export default defineConfig({
         commonJS(),
         resolve(),
         typescript(),
+        rollupForceExit('rollup-build', 5),
     ],
 });
