@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.3.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.2.0...v4.3.0) (2024-01-08)
+
+
+### Features
+
+* support specifying language IDs in plugins ([#834](https://github.com/typescript-language-server/typescript-language-server/issues/834)) ([e9c0b11](https://github.com/typescript-language-server/typescript-language-server/commit/e9c0b117a9a5e273eb517dc0d337ecdf973f3dac))
+
+
+### Bug Fixes
+
+* avoid sending window/workDoneProgress/create before init ([#846](https://github.com/typescript-language-server/typescript-language-server/issues/846)) ([625048f](https://github.com/typescript-language-server/typescript-language-server/commit/625048fac8533bccdeda82ee140d4f7792d9fb04))
+
 ## [4.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.1.3...v4.2.0) (2023-12-09)
 
 
