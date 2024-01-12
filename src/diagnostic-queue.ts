@@ -50,8 +50,8 @@ class FileDiagnostics {
     }
 
     public onDidClose(): void {
-        this.publishDiagnostics();
         this.diagnosticsPerKind.clear();
+        this.publishDiagnostics();
         this.closed = true;
     }
 
@@ -106,6 +106,7 @@ export class DiagnosticEventQueue {
         const uri = this.client.toResource(file).toString();
         const diagnosticsForFile = this.diagnostics.get(uri);
         diagnosticsForFile?.onDidClose();
+        this.diagnostics.delete(uri);
     }
 
     /**
