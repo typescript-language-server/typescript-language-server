@@ -50,8 +50,8 @@ class FileDiagnostics {
     }
 
     public onDidClose(): void {
-        this.publishDiagnostics();
         this.diagnosticsPerKind.clear();
+        this.publishDiagnostics();
         this.closed = true;
     }
 
