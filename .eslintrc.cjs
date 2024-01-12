@@ -133,6 +133,7 @@ module.exports = {
                 'vitest/no-conditional-in-test': 'off',
                 'vitest/no-conditional-tests': 'off',
                 'vitest/no-hooks': 'off',
+                'vitest/prefer-expect-assertions': 'off',
                 'vitest/require-top-level-describe': 'off',
             },
         },
