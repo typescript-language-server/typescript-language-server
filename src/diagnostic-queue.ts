@@ -106,6 +106,7 @@ export class DiagnosticEventQueue {
         const uri = this.client.toResource(file).toString();
         const diagnosticsForFile = this.diagnostics.get(uri);
         diagnosticsForFile?.onDidClose();
+        this.diagnostics.delete(uri);
     }
 
     /**
