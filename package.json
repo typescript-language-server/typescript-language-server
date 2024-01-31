@@ -28,7 +28,7 @@
     "fix": "eslint --ext \".js,.ts\" --fix src",
     "size": "yarn build && yarn size-limit",
     "postversion": "git push --follow-tags",
-    "prepare": "cd test-data/jsx && yarn"
+    "prepare": "cd test-data/jsx && yarn && cd ../yarn-pnp && yarn"
   },
   "eslintIgnore": [
     "!.eslintrc.cjs"

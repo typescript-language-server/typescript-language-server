@@ -51,7 +51,7 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
         const locations = response.body
             .map(reference =>
                 // Only take first line on implementation: https://github.com/microsoft/vscode/issues/23924
-                Location.create(this.client.toResource(reference.file).toString(),
+                Location.create(this.client.toResourceUri(reference.file),
                                 reference.start.line === reference.end.line
                                     ? typeConverters.Range.fromTextSpan(reference)
                                     : Range.create(

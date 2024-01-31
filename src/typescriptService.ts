@@ -80,6 +80,7 @@ export interface ITypeScriptServiceClient {
      * Convert a path to a resource.
      */
     toResource(filepath: string): URI;
+    toResourceUri(filepath: string): string;
 
     /**
      * Tries to ensure that a document is open on the TS server.

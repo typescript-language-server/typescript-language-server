@@ -204,6 +204,7 @@ interface TestLspServerOptions {
     rootUri: string | null;
     publishDiagnostics: (args: lsp.PublishDiagnosticsParams) => void;
     clientCapabilitiesOverride?: lsp.ClientCapabilities;
+    initializationOptionsOverrides?: TypeScriptInitializationOptions;
 }
 
 export async function createServer(options: TestLspServerOptions): Promise<TestLspServer> {
@@ -223,7 +224,7 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         rootUri: options.rootUri,
         processId: 42,
         capabilities: deepmerge(DEFAULT_TEST_CLIENT_CAPABILITIES, options.clientCapabilitiesOverride || {}),
-        initializationOptions: DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS,
+        initializationOptions: deepmerge(DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS, options.initializationOptionsOverrides || {}),
         workspaceFolders: null,
     });
     server.updateWorkspaceSettings({});

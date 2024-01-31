@@ -87,7 +87,7 @@ export class DiagnosticEventQueue {
         if (this.ignoredDiagnosticCodes.size) {
             diagnostics = diagnostics.filter(diagnostic => !this.isDiagnosticIgnored(diagnostic));
         }
-        const uri = this.client.toResource(file).toString();
+        const uri = this.client.toResourceUri(file);
         const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.client, this.features);
         diagnosticsForFile.update(kind, diagnostics);
         this.diagnostics.set(uri, diagnosticsForFile);
@@ -98,12 +98,12 @@ export class DiagnosticEventQueue {
     }
 
     public getDiagnosticsForFile(file: string): lsp.Diagnostic[] {
-        const uri = this.client.toResource(file).toString();
+        const uri = this.client.toResourceUri(file);
         return this.diagnostics.get(uri)?.getDiagnostics() || [];
     }
 
     public onDidCloseFile(file: string): void {
-        const uri = this.client.toResource(file).toString();
+        const uri = this.client.toResourceUri(file);
         const diagnosticsForFile = this.diagnostics.get(uri);
         diagnosticsForFile?.onDidClose();
         this.diagnostics.delete(uri);
@@ -113,7 +113,7 @@ export class DiagnosticEventQueue {
      * A testing function to clear existing file diagnostics, request fresh ones and wait for all to arrive.
      */
     public async waitForDiagnosticsForTesting(file: string): Promise<void> {
-        const uri = this.client.toResource(file).toString();
+        const uri = this.client.toResourceUri(file);
         let diagnosticsForFile = this.diagnostics.get(uri);
         if (diagnosticsForFile) {
             diagnosticsForFile.onDidClose();

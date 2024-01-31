@@ -47,7 +47,7 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
         const locations = response.body.refs
             .filter(reference => !reference.isDefinition)
             .map(reference =>
-                typeConverters.Location.fromTextSpan(this.client.toResource(reference.file).toString(), reference));
+                typeConverters.Location.fromTextSpan(this.client.toResourceUri(reference.file), reference));
 
         codeLens.command = {
             title: this.getCodeLensLabel(locations),

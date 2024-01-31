@@ -12,9 +12,9 @@ import type { ts } from './ts-protocol.js';
 import { Position, Range } from './utils/typeConverters.js';
 
 export function toLocation(fileSpan: ts.server.protocol.FileSpan, client: TsClient): lsp.Location {
-    const uri = client.toResource(fileSpan.file);
+    const uri = client.toResourceUri(fileSpan.file);
     return {
-        uri: uri.toString(),
+        uri,
         range: {
             start: Position.fromLocation(fileSpan.start),
             end: Position.fromLocation(fileSpan.end),
@@ -125,11 +125,11 @@ export function toTextEdit(edit: ts.server.protocol.CodeEdit): lsp.TextEdit {
 }
 
 export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, client: TsClient): lsp.TextDocumentEdit {
-    const uri = client.toResource(change.fileName);
-    const document = client.toOpenDocument(uri.toString());
+    const uri = client.toResourceUri(change.fileName);
+    const document = client.toOpenDocument(uri);
     return {
         textDocument: {
-            uri: uri.toString(),
+            uri,
             version: document?.version ?? null,
         },
         edits: change.textChanges.map(c => toTextEdit(c)),
