@@ -46,7 +46,7 @@ describe('zipfileuri handling', () => {
     });
 });
 
-describe('nevim zipfile scheme handling with yarn pnp', () => {
+describe('neovim zipfile scheme handling with yarn pnp', () => {
     let server: TestLspServer;
 
     beforeAll(async () => {

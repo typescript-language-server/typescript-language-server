@@ -22,12 +22,12 @@ jobs:
     name: ${{ matrix.os }} (Node.js ${{ matrix.node-version }})
     steps:
       - uses: actions/checkout@v4
+      - run: corepack enable
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: yarn
-      - run: corepack enable
       - name: yarn install
         run: yarn
       - name: build
