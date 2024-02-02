@@ -33,6 +33,7 @@ import API from './utils/api.js';
 import { SyntaxServerConfiguration, TsServerLogLevel } from './utils/configuration.js';
 import { Logger, PrefixingLogger } from './utils/logger.js';
 import type { WorkspaceFolder } from './utils/types.js';
+import { ZipfileURI } from './utils/uri.js';
 
 interface ToCancelOnResourceChanged {
     readonly resource: string;
@@ -134,6 +135,10 @@ class ServerInitializingIndicator {
     }
 }
 
+export const emptyAuthority = 'ts-nul-authority';
+export const inMemoryResourcePrefix = '^';
+const RE_IN_MEMORY_FILEPATH = /^\^\/([^/]+)\/([^/]*)\/(.+)$/;
+
 export interface TsClientOptions {
     trace: Trace;
     typescriptVersion: TypeScriptVersion;
@@ -142,6 +147,7 @@ export interface TsClientOptions {
     disableAutomaticTypingAcquisition?: boolean;
     maxTsServerMemory?: number;
     npmLocation?: string;
+    hostInfo?: string | undefined;
     locale?: string;
     plugins: TypeScriptPlugin[];
     onEvent?: (event: ts.server.protocol.Event) => void;
@@ -158,6 +164,7 @@ export class TsClient implements ITypeScriptServiceClient {
     private readonly logger: Logger;
     private readonly tsserverLogger: Logger;
     private readonly loadingIndicator: ServerInitializingIndicator;
+    private isNeovimHost: boolean = false;
     private tracer: Tracer | undefined;
     private workspaceFolders: WorkspaceFolder[] = [];
     private readonly documents: LspDocuments;
@@ -201,7 +208,7 @@ export class TsClient implements ITypeScriptServiceClient {
     public toTsFilePath(stringUri: string): string | undefined {
         // Vim may send `zipfile:` URIs which tsserver with Yarn v2+ hook can handle. Keep as-is.
         // Example: zipfile:///foo/bar/baz.zip::path/to/module
-        if (stringUri.startsWith('zipfile:')) {
+        if (this.isNeovimHost && stringUri.startsWith('zipfile:')) {
             return stringUri;
         }
 
@@ -215,7 +222,11 @@ export class TsClient implements ITypeScriptServiceClient {
             return resource.fsPath;
         }
 
-        return undefined;
+        return inMemoryResourcePrefix
+            + '/' + resource.scheme
+            + '/' + (resource.authority || emptyAuthority)
+            + (resource.path.startsWith('/') ? resource.path : '/' + resource.path)
+            + (resource.fragment ? '#' + resource.fragment : '');
     }
 
     public toOpenDocument(textDocumentUri: DocumentUri, options: { suppressAlertOnFailure?: boolean; } = {}): LspDocument | undefined {
@@ -245,12 +256,27 @@ export class TsClient implements ITypeScriptServiceClient {
     public toResource(filepath: string): URI {
         // Yarn v2+ hooks tsserver and sends `zipfile:` URIs for Vim. Keep as-is.
         // Example: zipfile:///foo/bar/baz.zip::path/to/module
-        if (filepath.startsWith('zipfile:')) {
-            return URI.parse(filepath);
+        if (this.isNeovimHost && filepath.startsWith('zipfile:')) {
+            return ZipfileURI.parse(filepath);
         }
+
+        if (filepath.startsWith(inMemoryResourcePrefix)) {
+            const parts = filepath.match(RE_IN_MEMORY_FILEPATH);
+            if (parts) {
+                const resource = URI.parse(parts[1] + '://' + (parts[2] === emptyAuthority ? '' : parts[2]) + '/' + parts[3]);
+                const tsFilepath = this.toTsFilePath(resource.toString());
+                const document = tsFilepath && this.documents.get(tsFilepath);
+                return document ? document.uri : resource;
+            }
+        }
+
         const fileUri = URI.file(filepath);
         const document = this.documents.get(fileUri.fsPath);
         return document ? document.uri : fileUri;
+    }
+
+    public toResourceUri(filepath: string): string {
+        return this.toResource(filepath).toString();
     }
 
     public getWorkspaceRootForResource(resource: URI): URI | undefined {
@@ -303,7 +329,7 @@ export class TsClient implements ITypeScriptServiceClient {
 
         switch (capability) {
             case ClientCapability.Semantic: {
-                return ['file', 'untitled'].includes(resource.scheme);
+                return fileSchemes.getSemanticSupportedSchemes().includes(resource.scheme);
             }
             case ClientCapability.Syntax:
             case ClientCapability.EnhancedSyntax: {
@@ -324,6 +350,7 @@ export class TsClient implements ITypeScriptServiceClient {
     ): boolean {
         this.apiVersion = options.typescriptVersion.version || API.defaultVersion;
         this.typescriptVersionSource = options.typescriptVersion.source;
+        this.isNeovimHost = options.hostInfo === 'neovim';
         this.tracer = new Tracer(this.tsserverLogger, options.trace);
         this.workspaceFolders = workspaceRoot ? [{ uri: URI.file(workspaceRoot) }] : [];
         this.useSyntaxServer = options.useSyntaxServer;

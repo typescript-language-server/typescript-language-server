@@ -147,6 +147,7 @@ export class LspServer {
                 disableAutomaticTypingAcquisition,
                 maxTsServerMemory,
                 npmLocation,
+                hostInfo,
                 locale,
                 plugins: plugins || [],
                 onEvent: this.onTsEvent.bind(this),
@@ -550,7 +551,7 @@ export class LspServer {
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
         item.data = item.data?.cacheId !== undefined ? this.completionDataCache.get(item.data.cacheId) : item.data;
-        const uri = this.tsClient.toResource(item.data.file).toString();
+        const uri = this.tsClient.toResourceUri(item.data.file);
         const document = item.data?.file ? this.tsClient.toOpenDocument(uri) : undefined;
         if (!document) {
             return item;
@@ -636,7 +637,7 @@ export class LspServer {
         const changes: lsp.WorkspaceEdit['changes'] = {};
         result.locs
             .forEach((spanGroup) => {
-                const uri = this.tsClient.toResource(spanGroup.file).toString();
+                const uri = this.tsClient.toResourceUri(spanGroup.file);
                 const textEdits = changes[uri] || (changes[uri] = []);
 
                 spanGroup.locs.forEach((textSpan) => {
@@ -868,7 +869,7 @@ export class LspServer {
             if (renameLocation) {
                 await this.options.lspClient.rename({
                     textDocument: {
-                        uri: this.tsClient.toResource(args.file).toString(),
+                        uri: this.tsClient.toResourceUri(args.file),
                     },
                     position: Position.fromLocation(renameLocation),
                 });
@@ -878,7 +879,7 @@ export class LspServer {
             this.tsClient.configurePlugin(pluginName, configuration);
         } else if (params.command === Commands.ORGANIZE_IMPORTS && params.arguments) {
             const file = params.arguments[0] as string;
-            const uri = this.tsClient.toResource(file).toString();
+            const uri = this.tsClient.toResourceUri(file);
             const document = this.tsClient.toOpenDocument(uri);
             if (!document) {
                 return;
@@ -944,7 +945,7 @@ export class LspServer {
         }
         const changes: { [uri: string]: lsp.TextEdit[]; } = {};
         for (const edit of edits) {
-            changes[this.tsClient.toResource(edit.fileName).toString()] = edit.textChanges.map(toTextEdit);
+            changes[this.tsClient.toResourceUri(edit.fileName)] = edit.textChanges.map(toTextEdit);
         }
         const { applied } = await this.options.lspClient.applyWorkspaceEdit({
             edit: { changes },
@@ -957,7 +958,7 @@ export class LspServer {
         for (const rename of params.files) {
             const codeEdits = await this.getEditsForFileRename(rename.oldUri, rename.newUri, token);
             for (const codeEdit of codeEdits) {
-                const uri = this.tsClient.toResource(codeEdit.fileName).toString();
+                const uri = this.tsClient.toResourceUri(codeEdit.fileName);
                 const textEdits = changes[uri] || (changes[uri] = []);
                 textEdits.push(...codeEdit.textChanges.map(toTextEdit));
             }
@@ -1061,7 +1062,7 @@ export class LspServer {
         return response.body.map(item => {
             return <lsp.SymbolInformation>{
                 location: {
-                    uri: this.tsClient.toResource(item.file).toString(),
+                    uri: this.tsClient.toResourceUri(item.file),
                     range: {
                         start: Position.fromLocation(item.start),
                         end: Position.fromLocation(item.end),

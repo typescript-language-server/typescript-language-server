@@ -26,7 +26,7 @@ export function fromProtocolCallHierarchyItem(item: ts.server.protocol.CallHiera
         kind: fromProtocolScriptElementKind(item.kind),
         name,
         detail,
-        uri: client.toResource(item.file).toString(),
+        uri: client.toResourceUri(item.file),
         range: Range.fromTextSpan(item.span),
         selectionRange: Range.fromTextSpan(item.selectionSpan),
     };

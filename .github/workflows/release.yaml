@@ -21,6 +21,7 @@ jobs:
         with:
           node-version: 18
           registry-url: https://registry.npmjs.org
+      - run: corepack enable
       - name: Lint and Test
         if: ${{ steps.release.outputs.release_created }}
         run: yarn && yarn build && yarn lint
