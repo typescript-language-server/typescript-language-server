@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.3.2](https://github.com/typescript-language-server/typescript-language-server/compare/v4.3.1...v4.3.2) (2024-02-02)
+
+
+### Bug Fixes
+
+* restore handling of zipfile: schema for neovim + yarn berry ([#862](https://github.com/typescript-language-server/typescript-language-server/issues/862)) ([caca007](https://github.com/typescript-language-server/typescript-language-server/commit/caca0071095557ecc43d8695d922a4cf5e38a2ad))
+
 ## [4.3.1](https://github.com/typescript-language-server/typescript-language-server/compare/v4.3.0...v4.3.1) (2024-01-12)
 
 
