@@ -27,6 +27,10 @@ class FileDiagnostics {
     ) { }
 
     public update(kind: DiagnosticKind, diagnostics: ts.server.protocol.Diagnostic[]): void {
+        if (this.diagnosticsPerKind.get(kind)?.length === 0 && diagnostics.length === 0) {
+            return;
+        }
+
         this.diagnosticsPerKind.set(kind, diagnostics);
         this.firePublishDiagnostics();
     }
@@ -87,6 +91,7 @@ export class DiagnosticEventQueue {
         if (this.ignoredDiagnosticCodes.size) {
             diagnostics = diagnostics.filter(diagnostic => !this.isDiagnosticIgnored(diagnostic));
         }
+
         const uri = this.client.toResourceUri(file);
         const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.client, this.features);
         diagnosticsForFile.update(kind, diagnostics);
