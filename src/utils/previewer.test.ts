@@ -99,7 +99,7 @@ describe('typescript.previewer', () => {
                     text: 'code();',
                 },
             ], noopToResource),
-        ).toBe('*@example*  \n```\ncode();\n```',
+        ).toBe('*@example*  \n```typescript\ncode();\n```',
         );
     });
 
@@ -123,7 +123,7 @@ describe('typescript.previewer', () => {
                     text: '<caption>Not code</caption>\ncode();',
                 },
             ], noopToResource),
-        ).toBe('*@example*  \nNot code\n```\ncode();\n```',
+        ).toBe('*@example*  \nNot code\n```typescript\ncode();\n```',
         );
     });
 
