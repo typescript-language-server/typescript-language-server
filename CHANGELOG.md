@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.3.4](https://github.com/typescript-language-server/typescript-language-server/compare/v4.3.3...v4.3.4) (2024-09-30)
+
+
+### Bug Fixes
+
+* **previewer:** mark `[@example](https://github.com/example)` and `[@default](https://github.com/default)` code blocks as TS ([#918](https://github.com/typescript-language-server/typescript-language-server/issues/918)) ([184c60d](https://github.com/typescript-language-server/typescript-language-server/commit/184c60de3308621380469d6632bdff2e10f672fd))
+
 ## [4.3.3](https://github.com/typescript-language-server/typescript-language-server/compare/v4.3.2...v4.3.3) (2024-02-09)
 
 
