@@ -3,6 +3,6 @@
   "packageManager": "yarn@4.1.0",
   "dependencies": {
     "axios": "1.6.7",
-    "typescript": "^5.3.3"
+    "typescript": "^5.6.3"
   }
 }
