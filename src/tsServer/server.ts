@@ -199,7 +199,7 @@ export class SingleTsServer implements ITypeScriptServer {
     private tryCancelRequest(seq: number, command: string): boolean {
         try {
             if (this._requestQueue.tryDeletePendingRequest(seq)) {
-                this.logTrace(`Canceled request with sequence number ${seq}`);
+                this.logTrace(`Canceled pending request with sequence number ${seq}`);
                 return true;
             }
 

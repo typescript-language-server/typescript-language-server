@@ -8,6 +8,7 @@
         "allowJs": true,
         "declaration": false,
         "declarationMap": false,
+        "experimentalDecorators": true,
         "noEmit": true,
         "esModuleInterop": true,
         "lib": ["es2020"],

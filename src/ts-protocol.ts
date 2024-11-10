@@ -325,6 +325,7 @@ export function toSymbolDisplayPartKind(kind: string): ts.SymbolDisplayPartKind 
 
 export interface SupportedFeatures {
     codeActionDisabledSupport?: boolean;
+    codeActionResolveSupport?: lsp.CodeActionClientCapabilities['resolveSupport'];
     completionCommitCharactersSupport?: boolean;
     completionInsertReplaceSupport?: boolean;
     completionLabelDetails?: boolean;

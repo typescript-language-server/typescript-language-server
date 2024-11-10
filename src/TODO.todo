@@ -1,0 +1,25 @@
+TODO
+ ☐ NEW!!!! Test how long it takes to provide completions before and after splitting into two server. Test in lsp-server.ts and compare with VSCode
+ ☐ this.documents should live inside tspClient?
+ ☐ create TypeScriptServiceConfiguration that reads settings from `initializationSettings.tsServer`. Replace `TspClientOptions` passed to `TspClient`.
+ ✔ look into what Tracer does and whether it's worth implementing @done (22-09-12 23:48)
+ ☐ Events:
+   ☐ ConfigFileDiag
+   ☐ ProjectLanguageServiceState
+   ☐ ProjectsUpdatedInBackground
+   ☐ BeginInstallTypes / endInstallTypes
+   ☐ TypesInstallerInitializationFailed
+ ☐ ServerState
+ ☐ Request config.cancelOnResourceChange
+
+VSCode implementation
+- new ElectronServiceProcessFactory()
+- lazy_new TypeScriptServiceClientHost()
+-   receives ElectronServiceProcessFactory
+-   creates new TypeScriptServiceClient()
+-     creates new TypeScriptVersionManager()
+-     starts the server: ensureServiceStarted() -> startService() -> typescriptServerSpawner.spawn()
+
+- ProcessBasedTsServer <=> TspClient
+- ProcessBasedTsServer implements ITypeScriptServer
+- ElectronServiceProcessFactory implements TsServerProcessFactory
