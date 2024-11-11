@@ -10,6 +10,7 @@ import { type TsClient } from './ts-client.js';
 import { HighlightSpanKind, SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import { Position, Range } from './utils/typeConverters.js';
+import { type ITypeScriptServiceClient } from './typescriptService.js';
 
 export function toLocation(fileSpan: ts.server.protocol.FileSpan, client: TsClient): lsp.Location {
     const uri = client.toResourceUri(fileSpan.file);
@@ -124,7 +125,7 @@ export function toTextEdit(edit: ts.server.protocol.CodeEdit): lsp.TextEdit {
     };
 }
 
-export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, client: TsClient): lsp.TextDocumentEdit {
+export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, client: ITypeScriptServiceClient): lsp.TextDocumentEdit {
     const uri = client.toResourceUri(change.fileName);
     const document = client.toOpenDocument(uri);
     return {

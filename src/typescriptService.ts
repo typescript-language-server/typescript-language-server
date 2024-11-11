@@ -91,6 +91,8 @@ export interface ITypeScriptServiceClient {
         suppressAlertOnFailure?: boolean;
     }): LspDocument | undefined;
 
+    hasPendingDiagnostics(resource: URI): boolean;
+
     /**
      * Checks if `resource` has a given capability.
      */

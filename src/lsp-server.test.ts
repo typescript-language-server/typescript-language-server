@@ -1298,7 +1298,7 @@ describe('code actions', () => {
 
     it('can provide quickfix code actions', async () => {
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
@@ -1314,7 +1314,7 @@ describe('code actions', () => {
                     message: 'unused arg',
                 }],
             },
-        }))!;
+        }) as lsp.CodeAction[];
 
         // 1 quickfix + 2 refactorings
         expect(result).toHaveLength(3);
@@ -1788,7 +1788,7 @@ describe('executeCommand', () => {
             text: 'export function fn(): void {}\nexport function newFn(): void {}',
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const codeActions = (await server.codeAction({
+        const codeActions = await server.codeAction({
             textDocument: doc,
             range: {
                 start: position(doc, 'newFn'),
@@ -1797,7 +1797,7 @@ describe('executeCommand', () => {
             context: {
                 diagnostics: [],
             },
-        }))!;
+        }) as lsp.CodeAction[];
         // Find refactoring code action.
         const applyRefactoringAction = codeActions.find(action => action.command?.command === Commands.APPLY_REFACTORING);
         expect(applyRefactoringAction).toBeDefined();
@@ -2425,6 +2425,71 @@ describe('fileOperations', () => {
                 newText:'./rename2/var',
             },
         ]);
+    });
+
+    it('willRenameFiles - new', async () => {
+        const filesDirectory = 'rename';
+        const import1FileName = 'import1.ts';
+        const import2FileName = 'import2.ts';
+        const import1FilePath = filePath(filesDirectory, import1FileName);
+        const import2FilePath = filePath(filesDirectory, import2FileName);
+        const import1Uri = uri(filesDirectory, import1FileName);
+        const import2Uri = uri(filesDirectory, import2FileName);
+        const exportFileName = 'export.ts';
+        const exportNewFileName = 'export2.ts';
+
+        // Open files 1 and 2.
+
+        const import1Document = {
+            uri: import1Uri,
+            languageId: 'typescript',
+            version: 1,
+            text: readContents(import1FilePath),
+        };
+        server.didOpenTextDocument({ textDocument: import1Document });
+
+        const import2Document = {
+            uri: import2Uri,
+            languageId: 'typescript',
+            version: 1,
+            text: readContents(import2FilePath),
+        };
+        server.didOpenTextDocument({ textDocument: import2Document });
+
+        // Close file 1.
+
+        server.didCloseTextDocument({ textDocument: import1Document });
+
+        const edit = await server.willRenameFiles({
+            files: [{
+                oldUri: uri(filesDirectory, exportFileName),
+                newUri: uri(filesDirectory, exportNewFileName),
+            }],
+        });
+        expect(edit.changes).toBeDefined();
+        expect(Object.keys(edit.changes!)).toHaveLength(2);
+        expect(edit.changes!).toStrictEqual(
+            {
+                [import1Uri]: [
+                    {
+                        range: {
+                            start:{ line: 0, character: 19 },
+                            end: { line: 0, character: 27 },
+                        },
+                        newText:'./export2',
+                    },
+                ],
+                [import2Uri]: [
+                    {
+                        range: {
+                            start:{ line: 0, character: 19 },
+                            end: { line: 0, character: 27 },
+                        },
+                        newText:'./export2',
+                    },
+                ],
+            },
+        );
     });
 });
 
