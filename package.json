@@ -15,9 +15,7 @@
   "files": [
     "lib"
   ],
-  "bin": {
-    "typescript-language-server": "./lib/cli.mjs"
-  },
+  "bin": "./lib/cli.mjs",
   "scripts": {
     "dev": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript --watch",
     "build": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript",
@@ -76,5 +74,6 @@
     "vscode-uri": "^3.0.8",
     "which": "^4.0.0",
     "why-is-node-running": "^2.2.2"
-  }
+  },
+  "packageManager": "yarn@4.5.3+sha512.3003a14012e2987072d244c720506549c1aab73ee728208f1b2580a9fd67b92d61ba6b08fe93f6dce68fd771e3af1e59a0afa28dd242dd0940d73b95fedd4e90"
 }
