@@ -6,7 +6,7 @@
 
 [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) implementation for TypeScript wrapping `tsserver`.
 
-Based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server and originally maintained by [TypeFox](https://typefox.io).
+Originally based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server and maintained by [TypeFox](https://typefox.io). The core logic for interacting with `tsserver` is nowadays mostly based on the code of the `TypeScript Language Features` VSCode bundled extension maintained in https://github.com/microsoft/vscode.
 
 Maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you.
 
