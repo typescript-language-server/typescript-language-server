@@ -4,3 +4,4 @@
 /.rollup.cache/
 /lib/
 node_modules/
+.yarn/
