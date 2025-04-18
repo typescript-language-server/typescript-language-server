@@ -109,6 +109,7 @@ function asCompletionItem(
         preselect: entry.isRecommended,
         data: {
             cacheId,
+            hasAction: entry.hasAction,
         },
     };
 
