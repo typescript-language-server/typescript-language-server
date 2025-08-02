@@ -21,7 +21,7 @@ import * as languageModeIds from './configuration/languageIds.js';
 import { CommandTypes, EventName } from './ts-protocol.js';
 import type { TypeScriptPlugin, ts } from './ts-protocol.js';
 import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
-import { AsyncTsServerRequests, ClientCapabilities, ClientCapability, ExecConfig, NoResponseTsServerRequests, ITypeScriptServiceClient, ServerResponse, StandardTsServerRequests, TypeScriptRequestTypes } from './typescriptService.js';
+import { AsyncTsServerRequests, ClientCapabilities, ClientCapability, ExecConfig, NoResponseTsServerRequests, ITypeScriptServiceClient, ServerResponse, StandardTsServerRequests, TypeScriptRequestTypes, ExecuteInfo } from './typescriptService.js';
 import { PluginManager } from './tsServer/plugins.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
 import { TypeScriptServerError } from './tsServer/serverError.js';
@@ -530,12 +530,30 @@ export class TsClient implements ITypeScriptServiceClient {
         command: K,
         args: AsyncTsServerRequests[K][0],
         token: CancellationToken,
-    ): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
+    ): Promise<ServerResponse.Response<AsyncTsServerRequests[K][1]>> {
         return this.executeImpl(command, args, {
             isAsync: true,
             token,
             expectsResult: true,
         })[0]!;
+    }
+
+    // For use by TSServerRequestCommand.
+    public executeCustom<K extends keyof TypeScriptRequestTypes>(
+        command: K,
+        args: any,
+        executeInfo?: ExecuteInfo,
+    ): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
+        const updatedExecuteInfo: ExecuteInfo = {
+            expectsResult: true,
+            isAsync: false,
+            ...executeInfo,
+        };
+        const executions = this.executeImpl(command, args, updatedExecuteInfo);
+
+        return executions[0]!.catch(error => {
+            throw new ResponseError(1, (error as Error).message);
+        });
     }
 
     public interruptGetErr<R>(f: () => R): R {
@@ -558,7 +576,7 @@ export class TsClient implements ITypeScriptServiceClient {
     //     return this._configuration;
     // }
 
-    private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; requireSemantic?: boolean; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: ExecuteInfo): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         const serverState = this.serverState;
         if (serverState.type === ServerState.Type.Running) {
             return serverState.server.executeImpl(command, args, executeInfo);

@@ -50,7 +50,7 @@ export interface ITypeScriptServer {
      * @return A list of all execute requests. If there are multiple entries, the first item is the primary
      * request while the rest are secondary ones.
      */
-    executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined>;
+    executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: ExecuteInfo): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined>;
 
     dispose(): void;
 }
@@ -232,7 +232,7 @@ export class SingleTsServer implements ITypeScriptServer {
         }
     }
 
-    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: ExecuteInfo): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         const request = this._requestQueue.createRequest(command, args);
         const requestInfo: RequestItem = {
             request,
@@ -556,7 +556,7 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
         this.semanticServer.kill();
     }
 
-    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: { isAsync: boolean; token?: CancellationToken; expectsResult: boolean; lowPriority?: boolean; executionTarget?: ExecutionTarget; }): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: ExecuteInfo): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         return this.router.execute(command, args, executeInfo);
     }
 }

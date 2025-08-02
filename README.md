@@ -25,6 +25,7 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
         - [Apply Refactoring](#apply-refactoring)
         - [Organize Imports](#organize-imports)
         - [Rename File](#rename-file)
+        - [Send Tsserver Command](#send-tsserver-command)
         - [Configure plugin](#configure-plugin)
     - [Code Lenses \(`textDocument/codeLens`\)](#code-lenses-textdocumentcodelens)
     - [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
@@ -199,6 +200,35 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     ```ts
     void
     ```
+
+#### Send Tsserver Command
+
+- Request:
+    ```ts
+    {
+        command: `typescript.tsserverRequest`
+        arguments: [
+            string,       // command
+            any,          // command arguments in a format that the command expects
+            ExecuteInfo,  // configuration object used for the tsserver request (see below)
+        ]
+    }
+    ```
+- Response:
+    ```ts
+    any
+    ```
+
+The `ExecuteInfo` object is defined as follows:
+
+```ts
+type ExecuteInfo = {
+    executionTarget?: number;  // 0 - semantic server, 1 - syntax server; default: 0
+    expectsResult?: boolean;   // default: true
+    isAsync?: boolean;         // default: false
+    lowPriority?: boolean;     // default: true
+};
+```
 
 #### Configure plugin
 

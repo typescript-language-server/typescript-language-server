@@ -41,6 +41,14 @@ export type ExecConfig = {
     readonly executionTarget?: ExecutionTarget;
 };
 
+export type ExecuteInfo = {
+    readonly executionTarget?: ExecutionTarget;
+    readonly expectsResult: boolean;
+    readonly isAsync: boolean;
+    readonly lowPriority?: boolean;
+    token?: lsp.CancellationToken;
+};
+
 export enum ClientCapability {
     /**
      * Basic syntax server. All clients should support this.
