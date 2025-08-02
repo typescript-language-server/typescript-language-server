@@ -1879,7 +1879,7 @@ describe('executeCommand', () => {
         expect(result).toBeDefined();
         expect(result.body).toMatchObject({
             // tsserver returns non-native path separators on Windows.
-            configFileName: filePath('tsconfig.json').replace('\\', '/'),
+            configFileName: filePath('tsconfig.json').replace(/\\/g, '/'),
         });
     });
 
