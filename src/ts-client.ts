@@ -114,6 +114,7 @@ class ServerInitializingIndicator {
         if (this._task) {
             const task = this._task;
             this._task = undefined;
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             task.then(reporter => reporter.done());
         }
     }
@@ -125,6 +126,7 @@ class ServerInitializingIndicator {
 
         this._loadingProjectName = projectName;
         this._task = this.lspClient.createProgressReporter();
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._task.then(reporter => reporter.begin('Initializing JS/TS language features…'));
     }
 
@@ -398,7 +400,7 @@ export class TsClient implements ITypeScriptServiceClient {
     }
 
     private dispatchEvent(event: ts.server.protocol.Event) {
-        switch (event.event) {
+        switch (event.event as EventName) {
             case EventName.syntaxDiag:
             case EventName.semanticDiag:
             case EventName.suggestionDiag:
@@ -505,6 +507,7 @@ export class TsClient implements ITypeScriptServiceClient {
 
         if (command === CommandTypes.UpdateOpen) {
             // If update open has completed, consider that the project has loaded
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.all(executions).then(() => {
                 this.loadingIndicator.reset();
             });
@@ -519,6 +522,7 @@ export class TsClient implements ITypeScriptServiceClient {
         command: K,
         args: NoResponseTsServerRequests[K][0],
     ): void {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.executeImpl(command, args, {
             isAsync: false,
             token: undefined,

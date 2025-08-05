@@ -51,12 +51,14 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
         const locations = response.body
             .map(reference =>
                 // Only take first line on implementation: https://github.com/microsoft/vscode/issues/23924
-                Location.create(this.client.toResourceUri(reference.file),
-                                reference.start.line === reference.end.line
-                                    ? typeConverters.Range.fromTextSpan(reference)
-                                    : Range.create(
-                                        typeConverters.Position.fromLocation(reference.start),
-                                        Position.create(reference.start.line, 0))))
+                Location.create(
+                    this.client.toResourceUri(reference.file),
+                    reference.start.line === reference.end.line
+                        ? typeConverters.Range.fromTextSpan(reference)
+                        : Range.create(
+                            typeConverters.Position.fromLocation(reference.start),
+                            Position.create(reference.start.line, 0))),
+            )
             // Exclude original from implementations
             .filter(location =>
                 !(location.uri.toString() === codeLens.data!.uri &&
@@ -86,7 +88,7 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
         item: ts.server.protocol.NavigationTree,
         _parent: ts.server.protocol.NavigationTree | undefined,
     ): lsp.Range | undefined {
-        switch (item.kind) {
+        switch (item.kind as ScriptElementKind) {
             case ScriptElementKind.interfaceElement:
                 return getSymbolRange(document, item);
 

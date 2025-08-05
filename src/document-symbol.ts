@@ -88,7 +88,7 @@ export function collectSymbolInformation(uri: string, current: ts.server.protoco
 }
 
 export function shouldIncludeEntry(item: ts.server.protocol.NavigationTree | ts.server.protocol.NavigationBarItem): boolean {
-    if (item.kind === ScriptElementKind.alias) {
+    if (item.kind === ScriptElementKind.alias as ts.ScriptElementKind) {
         return false;
     }
     return !!(item.text && item.text !== '<function>' && item.text !== '<class>');

@@ -25,7 +25,7 @@ import type { ts } from './ts-protocol.js';
 import { type TypeScriptRequestTypes, type ExecuteInfo } from './typescriptService.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { fromProtocolCallHierarchyItem, fromProtocolCallHierarchyIncomingCall, fromProtocolCallHierarchyOutgoingCall } from './features/call-hierarchy.js';
-import FileConfigurationManager from './features/fileConfigurationManager.js';
+import FileConfigurationManager, { type WorkspaceConfiguration } from './features/fileConfigurationManager.js';
 import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { CodeLensType, type ReferencesCodeLens } from './features/code-lens/baseCodeLensProvider.js';
 import TypeScriptImplementationsCodeLensProvider from './features/code-lens/implementationsCodeLens.js';
@@ -91,12 +91,12 @@ export class LspServer {
         this.tsClient.shutdown();
     }
 
-    async initialize(params: TypeScriptInitializeParams): Promise<lsp.InitializeResult> {
+    initialize(params: TypeScriptInitializeParams): lsp.InitializeResult {
         this.initializeParams = params;
         const clientCapabilities = this.initializeParams.capabilities;
         this.workspaceRoot = this.initializeParams.rootUri ? URI.parse(this.initializeParams.rootUri).fsPath : this.initializeParams.rootPath || undefined;
 
-        const userInitializationOptions: TypeScriptInitializationOptions = this.initializeParams.initializationOptions || {};
+        const userInitializationOptions = (this.initializeParams.initializationOptions || {}) as TypeScriptInitializationOptions;
         const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale, plugins, tsserver } = userInitializationOptions;
 
         const typescriptVersion = this.findTypescriptVersion(tsserver?.path, tsserver?.fallbackPath);
@@ -302,6 +302,7 @@ export class LspServer {
 
     public initialized(_: lsp.InitializedParams): void {
         const { apiVersion, typescriptVersionSource } = this.tsClient;
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.options.lspClient.sendNotification(TypescriptVersionNotification, {
             version: apiVersion.displayName,
             source: typescriptVersionSource,
@@ -354,7 +355,7 @@ export class LspServer {
     }
 
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
-        this.fileConfigurationManager.setWorkspaceConfiguration(params.settings || {});
+        this.fileConfigurationManager.setWorkspaceConfiguration((params.settings || {}) as WorkspaceConfiguration);
         const ignoredDiagnosticCodes = this.fileConfigurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
         this.tsClient.interruptGetErr(() => this.diagnosticQueue.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes));
     }
@@ -553,19 +554,26 @@ export class LspServer {
     }
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
-        item.data = item.data?.cacheId !== undefined ? this.completionDataCache.get(item.data.cacheId) : item.data;
-        const uri = this.tsClient.toResourceUri(item.data.file);
-        const document = item.data?.file ? this.tsClient.toOpenDocument(uri) : undefined;
-        if (!document) {
-            return item;
+        let document = undefined;
+        const data = item.data as { cacheId?: number; } | undefined;
+        if (data?.cacheId !== undefined) {
+            const cachedData = this.completionDataCache.get(data.cacheId);
+            item.data = cachedData;
+            if (cachedData?.file) {
+                const uri = this.tsClient.toResourceUri(cachedData.file);
+                document = this.tsClient.toOpenDocument(uri);
+                if (document) {
+                    await this.fileConfigurationManager.ensureConfigurationForDocument(document, token);
+                    const response = await this.tsClient.interruptGetErr(() => this.tsClient.execute(CommandTypes.CompletionDetails, cachedData, token));
+                    if (response.type !== 'response' || !response.body?.length) {
+                        return item;
+                    }
+                    return asResolvedCompletionItem(item, response.body[0], document, this.tsClient, this.fileConfigurationManager.workspaceConfiguration.completions || {}, this.features);
+                }
+            }
         }
 
-        await this.fileConfigurationManager.ensureConfigurationForDocument(document, token);
-        const response = await this.tsClient.interruptGetErr(() => this.tsClient.execute(CommandTypes.CompletionDetails, item.data, token));
-        if (response.type !== 'response' || !response.body?.length) {
-            return item;
-        }
-        return asResolvedCompletionItem(item, response.body[0], document, this.tsClient, this.fileConfigurationManager.workspaceConfiguration.completions || {}, this.features);
+        return item;
     }
 
     async hover(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.Hover | null> {
@@ -888,7 +896,7 @@ export class LspServer {
                 return;
             }
 
-            const additionalArguments: { skipDestructiveCodeActions?: boolean; } = params.arguments[1] || {};
+            const additionalArguments = (params.arguments[1] || {}) as { skipDestructiveCodeActions?: boolean; };
             const body = await this.tsClient.interruptGetErr(async () => {
                 await this.fileConfigurationManager.ensureConfigurationForDocument(document);
                 const response = await this.tsClient.execute(
@@ -920,6 +928,7 @@ export class LspServer {
                 sourceUri: string;
                 targetUri: string;
             };
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.applyRenameFile(sourceUri, targetUri, token);
         } else if (params.command === Commands.APPLY_COMPLETION_CODE_ACTION && params.arguments) {
             const [_, codeActions] = params.arguments as [string, ts.server.protocol.CodeAction[]];
@@ -977,6 +986,7 @@ export class LspServer {
 
     protected async applyRenameFile(sourceUri: string, targetUri: string, token?: lsp.CancellationToken): Promise<void> {
         const edits = await this.getEditsForFileRename(sourceUri, targetUri, token);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.applyFileCodeEdits(edits);
     }
     protected async getEditsForFileRename(sourceUri: string, targetUri: string, token?: lsp.CancellationToken): Promise<ReadonlyArray<ts.server.protocol.FileCodeEdits>> {
@@ -1110,6 +1120,7 @@ export class LspServer {
         const kind = this.asFoldingRangeKind(span);
 
         // workaround for https://github.com/Microsoft/vscode/issues/49904
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         if (span.kind === 'comment') {
             const line = document.getLine(range.start.line);
             if (line.match(/\/\/\s*#endregion/gi)) {
@@ -1133,16 +1144,21 @@ export class LspServer {
     }
     protected asFoldingRangeKind(span: ts.server.protocol.OutliningSpan): lsp.FoldingRangeKind | undefined {
         switch (span.kind) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             case 'comment': return lsp.FoldingRangeKind.Comment;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             case 'region': return lsp.FoldingRangeKind.Region;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             case 'imports': return lsp.FoldingRangeKind.Imports;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             case 'code':
             default: return undefined;
         }
     }
 
-    protected async onTsEvent(event: ts.server.protocol.Event): Promise<void> {
-        if (event.event === EventName.semanticDiag || event.event === EventName.syntaxDiag || event.event === EventName.suggestionDiag) {
+    protected onTsEvent(event: ts.server.protocol.Event): void {
+        const eventName = event.event as EventName;
+        if (eventName === EventName.semanticDiag || eventName === EventName.syntaxDiag || eventName === EventName.suggestionDiag) {
             const diagnosticEvent = event as ts.server.protocol.DiagnosticEvent;
             if (diagnosticEvent.body?.diagnostics) {
                 const { file, diagnostics } = diagnosticEvent.body;

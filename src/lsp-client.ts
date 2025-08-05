@@ -7,7 +7,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import { MessageType } from 'vscode-languageserver';
-import { attachWorkDone } from 'vscode-languageserver/lib/common/progress.js';
+import { ProgressContext, attachWorkDone } from 'vscode-languageserver/lib/common/progress.js';
 import { TypeScriptRenameRequest } from './ts-protocol.js';
 
 export interface WithProgressOptions {
@@ -27,7 +27,7 @@ export interface LspClient {
 }
 
 // Hack around the LSP library that makes it otherwise impossible to differentiate between Null and Client-initiated reporter.
-const nullProgressReporter = attachWorkDone(undefined as any, /* params */ undefined);
+const nullProgressReporter = attachWorkDone(undefined as any as ProgressContext, /* params */ undefined);
 
 export class LspClientImpl implements LspClient {
     constructor(protected connection: lsp.Connection) {}
@@ -52,14 +52,17 @@ export class LspClientImpl implements LspClient {
     }
 
     publishDiagnostics(params: lsp.PublishDiagnosticsParams): void {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connection.sendDiagnostics(params);
     }
 
     showErrorMessage(message: string): void {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connection.sendNotification(lsp.ShowMessageNotification.type, { type: MessageType.Error, message });
     }
 
     logMessage(args: lsp.LogMessageParams): void {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connection.sendNotification(lsp.LogMessageNotification.type, args);
     }
 

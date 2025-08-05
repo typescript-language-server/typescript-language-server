@@ -27,6 +27,7 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<ts.server.protocol.UserPreferences>
     allowRenameOfImportPath: true,
     allowTextChangesInNewFiles: true,
     autoImportFileExcludePatterns: [],
+    autoImportSpecifierExcludeRegexes: [],
     disableLineTextInReferences: true,
     disableSuggestions: false,
     displayPartsForJSDoc: true,
@@ -53,12 +54,15 @@ const DEFAULT_TSSERVER_PREFERENCES: Required<ts.server.protocol.UserPreferences>
     interactiveInlayHints: true,
     jsxAttributeCompletionStyle: 'auto',
     lazyConfiguredProjectsFromExternalProject: false,
+    maximumHoverLength: 500,
     organizeImportsAccentCollation: true,
     organizeImportsCaseFirst: false,
     organizeImportsCollation: 'ordinal',
-    organizeImportsCollationLocale: 'en',
+    organizeImportsLocale: 'en',
     organizeImportsIgnoreCase: 'auto',
     organizeImportsNumericCollation: false,
+    organizeImportsTypeOrder: 'last',
+    preferTypeOnlyAutoImports: false,
     providePrefixAndSuffixTextForRename: true,
     provideRefactorNotApplicableReason: true,
     quotePreference: 'auto',
@@ -107,7 +111,6 @@ export interface WorkspaceConfigurationImplicitProjectConfigurationOptions {
     target?: string;
 }
 
-/* eslint-disable @typescript-eslint/indent */
 export type TypeScriptInlayHintsPreferences = Pick<
     ts.server.protocol.UserPreferences,
     'includeInlayParameterNameHints' |
@@ -119,7 +122,6 @@ export type TypeScriptInlayHintsPreferences = Pick<
     'includeInlayFunctionLikeReturnTypeHints' |
     'includeInlayEnumMemberValueHints'
 >;
-/* eslint-enable @typescript-eslint/indent */
 
 interface WorkspaceConfigurationDiagnosticsOptions {
     ignoredCodes?: number[];

@@ -66,7 +66,7 @@ export function asCompletionItems(
 ): lsp.CompletionItem[] {
     const completions: lsp.CompletionItem[] = [];
     for (const entry of entries) {
-        if (entry.kind === 'warning') {
+        if (entry.kind === ScriptElementKind.warning as ts.ScriptElementKind) {
             continue;
         }
         const completion = asCompletionItem(entry, completionDataCache, file, position, document, filePathConverter, options, features, completionContext);
@@ -179,7 +179,7 @@ function asCompletionItem(
             item.tags = [lsp.CompletionItemTag.Deprecated];
         }
 
-        if (entry.kind === ScriptElementKind.scriptElement) {
+        if (entry.kind === ScriptElementKind.scriptElement as ScriptElementKind) {
             for (const extModifier of KindModifiers.fileExtensionKindModifiers) {
                 if (kindModifiers.has(extModifier)) {
                     if (entry.name.toLowerCase().endsWith(extModifier)) {
@@ -366,7 +366,7 @@ export async function asResolvedCompletionItem(
     }
 
     if (document && features.completionSnippets && canCreateSnippetOfFunctionCall(item.kind, options)) {
-        const { line, offset } = item.data;
+        const { line, offset } = item.data as ts.server.protocol.Location;
         const position = Position.fromLocation({ line, offset });
         const shouldCompleteFunction = await isValidFunctionCompletionContext(position, client, document);
         if (shouldCompleteFunction) {
@@ -384,11 +384,11 @@ async function isValidFunctionCompletionContext(position: lsp.Position, client: 
         const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(document.filepath, position);
         const response = await client.execute(CommandTypes.Quickinfo, args);
         if (response.type === 'response' && response.body) {
-            switch (response.body.kind) {
-                case 'var':
-                case 'let':
-                case 'const':
-                case 'alias':
+            switch (response.body.kind as ScriptElementKind) {
+                case ScriptElementKind.variableElement:
+                case ScriptElementKind.letElement:
+                case ScriptElementKind.constElement:
+                case ScriptElementKind.alias:
                     return false;
             }
         }
@@ -496,9 +496,9 @@ function getCodeActions(
     filepath: string,
     client: TsClient,
 ): {
-        additionalTextEdits: lsp.TextEdit[] | undefined;
-        command: lsp.Command | undefined;
-    } {
+    additionalTextEdits: lsp.TextEdit[] | undefined;
+    command: lsp.Command | undefined;
+} {
     // Try to extract out the additionalTextEdits for the current file.
     const additionalTextEdits: lsp.TextEdit[] = [];
     let hasRemainingCommandsOrEdits = false;

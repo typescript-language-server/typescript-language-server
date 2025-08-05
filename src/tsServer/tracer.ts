@@ -9,8 +9,6 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-/* eslint-disable @typescript-eslint/no-unnecessary-qualifier */
-
 import type { ts } from '../ts-protocol.js';
 import { Logger } from '../utils/logger.js';
 

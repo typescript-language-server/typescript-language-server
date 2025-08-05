@@ -53,6 +53,7 @@ export function fromProtocolCallHierarchyOutgoingCall(item: ts.server.protocol.C
 }
 
 function isSourceFileItem(item: ts.server.protocol.CallHierarchyItem) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     return item.kind === ScriptElementKind.scriptElement || item.kind === ScriptElementKind.moduleElement && item.selectionSpan.start.line === 1 && item.selectionSpan.start.offset === 1;
 }
 

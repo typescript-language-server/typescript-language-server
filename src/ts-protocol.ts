@@ -107,27 +107,43 @@ export enum HighlightSpanKind {
 }
 
 export enum JsxEmit {
-    None = 'None',
-    Preserve = 'Preserve',
-    ReactNative = 'ReactNative',
-    React = 'React'
+    None = 'none',
+    Preserve = 'preserve',
+    ReactNative = 'react-native',
+    React = 'react',
+    ReactJSX = 'react-jsx',
+    ReactJSXDev = 'react-jsxdev',
 }
 
 export enum ModuleKind {
-    None = 'None',
-    CommonJS = 'CommonJS',
-    AMD = 'AMD',
-    UMD = 'UMD',
-    System = 'System',
-    ES6 = 'ES6',
-    ES2015 = 'ES2015',
-    ESNext = 'ESNext'
+    None = 'none',
+    CommonJS = 'commonjs',
+    AMD = 'amd',
+    UMD = 'umd',
+    System = 'system',
+    ES6 = 'es6',
+    ES2015 = 'es2015',
+    ES2020 = 'es2020',
+    ES2022 = 'es2022',
+    ESNext = 'esnext',
+    Node16 = 'node16',
+    Node18 = 'node18',
+    Node20 = 'node20',
+    NodeNext = 'nodenext',
+    Preserve = 'preserve',
 }
 
 export enum ModuleResolutionKind {
-    Classic = 'Classic',
-    Node = 'Node',
-    // Bundler = 'Bundler'
+    Classic = 'classic',
+    /** @deprecated Renamed to `Node10` */
+    Node = 'node',
+    /** @deprecated Renamed to `Node10` */
+    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
+    NodeJs = 'node',
+    Node10 = 'node10',
+    Node16 = 'node16',
+    NodeNext = 'nodenext',
+    Bundler = 'bundler',
 }
 
 export enum SemicolonPreference {
@@ -205,18 +221,21 @@ export enum ScriptElementKindModifier {
 }
 
 export enum ScriptTarget {
-    ES3 = 'ES3',
-    ES5 = 'ES5',
-    ES6 = 'ES6',
-    ES2015 = 'ES2015',
-    ES2016 = 'ES2016',
-    ES2017 = 'ES2017',
-    ES2018 = 'ES2018',
-    ES2019 = 'ES2019',
-    ES2020 = 'ES2020',
-    ES2021 = 'ES2021',
-    ES2022 = 'ES2022',
-    ESNext = 'ESNext'
+    ES3 = 'es3',
+    ES5 = 'es5',
+    ES6 = 'es6',
+    ES2015 = 'es2015',
+    ES2016 = 'es2016',
+    ES2017 = 'es2017',
+    ES2018 = 'es2018',
+    ES2019 = 'es2019',
+    ES2020 = 'es2020',
+    ES2021 = 'es2021',
+    ES2022 = 'es2022',
+    ESNext = 'esnext',
+    JSON = 'json',
+    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
+    Latest = 'esnext',
 }
 
 export enum SymbolDisplayPartKind {
@@ -319,7 +338,7 @@ const SYMBOL_DISPLAY_PART_KIND_MAP: Record<keyof typeof ts.SymbolDisplayPartKind
     linkText: 24,
 };
 
-export function toSymbolDisplayPartKind(kind: string): ts.SymbolDisplayPartKind {
+export function toSymbolDisplayPartKind(kind: string): SymbolDisplayPartKind {
     return SYMBOL_DISPLAY_PART_KIND_MAP[kind as keyof typeof ts.SymbolDisplayPartKind];
 }
 

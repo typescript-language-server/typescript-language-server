@@ -83,10 +83,10 @@ export class TypeScriptVersion {
 
         this.logger.log(`Reading version from package.json at "${fileName}"`);
         const contents = fs.readFileSync(fileName).toString();
-        let desc: any = null;
+        let desc: { version?: string; } | null = null;
         try {
-            desc = JSON.parse(contents);
-        } catch (err) {
+            desc = JSON.parse(contents) as { version?: string; };
+        } catch {
             this.logger.log('Failed parsing contents of package.json.');
             return null;
         }
@@ -169,7 +169,7 @@ export class TypeScriptVersionProvider {
             const tsServerPath = path.join(path.dirname(file), 'tsserver.js');
             const bundledVersion = new TypeScriptVersion(TypeScriptVersionSource.Bundled, tsServerPath, this.logger);
             return bundledVersion;
-        } catch (e) {
+        } catch {
             // window.showMessage('Bundled typescript module not found', 'error');
             return null;
         }

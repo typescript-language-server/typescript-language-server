@@ -54,6 +54,8 @@ Specifies preferences for the internal `tsserver` process. Those options depend 
 
 **autoImportFileExcludePatterns** [array of strings] Glob patterns of files to exclude from auto imports. Relative paths are resolved relative to the workspace root. Since TypeScript 4.8.2+. **Default**: `[]`
 
+**autoImportSpecifierExcludeRegexes** [array of strings] Regexp patterns of files to exclude from auto imports. **Default**: `[]`
+
 **disableSuggestions** [boolean] **Default**: `false`
 
 **quotePreference** [string] Supported values `'auto'`, `'double'`, `'single'`. **Default**: `'auto'`
@@ -84,17 +86,23 @@ Specifies preferences for the internal `tsserver` process. Those options depend 
 
 **lazyConfiguredProjectsFromExternalProject** [boolean] **Default**: `false`
 
+**maximumHoverLength** [number] A positive integer indicating the maximum length of a hover text before it is truncated. **Default**: `500`
+
 <a name="organizeImportsIgnoreCase"></a> **organizeImportsIgnoreCase** [string or boolean] Indicates whether imports should be organized in a case-insensitive manner. Supported values: `'auto'`, `boolean`. **Default**: `'auto'`
 
-<a name="organizeImportsCollation"></a> **organizeImportsCollation** [string] Indicates whether imports should be organized via an "ordinal" (binary) comparison using the numeric value of their code points, or via "unicode" collation (via the [Unicode Collation Algorithm](https://unicode.org/reports/tr10/#Scope)) using rules associated with the locale specified in [organizeImportsCollationLocale](#organizeImportsCollationLocale). Supported values: `'ordinal'`, `'unicode'`. **Default**: `'ordinal'`
+<a name="organizeImportsCollation"></a> **organizeImportsCollation** [string] Indicates whether imports should be organized via an "ordinal" (binary) comparison using the numeric value of their code points, or via "unicode" collation (via the [Unicode Collation Algorithm](https://unicode.org/reports/tr10/#Scope)) using rules associated with the locale specified in [organizeImportsLocale](#organizeImportsLocale). Supported values: `'ordinal'`, `'unicode'`. **Default**: `'ordinal'`
 
-<a name="organizeImportsCollationLocale"></a> **organizeImportsCollationLocale** [string] Indicates the locale to use for "unicode" collation. If not specified, the locale `"en"` is used as an invariant for the sake of consistent sorting. Use `"auto"` to use the detected UI locale. This preference is ignored if [organizeImportsCollation](#organizeImportsNumericCollation) is not `"unicode"`. **Default**: `'en'`
+<a name="organizeImportsLocale"></a> **organizeImportsLocale** [string] Indicates the locale to use for "unicode" collation. If not specified, the locale `"en"` is used as an invariant for the sake of consistent sorting. Use `"auto"` to use the detected UI locale. This preference is ignored if [organizeImportsCollation](#organizeImportsNumericCollation) is not `"unicode"`. **Default**: `'en'`
 
 <a name="organizeImportsNumericCollation"></a> **organizeImportsNumericCollation** [boolean] Indicates whether numeric collation should be used for digit sequences in strings. When `true`, will collate strings such that `a1z < a2z < a100z`. When `false`, will collate strings such that `a1z < a100z < a2z`. This preference is ignored if [organizeImportsCollation](#organizeImportsCollation) is not `"unicode"`. **Default**: `false`
 
-**organizeImportsAccentCollation** [boolean] Indicates whether accents and other diacritic marks are considered unequal for the purpose of collation. When `true`, characters with accents and other diacritics will be collated in the order defined by the locale specified in [organizeImportsCollationLocale](#organizeImportsCollationLocale). This preference is ignored if [organizeImportsCollation](#organizeImportsCollation) is not `"unicode"`. **Default**: `true`
+**organizeImportsAccentCollation** [boolean] Indicates whether accents and other diacritic marks are considered unequal for the purpose of collation. When `true`, characters with accents and other diacritics will be collated in the order defined by the locale specified in [organizeImportsLocale](#organizeImportsLocale). This preference is ignored if [organizeImportsCollation](#organizeImportsCollation) is not `"unicode"`. **Default**: `true`
 
-**organizeImportsCaseFirst** [string or boolean] Indicates whether upper case or lower case should sort first. When `false`, the default order for the locale specified in [organizeImportsCollationLocale](#organizeImportsCollationLocale) is used. This preference is ignored if [organizeImportsCollation](#organizeImportsCollation) is not `"unicode"`. This preference is also ignored if we are using case-insensitive sorting, which occurs when [organizeImportsIgnoreCase](#organizeImportsIgnoreCase) is `true`, or if [organizeImportsIgnoreCase](#organizeImportsIgnoreCase) is `"auto"` and the auto-detected case sensitivity is determined to be case-insensitive. Supported values: `'upper'`, `'lower'`, `false`. **Default**: `false`
+**organizeImportsCaseFirst** [string or boolean] Indicates whether upper case or lower case should sort first. When `false`, the default order for the locale specified in [organizeImportsLocale](#organizeImportsLocale) is used. This preference is ignored if [organizeImportsCollation](#organizeImportsCollation) is not `"unicode"`. This preference is also ignored if we are using case-insensitive sorting, which occurs when [organizeImportsIgnoreCase](#organizeImportsIgnoreCase) is `true`, or if [organizeImportsIgnoreCase](#organizeImportsIgnoreCase) is `"auto"` and the auto-detected case sensitivity is determined to be case-insensitive. Supported values: `'upper'`, `'lower'`, `false`. **Default**: `false`
+
+**organizeImportsTypeOrder** ["last" | "inline" | "first"] Indicates where named type-only imports should sort. "inline" sorts named imports without regard to if the import is type-only. **Default**: `"last"`
+
+**preferTypeOnlyAutoImports** [boolean]  **Default**: `false`
 
 **providePrefixAndSuffixTextForRename** [boolean]  **Default**: `true`
 

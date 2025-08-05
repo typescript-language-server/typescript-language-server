@@ -19,7 +19,7 @@ const noopToResource: IFilePathToResourceConverter = {
 };
 
 describe('typescript.previewer', () => {
-    it('ignores hyphens after a param tag', async () => {
+    it('ignores hyphens after a param tag', () => {
         expect(
             tagsMarkdownPreview(
                 [
@@ -29,7 +29,7 @@ describe('typescript.previewer', () => {
         ).toBe('*@param* `a` — b');
     });
 
-    it('parses url jsdoc @link', async () => {
+    it('parses url jsdoc @link', () => {
         expect(
             markdownDocumentation(
                 'x {@link http://www.example.com/foo} y {@link https://api.jquery.com/bind/#bind-eventType-eventData-handler} z',
@@ -39,7 +39,7 @@ describe('typescript.previewer', () => {
         ).toBe('x [http://www.example.com/foo](http://www.example.com/foo) y [https://api.jquery.com/bind/#bind-eventType-eventData-handler](https://api.jquery.com/bind/#bind-eventType-eventData-handler) z');
     });
 
-    it('parses url jsdoc @link with text', async () => {
+    it('parses url jsdoc @link with text', () => {
         expect(
             markdownDocumentation(
                 'x {@link http://www.example.com/foo abc xyz} y {@link http://www.example.com/bar|b a z} z',
@@ -49,7 +49,7 @@ describe('typescript.previewer', () => {
         ).toBe('x [abc xyz](http://www.example.com/foo) y [b a z](http://www.example.com/bar) z');
     });
 
-    it('treats @linkcode jsdocs links as monospace', async () => {
+    it('treats @linkcode jsdocs links as monospace', () => {
         expect(
             markdownDocumentation(
                 'x {@linkcode http://www.example.com/foo} y {@linkplain http://www.example.com/bar} z',
@@ -59,7 +59,7 @@ describe('typescript.previewer', () => {
         ).toBe('x [`http://www.example.com/foo`](http://www.example.com/foo) y [http://www.example.com/bar](http://www.example.com/bar) z');
     });
 
-    it('parses url jsdoc @link in param tag', async () => {
+    it('parses url jsdoc @link in param tag', () => {
         expect(
             tagsMarkdownPreview([
                 {
@@ -70,7 +70,7 @@ describe('typescript.previewer', () => {
         ).toBe('*@param* `a` — x [abc xyz](http://www.example.com/foo) y [b a z](http://www.example.com/bar) z');
     });
 
-    it('ignores unclosed jsdocs @link', async () => {
+    it('ignores unclosed jsdocs @link', () => {
         expect(
             markdownDocumentation(
                 'x {@link http://www.example.com/foo y {@link http://www.example.com/bar bar} z',
@@ -80,7 +80,7 @@ describe('typescript.previewer', () => {
         ).toBe('x {@link http://www.example.com/foo y [bar](http://www.example.com/bar) z');
     });
 
-    it('supports non-ascii characters in parameter name (#90108)', async () => {
+    it('supports non-ascii characters in parameter name (#90108)', () => {
         expect(
             tagsMarkdownPreview([
                 {
@@ -139,7 +139,7 @@ describe('typescript.previewer', () => {
         );
     });
 
-    it('renders @linkcode symbol name as code', async () => {
+    it('renders @linkcode symbol name as code', () => {
         expect(
             plainWithLinks([
                 { text: 'a ', kind: 'text' },
@@ -159,7 +159,7 @@ describe('typescript.previewer', () => {
         ).toBe('a [`dog`](file:///path/file.ts#L7%2C5) b');
     });
 
-    it('renders @linkcode text as code', async () => {
+    it('renders @linkcode text as code', () => {
         expect(
             plainWithLinks([
                 { text: 'a ', kind: 'text' },

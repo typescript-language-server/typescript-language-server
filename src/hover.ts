@@ -75,9 +75,9 @@ export function toTsTriggerReason(context: lsp.SignatureHelpContext): ts.server.
         case lsp.SignatureHelpTriggerKind.TriggerCharacter:
             if (context.triggerCharacter) {
                 if (context.isRetrigger) {
-                    return { kind: 'retrigger', triggerCharacter: context.triggerCharacter as any };
+                    return { kind: 'retrigger', triggerCharacter: context.triggerCharacter as ts.SignatureHelpRetriggerCharacter };
                 } else {
-                    return { kind: 'characterTyped', triggerCharacter: context.triggerCharacter as any };
+                    return { kind: 'characterTyped', triggerCharacter: context.triggerCharacter as ts.SignatureHelpTriggerCharacter };
                 }
             } else {
                 return { kind: 'invoked' };

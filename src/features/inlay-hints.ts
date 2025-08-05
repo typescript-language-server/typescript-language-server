@@ -65,8 +65,12 @@ export class TypeScriptInlayHintsProvider {
                 Position.fromLocation(hint.position),
                 TypeScriptInlayHintsProvider.convertInlayHintText(hint, client),
                 fromProtocolInlayHintKind(hint.kind));
-            hint.whitespaceBefore && (inlayHint.paddingLeft = true);
-            hint.whitespaceAfter && (inlayHint.paddingRight = true);
+            if (hint.whitespaceBefore) {
+                inlayHint.paddingLeft = true;
+            }
+            if (hint.whitespaceAfter) {
+                inlayHint.paddingRight = true;
+            }
             return inlayHint;
         });
     }
@@ -105,8 +109,11 @@ function areInlayHintsEnabledForFile(fileConfigurationManager: FileConfiguration
 
 function fromProtocolInlayHintKind(kind: ts.server.protocol.InlayHintKind): lsp.InlayHintKind | undefined {
     switch (kind) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         case 'Parameter': return lsp.InlayHintKind.Parameter;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         case 'Type': return lsp.InlayHintKind.Type;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         case 'Enum': return undefined;
         default: return undefined;
     }

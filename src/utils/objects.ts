@@ -29,6 +29,9 @@ export function equals(one: any, other: any): boolean {
     }
 
     if (Array.isArray(one)) {
+        if (!Array.isArray(other)) {
+            return false;
+        }
         return array.equals(one, other, equals);
     } else {
         const oneKeys: string[] = [];
@@ -44,6 +47,6 @@ export function equals(one: any, other: any): boolean {
         if (!array.equals(oneKeys, otherKeys)) {
             return false;
         }
-        return oneKeys.every(key => equals(one[key], other[key]));
+        return oneKeys.every(key => equals((one as Record<string, any>)[key], (other as Record<string, any>)[key]));
     }
 }
