@@ -117,7 +117,7 @@ describe('call hierarchy', () => {
 -|> callThreeTwice (symbol: two.ts#3)
   -|> tada (symbol: three.ts#2)
     -|> print (symbol: three.ts#6)
-      -|> log (symbol: console.d.ts#220)
+      -|> log (symbol: console.d.ts#226)
   -|> Three (symbol: three.ts#1)
 `.trim(),
         );
