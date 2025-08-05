@@ -19,10 +19,10 @@ export function getInferredProjectCompilerOptions(
     workspaceConfig: WorkspaceConfigurationImplicitProjectConfigurationOptions,
 ): ts.server.protocol.ExternalProjectCompilerOptions {
     const projectConfig: ts.server.protocol.ExternalProjectCompilerOptions = {
-        module: ModuleKind.ESNext,
-        moduleResolution: ModuleResolutionKind.Node,
+        module: version.gte(API.v540) ? ModuleKind.Preserve : ModuleKind.ESNext,
+        moduleResolution: version.gte(API.v540) ? ModuleResolutionKind.Bundler : ModuleResolutionKind.Node,
         target: ScriptTarget.ES2022,
-        jsx: JsxEmit.React,
+        jsx: JsxEmit.ReactJSX,
     };
 
     if (version.gte(API.v500)) {

@@ -378,7 +378,7 @@ class RequestRouter {
                     request
                         .then(result => {
                             requestStates[serverIndex] = RequestState.Resolved;
-                            const erroredRequest = requestStates.find(state => state.type === RequestState.Type.Errored) as RequestState.Errored | undefined;
+                            const erroredRequest = requestStates.find(state => state.type === RequestState.Type.Errored);
                             if (erroredRequest) {
                                 // We've gone out of sync
                                 this.delegate.onFatalError(command, erroredRequest.err);

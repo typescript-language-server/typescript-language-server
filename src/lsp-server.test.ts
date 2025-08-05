@@ -1583,7 +1583,7 @@ accessSync('t');`,
                             edits: [
                                 {
                                     // Prefers import that is declared in package.json.
-                                    newText: 'import { existsSync } from "fs-extra";\n\n',
+                                    newText: 'import { existsSync } from "fs";\n\n',
                                     range: {
                                         end: {
                                             character: 0,
