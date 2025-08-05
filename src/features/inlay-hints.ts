@@ -109,8 +109,11 @@ function areInlayHintsEnabledForFile(fileConfigurationManager: FileConfiguration
 
 function fromProtocolInlayHintKind(kind: ts.server.protocol.InlayHintKind): lsp.InlayHintKind | undefined {
     switch (kind) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         case 'Parameter': return lsp.InlayHintKind.Parameter;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         case 'Type': return lsp.InlayHintKind.Type;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         case 'Enum': return undefined;
         default: return undefined;
     }
