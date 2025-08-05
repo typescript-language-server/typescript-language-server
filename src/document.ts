@@ -98,6 +98,7 @@ class GetErrRequest {
                 ? client.executeAsync(CommandTypes.GeterrForProject, { delay: 0, file: allFiles[0] }, this._token.token)
                 : client.executeAsync(CommandTypes.Geterr, { delay: 0, files: allFiles }, this._token.token);
 
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             request.finally(() => {
                 if (this._done) {
                     return;
@@ -443,6 +444,7 @@ export class LspDocuments {
     }
 
     private triggerDiagnostics(delay: number = 200): void {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.diagnosticDelayer.trigger(() => {
             this.sendPendingDiagnostics();
         }, delay);

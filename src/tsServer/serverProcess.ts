@@ -45,8 +45,8 @@ export class NodeTsServerProcessFactory implements TsServerProcessFactory {
     }
 }
 
-function generatePatchedEnv(env: any, modulePath: string): any {
-    const newEnv = Object.assign({}, env);
+function generatePatchedEnv(env: any, modulePath: string): NodeJS.ProcessEnv {
+    const newEnv = Object.assign({}, env) as NodeJS.ProcessEnv;
     newEnv.NODE_PATH = path.join(modulePath, '..', '..', '..');
     // Ensure we always have a PATH set
     newEnv.PATH = newEnv.PATH || process.env.PATH;
@@ -107,7 +107,7 @@ class IpcChildServerProcess implements TsServerProcess {
     }
 
     onStdErr(handler: (data: string) => void): void {
-        this._process.stderr!.on('data', data => handler(data.toString()));
+        this._process.stderr!.on('data', (data: Buffer | string) => handler(data.toString()));
     }
 
     onError(handler: (err: Error) => void): void {
@@ -145,7 +145,7 @@ class StdioChildServerProcess implements TsServerProcess {
     }
 
     onStdErr(handler: (data: string) => void): void {
-        this._process.stderr!.on('data', data => handler(data.toString()));
+        this._process.stderr!.on('data', (data: Buffer | string) => handler(data.toString()));
     }
 
     onError(handler: (err: Error) => void): void {
@@ -168,7 +168,7 @@ class Reader<T> {
     private isDisposed = false;
 
     public constructor(readable: Readable) {
-        readable.on('data', data => this.onLengthData(data));
+        readable.on('data', (data: Buffer | string) => this.onLengthData(data));
     }
 
     public dispose() {
@@ -192,7 +192,7 @@ class Reader<T> {
 
         try {
             this.buffer.append(data);
-            // eslint-disable-next-line no-constant-condition
+
             while (true) {
                 if (this.nextMessageLength === -1) {
                     this.nextMessageLength = this.buffer.tryReadContentLength();
@@ -205,7 +205,7 @@ class Reader<T> {
                     return;
                 }
                 this.nextMessageLength = -1;
-                const json = JSON.parse(msg);
+                const json = JSON.parse(msg) as T;
                 this._onData(json);
             }
         } catch (e) {

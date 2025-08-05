@@ -26,7 +26,7 @@ export class LogDirectoryProvider implements ILogDirectoryProvider {
         if (root) {
             try {
                 return fs.mkdtempSync(path.join(root, 'tsserver-log-'));
-            } catch (e) {
+            } catch {
                 return undefined;
             }
         }

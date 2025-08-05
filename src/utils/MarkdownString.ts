@@ -21,7 +21,7 @@ export class MarkdownString {
 
     appendText(value: string, newlineStyle: MarkdownStringTextNewlineStyle = MarkdownStringTextNewlineStyle.Paragraph): MarkdownString {
         this.value += escapeMarkdownSyntaxTokens(value)
-            .replace(/([ \t]+)/g, (_match, g1) => '&nbsp;'.repeat(g1.length))
+            .replace(/([ \t]+)/g, (_match, g1: string) => '&nbsp;'.repeat(g1.length))
             .replace(/>/gm, '\\>')
             .replace(/\n/g, newlineStyle === MarkdownStringTextNewlineStyle.Break ? '\\\n' : '\n\n');
 

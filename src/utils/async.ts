@@ -11,7 +11,7 @@ export interface ITask<T> {
 
 export class Delayer<T> {
     public defaultDelay: number;
-    private timeout: any; // Timer
+    private timeout: NodeJS.Timeout | null;
     private completionPromise: Promise<T | undefined> | null;
     private onSuccess: ((value: T | PromiseLike<T> | undefined) => void) | null;
     private task: ITask<T> | null;
@@ -62,9 +62,11 @@ export class Delayer<T> {
 
 export function setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
     if (global.setImmediate) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const handle = global.setImmediate(callback, ...args);
         return { dispose: () => global.clearImmediate(handle) };
     } else {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const handle = setTimeout(callback, 0, ...args);
         return { dispose: () => clearTimeout(handle) };
     }

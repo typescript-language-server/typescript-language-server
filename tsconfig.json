@@ -1,6 +1,8 @@
 {
     "include": [
         "src/**/*.ts",
+        "test-data/**/*.ts",
+        "eslint.config.js",
         "rollup.config.ts",
         "vitest.config.ts",
     ],

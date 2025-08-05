@@ -68,11 +68,11 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
         item: ts.server.protocol.NavigationTree,
         parent: ts.server.protocol.NavigationTree | undefined,
     ): lsp.Range | undefined {
-        if (parent && parent.kind === ScriptElementKind.enumElement) {
+        if (parent && (parent.kind as ScriptElementKind) === ScriptElementKind.enumElement) {
             return getSymbolRange(document, item);
         }
 
-        switch (item.kind) {
+        switch (item.kind as ScriptElementKind) {
             case ScriptElementKind.functionElement: {
                 const showOnAllFunctions = this.fileConfigurationManager.getWorkspacePreferencesForFile(document).referencesCodeLens?.showOnAllFunctions;
                 if (showOnAllFunctions) {
@@ -118,7 +118,7 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
                 }
 
                 // Only show if parent is a class type object (not a literal)
-                switch (parent?.kind) {
+                switch (parent?.kind as ScriptElementKind) {
                     case ScriptElementKind.classElement:
                     case ScriptElementKind.interfaceElement:
                     case ScriptElementKind.typeElement:

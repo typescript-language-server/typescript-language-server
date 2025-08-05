@@ -9,8 +9,6 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-/* eslint-disable @typescript-eslint/no-unnecessary-qualifier */
-
 import lsp from 'vscode-languageserver';
 import type { LspClient } from '../lsp-client.js';
 
@@ -79,7 +77,7 @@ export class LspClientLogger implements Logger {
                 if (typeof p === 'object') {
                     return JSON.stringify(p, null, 2);
                 } else {
-                    return p;
+                    return p as string;
                 }
             }).join(' ');
 
@@ -139,6 +137,7 @@ export class ConsoleLogger implements Logger {
     private print(level: LogLevel, args: any[], options?: { overrideLevel?: boolean; }): void {
         if (this.level >= level || options?.overrideLevel) {
             // All messages logged to stderr as stdout is reserved for LSP communication.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             console.error(`[${LogLevel.toString(level)}]`, ...this.toStrings(...args));
         }
     }
@@ -187,22 +186,27 @@ export class PrefixingLogger implements Logger {
     ) {}
 
     error(...args: any[]): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.logger.error(this.prefix, ...args);
     }
 
     warn(...args: any[]): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.logger.warn(this.prefix, ...args);
     }
 
     info(...args: any[]): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.logger.info(this.prefix, ...args);
     }
 
     log(...args: any[]): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.logger.log(this.prefix, ...args);
     }
 
     logIgnoringVerbosity(level: LogLevel, ...args: any[]): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         this.logger.logIgnoringVerbosity(level, this.prefix, ...args);
     }
 
@@ -227,8 +231,6 @@ function data2String(data: any): string {
     if (data instanceof Error) {
         return data.stack || data.message;
     }
-    if (data.success === false && data.message) {
-        return data.message;
-    }
-    return data.toString();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    return data.success === false && data.message ? data.message : data.toString();
 }

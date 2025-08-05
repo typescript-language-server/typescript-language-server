@@ -65,8 +65,12 @@ export class TypeScriptInlayHintsProvider {
                 Position.fromLocation(hint.position),
                 TypeScriptInlayHintsProvider.convertInlayHintText(hint, client),
                 fromProtocolInlayHintKind(hint.kind));
-            hint.whitespaceBefore && (inlayHint.paddingLeft = true);
-            hint.whitespaceAfter && (inlayHint.paddingRight = true);
+            if (hint.whitespaceBefore) {
+                inlayHint.paddingLeft = true;
+            }
+            if (hint.whitespaceAfter) {
+                inlayHint.paddingRight = true;
+            }
             return inlayHint;
         });
     }
