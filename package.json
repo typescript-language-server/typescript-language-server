@@ -44,7 +44,7 @@
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^11.1.6",
+    "@rollup/plugin-typescript": "^12.1.4",
     "@size-limit/file": "^11.2.0",
     "@stylistic/eslint-plugin": "^5.2.2",
     "@types/fs-extra": "^11.0.4",
