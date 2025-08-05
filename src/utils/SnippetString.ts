@@ -6,7 +6,7 @@ export default class SnippetString {
         if (!thing) {
             return false;
         }
-        return typeof thing.value === 'string';
+        return typeof (thing as { value?: string; }).value === 'string';
     }
 
     private static _escape(value: string): string {

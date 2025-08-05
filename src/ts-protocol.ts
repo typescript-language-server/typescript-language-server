@@ -319,7 +319,7 @@ const SYMBOL_DISPLAY_PART_KIND_MAP: Record<keyof typeof ts.SymbolDisplayPartKind
     linkText: 24,
 };
 
-export function toSymbolDisplayPartKind(kind: string): ts.SymbolDisplayPartKind {
+export function toSymbolDisplayPartKind(kind: string): SymbolDisplayPartKind {
     return SYMBOL_DISPLAY_PART_KIND_MAP[kind as keyof typeof ts.SymbolDisplayPartKind];
 }
 

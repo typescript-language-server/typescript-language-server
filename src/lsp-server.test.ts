@@ -568,10 +568,8 @@ describe('completion', () => {
         expect(resolvedItem).toMatchObject({
             label: '$',
             insertTextFormat: lsp.InsertTextFormat.Snippet,
-            // eslint-disable-next-line no-template-curly-in-string
             insertText: '\\$()$0',
             textEdit: {
-                // eslint-disable-next-line no-template-curly-in-string
                 newText: '\\$()$0',
                 insert: {
                     start: {
@@ -700,8 +698,8 @@ describe('definition', () => {
             position: position(indexDoc, 'a/*identifier*/'),
         }) as lsp.Location[];
         expect(Array.isArray(definitions)).toBeTruthy();
-        expect(definitions!).toHaveLength(1);
-        expect(definitions![0]).toMatchObject({
+        expect(definitions).toHaveLength(1);
+        expect(definitions[0]).toMatchObject({
             uri: uri('source-definition', 'a.d.ts'),
             range: {
                 start: {
@@ -762,8 +760,8 @@ describe('definition (definition link supported)', () => {
             position: position(indexDoc, 'a/*identifier*/'),
         }) as lsp.DefinitionLink[];
         expect(Array.isArray(definitions)).toBeTruthy();
-        expect(definitions!).toHaveLength(1);
-        expect(definitions![0]).toMatchObject({
+        expect(definitions).toHaveLength(1);
+        expect(definitions[0]).toMatchObject({
             originSelectionRange: {
                 start: {
                     line: 1,
@@ -1074,7 +1072,7 @@ describe('formatting', () => {
     const languageId = 'typescript';
     const version = 1;
 
-    beforeAll(async () => {
+    beforeAll(() => {
         server.updateWorkspaceSettings({
             typescript: {
                 format: {
@@ -1277,7 +1275,7 @@ describe('signatureHelp', () => {
                 },
             },
         }))!;
-        const { activeSignature, signatures } = result!;
+        const { activeSignature, signatures } = result;
         expect(activeSignature).toBe(1);
         expect(signatures[activeSignature!]).toMatchObject({
             label: 'foo(n: number, baz?: boolean): void',
@@ -1298,7 +1296,7 @@ describe('code actions', () => {
 
     it('can provide quickfix code actions', async () => {
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
@@ -1314,7 +1312,7 @@ describe('code actions', () => {
                     message: 'unused arg',
                 }],
             },
-        }))!;
+        });
 
         // 1 quickfix + 2 refactorings
         expect(result).toHaveLength(3);
@@ -1401,7 +1399,7 @@ describe('code actions', () => {
 
     it('can filter quickfix code actions filtered by only', async () => {
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
@@ -1418,7 +1416,7 @@ describe('code actions', () => {
                 }],
                 only: ['refactor', 'invalid-action'],
             },
-        }))!;
+        });
 
         expect(result).toMatchObject([
             {
@@ -1464,7 +1462,7 @@ describe('code actions', () => {
 
     it('does not provide organize imports when there are errors', async () => {
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 29 },
@@ -1481,7 +1479,7 @@ describe('code actions', () => {
                 }],
                 only: [CodeActionKind.SourceOrganizeImportsTs.value],
             },
-        }))!;
+        });
 
         expect(result).toStrictEqual([]);
     });
@@ -1497,7 +1495,7 @@ existsSync('t');
 accessSync('t');`,
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 0, character: 0 },
@@ -1507,7 +1505,7 @@ accessSync('t');`,
                 diagnostics: [],
                 only: [CodeActionKind.SourceOrganizeImportsTs.value],
             },
-        }))!;
+        });
 
         expect(result).toMatchObject([
             {
@@ -1563,7 +1561,7 @@ accessSync('t');`,
             text: 'existsSync(\'t\');',
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 29 },
@@ -1573,7 +1571,7 @@ accessSync('t');`,
                 diagnostics: [],
                 only: [CodeActionKind.SourceAddMissingImportsTs.value],
             },
-        }))!;
+        });
 
         expect(result).toMatchObject([
             {
@@ -1620,7 +1618,7 @@ accessSync('t');`,
 }`,
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 0, character: 0 },
@@ -1630,7 +1628,7 @@ accessSync('t');`,
                 diagnostics: [],
                 only: [CodeActionKind.SourceFixAllTs.value],
             },
-        }))!;
+        });
 
         expect(result).toMatchObject([
             {
@@ -1673,7 +1671,7 @@ accessSync('t');`,
             text: 'import { existsSync } from \'fs\';',
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: position(doc, 'existsSync'),
@@ -1683,7 +1681,7 @@ accessSync('t');`,
                 diagnostics: [],
                 only: [CodeActionKind.SourceRemoveUnusedTs.value],
             },
-        }))!;
+        });
 
         expect(result).toMatchObject([
             {
@@ -1732,7 +1730,7 @@ accessSync('t');`,
             `,
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = (await server.codeAction({
+        const result = await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 0, character: 0 },
@@ -1742,7 +1740,7 @@ accessSync('t');`,
                 diagnostics: [],
                 only: [CodeActionKind.SourceFixAllTs.value],
             },
-        }))!;
+        });
         expect(result).toHaveLength(1);
         expect(result).toMatchObject([
             {
@@ -1788,7 +1786,7 @@ describe('executeCommand', () => {
             text: 'export function fn(): void {}\nexport function newFn(): void {}',
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const codeActions = (await server.codeAction({
+        const codeActions = await server.codeAction({
             textDocument: doc,
             range: {
                 start: position(doc, 'newFn'),
@@ -1797,7 +1795,7 @@ describe('executeCommand', () => {
             context: {
                 diagnostics: [],
             },
-        }))!;
+        });
         // Find refactoring code action.
         const applyRefactoringAction = codeActions.find(action => action.command?.command === Commands.APPLY_REFACTORING);
         expect(applyRefactoringAction).toBeDefined();
@@ -1860,13 +1858,13 @@ describe('executeCommand', () => {
             text: readContents(filePath('source-definition', 'index.ts')),
         };
         await openDocumentAndWaitForDiagnostics(server, indexDoc);
-        const result: lsp.Location[] | null = await server.executeCommand({
+        const result = await server.executeCommand({
             command: Commands.SOURCE_DEFINITION,
             arguments: [
                 indexUri,
                 position(indexDoc, '/*identifier*/'),
             ],
-        });
+        }) as lsp.Location[] | null;
         expect(result).not.toBeNull();
         expect(result).toHaveLength(1);
         expect(result![0]).toMatchObject({
@@ -2005,7 +2003,7 @@ describe('jsx/tsx project', () => {
 });
 
 describe('codeLens', () => {
-    beforeAll(async () => {
+    beforeAll(() => {
         server.updateWorkspaceSettings({
             typescript: {
                 implementationsCodeLens: {
@@ -2239,7 +2237,7 @@ describe('codeLens disabled', () => {
 });
 
 describe('inlayHints', () => {
-    beforeAll(async () => {
+    beforeAll(() => {
         server.updateWorkspaceSettings({
             typescript: {
                 inlayHints: {
@@ -2335,7 +2333,7 @@ describe('completions without client snippet support', () => {
         expect(completion!.insertTextFormat).not.toBe(lsp.InsertTextFormat.Snippet);
         expect(completion!.label).toBe('readFile');
         const resolvedItem = await localServer.completionResolve(completion!);
-        expect(resolvedItem!.label).toBe('readFile');
+        expect(resolvedItem.label).toBe('readFile');
         expect(resolvedItem.insertText).toBeUndefined();
         expect(resolvedItem.insertTextFormat).toBeUndefined();
         localServer.didCloseTextDocument({ textDocument: doc });

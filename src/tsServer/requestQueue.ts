@@ -76,7 +76,7 @@ export class RequestQueue {
         return false;
     }
 
-    public createRequest(command: string, args: any): ts.server.protocol.Request {
+    public createRequest(command: string, args: unknown): ts.server.protocol.Request {
         return {
             seq: this.sequenceNumber++,
             type: 'request',

@@ -145,6 +145,7 @@ export class TestLspClient implements LspClient {
         protected logger: ConsoleLogger,
     ) {}
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async createProgressReporter(_token?: lsp.CancellationToken, _workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter> {
         const reporter = new class implements lsp.WorkDoneProgressReporter {
             begin(_title: string, _percentage?: number, _message?: string, _cancellable?: boolean): void {}
@@ -175,6 +176,7 @@ export class TestLspClient implements LspClient {
         this.workspaceEditsListener = listener;
     }
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {
         if (this.workspaceEditsListener) {
             this.workspaceEditsListener(args);
@@ -209,6 +211,7 @@ interface TestLspServerOptions {
     initializationOptionsOverrides?: TypeScriptInitializationOptions;
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function createServer(options: TestLspServerOptions): Promise<TestLspServer> {
     const logger = new ConsoleLogger(CONSOLE_LOG_LEVEL);
     const lspClient = new TestLspClient(options, logger);
@@ -221,7 +224,7 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         server.workspaceEdits.push(args);
     });
 
-    await server.initialize({
+    server.initialize({
         rootPath: undefined,
         rootUri: options.rootUri,
         processId: 42,

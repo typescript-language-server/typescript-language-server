@@ -1,7 +1,7 @@
-import Button from './button'
+import Button from './button';
 
 export default function App() {
-  return (
-    <Button title />
-  )
+    return (
+        <Button title />
+    );
 }

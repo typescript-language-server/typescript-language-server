@@ -107,7 +107,6 @@ export interface WorkspaceConfigurationImplicitProjectConfigurationOptions {
     target?: string;
 }
 
-/* eslint-disable @typescript-eslint/indent */
 export type TypeScriptInlayHintsPreferences = Pick<
     ts.server.protocol.UserPreferences,
     'includeInlayParameterNameHints' |
@@ -119,7 +118,6 @@ export type TypeScriptInlayHintsPreferences = Pick<
     'includeInlayFunctionLikeReturnTypeHints' |
     'includeInlayEnumMemberValueHints'
 >;
-/* eslint-enable @typescript-eslint/indent */
 
 interface WorkspaceConfigurationDiagnosticsOptions {
     ignoredCodes?: number[];

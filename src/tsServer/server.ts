@@ -109,15 +109,18 @@ export class SingleTsServer implements ITypeScriptServer {
         });
 
         this._process.onStdErr(error => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             this._stdErrHandlers.forEach(handler => handler(error));
         });
 
         this._process.onExit((code, signal) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             this._exitHandlers.forEach(handler => handler({ code, signal }));
             this._callbacks.destroy('server exited');
         });
 
         this._process.onError(error => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             this._errorHandlers.forEach(handler => handler(error));
             this._callbacks.destroy('server errored');
         });
@@ -184,6 +187,7 @@ export class SingleTsServer implements ITypeScriptServer {
                         }
                     } else {
                         this._tracer.traceEvent(this._serverId, event);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         this._eventHandlers.forEach(handler => handler(event));
                     }
                     break;
@@ -332,7 +336,7 @@ class RequestRouter {
     constructor(
         private readonly servers: ReadonlyArray<{
             readonly server: ITypeScriptServer;
-            canRun?(command: keyof TypeScriptRequestTypes, executeInfo: ExecuteInfo): boolean;
+            canRun?(this: void, command: keyof TypeScriptRequestTypes, executeInfo: ExecuteInfo): boolean;
         }>,
         private readonly delegate: TsServerDelegate,
     ) { }
@@ -381,9 +385,11 @@ class RequestRouter {
                             }
                             return result;
                         }, err => {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                             requestStates[serverIndex] = new RequestState.Errored(err);
                             if (requestStates.some(state => state === RequestState.Resolved)) {
                                 // We've gone out of sync
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                                 this.delegate.onFatalError(command, err);
                             }
                             throw err;
@@ -493,11 +499,12 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
             delegate);
 
         this.syntaxServer.onEvent(event => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             this._eventHandlers.forEach(handler => handler(event));
         });
 
         this.semanticServer.onEvent(event => {
-            switch (event.event) {
+            switch (event.event as EventName) {
                 case EventName.projectLoadingStart:
                     this._projectLoading = true;
                     break;
@@ -510,14 +517,17 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
                     this._projectLoading = false;
                     break;
             }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             this._eventHandlers.forEach(handler => handler(event));
         });
 
         this.semanticServer.onExit(event => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             this._exitHandlers.forEach(handler => handler(event));
             this.syntaxServer.kill();
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         this.semanticServer.onError(event => this._errorHandlers.forEach(handler => handler(event)));
     }
 
