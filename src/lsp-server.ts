@@ -16,11 +16,13 @@ import { LspDocument } from './document.js';
 import { asCompletionItems, asResolvedCompletionItem, CompletionContext, CompletionDataCache, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
+import { TSServerRequestCommand } from './commands/tsserverRequests.js';
 import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
 import { organizeImportsCommands, provideOrganizeImports } from './organize-imports.js';
 import { CommandTypes, EventName, OrganizeImportsMode, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
+import { type TypeScriptRequestTypes, type ExecuteInfo } from './typescriptService.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { fromProtocolCallHierarchyItem, fromProtocolCallHierarchyIncomingCall, fromProtocolCallHierarchyOutgoingCall } from './features/call-hierarchy.js';
 import FileConfigurationManager, { type WorkspaceConfiguration } from './features/fileConfigurationManager.js';
@@ -209,6 +211,7 @@ export class LspServer {
                         Commands.ORGANIZE_IMPORTS,
                         Commands.APPLY_RENAME_FILE,
                         Commands.SOURCE_DEFINITION,
+                        Commands.TS_SERVER_REQUEST,
                     ],
                 },
                 hoverProvider: true,
@@ -943,6 +946,12 @@ export class LspServer {
             const [uri, position] = (params.arguments || []) as [lsp.DocumentUri?, lsp.Position?];
             const reporter = await this.options.lspClient.createProgressReporter(token, workDoneProgress);
             return SourceDefinitionCommand.execute(uri, position, this.tsClient, this.options.lspClient, reporter, token);
+        } else if (params.command === Commands.TS_SERVER_REQUEST) {
+            const [command, args, config] = (params.arguments || []) as [keyof TypeScriptRequestTypes, unknown?, ExecuteInfo?];
+            if (typeof command !== 'string') {
+                throw new Error(`"Command" argument must be a string, got: ${typeof command}`);
+            }
+            return TSServerRequestCommand.execute(this.tsClient, command, args, config, token);
         } else {
             this.logger.error(`Unknown command ${params.command}.`);
         }

@@ -11,8 +11,9 @@ import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, openDocumentAndWaitForDiagnostics, range, lastRange } from './test-utils.js';
 import { Commands } from './commands.js';
-import { SemicolonPreference } from './ts-protocol.js';
+import { CommandTypes, SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
+import { ExecutionTarget } from './tsServer/server.js';
 
 const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 
@@ -1846,6 +1847,40 @@ describe('executeCommand', () => {
             },
         ],
         );
+    });
+
+    it('send custom tsserver command', async () => {
+        const fooUri = uri('foo.ts');
+        const doc = {
+            uri: fooUri,
+            languageId: 'typescript',
+            version: 1,
+            text: 'export function fn(): void {}\nexport function newFn(): void {}',
+        };
+        await openDocumentAndWaitForDiagnostics(server, doc);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const result = await server.executeCommand({
+            command: Commands.TS_SERVER_REQUEST,
+            arguments: [
+                CommandTypes.ProjectInfo,
+                {
+                    file: filePath('foo.ts'),
+                    needFileNameList: false,
+                },
+                {
+                    executionTarget: ExecutionTarget.Semantic,
+                    expectsResult: true,
+                    isAsync: false,
+                    lowPriority: true,
+                },
+            ],
+        });
+        expect(result).toBeDefined();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(result.body).toMatchObject({
+            // tsserver returns non-native path separators on Windows.
+            configFileName: filePath('tsconfig.json').replace(/\\/g, '/'),
+        });
     });
 
     it('go to source definition', async () => {

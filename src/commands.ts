@@ -8,6 +8,7 @@
 import * as lsp from 'vscode-languageserver';
 import { SourceDefinitionCommand } from './features/source-definition.js';
 import { TypeScriptVersionSource } from './tsServer/versionProvider.js';
+import { TSServerRequestCommand } from './commands/tsserverRequests.js';
 
 export const Commands = {
     APPLY_WORKSPACE_EDIT: '_typescript.applyWorkspaceEdit',
@@ -20,6 +21,7 @@ export const Commands = {
     /** Commands below should be implemented by the client */
     SELECT_REFACTORING: '_typescript.selectRefactoring',
     SOURCE_DEFINITION: SourceDefinitionCommand.id,
+    TS_SERVER_REQUEST: TSServerRequestCommand.id,
 };
 
 type TypescriptVersionNotificationParams = {
