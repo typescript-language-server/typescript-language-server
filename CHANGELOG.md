@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.4.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.3.4...v4.4.0) (2025-08-05)
+
+
+### Features
+
+* add support for typescript.tsserverRequest command ([#967](https://github.com/typescript-language-server/typescript-language-server/issues/967)) ([f09e87a](https://github.com/typescript-language-server/typescript-language-server/commit/f09e87a8d7bca95db3487d115c869612463796dc)), closes [#959](https://github.com/typescript-language-server/typescript-language-server/issues/959)
+
+
+### Bug Fixes
+
+* **deps:** update devdependency typescript to ^5.9.2 ([#882](https://github.com/typescript-language-server/typescript-language-server/issues/882)) ([93cc29d](https://github.com/typescript-language-server/typescript-language-server/commit/93cc29d247441fdb0b86b6bf35aaf22657983a74))
+
 ## [4.3.4](https://github.com/typescript-language-server/typescript-language-server/compare/v4.3.3...v4.3.4) (2025-02-26)
 
 
