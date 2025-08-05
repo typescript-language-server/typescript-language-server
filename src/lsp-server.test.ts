@@ -1858,6 +1858,7 @@ describe('executeCommand', () => {
             text: 'export function fn(): void {}\nexport function newFn(): void {}',
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const result = await server.executeCommand({
             command: Commands.TS_SERVER_REQUEST,
             arguments: [
@@ -1875,6 +1876,7 @@ describe('executeCommand', () => {
             ],
         });
         expect(result).toBeDefined();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(result.body).toMatchObject({
             // tsserver returns non-native path separators on Windows.
             configFileName: filePath('tsconfig.json').replace(/\\/g, '/'),

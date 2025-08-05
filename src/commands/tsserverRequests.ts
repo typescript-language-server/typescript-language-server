@@ -8,6 +8,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import * as lsp from 'vscode-languageserver';
 import type { TsClient } from '../ts-client.js';
@@ -20,7 +21,7 @@ interface RequestArgs {
 export class TSServerRequestCommand {
     public static readonly id = 'typescript.tsserverRequest';
 
-    public static async execute(
+    public static execute(
         client: TsClient,
         command: keyof TypeScriptRequestTypes,
         args?: any,
@@ -35,6 +36,7 @@ export class TSServerRequestCommand {
                 if (hasFile) {
                     const document = client.toOpenDocument(requestArgs.file);
                     if (document) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         newArgs.file = document.filepath;
                     }
                 }
