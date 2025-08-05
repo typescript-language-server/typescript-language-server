@@ -77,5 +77,8 @@
     "vscode-uri": "^3.1.0",
     "which": "^4.0.0",
     "why-is-node-running": "^2.3.0"
+  },
+  "resolutions": {
+    "vscode-jsonrpc": "^8.2.1"
   }
 }
