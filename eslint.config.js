@@ -2,7 +2,7 @@ import eslint from '@eslint/js';
 import globals from 'globals';
 import tsEslint from 'typescript-eslint';
 import stylistic from '@stylistic/eslint-plugin';
-import vitest from 'eslint-plugin-vitest';
+import vitest from '@vitest/eslint-plugin';
 
 export default tsEslint.config([
     eslint.configs.recommended,
