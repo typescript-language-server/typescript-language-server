@@ -4,14 +4,9 @@
 
 # TypeScript Language Server
 
-[Language Server Protocol](https://github.com/Microsoft/language-server-protocol) implementation for TypeScript wrapping `tsserver`.
-
-Originally based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server and maintained by [TypeFox](https://typefox.io). The core logic for interacting with `tsserver` is nowadays mostly based on the code of the `TypeScript Language Features` VSCode bundled extension maintained in https://github.com/microsoft/vscode.
-
-Maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you.
-
 <!-- MarkdownTOC -->
 
+- [What is it, exactly?](#what-is-it-exactly)
 - [Installing](#installing)
 - [Running the language server](#running-the-language-server)
 - [CLI Options](#cli-options)
@@ -37,6 +32,14 @@ Maintained by a [community of contributors](https://github.com/typescript-langua
     - [Publishing](#publishing)
 
 <!-- /MarkdownTOC -->
+
+## What is it, exactly?
+
+The [TypeScript project/package](https://github.com/microsoft/TypeScript) includes a `tsserver` component which provides a custom API that can be used for gathering various intelligence about a typescript/javascript project. The (VSCode)[https://github.com/microsoft/vscode] team has built a project called `Typescript Language Features` (and bundled it as an internal extension in VSCode) that provides code intelligence for your javascript and typescript projects by utilizing that `tsserver` API. Since that extension doesn't use the standardized [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) to communicate with the editor, other editors that implement LSP can't directly utilize it. Here is wher this `typescript-language server` project comes in with the aim to provide a thin LSP interface on top of that extension's code base for the benefit of all other editors that implement the LSP protocol.
+
+Originally based on concepts and ideas from https://github.com/prabirshrestha/typescript-language-server and maintained by [TypeFox](https://typefox.io). Currently maintained by a [community of contributors](https://github.com/typescript-language-server/typescript-language-server/graphs/contributors) like you.
+
+This project is not directly associated with Microsoft and is not used in their [VSCode](https://github.com/microsoft/vscode) editor. If you have an issue with VSCode functionality, report it in their repository instead.
 
 ## Installing
 
