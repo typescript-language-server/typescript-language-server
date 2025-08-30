@@ -41,6 +41,8 @@ Originally based on concepts and ideas from https://github.com/prabirshrestha/ty
 
 This project is not directly associated with Microsoft and is not used in their [VSCode](https://github.com/microsoft/vscode) editor. If you have an issue with VSCode functionality, report it in their repository instead.
 
+Currently Microsoft is working on [TypeScript 7](https://github.com/microsoft/typescript-go) written natively in the go language that will include the LSP implementation and will hopefully supersede this project.
+
 ## Installing
 
 ```sh
