@@ -352,6 +352,7 @@ export interface SupportedFeatures {
     definitionLinkSupport?: boolean;
     diagnosticsSupport?: boolean;
     diagnosticsTagSupport?: boolean;
+    moveToFileCodeActionSupport?: boolean;
 }
 
 export interface TypeScriptPlugin {
@@ -363,6 +364,7 @@ export interface TypeScriptPlugin {
 export interface TypeScriptInitializationOptions {
     completionDisableFilterText?: boolean;
     disableAutomaticTypingAcquisition?: boolean;
+    supportsMoveToFileCodeAction?: boolean;
     hostInfo?: string;
     locale?: string;
     maxTsServerMemory?: number;
