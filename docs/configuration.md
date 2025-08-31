@@ -17,6 +17,7 @@ The language server accepts various settings through the `initializationOptions`
 | hostInfo          | string   | Information about the host, for example `"Emacs 24.4"` or `"Sublime Text v3075"`. **Default**: `undefined` |
 | completionDisableFilterText  | boolean | Don't set `filterText` property on completion items. **Default**: `false` |
 | disableAutomaticTypingAcquisition | boolean | Disables tsserver from automatically fetching missing type definitions (`@types` packages) for external modules. |
+| supportsMoveToFileCodeAction | boolean | Whether the client supports the "Move to file" interactive code action. |
 | maxTsServerMemory | number   | The maximum size of the V8's old memory section in megabytes (for example `4096` means 4GB). The default value is dynamically configured by Node so can differ per system. Increase for very big projects that exceed allowed memory usage. **Default**: `undefined` |
 | npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
 | locale            | string   | The locale to use to show error messages. |
