@@ -293,6 +293,7 @@ export const enum EventName {
 export class KindModifiers {
     public static readonly optional = 'optional';
     public static readonly deprecated = 'deprecated';
+    public static readonly color = 'color';
     public static readonly dtsFile = '.d.ts';
     public static readonly tsFile = '.ts';
     public static readonly tsxFile = '.tsx';
