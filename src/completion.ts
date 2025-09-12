@@ -24,7 +24,9 @@ interface ParameterListParts {
 }
 
 export interface CompletionContext {
+    readonly enableCallCompletions: boolean;
     readonly isMemberCompletion: boolean;
+    readonly isNewIdentifierLocation: boolean;
     readonly dotAccessorContext?: {
         range: lsp.Range;
         text: string;
@@ -63,10 +65,11 @@ export function asCompletionItems(
     options: WorkspaceConfigurationCompletionOptions,
     features: SupportedFeatures,
     completionContext: CompletionContext,
+    defaultCommitCharacters: readonly string[] | undefined,
 ): lsp.CompletionItem[] {
     const completions: lsp.CompletionItem[] = [];
     for (const entry of entries) {
-        const completion = asCompletionItem(entry, completionDataCache, file, position, document, filePathConverter, options, features, completionContext);
+        const completion = asCompletionItem(entry, completionDataCache, file, position, document, filePathConverter, options, features, completionContext, defaultCommitCharacters);
         if (!completion) {
             continue;
         }
@@ -85,6 +88,7 @@ function asCompletionItem(
     options: WorkspaceConfigurationCompletionOptions,
     features: SupportedFeatures,
     completionContext: CompletionContext,
+    defaultCommitCharacters: readonly string[] | undefined,
 ): lsp.CompletionItem | null {
     const cacheId = completionDataCache.add({
         file,
@@ -100,7 +104,7 @@ function asCompletionItem(
     });
 
     const item: lsp.CompletionItem = {
-        label: entry.name,
+        label: entry.name || (entry.insertText ?? ''),
         kind: asCompletionItemKind(entry.kind),
         sortText: entry.sortText,
         preselect: entry.isRecommended,
@@ -109,18 +113,18 @@ function asCompletionItem(
         },
     };
 
-    if (features.completionCommitCharactersSupport) {
-        item.commitCharacters = asCommitCharacters(entry.kind);
-    }
-
-    if (features.completionLabelDetails) {
-        item.labelDetails = entry.labelDetails;
-    }
-
     if (entry.source && entry.hasAction) {
         // De-prioritze auto-imports
         // https://github.com/Microsoft/vscode/issues/40311
         item.sortText = `\uffff${entry.sortText}`;
+    }
+
+    if (features.completionCommitCharactersSupport) {
+        item.commitCharacters = asCommitCharacters(completionContext, entry, defaultCommitCharacters);
+    }
+
+    if (features.completionLabelDetails) {
+        item.labelDetails = entry.labelDetails;
     }
 
     const { isSnippet, replacementSpan, sourceDisplay } = entry;
@@ -174,6 +178,10 @@ function asCompletionItem(
 
         if (kindModifiers.has(KindModifiers.deprecated)) {
             item.tags = [lsp.CompletionItemTag.Deprecated];
+        }
+
+        if (kindModifiers.has(KindModifiers.color)) {
+            item.kind = lsp.CompletionItemKind.Color;
         }
 
         if (entry.kind === ScriptElementKind.scriptElement as ScriptElementKind) {
@@ -313,35 +321,33 @@ function asCompletionItemKind(kind: ScriptElementKind): lsp.CompletionItemKind {
     return lsp.CompletionItemKind.Property;
 }
 
-function asCommitCharacters(kind: ScriptElementKind): string[] | undefined {
-    const commitCharacters: string[] = [];
-    switch (kind) {
-        case ScriptElementKind.memberGetAccessorElement:
-        case ScriptElementKind.memberSetAccessorElement:
-        case ScriptElementKind.constructSignatureElement:
-        case ScriptElementKind.callSignatureElement:
-        case ScriptElementKind.indexSignatureElement:
-        case ScriptElementKind.enumElement:
-        case ScriptElementKind.interfaceElement:
-            commitCharacters.push('.');
-            break;
-
-        case ScriptElementKind.moduleElement:
-        case ScriptElementKind.alias:
-        case ScriptElementKind.constElement:
-        case ScriptElementKind.letElement:
-        case ScriptElementKind.variableElement:
-        case ScriptElementKind.localVariableElement:
-        case ScriptElementKind.memberVariableElement:
-        case ScriptElementKind.classElement:
-        case ScriptElementKind.functionElement:
-        case ScriptElementKind.memberFunctionElement:
-            commitCharacters.push('.', ',');
+function asCommitCharacters(
+    context: CompletionContext,
+    entry: ts.server.protocol.CompletionEntry,
+    defaultCommitCharacters: readonly string[] | undefined,
+): string[] | undefined {
+    const kind = entry.kind as ScriptElementKind;
+    let commitCharacters = entry.commitCharacters ?? (defaultCommitCharacters ? Array.from(defaultCommitCharacters) : undefined);
+    if (commitCharacters) {
+        if (context.enableCallCompletions
+            && !context.isNewIdentifierLocation
+            && kind !== ScriptElementKind.warning
+            && kind !== ScriptElementKind.string) {
             commitCharacters.push('(');
-            break;
+        }
+        return commitCharacters;
     }
 
-    return commitCharacters.length === 0 ? undefined : commitCharacters;
+    if (kind === ScriptElementKind.warning || kind === ScriptElementKind.string) { // Ambient JS word based suggestion, strings
+        return undefined;
+    }
+
+    commitCharacters = ['.', ',', ';'];
+    if (context.enableCallCompletions) {
+        commitCharacters.push('(');
+    }
+
+    return commitCharacters;
 }
 
 export async function asResolvedCompletionItem(

@@ -531,7 +531,8 @@ export class LspServer {
             return lsp.CompletionList.create();
         }
 
-        const { entries, isIncomplete, optionalReplacementSpan, isMemberCompletion } = result;
+        const { entries, isIncomplete, optionalReplacementSpan, isMemberCompletion, isNewIdentifierLocation } = result;
+        const defaultCommitCharacters = Object.freeze(result.defaultCommitCharacters);
         const line = document.getLine(params.position.line);
         let dotAccessorContext: CompletionContext['dotAccessorContext'];
         if (isMemberCompletion) {
@@ -544,12 +545,24 @@ export class LspServer {
             }
         }
         const completionContext: CompletionContext = {
+            enableCallCompletions: !completionOptions.completeFunctionCalls,
             isMemberCompletion,
+            isNewIdentifierLocation,
             dotAccessorContext,
             line,
             optionalReplacementRange: optionalReplacementSpan ? Range.fromTextSpan(optionalReplacementSpan) : undefined,
         };
-        const completions = asCompletionItems(entries, this.completionDataCache, filepath, params.position, document, this.tsClient, completionOptions, this.features, completionContext);
+        const completions = asCompletionItems(
+            entries,
+            this.completionDataCache,
+            filepath,
+            params.position,
+            document,
+            this.tsClient,
+            completionOptions,
+            this.features,
+            completionContext,
+            defaultCommitCharacters);
         return lsp.CompletionList.create(completions, isIncomplete);
     }
 
