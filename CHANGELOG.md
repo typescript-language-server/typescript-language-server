@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.4.1](https://github.com/typescript-language-server/typescript-language-server/compare/v4.4.0...v4.4.1) (2025-09-12)
+
+
+### Bug Fixes
+
+* align completions code with upstream ([#992](https://github.com/typescript-language-server/typescript-language-server/issues/992)) ([f0eb0f5](https://github.com/typescript-language-server/typescript-language-server/commit/f0eb0f5abb981cbf496d5fc9e2b2e49150437c12))
+* don't filter out 'warning' TS completion kinds ([ab388a0](https://github.com/typescript-language-server/typescript-language-server/commit/ab388a010cbe8353af6c17964e9e2567fa73cce0))
+
 ## [4.4.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.3.4...v4.4.0) (2025-08-05)
 
 
