@@ -66,9 +66,6 @@ export function asCompletionItems(
 ): lsp.CompletionItem[] {
     const completions: lsp.CompletionItem[] = [];
     for (const entry of entries) {
-        if (entry.kind === ScriptElementKind.warning as ts.ScriptElementKind) {
-            continue;
-        }
         const completion = asCompletionItem(entry, completionDataCache, file, position, document, filePathConverter, options, features, completionContext);
         if (!completion) {
             continue;
