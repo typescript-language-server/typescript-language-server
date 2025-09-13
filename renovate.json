@@ -1,6 +1,6 @@
 {
   "extends": [
-    "config:base",
+    "config:recommended",
     ":prHourlyLimit4",
     ":semanticCommitTypeAll(chore)",
     "schedule:daily"
@@ -28,10 +28,11 @@
       "enabled": false
     },
     {
-      "excludePackageNames": ["typescript"],
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "matchFiles": ["package.json"],
+      "matchFileNames": [
+        "package.json"
+      ],
       "matchUpdateTypes": [
         "minor",
         "patch"
@@ -41,20 +42,31 @@
         "extends": [
           "schedule:weekly"
         ]
-      }
+      },
+      "matchPackageNames": [
+        "!typescript"
+      ]
     },
     {
       "groupName": "size-limit",
-      "matchPackagePatterns": ["^@?size-limit"],
-      "matchFiles": ["package.json"],
+      "matchFileNames": [
+        "package.json"
+      ],
       "matchUpdateTypes": [
         "major"
+      ],
+      "matchPackageNames": [
+        "/^@?size-limit/"
       ]
     },
     {
       "groupName": "TypeScript",
-      "matchPackageNames": ["typescript"],
-      "matchFiles": ["package.json"],
+      "matchPackageNames": [
+        "typescript"
+      ],
+      "matchFileNames": [
+        "package.json"
+      ],
       "matchUpdateTypes": [
         "minor",
         "patch"
