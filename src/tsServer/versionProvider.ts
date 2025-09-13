@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import which from 'which';
-import { pkgUpSync } from 'pkg-up';
+import { packageUpSync } from 'package-up';
 import API from '../utils/api.js';
 import { findPathToModule } from '../utils/modules-resolver.js';
 import type { Logger } from '../utils/logger.js';
@@ -136,7 +136,7 @@ export class TypeScriptVersionProvider {
         }
         // Resolve path to the "lib" dir.
         try {
-            const packageJsonPath = pkgUpSync({ cwd: resolvedPath });
+            const packageJsonPath = packageUpSync({ cwd: resolvedPath });
             this.logger.log(`Resolved package.json location: "${packageJsonPath}"`);
             if (packageJsonPath) {
                 resolvedPath = path.join(path.dirname(packageJsonPath), 'lib', 'tsserver.js');
