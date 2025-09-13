@@ -60,7 +60,7 @@
     "fs-extra": "^11.3.1",
     "husky": "4.3.8",
     "p-debounce": "^4.0.0",
-    "pkg-up": "^5.0.0",
+    "package-up": "^5.0.0",
     "rimraf": "^5.0.10",
     "rollup": "^4.50.1",
     "semver": "^7.7.2",
