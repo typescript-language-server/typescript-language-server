@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: ${{ steps.release.outputs.release_created }}
         with:
-          node-version: 18
+          node-version: 22.19.0
           registry-url: https://registry.npmjs.org
       - run: corepack enable
       - name: Lint and Test
