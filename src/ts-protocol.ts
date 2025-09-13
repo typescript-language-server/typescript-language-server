@@ -353,6 +353,7 @@ export interface SupportedFeatures {
     definitionLinkSupport?: boolean;
     diagnosticsSupport?: boolean;
     diagnosticsTagSupport?: boolean;
+    moveToFileCodeActionSupport?: boolean;
 }
 
 export interface TypeScriptPlugin {
@@ -370,6 +371,7 @@ export interface TypeScriptInitializationOptions {
     npmLocation?: string;
     plugins?: TypeScriptPlugin[];
     preferences?: ts.server.protocol.UserPreferences;
+    supportsMoveToFileCodeAction?: boolean;
     tsserver?: TsserverOptions;
 }
 
