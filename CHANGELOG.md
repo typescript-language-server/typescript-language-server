@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.4.1...v5.0.0) (2025-09-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* require at least node 20 ([#994](https://github.com/typescript-language-server/typescript-language-server/issues/994))
+
+### Bug Fixes
+
+* require at least node 20 ([#994](https://github.com/typescript-language-server/typescript-language-server/issues/994)) ([63e287d](https://github.com/typescript-language-server/typescript-language-server/commit/63e287d81f83c76b46a23733b7fc8df7b082f7aa))
+
 ## [4.4.1](https://github.com/typescript-language-server/typescript-language-server/compare/v4.4.0...v4.4.1) (2025-09-12)
 
 
