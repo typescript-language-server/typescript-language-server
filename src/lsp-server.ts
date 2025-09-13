@@ -785,7 +785,7 @@ export class LspServer {
             actions.push(...provideQuickFix(await this.getCodeFixes(fileRangeArgs, params.context, token), this.tsClient));
         }
         if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.Refactor))) {
-            actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context, token, this.features), fileRangeArgs, this.features));
+            actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context, this.features, token), fileRangeArgs, this.features));
         }
 
         for (const kind of kinds || []) {
@@ -839,7 +839,7 @@ export class LspServer {
         const response = await this.tsClient.execute(CommandTypes.GetCodeFixes, args, token);
         return response.type === 'response' ? response : undefined;
     }
-    protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, token?: lsp.CancellationToken, features?: SupportedFeatures): Promise<ts.server.protocol.GetApplicableRefactorsResponse | undefined> {
+    protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, features: SupportedFeatures, token?: lsp.CancellationToken): Promise<ts.server.protocol.GetApplicableRefactorsResponse | undefined> {
         const args: ts.server.protocol.GetApplicableRefactorsRequestArgs = {
             ...fileRangeArgs,
             triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
