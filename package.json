@@ -53,7 +53,7 @@
     "@types/which": "^3.0.4",
     "@vitest/eslint-plugin": "^1.0.1",
     "commander": "^12.1.0",
-    "concurrently": "^8.2.2",
+    "concurrently": "^9.2.1",
     "cross-env": "^7.0.3",
     "deepmerge": "^4.3.1",
     "eslint": "^9.32.0",
