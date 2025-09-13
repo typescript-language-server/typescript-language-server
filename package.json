@@ -52,7 +52,7 @@
     "@types/semver": "^7.7.0",
     "@types/which": "^3.0.4",
     "@vitest/eslint-plugin": "^1.0.1",
-    "commander": "^12.1.0",
+    "commander": "^14.0.1",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "deepmerge": "^4.3.1",
