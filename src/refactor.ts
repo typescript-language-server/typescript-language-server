@@ -22,7 +22,7 @@ export function provideRefactors(response: ts.server.protocol.GetApplicableRefac
                 if (action.notApplicableReason && !features.codeActionDisabledSupport) {
                     return false;
                 }
-                if (action.isInteractive && (!features.moveToFileCodeActionSupport || action.name !== 'Move to file')) {
+                if (action.isInteractive && (!features.moveToFileCodeActionSupport || action.kind !== 'refactor.move.file')) {
                     return false;
                 }
                 return true;

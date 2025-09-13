@@ -17,12 +17,12 @@ The language server accepts various settings through the `initializationOptions`
 | hostInfo          | string   | Information about the host, for example `"Emacs 24.4"` or `"Sublime Text v3075"`. **Default**: `undefined` |
 | completionDisableFilterText  | boolean | Don't set `filterText` property on completion items. **Default**: `false` |
 | disableAutomaticTypingAcquisition | boolean | Disables tsserver from automatically fetching missing type definitions (`@types` packages) for external modules. |
-| supportsMoveToFileCodeAction | boolean | Whether the client supports the "Move to file" interactive code action. |
 | maxTsServerMemory | number   | The maximum size of the V8's old memory section in megabytes (for example `4096` means 4GB). The default value is dynamically configured by Node so can differ per system. Increase for very big projects that exceed allowed memory usage. **Default**: `undefined` |
 | npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
 | locale            | string   | The locale to use to show error messages. |
 | plugins           | object[] | An array of `{ name: string, location: string, languages?: string[] }` objects for registering a Typescript plugins. **Default**: [] |
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more |
+| supportsMoveToFileCodeAction | boolean | Whether the client supports the "Move to file" interactive code action. See below for more |
 | tsserver          | object   | Options related to the `tsserver` process. See below for more |
 
 ### `plugins` option
@@ -30,6 +30,33 @@ The language server accepts various settings through the `initializationOptions`
 Accepts a list of `tsserver` (typescript) plugins.
 The `name` and the `location` are required. The `location` is a path to the package or a directory in which `tsserver` will try to import the plugin `name` using Node's `require` API.
 The `languages` property specifies which extra language IDs the language server should accept. This is required when plugin enables support for language IDs that this server does not support by default (so other than `typescript`, `typescriptreact`, `javascript`, `javascriptreact`). It's an optional property and only affects which file types the language server allows to be opened and do not concern the `tsserver` itself.
+
+### `supportsMoveToFileCodeAction` option
+
+The "Move to file" code action is different from other code actions as it is interactive (it needs to ask the user for a file path) and therefore requires custom implementation in the client.
+
+In order to support it, when the user chooses the code action named "Move to file" (of kind `refactor.move.file`), the client should first ask the user for a file path (via a file picker or equivalent), and then send a `workspace/executeCommand` with parameters as follows:
+```json
+{
+  "command": "_typescript.applyRefactoring",
+  "arguments": [
+    {
+      "file": "/path/to/project/currentFile.ts",
+      "startLine": 1,
+      "startOffset": 1,
+      "endLine": 2,
+      "endOffset": 1,
+      "refactor": "Move to file",
+      "action": "Move to file",
+      "interactiveRefactorArguments": {
+        "targetFile": "/path/to/project/chosenDestinationFile.ts"
+      }
+    }
+  ]
+}
+```
+
+That is, it should use the arguments provided by the code action (like for other code actions), but also insert an additional `interactiveRefactorArguments` argument containing a `targetFile` field containing the absolute path of the file chosen by the user.
 
 ### `tsserver` options
 

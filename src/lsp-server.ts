@@ -110,7 +110,9 @@ export class LspServer {
 
         // Setup supported features.
         this.features.completionDisableFilterText = userInitializationOptions.completionDisableFilterText ?? false;
-        this.features.moveToFileCodeActionSupport = userInitializationOptions.supportsMoveToFileCodeAction ?? false;
+        this.features.moveToFileCodeActionSupport =
+            userInitializationOptions.supportsMoveToFileCodeAction &&
+            typescriptVersion.version?.gte(API.v520);
         const { textDocument } = clientCapabilities;
         if (textDocument) {
             const { codeAction, completion, definition, publishDiagnostics } = textDocument;

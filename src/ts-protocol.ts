@@ -364,13 +364,13 @@ export interface TypeScriptPlugin {
 export interface TypeScriptInitializationOptions {
     completionDisableFilterText?: boolean;
     disableAutomaticTypingAcquisition?: boolean;
-    supportsMoveToFileCodeAction?: boolean;
     hostInfo?: string;
     locale?: string;
     maxTsServerMemory?: number;
     npmLocation?: string;
     plugins?: TypeScriptPlugin[];
     preferences?: ts.server.protocol.UserPreferences;
+    supportsMoveToFileCodeAction?: boolean;
     tsserver?: TsserverOptions;
 }
 
