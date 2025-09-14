@@ -844,7 +844,7 @@ export class LspServer {
             ...fileRangeArgs,
             triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
             kind: context.only?.length === 1 ? context.only[0] : undefined,
-            includeInteractiveActions: features?.moveToFileCodeActionSupport,
+            includeInteractiveActions: features.moveToFileCodeActionSupport,
         };
         const response = await this.tsClient.execute(CommandTypes.GetApplicableRefactors, args, token);
         return response.type === 'response' ? response : undefined;

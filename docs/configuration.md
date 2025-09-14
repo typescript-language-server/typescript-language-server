@@ -37,7 +37,7 @@ The `languages` property specifies which extra language IDs the language server 
 
 The "Move to file" code action is different from other code actions as it is interactive (it needs to ask the user for a file path) and therefore requires custom implementation in the client.
 
-In order to support it, when the user chooses the code action named "Move to file" (of kind `refactor.move.file`), the client should first ask the user for a file path (via a file picker or equivalent), and then send a `workspace/executeCommand` with parameters as follows:
+In order to support it, when the user chooses the code action named "Move to file", the client should first ask the user for a file path (via a file picker or equivalent), and then send a `workspace/executeCommand` with parameters as follows:
 ```json
 {
   "command": "_typescript.applyRefactoring",
