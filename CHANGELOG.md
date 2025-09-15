@@ -1,6 +1,23 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.4.1...v5.0.0) (2025-09-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* require at least node 20 ([#994](https://github.com/typescript-language-server/typescript-language-server/issues/994))
+
+### Features
+
+* opt-in support for the "Move to file" interactive code action ([#987](https://github.com/typescript-language-server/typescript-language-server/issues/987)) ([6cf230c](https://github.com/typescript-language-server/typescript-language-server/commit/6cf230c4b357af0543f183b168b841a836b6e7bc))
+
+
+### Bug Fixes
+
+* code actions handling ([#1009](https://github.com/typescript-language-server/typescript-language-server/issues/1009)) ([fd53ca8](https://github.com/typescript-language-server/typescript-language-server/commit/fd53ca82a7ad74ab6c6fd6102ccf64d0a73a54bd)), closes [#954](https://github.com/typescript-language-server/typescript-language-server/issues/954)
+* require at least node 20 ([#994](https://github.com/typescript-language-server/typescript-language-server/issues/994)) ([63e287d](https://github.com/typescript-language-server/typescript-language-server/commit/63e287d81f83c76b46a23733b7fc8df7b082f7aa))
+
 ## [4.4.1](https://github.com/typescript-language-server/typescript-language-server/compare/v4.4.0...v4.4.1) (2025-09-12)
 
 
