@@ -1813,7 +1813,7 @@ describe('code actions (interactive)', () => {
                 command: '_typescript.applyRefactoring',
                 arguments: [
                     {
-                        file: '/usr/local/workspace/github/typescript-language-server/test-data/bar.ts',
+                        file: filePath('bar.ts'),
                         startLine: 1,
                         startOffset: 2,
                         endLine: 1,
