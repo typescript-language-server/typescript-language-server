@@ -794,10 +794,10 @@ export class LspServer {
         const fileRangeArgs = Range.toFileRangeRequestArgs(document.filepath, params.range);
         const actions: lsp.CodeAction[] = [];
         const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
-        if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.QuickFix))) {
+        if (!kinds || kinds.some(kind => CodeActionKind.QuickFix.contains(kind))) {
             actions.push(...provideQuickFix(await this.getCodeFixes(fileRangeArgs, params.context, token), this.tsClient));
         }
-        if (!kinds || kinds.some(kind => kind.contains(CodeActionKind.Refactor))) {
+        if (!kinds || kinds.some(kind => CodeActionKind.Refactor.contains(kind))) {
             actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context, this.features, token), fileRangeArgs, this.features));
         }
 
@@ -852,18 +852,25 @@ export class LspServer {
         const response = await this.tsClient.execute(CommandTypes.GetCodeFixes, args, token);
         return response.type === 'response' ? response : undefined;
     }
-    protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, features: SupportedFeatures, token?: lsp.CancellationToken): Promise<ts.server.protocol.GetApplicableRefactorsResponse | undefined> {
-        const args: ts.server.protocol.GetApplicableRefactorsRequestArgs = {
-            ...fileRangeArgs,
-            triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
-            kind: context.only?.length === 1 ? context.only[0] : undefined,
-            includeInteractiveActions: features.moveToFileCodeActionSupport,
-        };
-        const response = await this.tsClient.execute(CommandTypes.GetApplicableRefactors, args, token);
-        return response.type === 'response' ? response : undefined;
+    protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, features: SupportedFeatures, token?: lsp.CancellationToken): Promise<ts.server.protocol.ApplicableRefactorInfo[]> {
+        // Make separate request for each "kind" that was specified or a single request otherwise.
+        const kinds = context.only || [undefined];
+
+        const responses = await Promise.all(kinds.map(async (kind) => {
+            const args: ts.server.protocol.GetApplicableRefactorsRequestArgs = {
+                ...fileRangeArgs,
+                triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
+                kind,
+                includeInteractiveActions: features.moveToFileCodeActionSupport,
+            };
+            const response = await this.tsClient.execute(CommandTypes.GetApplicableRefactors, args, token);
+            return response.type === 'response' && response.body ? response.body : [];
+        }));
+
+        return responses.flat();
     }
 
-    async executeCommand(params: lsp.ExecuteCommandParams, token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<any> {
+    async executeCommand(params: lsp.ExecuteCommandParams, token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<unknown> {
         if (params.command === Commands.APPLY_WORKSPACE_EDIT && params.arguments) {
             const edit = params.arguments[0] as lsp.WorkspaceEdit;
             await this.options.lspClient.applyWorkspaceEdit({ edit });

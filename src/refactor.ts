@@ -9,16 +9,18 @@ import * as lsp from 'vscode-languageserver';
 import { Commands } from './commands.js';
 import type { ts, SupportedFeatures } from './ts-protocol.js';
 
-export function provideRefactors(response: ts.server.protocol.GetApplicableRefactorsResponse | undefined, args: ts.server.protocol.FileRangeRequestArgs, features: SupportedFeatures): lsp.CodeAction[] {
-    if (!response?.body) {
-        return [];
-    }
+// Defining locally until new version of vscode-languageserver is reladed.
+namespace CodeActionKind {
+    export const RefactorMove = 'refactor.move';
+}
+
+export function provideRefactors(refactors: ts.server.protocol.ApplicableRefactorInfo[], args: ts.server.protocol.FileRangeRequestArgs, features: SupportedFeatures): lsp.CodeAction[] {
     const actions: lsp.CodeAction[] = [];
-    for (const info of response.body) {
-        if (info.inlineable === false) {
-            actions.push(asSelectRefactoring(info, args));
+    for (const refactor of refactors) {
+        if (refactor.inlineable === false) {
+            actions.push(asSelectRefactoring(refactor, args));
         } else {
-            const relevantActions = info.actions.filter(action => {
+            const relevantActions = refactor.actions.filter(action => {
                 if (action.notApplicableReason && !features.codeActionDisabledSupport) {
                     return false;
                 }
@@ -28,23 +30,23 @@ export function provideRefactors(response: ts.server.protocol.GetApplicableRefac
                 return true;
             });
             for (const action of relevantActions) {
-                actions.push(asApplyRefactoring(action, info, args));
+                actions.push(asApplyRefactoring(action, refactor, args));
             }
         }
     }
     return actions;
 }
 
-export function asSelectRefactoring(info: ts.server.protocol.ApplicableRefactorInfo, args: ts.server.protocol.FileRangeRequestArgs): lsp.CodeAction {
+export function asSelectRefactoring(refactor: ts.server.protocol.ApplicableRefactorInfo, args: ts.server.protocol.FileRangeRequestArgs): lsp.CodeAction {
     return lsp.CodeAction.create(
-        info.description,
-        lsp.Command.create(info.description, Commands.SELECT_REFACTORING, info, args),
+        refactor.description,
+        lsp.Command.create(refactor.description, Commands.SELECT_REFACTORING, refactor, args),
         lsp.CodeActionKind.Refactor,
     );
 }
 
-export function asApplyRefactoring(action: ts.server.protocol.RefactorActionInfo, info: ts.server.protocol.ApplicableRefactorInfo, args: ts.server.protocol.FileRangeRequestArgs): lsp.CodeAction {
-    const codeAction = lsp.CodeAction.create(action.description, asKind(info));
+export function asApplyRefactoring(action: ts.server.protocol.RefactorActionInfo, refactor: ts.server.protocol.ApplicableRefactorInfo, args: ts.server.protocol.FileRangeRequestArgs): lsp.CodeAction {
+    const codeAction = lsp.CodeAction.create(action.description, asKind(action));
     if (action.notApplicableReason) {
         codeAction.disabled = { reason: action.notApplicableReason };
     } else {
@@ -53,7 +55,7 @@ export function asApplyRefactoring(action: ts.server.protocol.RefactorActionInfo
             Commands.APPLY_REFACTORING,
             {
                 ...args,
-                refactor: info.name,
+                refactor: refactor.name,
                 action: action.name,
             },
         );
@@ -61,13 +63,39 @@ export function asApplyRefactoring(action: ts.server.protocol.RefactorActionInfo
     return codeAction;
 }
 
-function asKind(refactor: ts.server.protocol.RefactorActionInfo): lsp.CodeActionKind {
-    if (refactor.name.startsWith('function_')) {
+function asKind(action: ts.server.protocol.RefactorActionInfo): lsp.CodeActionKind {
+    if (action.kind) {
+        return action.kind;
+    }
+    if (action.name.startsWith('function_')) {
         return `${lsp.CodeActionKind.RefactorExtract}.function`;
-    } else if (refactor.name.startsWith('constant_')) {
+    }
+    if (action.name.startsWith('constant_')) {
         return `${lsp.CodeActionKind.RefactorExtract}.constant`;
-    } else if (refactor.name.startsWith('Move')) {
-        return `${lsp.CodeActionKind.Refactor}.move`;
+    }
+    if (action.name.startsWith('Extract to type alias')) {
+        return `${lsp.CodeActionKind.RefactorExtract}.type`;
+    }
+    if (action.name.startsWith('Extract to interface')) {
+        return `${lsp.CodeActionKind.RefactorExtract}.interface`;
+    }
+    if (action.name.startsWith('Move to file')) {
+        return `${CodeActionKind.RefactorMove}.file`;
+    }
+    if (action.name.startsWith('Move to a new file')) {
+        return `${CodeActionKind.RefactorMove}.newFile`;
+    }
+    if (action.name.startsWith('Convert namespace import') || action.name.startsWith('Convert named imports')) {
+        return `${lsp.CodeActionKind.RefactorRewrite}.import`;
+    }
+    if (action.name.startsWith('Convert default export') || action.name.startsWith('Convert named export')) {
+        return `${lsp.CodeActionKind.RefactorRewrite}.export`;
+    }
+    if (action.name.startsWith('Convert parameters to destructured object')) {
+        return `${lsp.CodeActionKind.RefactorRewrite}.parameters.toDestructured`;
+    }
+    if (action.name.startsWith('Generate \'get\' and \'set\' accessors')) {
+        return `${lsp.CodeActionKind.RefactorRewrite}.property.generateAccessors`;
     }
     return lsp.CodeActionKind.Refactor;
 }

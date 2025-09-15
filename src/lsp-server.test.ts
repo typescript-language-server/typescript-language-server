@@ -1354,7 +1354,7 @@ describe('code actions', () => {
             },
             kind: 'quickfix',
         });
-        const refactorAction = result.find(diagnostic => diagnostic.kind === 'refactor');
+        const refactorAction = result.find(diagnostic => diagnostic.kind === 'refactor.rewrite.parameters.toDestructured');
         expect(refactorAction).toBeDefined();
         expect(refactorAction).toMatchObject({
             title: 'Convert parameters to destructured object',
@@ -1373,9 +1373,9 @@ describe('code actions', () => {
                     },
                 ],
             },
-            kind: 'refactor',
+            kind: 'refactor.rewrite.parameters.toDestructured',
         });
-        const refactorMoveAction = result.find(diagnostic => diagnostic.kind === 'refactor.move');
+        const refactorMoveAction = result.find(diagnostic => diagnostic.kind === 'refactor.move.newFile');
         expect(refactorMoveAction).toBeDefined();
         expect(refactorMoveAction).toMatchObject({
             title: 'Move to a new file',
@@ -1394,7 +1394,7 @@ describe('code actions', () => {
                     },
                 ],
             },
-            kind: 'refactor.move',
+            kind: 'refactor.move.newFile',
         });
     });
 
@@ -1415,30 +1415,11 @@ describe('code actions', () => {
                     code: 6133,
                     message: 'unused arg',
                 }],
-                only: ['refactor', 'invalid-action'],
+                only: ['refactor.rewrite', 'invalid-action'],
             },
         });
 
         expect(result).toMatchObject([
-            {
-                title: 'Move to a new file',
-                kind: 'refactor.move',
-                command: {
-                    title: 'Move to a new file',
-                    command: '_typescript.applyRefactoring',
-                    arguments: [
-                        {
-                            file: filePath('bar.ts'),
-                            startLine: 2,
-                            startOffset: 26,
-                            endLine: 2,
-                            endOffset: 50,
-                            refactor: 'Move to a new file',
-                            action: 'Move to a new file',
-                        },
-                    ],
-                },
-            },
             {
                 command: {
                     arguments: [
@@ -1455,7 +1436,7 @@ describe('code actions', () => {
                     command: '_typescript.applyRefactoring',
                     title: 'Convert parameters to destructured object',
                 },
-                kind: 'refactor',
+                kind: 'refactor.rewrite.parameters.toDestructured',
                 title: 'Convert parameters to destructured object',
             },
         ]);
@@ -1777,6 +1758,136 @@ accessSync('t');`,
     });
 });
 
+describe('code actions (interactive)', () => {
+    const MOVE_TO_FILE_TARGET_FILENAME = 'moveFileTarget.ts';
+    let localServer: TestLspServer;
+
+    beforeAll(async () => {
+        localServer = await createServer({
+            rootUri: uri(),
+            publishDiagnostics: () => {},
+            initializationOptionsOverrides: {
+                supportsMoveToFileCodeAction: true,
+            },
+        });
+    });
+
+    beforeEach(() => {
+        localServer.closeAllForTesting();
+        localServer.workspaceEdits = [];
+    });
+
+    afterAll(async () => {
+        localServer.closeAllForTesting();
+        localServer.shutdown();
+        await fs.unlink(filePath(MOVE_TO_FILE_TARGET_FILENAME)).catch(() => {});
+    });
+
+    const doc = {
+        uri: uri('bar.ts'),
+        languageId: 'typescript',
+        version: 1,
+        text: 'export function foo(bar: string, baz?:boolean): void {}',
+    };
+
+    it('provides "Move to file" code action', async () => {
+        await openDocumentAndWaitForDiagnostics(localServer, doc);
+        const actions = await localServer.codeAction({
+            textDocument: doc,
+            range: {
+                start: { line: 0, character: 1 },
+                end: { line: 0, character: 1 },
+            },
+            context: {
+                diagnostics: [],
+            },
+        });
+
+        const moveToFileAction = actions.find(action => action.title === 'Move to file');
+        expect(moveToFileAction).toBeDefined();
+        expect(moveToFileAction).toMatchObject({
+            title: 'Move to file',
+            kind: 'refactor.move.file',
+            command: {
+                title: 'Move to file',
+                command: '_typescript.applyRefactoring',
+                arguments: [
+                    {
+                        file: filePath('bar.ts'),
+                        startLine: 1,
+                        startOffset: 2,
+                        endLine: 1,
+                        endOffset: 2,
+                        refactor: 'Move to file',
+                        action: 'Move to file',
+                    },
+                ],
+            },
+        });
+
+        // The new file needs to exist physically and be opened by tsserver for the move command to work.
+        const moveFileTargetPath = filePath(MOVE_TO_FILE_TARGET_FILENAME);
+        await fs.writeFile(moveFileTargetPath, '');
+        const moveFileTargetDoc = {
+            uri: uri(MOVE_TO_FILE_TARGET_FILENAME),
+            languageId: 'typescript',
+            version: 1,
+            text: '',
+        };
+        await openDocumentAndWaitForDiagnostics(localServer, moveFileTargetDoc);
+
+        const moveCommand: lsp.ExecuteCommandParams = {
+            command: moveToFileAction!.command!.command,
+            arguments: [
+                {
+                    ...moveToFileAction!.command!.arguments![0],
+                    interactiveRefactorArguments: {
+                        targetFile: moveFileTargetPath,
+                    },
+                },
+            ],
+        };
+        await localServer.executeCommand(moveCommand);
+
+        // Verify the received workspace edits.
+        expect(localServer.workspaceEdits).toHaveLength(1);
+        const { changes } = localServer.workspaceEdits[0].edit;
+        expect(changes).toBeDefined();
+        expect(changes).toMatchObject({
+            [uri('bar.ts')]: [
+                {
+                    range: {
+                        start: {
+                            line: 0,
+                            character: 0,
+                        },
+                        end: {
+                            line: 0,
+                            character: 55,
+                        },
+                    },
+                    newText: '',
+                },
+            ],
+            [uri(MOVE_TO_FILE_TARGET_FILENAME)]: [
+                {
+                    range: {
+                        start: {
+                            line: 0,
+                            character: 1,
+                        },
+                        end: {
+                            line: 0,
+                            character: 1,
+                        },
+                    },
+                    newText: '\nexport function foo(bar: string, baz?: boolean): void { }\n',
+                },
+            ],
+        });
+    });
+});
+
 describe('executeCommand', () => {
     it('apply refactoring (move to new file)', async () => {
         const fooUri = uri('foo.ts');
@@ -1858,7 +1969,7 @@ describe('executeCommand', () => {
             text: 'export function fn(): void {}\nexport function newFn(): void {}',
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         const result = await server.executeCommand({
             command: Commands.TS_SERVER_REQUEST,
             arguments: [
@@ -1874,9 +1985,9 @@ describe('executeCommand', () => {
                     lowPriority: true,
                 },
             ],
-        });
+        }) as {body: {configFileName: string;};};
         expect(result).toBeDefined();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
         expect(result.body).toMatchObject({
             // tsserver returns non-native path separators on Windows.
             configFileName: filePath('tsconfig.json').replace(/\\/g, '/'),
