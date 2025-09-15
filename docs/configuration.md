@@ -3,6 +3,8 @@
 <!--toc:start-->
 - [Configuration](#configuration)
   - [initializationOptions](#initializationoptions)
+    - [`plugins` option](#plugins-option)
+    - [`supportsMoveToFileCodeAction` option](#supportsmovetofilecodeaction-option)
     - [`tsserver` options](#tsserver-options)
     - [`preferences` options](#preferences-options)
   - [workspace/didChangeConfiguration](#workspacedidchangeconfiguration)
@@ -21,7 +23,8 @@ The language server accepts various settings through the `initializationOptions`
 | npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
 | locale            | string   | The locale to use to show error messages. |
 | plugins           | object[] | An array of `{ name: string, location: string, languages?: string[] }` objects for registering a Typescript plugins. **Default**: [] |
-| preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See below for more |
+| preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See [`preferences` options](#preferences-options) for more details. |
+| supportsMoveToFileCodeAction | boolean | Whether the client supports the "Move to file" interactive code action. See [`supportsMoveToFileCodeAction` option](#supportsmovetofilecodeaction-option) for more details. |
 | tsserver          | object   | Options related to the `tsserver` process. See below for more |
 
 ### `plugins` option
@@ -29,6 +32,33 @@ The language server accepts various settings through the `initializationOptions`
 Accepts a list of `tsserver` (typescript) plugins.
 The `name` and the `location` are required. The `location` is a path to the package or a directory in which `tsserver` will try to import the plugin `name` using Node's `require` API.
 The `languages` property specifies which extra language IDs the language server should accept. This is required when plugin enables support for language IDs that this server does not support by default (so other than `typescript`, `typescriptreact`, `javascript`, `javascriptreact`). It's an optional property and only affects which file types the language server allows to be opened and do not concern the `tsserver` itself.
+
+### `supportsMoveToFileCodeAction` option
+
+The "Move to file" code action is different from other code actions as it is interactive (it needs to ask the user for a file path) and therefore requires custom implementation in the client.
+
+In order to support it, when the user chooses the code action named "Move to file", the client should first ask the user for a file path (via a file picker or equivalent), and then send a `workspace/executeCommand` with parameters as follows:
+```json
+{
+  "command": "_typescript.applyRefactoring",
+  "arguments": [
+    {
+      "file": "/path/to/project/currentFile.ts",
+      "startLine": 1,
+      "startOffset": 1,
+      "endLine": 2,
+      "endOffset": 1,
+      "refactor": "Move to file",
+      "action": "Move to file",
+      "interactiveRefactorArguments": {
+        "targetFile": "/path/to/project/chosenDestinationFile.ts"
+      }
+    }
+  ]
+}
+```
+
+That is, it should use the arguments provided by the code action (like for other code actions), but also insert an additional `interactiveRefactorArguments` argument containing a `targetFile` field containing the absolute path of the file chosen by the user.
 
 ### `tsserver` options
 

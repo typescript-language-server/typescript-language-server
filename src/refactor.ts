@@ -18,9 +18,15 @@ export function provideRefactors(response: ts.server.protocol.GetApplicableRefac
         if (info.inlineable === false) {
             actions.push(asSelectRefactoring(info, args));
         } else {
-            const relevantActions = features.codeActionDisabledSupport
-                ? info.actions
-                : info.actions.filter(action => !action.notApplicableReason);
+            const relevantActions = info.actions.filter(action => {
+                if (action.notApplicableReason && !features.codeActionDisabledSupport) {
+                    return false;
+                }
+                if (action.isInteractive && (!features.moveToFileCodeActionSupport || action.name !== 'Move to file')) {
+                    return false;
+                }
+                return true;
+            });
             for (const action of relevantActions) {
                 actions.push(asApplyRefactoring(action, info, args));
             }
