@@ -59,7 +59,7 @@
     "eslint": "^9.35.0",
     "fs-extra": "^11.3.1",
     "husky": "4.3.8",
-    "p-debounce": "^4.0.0",
+    "p-debounce": "^5.0.0",
     "package-up": "^5.0.0",
     "rimraf": "^6.0.1",
     "rollup": "^4.50.1",
