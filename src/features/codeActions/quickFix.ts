@@ -1,4 +1,4 @@
-// sync: file[extensions/typescript-language-features/src/languageFeatures/quickFix.ts] sha[f76ac124233270762d11ec3afaaaafcba53b3bbf]
+// sync: file[extensions/typescript-language-features/src/languageFeatures/quickFix.ts] sha[c738ec6c40099671c763e1ee7023e321589cf815]
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -17,7 +17,7 @@ import { type Command, CommandManager } from '../../commands/commandManager.js';
 import * as fixNames from '../../utils/fixNames.js';
 import * as typeConverters from '../../utils/typeConverters.js';
 import { type ITypeScriptServiceClient } from '../../typescriptService.js';
-import { memoizeGetter } from '../../utils/memoize.js';
+import { Lazy } from '../../utils/lazy.js';
 import { equals } from '../../utils/objects.js';
 // import { DiagnosticsManager } from './diagnostics.js';
 import FileConfigurationManager from '../fileConfigurationManager.js';
@@ -175,17 +175,16 @@ class SupportedCodeActionProvider {
     ) { }
 
     public async getFixableDiagnosticsForContext(diagnostics: readonly lsp.Diagnostic[]): Promise<DiagnosticsSet> {
-        const fixableCodes = await this.fixableDiagnosticCodes;
+        const fixableCodes = await this.fixableDiagnosticCodes.value;
         return DiagnosticsSet.from(
             diagnostics.filter(diagnostic => typeof diagnostic.code !== 'undefined' && fixableCodes.has(diagnostic.code + '')));
     }
 
-    @memoizeGetter
-    private get fixableDiagnosticCodes(): Thenable<Set<string>> {
+    private readonly fixableDiagnosticCodes = new Lazy<Thenable<Set<string>>>(() => {
         return this.client.execute(CommandTypes.GetSupportedCodeFixes, null)
             .then(response => response.type === 'response' ? response.body || [] : [])
             .then(codes => new Set(codes));
-    }
+    });
 }
 
 export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFixCodeAction>, TsCodeActionProvider {
@@ -355,7 +354,7 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
             return results;
         }
 
-        // Make sure there are multiple diagnostics of the same type in the file
+        // Make sure there are multiple different diagnostics of the same type in the file
         if (!this.diagnosticsManager.getDiagnosticsForFile(file).some(x => {
             if (x === diagnostic) {
                 return false;
@@ -384,7 +383,7 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
     }
 }
 
-// Some fix all actions can actually fix multiple differnt diagnostics. Make sure we still show the fix all action
+// Some fix all actions can actually fix multiple different diagnostics. Make sure we still show the fix all action
 // in such cases
 const fixAllErrorCodes = new Map<number, number>([
     // Missing async

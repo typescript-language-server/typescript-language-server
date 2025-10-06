@@ -507,8 +507,9 @@ export class TsClient implements ITypeScriptServiceClient {
 
         if (command === CommandTypes.UpdateOpen) {
             // If update open has completed, consider that the project has loaded
+            const executionsWithResults = executions.filter<Promise<ServerResponse.Response<ts.server.protocol.Response>>>(e => e !== undefined);
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.all(executions).then(() => {
+            Promise.all(executionsWithResults).then(() => {
                 this.loadingIndicator.reset();
             });
         }
