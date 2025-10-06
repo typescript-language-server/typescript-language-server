@@ -345,6 +345,7 @@ export function toSymbolDisplayPartKind(kind: string): SymbolDisplayPartKind {
 
 export interface SupportedFeatures {
     codeActionDisabledSupport?: boolean;
+    codeActionResolveSupport?: lsp.CodeActionClientCapabilities['resolveSupport'];
     completionCommitCharactersSupport?: boolean;
     completionInsertReplaceSupport?: boolean;
     completionLabelDetails?: boolean;
