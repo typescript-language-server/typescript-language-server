@@ -1331,7 +1331,6 @@ describe('code actions', () => {
                             description: "Prefix 'bar' with an underscore",
                             changes: [
                                 {
-                                    fileName: filePath('bar.ts'),
                                     textChanges: [
                                         {
                                             start: {
@@ -1443,7 +1442,6 @@ describe('code actions', () => {
                             action: {
                                 changes: [
                                     {
-                                        fileName: filePath('bar.ts'),
                                         textChanges: [
                                             {
                                                 end: {
