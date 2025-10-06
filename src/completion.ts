@@ -184,7 +184,7 @@ function asCompletionItem(
             item.kind = lsp.CompletionItemKind.Color;
         }
 
-        if (entry.kind === ScriptElementKind.scriptElement as ScriptElementKind) {
+        if (entry.kind as ScriptElementKind === ScriptElementKind.scriptElement as ScriptElementKind) {
             for (const extModifier of KindModifiers.fileExtensionKindModifiers) {
                 if (kindModifiers.has(extModifier)) {
                     if (entry.name.toLowerCase().endsWith(extModifier)) {

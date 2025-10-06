@@ -37,5 +37,5 @@ jobs:
       - name: Unittest
         run: yarn test
       - name: Lint
-        if: ${{ matrix.node-version == '18.x' }}
+        if: ${{ matrix.node-version == '22.x' }}
         run: yarn lint
