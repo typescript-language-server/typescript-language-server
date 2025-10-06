@@ -1,6 +1,6 @@
 {
   "name": "yarn2",
-  "packageManager": "yarn@4.9.4",
+  "packageManager": "yarn@4.10.3",
   "dependencies": {
     "axios": "1.12.2",
     "typescript": "^5.3.3"
