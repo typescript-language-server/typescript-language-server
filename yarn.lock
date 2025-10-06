@@ -1610,10 +1610,10 @@ optionator@^0.9.3:
     type-check "^0.4.0"
     word-wrap "^1.2.5"
 
-p-debounce@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/p-debounce/-/p-debounce-4.0.0.tgz#348e3f44489baa9435cc7d807f17b3bb2fb16b24"
-  integrity sha512-4Ispi9I9qYGO4lueiLDhe4q4iK5ERK8reLsuzH6BPaXn53EGaua8H66PXIFGrW897hwjXp+pVLrm/DLxN0RF0A==
+p-debounce@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/p-debounce/-/p-debounce-5.0.0.tgz#e9522163e159b8c72a19c40f3573aeabab86d8f1"
+  integrity sha512-rnaPSZtETbl75h6lcVFQxJ9LXJhkYhtVNie4Kj/nECazixDxrPYWl8I+DfY69C299HI4Of8NJDfR0ekrlcwAkA==
 
 p-limit@^3.0.2:
   version "3.1.0"
