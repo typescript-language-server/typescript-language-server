@@ -15,8 +15,6 @@
     - [Code actions on save](#code-actions-on-save)
     - [Workspace commands \(`workspace/executeCommand`\)](#workspace-commands-workspaceexecutecommand)
         - [Go to Source Definition](#go-to-source-definition)
-        - [Apply Workspace Edits](#apply-workspace-edits)
-        - [Apply Code Action](#apply-code-action)
         - [Apply Refactoring](#apply-refactoring)
         - [Organize Imports](#organize-imports)
         - [Rename File](#rename-file)
@@ -126,36 +124,6 @@ Most of the time, you'll execute commands with arguments retrieved from another 
     ```
 
 (This command is supported from Typescript 4.7.)
-
-#### Apply Workspace Edits
-
-- Request:
-    ```ts
-    {
-        command: `_typescript.applyWorkspaceEdit`
-        arguments: [lsp.WorkspaceEdit]
-    }
-    ```
-- Response:
-    ```ts
-    lsp.ApplyWorkspaceEditResult
-    ```
-
-#### Apply Code Action
-
-- Request:
-    ```ts
-    {
-        command: `_typescript.applyCodeAction`
-        arguments: [
-            tsp.CodeAction,  // TypeScript Code Action object
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
 
 #### Apply Refactoring
 

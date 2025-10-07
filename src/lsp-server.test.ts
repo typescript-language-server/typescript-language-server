@@ -1313,7 +1313,7 @@ describe('code actions', () => {
                     message: 'unused arg',
                 }],
             },
-        });
+        }) as lsp.CodeAction[];
 
         // 1 quickfix + 2 refactorings
         expect(result).toHaveLength(3);
@@ -1322,33 +1322,48 @@ describe('code actions', () => {
         expect(quickFixDiagnostic).toMatchObject({
             title: "Prefix 'bar' with an underscore",
             command: {
-                title: "Prefix 'bar' with an underscore",
-                command: '_typescript.applyWorkspaceEdit',
+                command: '_typescript.applyCodeActionCommand',
+                title: '',
                 arguments: [
                     {
-                        documentChanges: [
-                            {
-                                textDocument: {
-                                    uri: uri('bar.ts'),
-                                    version: 1,
-                                },
-                                edits: [
-                                    {
-                                        range: {
+                        action: {
+                            fixName: 'unusedIdentifier',
+                            description: "Prefix 'bar' with an underscore",
+                            changes: [
+                                {
+                                    textChanges: [
+                                        {
                                             start: {
-                                                line: 1,
-                                                character: 24,
+                                                line: 2,
+                                                offset: 25,
                                             },
                                             end: {
-                                                line: 1,
-                                                character: 27,
+                                                line: 2,
+                                                offset: 28,
                                             },
+                                            newText: '_bar',
                                         },
-                                        newText: '_bar',
-                                    },
-                                ],
+                                    ],
+                                },
+                            ],
+                            fixId: 'unusedIdentifier_prefix',
+                            fixAllDescription: "Prefix all unused declarations with '_' where possible",
+                        },
+                        diagnostic: {
+                            range: {
+                                start: {
+                                    line: 1,
+                                    character: 25,
+                                },
+                                end: {
+                                    line: 1,
+                                    character: 49,
+                                },
                             },
-                        ],
+                            code: 6133,
+                            message: 'unused arg',
+                        },
+                        documentUri: uri('bar.ts'),
                     },
                 ],
             },
@@ -1424,6 +1439,57 @@ describe('code actions', () => {
                 command: {
                     arguments: [
                         {
+                            action: {
+                                changes: [
+                                    {
+                                        textChanges: [
+                                            {
+                                                end: {
+                                                    line: 2,
+                                                    offset: 28,
+                                                },
+                                                newText: '_bar',
+                                                start: {
+                                                    line: 2,
+                                                    offset: 25,
+                                                },
+                                            },
+                                        ],
+                                    },
+                                ],
+                                description: "Prefix 'bar' with an underscore",
+                                fixAllDescription: "Prefix all unused declarations with '_' where possible",
+                                fixId: 'unusedIdentifier_prefix',
+                                fixName: 'unusedIdentifier',
+                            },
+                            diagnostic: {
+                                code: 6133,
+                                message: 'unused arg',
+                                range: {
+                                    end: {
+                                        character: 49,
+                                        line: 1,
+                                    },
+                                    start: {
+                                        character: 25,
+                                        line: 1,
+                                    },
+                                },
+                            },
+                            documentUri: uri('bar.ts'),
+                        },
+                    ],
+                    command: '_typescript.applyCodeActionCommand',
+                    title: '',
+                },
+                isPreferred: true,
+                kind: 'quickfix',
+                title: "Prefix 'bar' with an underscore",
+            },
+            {
+                command: {
+                    arguments: [
+                        {
                             action: 'Convert parameters to destructured object',
                             endLine: 2,
                             endOffset: 50,
@@ -1463,7 +1529,7 @@ describe('code actions', () => {
             },
         });
 
-        expect(result).toStrictEqual([]);
+        expect(result.filter(action => 'kind' in action && action.kind === CodeActionKind.SourceOrganizeImportsTs.value)).toStrictEqual([]);
     });
 
     it('provides organize imports when there are no errors', async () => {
@@ -1615,7 +1681,7 @@ accessSync('t');`,
         expect(result).toMatchObject([
             {
                 kind: CodeActionKind.SourceFixAllTs.value,
-                title: 'Fix all',
+                title: 'Fix all fixable JS/TS issues',
                 edit: {
                     documentChanges: [
                         {
@@ -1727,7 +1793,7 @@ accessSync('t');`,
         expect(result).toMatchObject([
             {
                 kind: CodeActionKind.SourceFixAllTs.value,
-                title: 'Fix all',
+                title: 'Fix all fixable JS/TS issues',
                 edit: {
                     documentChanges: [
                         {
@@ -1836,11 +1902,17 @@ describe('code actions (interactive)', () => {
         };
         await openDocumentAndWaitForDiagnostics(localServer, moveFileTargetDoc);
 
+        const command = moveToFileAction!.command!;
+        expect(command).not.toBeTypeOf('string');
+        if (typeof command === 'string') {
+            return;
+        }
+
         const moveCommand: lsp.ExecuteCommandParams = {
-            command: moveToFileAction!.command!.command,
+            command: command.command,
             arguments: [
                 {
-                    ...moveToFileAction!.command!.arguments![0],
+                    ...command.arguments![0],
                     interactiveRefactorArguments: {
                         targetFile: moveFileTargetPath,
                     },
@@ -1907,7 +1979,7 @@ describe('executeCommand', () => {
             context: {
                 diagnostics: [],
             },
-        });
+        }) as lsp.CodeAction[];
         // Find refactoring code action.
         const applyRefactoringAction = codeActions.find(action => action.command?.command === Commands.APPLY_REFACTORING);
         expect(applyRefactoringAction).toBeDefined();
@@ -2569,6 +2641,71 @@ describe('fileOperations', () => {
                 newText:'./rename2/var',
             },
         ]);
+    });
+
+    it('willRenameFiles - new', async () => {
+        const filesDirectory = 'rename';
+        const import1FileName = 'import1.ts';
+        const import2FileName = 'import2.ts';
+        const import1FilePath = filePath(filesDirectory, import1FileName);
+        const import2FilePath = filePath(filesDirectory, import2FileName);
+        const import1Uri = uri(filesDirectory, import1FileName);
+        const import2Uri = uri(filesDirectory, import2FileName);
+        const exportFileName = 'export.ts';
+        const exportNewFileName = 'export2.ts';
+
+        // Open files 1 and 2.
+
+        const import1Document = {
+            uri: import1Uri,
+            languageId: 'typescript',
+            version: 1,
+            text: readContents(import1FilePath),
+        };
+        server.didOpenTextDocument({ textDocument: import1Document });
+
+        const import2Document = {
+            uri: import2Uri,
+            languageId: 'typescript',
+            version: 1,
+            text: readContents(import2FilePath),
+        };
+        server.didOpenTextDocument({ textDocument: import2Document });
+
+        // Close file 1.
+
+        server.didCloseTextDocument({ textDocument: import1Document });
+
+        const edit = await server.willRenameFiles({
+            files: [{
+                oldUri: uri(filesDirectory, exportFileName),
+                newUri: uri(filesDirectory, exportNewFileName),
+            }],
+        });
+        expect(edit.changes).toBeDefined();
+        expect(Object.keys(edit.changes!)).toHaveLength(2);
+        expect(edit.changes!).toStrictEqual(
+            {
+                [import1Uri]: [
+                    {
+                        range: {
+                            start:{ line: 0, character: 19 },
+                            end: { line: 0, character: 27 },
+                        },
+                        newText:'./export2',
+                    },
+                ],
+                [import2Uri]: [
+                    {
+                        range: {
+                            start:{ line: 0, character: 19 },
+                            end: { line: 0, character: 27 },
+                        },
+                        newText:'./export2',
+                    },
+                ],
+            },
+        );
     });
 });
 

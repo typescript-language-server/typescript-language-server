@@ -10,14 +10,13 @@ import fs from 'fs-extra';
 import { URI } from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
 import { getDignosticsKind, TsClient } from './ts-client.js';
-import { DiagnosticEventQueue } from './diagnostic-queue.js';
+import { DiagnosticsManager } from './diagnosticsManager.js';
 import { toDocumentHighlight, toSymbolKind, toLocation, toSelectionRange, toTextEdit } from './protocol-translation.js';
 import { LspDocument } from './document.js';
 import { asCompletionItems, asResolvedCompletionItem, CompletionContext, CompletionDataCache, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
 import { TSServerRequestCommand } from './commands/tsserverRequests.js';
-import { provideQuickFix } from './quickfix.js';
 import { provideRefactors } from './refactor.js';
 import { organizeImportsCommands, provideOrganizeImports } from './organize-imports.js';
 import { CommandTypes, EventName, OrganizeImportsMode, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
@@ -26,7 +25,6 @@ import { type TypeScriptRequestTypes, type ExecuteInfo } from './typescriptServi
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { fromProtocolCallHierarchyItem, fromProtocolCallHierarchyIncomingCall, fromProtocolCallHierarchyOutgoingCall } from './features/call-hierarchy.js';
 import FileConfigurationManager, { type WorkspaceConfiguration } from './features/fileConfigurationManager.js';
-import { TypeScriptAutoFixProvider } from './features/fix-all.js';
 import { CodeLensType, type ReferencesCodeLens } from './features/code-lens/baseCodeLensProvider.js';
 import TypeScriptImplementationsCodeLensProvider from './features/code-lens/implementationsCodeLens.js';
 import { TypeScriptReferencesCodeLensProvider } from './features/code-lens/referencesCodeLens.js';
@@ -45,16 +43,19 @@ import { MarkdownString } from './utils/MarkdownString.js';
 import * as Previewer from './utils/previewer.js';
 import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
+import { CommandManager } from './commands/commandManager.js';
+import { CodeActionManager } from './features/codeActions/codeActionManager.js';
 
 export class LspServer {
     private tsClient: TsClient;
     private fileConfigurationManager: FileConfigurationManager;
     private initializeParams: TypeScriptInitializeParams | null = null;
-    private diagnosticQueue: DiagnosticEventQueue;
+    private diagnosticsManager: DiagnosticsManager;
     private completionDataCache = new CompletionDataCache();
     private logger: Logger;
+    private codeActionsManager: CodeActionManager;
+    private commandManager: CommandManager;
     private workspaceRoot: string | undefined;
-    private typeScriptAutoFixProvider: TypeScriptAutoFixProvider | null = null;
     private features: SupportedFeatures = {};
     // Caching for navTree response shared by multiple requests.
     private cachedNavTreeResponse = new CachedResponse<ts.server.protocol.NavTreeResponse>();
@@ -65,12 +66,14 @@ export class LspServer {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
         this.tsClient = new TsClient(onCaseInsensitiveFileSystem(), this.logger, options.lspClient);
         this.fileConfigurationManager = new FileConfigurationManager(this.tsClient, onCaseInsensitiveFileSystem());
-        this.diagnosticQueue = new DiagnosticEventQueue(
+        this.commandManager = new CommandManager();
+        this.diagnosticsManager = new DiagnosticsManager(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
             this.tsClient,
             this.features,
             this.logger,
         );
+        this.codeActionsManager = new CodeActionManager(this.tsClient, this.fileConfigurationManager, this.commandManager, this.diagnosticsManager, this.features);
     }
 
     closeAllForTesting(): void {
@@ -84,7 +87,7 @@ export class LspServer {
         if (!document) {
             throw new Error(`Document not open: ${uri}`);
         }
-        await this.diagnosticQueue.waitForDiagnosticsForTesting(document.filepath);
+        await this.diagnosticsManager.waitForDiagnosticsForTesting(document.filepath);
     }
 
     shutdown(): void {
@@ -118,6 +121,7 @@ export class LspServer {
             const { codeAction, completion, definition, publishDiagnostics } = textDocument;
             if (codeAction) {
                 this.features.codeActionDisabledSupport = codeAction.disabledSupport;
+                this.features.codeActionResolveSupport = codeAction.resolveSupport;
             }
             if (completion) {
                 const { completionItem } = completion;
@@ -174,11 +178,11 @@ export class LspServer {
             process.exit();
         });
 
-        this.typeScriptAutoFixProvider = new TypeScriptAutoFixProvider(this.tsClient);
         this.fileConfigurationManager.setGlobalConfiguration(this.workspaceRoot, hostInfo);
         this.registerHandlers();
 
         const prepareSupport = textDocument?.rename?.prepareSupport && this.tsClient.apiVersion.gte(API.v310);
+        const { codeActionLiteralSupport, resolveSupport: codeActionResolveSupport } = textDocument?.codeAction || {};
         const initializeResult: lsp.InitializeResult = {
             capabilities: {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
@@ -186,17 +190,20 @@ export class LspServer {
                     triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
                     resolveProvider: true,
                 },
-                codeActionProvider: clientCapabilities.textDocument?.codeAction?.codeActionLiteralSupport
+                codeActionProvider: codeActionLiteralSupport || codeActionResolveSupport
                     ? {
-                        codeActionKinds: [
-                            ...TypeScriptAutoFixProvider.kinds.map(kind => kind.value),
-                            CodeActionKind.SourceOrganizeImportsTs.value,
-                            CodeActionKind.SourceRemoveUnusedImportsTs.value,
-                            CodeActionKind.SourceSortImportsTs.value,
-                            CodeActionKind.QuickFix.value,
-                            CodeActionKind.Refactor.value,
-                        ],
-                    } : true,
+                        ...codeActionLiteralSupport ? {
+                            codeActionKinds: [
+                                ...this.codeActionsManager.kinds,
+                                CodeActionKind.SourceOrganizeImportsTs.value,
+                                CodeActionKind.SourceRemoveUnusedImportsTs.value,
+                                CodeActionKind.SourceSortImportsTs.value,
+                                CodeActionKind.Refactor.value,
+                            ],
+                        } : {},
+                        ...codeActionResolveSupport ? { resolveProvider: true } : {},
+                    }
+                    : true,
                 codeLensProvider: {
                     resolveProvider: true,
                 },
@@ -207,8 +214,6 @@ export class LspServer {
                 documentSymbolProvider: true,
                 executeCommandProvider: {
                     commands: [
-                        Commands.APPLY_WORKSPACE_EDIT,
-                        Commands.APPLY_CODE_ACTION,
                         Commands.APPLY_REFACTORING,
                         Commands.CONFIGURE_PLUGIN,
                         Commands.ORGANIZE_IMPORTS,
@@ -360,7 +365,7 @@ export class LspServer {
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
         this.fileConfigurationManager.setWorkspaceConfiguration((params.settings || {}) as WorkspaceConfiguration);
         const ignoredDiagnosticCodes = this.fileConfigurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
-        this.tsClient.interruptGetErr(() => this.diagnosticQueue.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes));
+        this.tsClient.interruptGetErr(() => this.diagnosticsManager.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes));
     }
 
     didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
@@ -384,7 +389,7 @@ export class LspServer {
         }
         this.cachedNavTreeResponse.onDocumentClose(document);
         this.tsClient.onDidCloseTextDocument(uri);
-        this.diagnosticQueue.onDidCloseFile(document.filepath);
+        this.diagnosticsManager.onDidCloseFile(document.filepath);
         this.fileConfigurationManager.onDidCloseTextDocument(document.uri);
     }
 
@@ -783,20 +788,16 @@ export class LspServer {
         return asSignatureHelp(response.body, params.context, this.tsClient);
     }
 
-    async codeAction(params: lsp.CodeActionParams, token?: lsp.CancellationToken): Promise<lsp.CodeAction[]> {
+    async codeAction(params: lsp.CodeActionParams, token?: lsp.CancellationToken): Promise<(lsp.CodeAction | lsp.Command)[]> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return [];
         }
 
-        await this.tsClient.interruptGetErr(() => this.fileConfigurationManager.ensureConfigurationForDocument(document));
+        const actions = await this.codeActionsManager.provideCodeActions(document, params.range, params.context, token);
 
         const fileRangeArgs = Range.toFileRangeRequestArgs(document.filepath, params.range);
-        const actions: lsp.CodeAction[] = [];
         const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
-        if (!kinds || kinds.some(kind => CodeActionKind.QuickFix.contains(kind))) {
-            actions.push(...provideQuickFix(await this.getCodeFixes(fileRangeArgs, params.context, token), this.tsClient));
-        }
         if (!kinds || kinds.some(kind => CodeActionKind.Refactor.contains(kind))) {
             actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context, this.features, token), fileRangeArgs, this.features));
         }
@@ -830,28 +831,9 @@ export class LspServer {
             }
         }
 
-        // TODO: Since we rely on diagnostics pointing at errors in the correct places, we can't proceed if we are not
-        // sure that diagnostics are up-to-date. Thus we check if there are pending diagnostic requests for the file.
-        // In general would be better to replace the whole diagnostics handling logic with the one from
-        // bufferSyncSupport.ts in VSCode's typescript language features.
-        if (kinds && !this.tsClient.hasPendingDiagnostics(document.uri)) {
-            const diagnostics = this.diagnosticQueue.getDiagnosticsForFile(document.filepath) || [];
-            if (diagnostics.length) {
-                actions.push(...await this.typeScriptAutoFixProvider!.provideCodeActions(kinds, document.filepath, diagnostics));
-            }
-        }
-
         return actions;
     }
-    protected async getCodeFixes(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, token?: lsp.CancellationToken): Promise<ts.server.protocol.CodeFixResponse | undefined> {
-        const errorCodes = context.diagnostics.map(diagnostic => Number(diagnostic.code));
-        const args: ts.server.protocol.CodeFixRequestArgs = {
-            ...fileRangeArgs,
-            errorCodes,
-        };
-        const response = await this.tsClient.execute(CommandTypes.GetCodeFixes, args, token);
-        return response.type === 'response' ? response : undefined;
-    }
+
     protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, features: SupportedFeatures, token?: lsp.CancellationToken): Promise<ts.server.protocol.ApplicableRefactorInfo[]> {
         // Make separate request for each "kind" that was specified or a single request otherwise.
         const kinds = context.only || [undefined];
@@ -870,20 +852,14 @@ export class LspServer {
         return responses.flat();
     }
 
+    async codeActionResolve(params: lsp.CodeAction, _token?: lsp.CancellationToken): Promise<lsp.CodeAction> {
+        return this.codeActionsManager.resolveCodeAction(params);
+    }
+
     async executeCommand(params: lsp.ExecuteCommandParams, token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<unknown> {
-        if (params.command === Commands.APPLY_WORKSPACE_EDIT && params.arguments) {
-            const edit = params.arguments[0] as lsp.WorkspaceEdit;
-            await this.options.lspClient.applyWorkspaceEdit({ edit });
-        } else if (params.command === Commands.APPLY_CODE_ACTION && params.arguments) {
-            const codeAction = params.arguments[0] as ts.server.protocol.CodeAction;
-            if (!await this.applyFileCodeEdits(codeAction.changes)) {
-                return;
-            }
-            if (codeAction.commands?.length) {
-                for (const command of codeAction.commands) {
-                    await this.tsClient.execute(CommandTypes.ApplyCodeActionCommand, { command }, token);
-                }
-            }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        if (await this.commandManager.handle(params.command, ...params.arguments || [])) {
+            // handled by command manager
         } else if (params.command === Commands.APPLY_REFACTORING && params.arguments) {
             const args = params.arguments[0] as ts.server.protocol.GetEditsForRefactorRequestArgs;
             const response = await this.tsClient.execute(CommandTypes.GetEditsForRefactor, args, token);
@@ -1189,7 +1165,7 @@ export class LspServer {
             const diagnosticEvent = event as ts.server.protocol.DiagnosticEvent;
             if (diagnosticEvent.body?.diagnostics) {
                 const { file, diagnostics } = diagnosticEvent.body;
-                this.diagnosticQueue.updateDiagnostics(getDignosticsKind(event), file, diagnostics);
+                this.diagnosticsManager.updateDiagnostics(getDignosticsKind(event), file, diagnostics);
             }
         }
     }

@@ -33,6 +33,7 @@ export function createLspConnection(options: LspConnectionOptions): lsp.Connecti
     connection.onDidChangeTextDocument(server.didChangeTextDocument.bind(server));
 
     connection.onCodeAction(server.codeAction.bind(server));
+    connection.onCodeActionResolve(server.codeActionResolve.bind(server));
     connection.onCodeLens(server.codeLens.bind(server));
     connection.onCodeLensResolve(server.codeLensResolve.bind(server));
     connection.onCompletion(server.completion.bind(server));

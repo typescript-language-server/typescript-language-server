@@ -11,8 +11,6 @@ import { TypeScriptVersionSource } from './tsServer/versionProvider.js';
 import { TSServerRequestCommand } from './commands/tsserverRequests.js';
 
 export const Commands = {
-    APPLY_WORKSPACE_EDIT: '_typescript.applyWorkspaceEdit',
-    APPLY_CODE_ACTION: '_typescript.applyCodeAction',
     APPLY_REFACTORING: '_typescript.applyRefactoring',
     CONFIGURE_PLUGIN: '_typescript.configurePlugin',
     ORGANIZE_IMPORTS: '_typescript.organizeImports',

@@ -73,7 +73,7 @@ class FileDiagnostics {
     }
 }
 
-export class DiagnosticEventQueue {
+export class DiagnosticsManager {
     protected readonly diagnostics = new Map<string, FileDiagnostics>();
     private ignoredDiagnosticCodes: Set<number> = new Set();
 
