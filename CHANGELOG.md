@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.0.1](https://github.com/typescript-language-server/typescript-language-server/compare/v5.0.0...v5.0.1) (2025-10-07)
+
+
+### Bug Fixes
+
+* **deps:** update devdependency typescript to ^5.9.3 ([#1017](https://github.com/typescript-language-server/typescript-language-server/issues/1017)) ([44f8778](https://github.com/typescript-language-server/typescript-language-server/commit/44f87786a49b9810ac975973fbb5bdeebcdde022))
+* improve code actions support ([#1018](https://github.com/typescript-language-server/typescript-language-server/issues/1018)) ([8591c0a](https://github.com/typescript-language-server/typescript-language-server/commit/8591c0a9e539b8de2340f6c9bf258db6f6eeea3e))
+
 ## [5.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v4.4.1...v5.0.0) (2025-09-15)
 
 
