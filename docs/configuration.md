@@ -116,7 +116,7 @@ Specifies preferences for the internal `tsserver` process. Those options depend 
 
 **lazyConfiguredProjectsFromExternalProject** [boolean] **Default**: `false`
 
-**maximumHoverLength** [number] A positive integer indicating the maximum length of a hover text before it is truncated. **Default**: `500`
+**maximumHoverLength** [number] A positive integer indicating the maximum length of a hover text before it is truncated. Since TypeScript 5.9+. **Default**: `500`.
 
 <a name="organizeImportsIgnoreCase"></a> **organizeImportsIgnoreCase** [string or boolean] Indicates whether imports should be organized in a case-insensitive manner. Supported values: `'auto'`, `boolean`. **Default**: `'auto'`
 
