@@ -23,6 +23,7 @@ The language server accepts various settings through the `initializationOptions`
 | npmLocation       | string   | Specifies the path to the NPM executable used for Automatic Type Acquisition. |
 | locale            | string   | The locale to use to show error messages. |
 | plugins           | object[] | An array of `{ name: string, location: string, languages?: string[] }` objects for registering a Typescript plugins. **Default**: [] |
+| diagnosticsIgnoredCodes | number[] | An array of diagnostics codes to be omitted when reporting diagnostics. | 
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See [`preferences` options](#preferences-options) for more details. |
 | supportsMoveToFileCodeAction | boolean | Whether the client supports the "Move to file" interactive code action. See [`supportsMoveToFileCodeAction` option](#supportsmovetofilecodeaction-option) for more details. |
 | tsserver          | object   | Options related to the `tsserver` process. See below for more |

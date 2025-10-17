@@ -111,6 +111,10 @@ export class LspServer {
 
         this.fileConfigurationManager.mergeTsPreferences(userInitializationOptions.preferences || {});
 
+        if (userInitializationOptions.diagnosticsIgnoredCodes) {
+            this.diagnosticsManager.updateIgnoredDiagnosticCodes(userInitializationOptions.diagnosticsIgnoredCodes);
+        }
+
         // Setup supported features.
         this.features.completionDisableFilterText = userInitializationOptions.completionDisableFilterText ?? false;
         this.features.moveToFileCodeActionSupport =
