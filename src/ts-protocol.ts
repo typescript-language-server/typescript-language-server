@@ -374,6 +374,7 @@ export interface TypeScriptInitializationOptions {
     preferences?: ts.server.protocol.UserPreferences;
     supportsMoveToFileCodeAction?: boolean;
     tsserver?: TsserverOptions;
+    diagnosticsIgnoredCodes?: number[];
 }
 
 interface TsserverOptions {
