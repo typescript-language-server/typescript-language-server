@@ -17,6 +17,7 @@ import { CommandTypes, ModuleKind, ScriptTarget, type ts, type TypeScriptInitial
 import { ITypeScriptServiceClient } from '../typescriptService.js';
 import { isTypeScriptDocument } from '../configuration/languageIds.js';
 import { LspDocument } from '../document.js';
+import type { LspClient } from '../lsp-client.js';
 import API from '../utils/api.js';
 import { equals } from '../utils/objects.js';
 import { ResourceMap } from '../utils/resourceMap.js';
@@ -147,6 +148,7 @@ export default class FileConfigurationManager {
 
     public constructor(
         private readonly client: ITypeScriptServiceClient,
+        private readonly lspClient: LspClient,
         onCaseInsensitiveFileSystem: boolean,
     ) {
         this.formatOptions = new ResourceMap(undefined, { onCaseInsensitiveFileSystem });
@@ -208,12 +210,22 @@ export default class FileConfigurationManager {
         document: LspDocument,
         token?: lsp.CancellationToken,
     ): Promise<void> {
-        return this.ensureConfigurationOptions(document, undefined, token);
+        const formattingOptions = await this.getFormattingOptions(document);
+        return this.ensureConfigurationOptions(document, formattingOptions, token);
+    }
+
+    private async getFormattingOptions(document: LspDocument): Promise<Partial<lsp.FormattingOptions>> {
+        const formatConfiguration = await this.lspClient.getWorkspaceConfiguration<Partial<lsp.FormattingOptions> | undefined>(document.uri.toString(), 'formattingOptions') || {};
+
+        return {
+            tabSize: typeof formatConfiguration.tabSize === 'number' ? formatConfiguration.tabSize : undefined,
+            insertSpaces: typeof formatConfiguration.insertSpaces === 'boolean' ? formatConfiguration.insertSpaces : undefined,
+        };
     }
 
     public async ensureConfigurationOptions(
         document: LspDocument,
-        options?: lsp.FormattingOptions,
+        options?: Partial<lsp.FormattingOptions>,
         token?: lsp.CancellationToken,
     ): Promise<void> {
         const currentOptions = this.getFileOptions(document, options);
@@ -260,7 +272,7 @@ export default class FileConfigurationManager {
 
     private getFileOptions(
         document: LspDocument,
-        options?: lsp.FormattingOptions,
+        options?: Partial<lsp.FormattingOptions>,
     ): FileConfiguration {
         return {
             formatOptions: this.getFormatOptions(document, options),
@@ -270,7 +282,7 @@ export default class FileConfigurationManager {
 
     private getFormatOptions(
         document: LspDocument,
-        formattingOptions?: lsp.FormattingOptions,
+        formattingOptions?: Partial<lsp.FormattingOptions>,
     ): ts.server.protocol.FormatCodeSettings {
         const workspacePreferences = this.getWorkspacePreferencesForFile(document);
 

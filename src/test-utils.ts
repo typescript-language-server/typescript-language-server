@@ -191,6 +191,10 @@ export class TestLspClient implements LspClient {
     sendNotification<P>(_type: lsp.NotificationType<P>, _params: P): Promise<void> {
         throw new Error('unsupported');
     }
+
+    async getWorkspaceConfiguration(_scopeUri: string, _section: string): Promise<any> {
+        return Promise.resolve(undefined);
+    }
 }
 
 export class TestLspServer extends LspServer {

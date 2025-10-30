@@ -23,6 +23,7 @@
     - [Code Lenses \(`textDocument/codeLens`\)](#code-lenses-textdocumentcodelens)
     - [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
     - [TypeScript Version Notification](#typescript-version-notification)
+    - [Workspace Configuration request for formatting settings](#workspace-configuration-request-for-formatting-settings)
 - [Development](#development)
     - [Build](#build)
     - [Dev](#dev)
@@ -274,6 +275,18 @@ The `$/typescriptVersion` notification params include two properties:
 
  - `version` - a semantic version (for example `4.8.4`)
  - `source` - a string specifying whether used TypeScript version comes from the local workspace (`workspace`), is explicitly specified through a `initializationOptions.tsserver.path` setting (`user-setting`) or was bundled with the server (`bundled`)
+
+
+### Workspace Configuration request for formatting settings
+
+Server asks the client for file-specific configuration options (`tabSize` and `insertSpaces`) that are required by `tsserver` to properly format the file edits when for example using "Organize imports" or performing other file modifications. Those options have to be dynamically provided by the client/editor since the values can differ for each file. For this reason server sends a `workspace/configuration` request with `scopeUri` equal to file's URI and `section` equal to `formattingOptions`. The client is expected to return a configuration that includes the following properties:
+
+```js
+{
+    "tabSize": number
+    "insertSpaces": boolean
+}
+```
 
 ## Development
 
