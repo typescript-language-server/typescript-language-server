@@ -112,7 +112,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 - Request:
     ```ts
     {
-        command: `_typescript.goToSourceDefinition`
+        command: '_typescript.goToSourceDefinition'
         arguments: [
             lsp.DocumentUri,  // String URI of the document
             lsp.Position,     // Line and character position (zero-based)
@@ -131,7 +131,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 - Request:
     ```ts
     {
-        command: `_typescript.applyRefactoring`
+        command: '_typescript.applyRefactoring'
         arguments: [
             tsp.GetEditsForRefactorRequestArgs,
         ]
@@ -147,7 +147,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 - Request:
     ```ts
     {
-        command: `_typescript.organizeImports`
+        command: '_typescript.organizeImports'
         arguments: [
             // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
             [string] | [string, { skipDestructiveCodeActions?: boolean }],
@@ -164,7 +164,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 - Request:
     ```ts
     {
-        command: `_typescript.applyRenameFile`
+        command: '_typescript.applyRenameFile'
         arguments: [
             { sourceUri: string; targetUri: string; },
         ]
@@ -180,7 +180,7 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 - Request:
     ```ts
     {
-        command: `typescript.tsserverRequest`
+        command: 'typescript.tsserverRequest'
         arguments: [
             string,       // command
             any,          // command arguments in a format that the command expects
@@ -209,7 +209,7 @@ type ExecuteInfo = {
 - Request:
     ```ts
     {
-        command: `_typescript.configurePlugin`
+        command: '_typescript.configurePlugin'
         arguments: [pluginName: string, configuration: any]
     }
     ```
