@@ -109,89 +109,104 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 
 #### Go to Source Definition
 
-- Request:
-    ```ts
-    {
-        command: '_typescript.goToSourceDefinition'
-        arguments: [
-            lsp.DocumentUri,  // String URI of the document
-            lsp.Position,     // Line and character position (zero-based)
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    lsp.Location[] | null
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.goToSourceDefinition'
+    arguments: [
+        lsp.DocumentUri,  // String URI of the document
+        lsp.Position,     // Line and character position (zero-based)
+    ]
+}
+```
+
+Response:
+
+```ts
+lsp.Location[] | null
+```
 
 (This command is supported from Typescript 4.7.)
 
 #### Apply Refactoring
 
-- Request:
-    ```ts
-    {
-        command: '_typescript.applyRefactoring'
-        arguments: [
-            tsp.GetEditsForRefactorRequestArgs,
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.applyRefactoring'
+    arguments: [
+        tsp.GetEditsForRefactorRequestArgs,
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 #### Organize Imports
 
-- Request:
-    ```ts
-    {
-        command: '_typescript.organizeImports'
-        arguments: [
-            // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
-            [string] | [string, { skipDestructiveCodeActions?: boolean }],
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.organizeImports'
+    arguments: [
+        // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
+        [string] | [string, { skipDestructiveCodeActions?: boolean }],
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 #### Rename File
 
-- Request:
-    ```ts
-    {
-        command: '_typescript.applyRenameFile'
-        arguments: [
-            { sourceUri: string; targetUri: string; },
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.applyRenameFile'
+    arguments: [
+        { sourceUri: string; targetUri: string; },
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 #### Send Tsserver Command
 
-- Request:
-    ```ts
-    {
-        command: 'typescript.tsserverRequest'
-        arguments: [
-            string,       // command
-            any,          // command arguments in a format that the command expects
-            ExecuteInfo,  // configuration object used for the tsserver request (see below)
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    any
-    ```
+Request:
+
+```ts
+{
+    command: 'typescript.tsserverRequest'
+    arguments: [
+        string,       // command
+        any,          // command arguments in a format that the command expects
+        ExecuteInfo,  // configuration object used for the tsserver request (see below)
+    ]
+}
+```
+
+Response:
+
+```ts
+any
+```
 
 The `ExecuteInfo` object is defined as follows:
 
@@ -206,17 +221,20 @@ type ExecuteInfo = {
 
 #### Configure plugin
 
-- Request:
-    ```ts
-    {
-        command: '_typescript.configurePlugin'
-        arguments: [pluginName: string, configuration: any]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.configurePlugin'
+    arguments: [pluginName: string, configuration: any]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 ### Code Lenses (`textDocument/codeLens`)
 
