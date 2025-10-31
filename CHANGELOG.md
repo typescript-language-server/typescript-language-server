@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v5.0.1...v5.1.0) (2025-10-31)
+
+
+### Features
+
+* request file-specific formatting options ([#1034](https://github.com/typescript-language-server/typescript-language-server/issues/1034)) ([de89dd3](https://github.com/typescript-language-server/typescript-language-server/commit/de89dd34b27d9dd65b9c3823ad2ddae06eb73c47))
+* support passing "mode" to organize imports command ([#1036](https://github.com/typescript-language-server/typescript-language-server/issues/1036)) ([a7c24b8](https://github.com/typescript-language-server/typescript-language-server/commit/a7c24b85a4503f320aa78fb12ea6cb3f81186b28))
+
 ## [5.0.1](https://github.com/typescript-language-server/typescript-language-server/compare/v5.0.0...v5.0.1) (2025-10-07)
 
 
