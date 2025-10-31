@@ -903,7 +903,7 @@ export class LspServer {
                 return;
             }
 
-            const additionalArguments = (params.arguments[1] || {}) as { skipDestructiveCodeActions?: boolean; };
+            const additionalArguments = (params.arguments[1] || {}) as { skipDestructiveCodeActions?: boolean; mode?: OrganizeImportsMode; };
             const body = await this.tsClient.interruptGetErr(async () => {
                 await this.fileConfigurationManager.ensureConfigurationForDocument(document);
                 const response = await this.tsClient.execute(
