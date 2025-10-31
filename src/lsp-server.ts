@@ -906,6 +906,7 @@ export class LspServer {
             const additionalArguments = (params.arguments[1] || {}) as { skipDestructiveCodeActions?: boolean; mode?: OrganizeImportsMode; };
             const body = await this.tsClient.interruptGetErr(async () => {
                 await this.fileConfigurationManager.ensureConfigurationForDocument(document);
+                const mode = additionalArguments.mode ?? (additionalArguments.skipDestructiveCodeActions ? OrganizeImportsMode.SortAndCombine : OrganizeImportsMode.All);
                 const response = await this.tsClient.execute(
                     CommandTypes.OrganizeImports,
                     {
@@ -915,7 +916,7 @@ export class LspServer {
                         },
                         // Deprecated in 4.9; `mode` takes priority
                         skipDestructiveCodeActions: additionalArguments.skipDestructiveCodeActions,
-                        mode: additionalArguments.skipDestructiveCodeActions ? OrganizeImportsMode.SortAndCombine : OrganizeImportsMode.All,
+                        mode,
                     },
                     token,
                 );
