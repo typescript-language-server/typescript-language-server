@@ -24,6 +24,7 @@ export interface LspClient {
     applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult>;
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
     sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void>;
+    getWorkspaceConfiguration<R = unknown>(scopeUri: string, section: string): Promise<R>;
 }
 
 // Hack around the LSP library that makes it otherwise impossible to differentiate between Null and Client-initiated reporter.
@@ -64,6 +65,10 @@ export class LspClientImpl implements LspClient {
     logMessage(args: lsp.LogMessageParams): void {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connection.sendNotification(lsp.LogMessageNotification.type, args);
+    }
+
+    async getWorkspaceConfiguration<R = unknown>(scopeUri: string, section: string): Promise<R> {
+        return await this.connection.workspace.getConfiguration({ scopeUri, section }) as R;
     }
 
     async applyWorkspaceEdit(params: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {

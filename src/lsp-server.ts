@@ -65,7 +65,7 @@ export class LspServer {
     constructor(private options: LspServerConfiguration) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
         this.tsClient = new TsClient(onCaseInsensitiveFileSystem(), this.logger, options.lspClient);
-        this.fileConfigurationManager = new FileConfigurationManager(this.tsClient, onCaseInsensitiveFileSystem());
+        this.fileConfigurationManager = new FileConfigurationManager(this.tsClient, this.options.lspClient, onCaseInsensitiveFileSystem());
         this.commandManager = new CommandManager();
         this.diagnosticsManager = new DiagnosticsManager(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
@@ -816,15 +816,19 @@ export class LspServer {
                     skipDestructiveCodeActions = documentHasErrors;
                     mode = OrganizeImportsMode.SortAndCombine;
                 }
-                const response = await this.tsClient.interruptGetErr(() => this.tsClient.execute(
-                    CommandTypes.OrganizeImports,
-                    {
-                        scope: { type: 'file', args: fileRangeArgs },
-                        // Deprecated in 4.9; `mode` takes priority.
-                        skipDestructiveCodeActions,
-                        mode,
-                    },
-                    token));
+                const response = await this.tsClient.interruptGetErr(async () => {
+                    await this.fileConfigurationManager.ensureConfigurationForDocument(document, token);
+
+                    return this.tsClient.execute(
+                        CommandTypes.OrganizeImports,
+                        {
+                            scope: { type: 'file', args: fileRangeArgs },
+                            // Deprecated in 4.9; `mode` takes priority.
+                            skipDestructiveCodeActions,
+                            mode,
+                        },
+                        token);
+                });
                 if (response.type === 'response' && response.body) {
                     actions.push(...provideOrganizeImports(command, response, this.tsClient));
                 }

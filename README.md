@@ -23,6 +23,7 @@
     - [Code Lenses \(`textDocument/codeLens`\)](#code-lenses-textdocumentcodelens)
     - [Inlay hints \(`textDocument/inlayHint`\)](#inlay-hints-textdocumentinlayhint)
     - [TypeScript Version Notification](#typescript-version-notification)
+    - [Workspace Configuration request for formatting settings](#workspace-configuration-request-for-formatting-settings)
 - [Development](#development)
     - [Build](#build)
     - [Dev](#dev)
@@ -108,89 +109,104 @@ Most of the time, you'll execute commands with arguments retrieved from another 
 
 #### Go to Source Definition
 
-- Request:
-    ```ts
-    {
-        command: `_typescript.goToSourceDefinition`
-        arguments: [
-            lsp.DocumentUri,  // String URI of the document
-            lsp.Position,     // Line and character position (zero-based)
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    lsp.Location[] | null
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.goToSourceDefinition'
+    arguments: [
+        lsp.DocumentUri,  // String URI of the document
+        lsp.Position,     // Line and character position (zero-based)
+    ]
+}
+```
+
+Response:
+
+```ts
+lsp.Location[] | null
+```
 
 (This command is supported from Typescript 4.7.)
 
 #### Apply Refactoring
 
-- Request:
-    ```ts
-    {
-        command: `_typescript.applyRefactoring`
-        arguments: [
-            tsp.GetEditsForRefactorRequestArgs,
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.applyRefactoring'
+    arguments: [
+        tsp.GetEditsForRefactorRequestArgs,
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 #### Organize Imports
 
-- Request:
-    ```ts
-    {
-        command: `_typescript.organizeImports`
-        arguments: [
-            // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
-            [string] | [string, { skipDestructiveCodeActions?: boolean }],
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.organizeImports'
+    arguments: [
+        // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
+        [string] | [string, { skipDestructiveCodeActions?: boolean }],
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 #### Rename File
 
-- Request:
-    ```ts
-    {
-        command: `_typescript.applyRenameFile`
-        arguments: [
-            { sourceUri: string; targetUri: string; },
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.applyRenameFile'
+    arguments: [
+        { sourceUri: string; targetUri: string; },
+    ]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 #### Send Tsserver Command
 
-- Request:
-    ```ts
-    {
-        command: `typescript.tsserverRequest`
-        arguments: [
-            string,       // command
-            any,          // command arguments in a format that the command expects
-            ExecuteInfo,  // configuration object used for the tsserver request (see below)
-        ]
-    }
-    ```
-- Response:
-    ```ts
-    any
-    ```
+Request:
+
+```ts
+{
+    command: 'typescript.tsserverRequest'
+    arguments: [
+        string,       // command
+        any,          // command arguments in a format that the command expects
+        ExecuteInfo,  // configuration object used for the tsserver request (see below)
+    ]
+}
+```
+
+Response:
+
+```ts
+any
+```
 
 The `ExecuteInfo` object is defined as follows:
 
@@ -205,17 +221,20 @@ type ExecuteInfo = {
 
 #### Configure plugin
 
-- Request:
-    ```ts
-    {
-        command: `_typescript.configurePlugin`
-        arguments: [pluginName: string, configuration: any]
-    }
-    ```
-- Response:
-    ```ts
-    void
-    ```
+Request:
+
+```ts
+{
+    command: '_typescript.configurePlugin'
+    arguments: [pluginName: string, configuration: any]
+}
+```
+
+Response:
+
+```ts
+void
+```
 
 ### Code Lenses (`textDocument/codeLens`)
 
@@ -274,6 +293,18 @@ The `$/typescriptVersion` notification params include two properties:
 
  - `version` - a semantic version (for example `4.8.4`)
  - `source` - a string specifying whether used TypeScript version comes from the local workspace (`workspace`), is explicitly specified through a `initializationOptions.tsserver.path` setting (`user-setting`) or was bundled with the server (`bundled`)
+
+
+### Workspace Configuration request for formatting settings
+
+Server asks the client for file-specific configuration options (`tabSize` and `insertSpaces`) that are required by `tsserver` to properly format the file edits when for example using "Organize imports" or performing other file modifications. Those options have to be dynamically provided by the client/editor since the values can differ for each file. For this reason server sends a `workspace/configuration` request with `scopeUri` equal to file's URI and `section` equal to `formattingOptions`. The client is expected to return a configuration that includes the following properties:
+
+```js
+{
+    "tabSize": number
+    "insertSpaces": boolean
+}
+```
 
 ## Development
 
