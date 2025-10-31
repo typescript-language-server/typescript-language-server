@@ -48,7 +48,7 @@
     "@size-limit/file": "^11.2.0",
     "@stylistic/eslint-plugin": "^5.5.0",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^20.19.24",
+    "@types/node": "^24.9.2",
     "@types/semver": "^7.7.1",
     "@types/which": "^3.0.4",
     "@vitest/eslint-plugin": "^1.4.0",
