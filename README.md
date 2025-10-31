@@ -156,8 +156,16 @@ Request:
 {
     command: '_typescript.organizeImports'
     arguments: [
-        // The "skipDestructiveCodeActions" argument is supported from Typescript 4.4+
-        [string] | [string, { skipDestructiveCodeActions?: boolean }],
+        string,  // file URI
+        // Optional options:
+        {
+            // @deprecated - use "mode". Supported from Typescript 4.4+.
+            skipDestructiveCodeActions?: boolean
+            // 'All' - organizes imports including destructive actions (removing unused imports)
+            // 'SortAndCombine' - Doesn't perform destructive actions.
+            // 'RemoveUnused' - Only removes unused imports.
+            mode?: 'All' | 'SortAndCombine' | 'RemoveUnused'
+        },
     ]
 }
 ```
