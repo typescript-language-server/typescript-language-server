@@ -216,11 +216,16 @@ export default class FileConfigurationManager {
 
     private async getFormattingOptions(document: LspDocument): Promise<Partial<lsp.FormattingOptions>> {
         const formatConfiguration = await this.lspClient.getWorkspaceConfiguration<Partial<lsp.FormattingOptions> | undefined>(document.uri.toString(), 'formattingOptions') || {};
+        const options: Partial<lsp.FormattingOptions> = {};
 
-        return {
-            tabSize: typeof formatConfiguration.tabSize === 'number' ? formatConfiguration.tabSize : undefined,
-            insertSpaces: typeof formatConfiguration.insertSpaces === 'boolean' ? formatConfiguration.insertSpaces : undefined,
-        };
+        if (typeof formatConfiguration.tabSize === 'number') {
+            options.tabSize = formatConfiguration.tabSize;
+        }
+        if (typeof formatConfiguration.insertSpaces === 'boolean') {
+            options.insertSpaces = formatConfiguration.insertSpaces;
+        }
+
+        return options;
     }
 
     public async ensureConfigurationOptions(
