@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.1.1](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.0...v5.1.1) (2025-11-05)
+
+
+### Bug Fixes
+
+* don't override formatting options with undefined values ([#1041](https://github.com/typescript-language-server/typescript-language-server/issues/1041)) ([4645124](https://github.com/typescript-language-server/typescript-language-server/commit/464512454a1f68bb6f1e270cf5c0c2be13cdaa54))
+
 ## [5.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v5.0.1...v5.1.0) (2025-10-31)
 
 
