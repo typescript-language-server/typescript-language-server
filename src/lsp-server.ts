@@ -584,7 +584,6 @@ export class LspServer {
                 const uri = this.tsClient.toResourceUri(cachedData.file);
                 document = this.tsClient.toOpenDocument(uri);
                 if (document) {
-                    await this.fileConfigurationManager.ensureConfigurationForDocument(document, token);
                     const response = await this.tsClient.interruptGetErr(() => this.tsClient.execute(CommandTypes.CompletionDetails, cachedData, token));
                     if (response.type !== 'response' || !response.body?.length) {
                         return item;
