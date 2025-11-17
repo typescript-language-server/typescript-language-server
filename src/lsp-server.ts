@@ -369,12 +369,19 @@ export class LspServer {
     }
 
     didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
-        if (this.tsClient.toOpenDocument(params.textDocument.uri, { suppressAlertOnFailure: true })) {
-            throw new Error(`Can't open already open document: ${params.textDocument.uri}`);
+        const { uri, languageId } = params.textDocument;
+
+        if (this.tsClient.toOpenDocument(uri, { suppressAlertOnFailure: true })) {
+            throw new Error(`Can't open already open document: ${uri}`);
         }
 
         if (!this.tsClient.openTextDocument(params.textDocument)) {
-            throw new Error(`Cannot open document '${params.textDocument.uri}' (languageId: ${params.textDocument.languageId}).`);
+            throw new Error(`Cannot open document '${uri}' (languageId: ${languageId}).`);
+        }
+
+        const document = this.tsClient.toOpenDocument(uri);
+        if (document) {
+            this.fileConfigurationManager.onDidOpenTextDocument(document);
         }
     }
 

@@ -11,7 +11,7 @@
 
 import path from 'node:path';
 import deepmerge from 'deepmerge';
-import type lsp from 'vscode-languageserver';
+import lsp from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { CommandTypes, ModuleKind, ScriptTarget, type ts, type TypeScriptInitializationOptions } from '../ts-protocol.js';
 import { ITypeScriptServiceClient } from '../typescriptService.js';
@@ -144,14 +144,28 @@ function areFileConfigurationsEqual(a: FileConfiguration, b: FileConfiguration):
 export default class FileConfigurationManager {
     public tsPreferences: Required<ts.server.protocol.UserPreferences> = deepmerge({}, DEFAULT_TSSERVER_PREFERENCES);
     public workspaceConfiguration: WorkspaceConfiguration = deepmerge({}, DEFAULT_WORKSPACE_CONFIGURATION);
-    private readonly formatOptions: ResourceMap<Promise<FileConfiguration | undefined>>;
+    private readonly fileOptionsCache: ResourceMap<Promise<FileConfiguration | undefined>>;
+    private readonly formatOptionsCache: ResourceMap<Partial<lsp.FormattingOptions>>;
+    private readonly initialConfigurationRequestsMap: ResourceMap<lsp.CancellationTokenSource>;
 
     public constructor(
         private readonly client: ITypeScriptServiceClient,
         private readonly lspClient: LspClient,
         onCaseInsensitiveFileSystem: boolean,
     ) {
-        this.formatOptions = new ResourceMap(undefined, { onCaseInsensitiveFileSystem });
+        this.fileOptionsCache = new ResourceMap(undefined, { onCaseInsensitiveFileSystem });
+        this.formatOptionsCache = new ResourceMap(undefined, { onCaseInsensitiveFileSystem });
+        this.initialConfigurationRequestsMap = new ResourceMap(undefined, { onCaseInsensitiveFileSystem });
+    }
+
+    public onDidOpenTextDocument(document: LspDocument): void {
+        const cancellation = new lsp.CancellationTokenSource();
+        this.initialConfigurationRequestsMap.set(document.uri, cancellation);
+        this.ensureConfigurationForDocument(document, cancellation.token)
+            .then(() => {
+                this.initialConfigurationRequestsMap.delete(document.uri);
+            })
+            .catch(() => {});
     }
 
     public onDidCloseTextDocument(documentUri: URI): void {
@@ -159,7 +173,8 @@ export default class FileConfigurationManager {
         // This is necessary since the tsserver now closed a project when its
         // last file in it closes which drops the stored formatting options
         // as well.
-        this.formatOptions.delete(documentUri);
+        this.fileOptionsCache.delete(documentUri);
+        this.initialConfigurationRequestsMap.get(documentUri)?.cancel();
     }
 
     public mergeTsPreferences(preferences: ts.server.protocol.UserPreferences): void {
@@ -215,6 +230,11 @@ export default class FileConfigurationManager {
     }
 
     private async getFormattingOptions(document: LspDocument): Promise<Partial<lsp.FormattingOptions>> {
+        const formatOptionsCached = this.formatOptionsCache.get(document.uri);
+        if (formatOptionsCached) {
+            return formatOptionsCached;
+        }
+
         const formatConfiguration = await this.lspClient.getWorkspaceConfiguration<Partial<lsp.FormattingOptions> | undefined>(document.uri.toString(), 'formattingOptions') || {};
         const options: Partial<lsp.FormattingOptions> = {};
 
@@ -225,6 +245,7 @@ export default class FileConfigurationManager {
             options.insertSpaces = formatConfiguration.insertSpaces;
         }
 
+        this.formatOptionsCache.set(document.uri, options);
         return options;
     }
 
@@ -234,7 +255,7 @@ export default class FileConfigurationManager {
         token?: lsp.CancellationToken,
     ): Promise<void> {
         const currentOptions = this.getFileOptions(document, options);
-        const cachedOptions = this.formatOptions.get(document.uri);
+        const cachedOptions = this.fileOptionsCache.get(document.uri);
         if (cachedOptions) {
             const cachedOptionsValue = await cachedOptions;
             if (token?.isCancellationRequested) {
@@ -255,7 +276,7 @@ export default class FileConfigurationManager {
             }
         })();
 
-        this.formatOptions.set(document.uri, task);
+        this.fileOptionsCache.set(document.uri, task);
 
         await task;
     }
@@ -272,7 +293,9 @@ export default class FileConfigurationManager {
     }
 
     public reset(): void {
-        this.formatOptions.clear();
+        this.fileOptionsCache.clear();
+        this.formatOptionsCache.clear();
+        this.initialConfigurationRequestsMap.clear();
     }
 
     private getFileOptions(
