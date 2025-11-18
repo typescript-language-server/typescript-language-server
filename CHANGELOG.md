@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.1.2](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.1...v5.1.2) (2025-11-18)
+
+
+### Refactors
+
+* cache file formatting configuration requests ([#1048](https://github.com/typescript-language-server/typescript-language-server/issues/1048)) ([9a366df](https://github.com/typescript-language-server/typescript-language-server/commit/9a366dfc7a989829f4b9e53017c298b565a307fd))
+
 ## [5.1.1](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.0...v5.1.1) (2025-11-05)
 
 
