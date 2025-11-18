@@ -355,6 +355,7 @@ export interface SupportedFeatures {
     diagnosticsSupport?: boolean;
     diagnosticsTagSupport?: boolean;
     moveToFileCodeActionSupport?: boolean;
+    workspaceConfigurationSuppport?: boolean;
 }
 
 export interface TypeScriptPlugin {

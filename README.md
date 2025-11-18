@@ -305,7 +305,7 @@ The `$/typescriptVersion` notification params include two properties:
 
 ### Workspace Configuration request for formatting settings
 
-Server asks the client for file-specific configuration options (`tabSize` and `insertSpaces`) that are required by `tsserver` to properly format file edits when for example using "Organize imports" or performing other file modifications. Those options have to be dynamically provided by the client/editor since the values can differ for each file. For this reason server sends a `workspace/configuration` request with `scopeUri` equal to file's URI and `section` equal to `formattingOptions`. The client is expected to return a configuration that includes the following properties:
+Server asks the client (provided client supports `workspace/configuration` capability) for file-specific configuration options (`tabSize` and `insertSpaces`) that are required by `tsserver` to properly format file edits when for example using "Organize imports" or performing other file modifications. Those options have to be dynamically provided by the client/editor since the values can differ for each file. For this reason server sends a `workspace/configuration` request with `scopeUri` equal to file's URI and `section` equal to `formattingOptions`. The client is expected to return a configuration that includes the following properties:
 
 ```js
 {
