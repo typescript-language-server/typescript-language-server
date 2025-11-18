@@ -140,7 +140,7 @@ export class LspServer {
             this.features.diagnosticsSupport = Boolean(publishDiagnostics);
             this.features.diagnosticsTagSupport = Boolean(publishDiagnostics?.tagSupport);
         }
-        if (workspace) {
+        if (workspace?.configuration) {
             this.features.workspaceConfigurationSuppport = true;
         }
 
