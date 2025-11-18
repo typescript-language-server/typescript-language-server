@@ -11,9 +11,8 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
-          release-type: node
-          package-name: typescript-language-server
-          changelog-types: '[{"type":"feat","section":"Features","hidden":false},{"type":"fix","section":"Bug Fixes","hidden":false},{"type":"refactor","section":"Refactors","hidden":false}]'
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
       - uses: actions/checkout@v5
         if: ${{ steps.release.outputs.release_created }}
       - uses: actions/setup-node@v6

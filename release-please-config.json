@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
     ".": {
       "changelog-path": "CHANGELOG.md",
@@ -9,5 +10,21 @@
       "prerelease": false
     }
   },
-  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+  "changelog-sections": [
+      {
+          "type": "feat",
+          "section": "Features",
+          "hidden": false
+      },
+      {
+          "type": "fix",
+          "section": "Bug Fixes",
+          "hidden": false
+      },
+      {
+          "type": "refactor",
+          "section": "Refactors",
+          "hidden": false
+      }
+  ]
 }
