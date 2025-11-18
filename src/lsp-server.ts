@@ -65,7 +65,7 @@ export class LspServer {
     constructor(private options: LspServerConfiguration) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
         this.tsClient = new TsClient(onCaseInsensitiveFileSystem(), this.logger, options.lspClient);
-        this.fileConfigurationManager = new FileConfigurationManager(this.tsClient, this.options.lspClient, onCaseInsensitiveFileSystem());
+        this.fileConfigurationManager = new FileConfigurationManager(this.tsClient, this.options.lspClient, this.features, onCaseInsensitiveFileSystem());
         this.commandManager = new CommandManager();
         this.diagnosticsManager = new DiagnosticsManager(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
@@ -116,7 +116,7 @@ export class LspServer {
         this.features.moveToFileCodeActionSupport =
             userInitializationOptions.supportsMoveToFileCodeAction &&
             typescriptVersion.version?.gte(API.v520);
-        const { textDocument } = clientCapabilities;
+        const { textDocument, workspace } = clientCapabilities;
         if (textDocument) {
             const { codeAction, completion, definition, publishDiagnostics } = textDocument;
             if (codeAction) {
@@ -139,6 +139,9 @@ export class LspServer {
             }
             this.features.diagnosticsSupport = Boolean(publishDiagnostics);
             this.features.diagnosticsTagSupport = Boolean(publishDiagnostics?.tagSupport);
+        }
+        if (workspace) {
+            this.features.workspaceConfigurationSuppport = true;
         }
 
         this.fileConfigurationManager.mergeTsPreferences({

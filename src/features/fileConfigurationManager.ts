@@ -13,7 +13,7 @@ import path from 'node:path';
 import deepmerge from 'deepmerge';
 import lsp from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { CommandTypes, ModuleKind, ScriptTarget, type ts, type TypeScriptInitializationOptions } from '../ts-protocol.js';
+import { CommandTypes, ModuleKind, ScriptTarget, type ts, type TypeScriptInitializationOptions, SupportedFeatures } from '../ts-protocol.js';
 import { ITypeScriptServiceClient } from '../typescriptService.js';
 import { isTypeScriptDocument } from '../configuration/languageIds.js';
 import { LspDocument } from '../document.js';
@@ -151,6 +151,7 @@ export default class FileConfigurationManager {
     public constructor(
         private readonly client: ITypeScriptServiceClient,
         private readonly lspClient: LspClient,
+        private readonly features: SupportedFeatures,
         onCaseInsensitiveFileSystem: boolean,
     ) {
         this.fileOptionsCache = new ResourceMap(undefined, { onCaseInsensitiveFileSystem });
@@ -235,7 +236,11 @@ export default class FileConfigurationManager {
             return formatOptionsCached;
         }
 
-        const formatConfiguration = await this.lspClient.getWorkspaceConfiguration<Partial<lsp.FormattingOptions> | undefined>(document.uri.toString(), 'formattingOptions') || {};
+        const formatConfiguration =
+            this.features.workspaceConfigurationSuppport
+                ? await this.lspClient.getWorkspaceConfiguration<Partial<lsp.FormattingOptions> | undefined>(document.uri.toString(), 'formattingOptions') || {}
+                : {};
+
         const options: Partial<lsp.FormattingOptions> = {};
 
         if (typeof formatConfiguration.tabSize === 'number') {
