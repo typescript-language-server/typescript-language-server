@@ -30,6 +30,10 @@ export class CommandManager {
         }
     }
 
+    public get registeredIds(): string[] {
+        return Array.from(this.commands.keys());
+    }
+
     public async handle(commandId: Command['id'], ...args: unknown[]): Promise<boolean> {
         const entry = this.commands.get(commandId);
         if (entry) {
