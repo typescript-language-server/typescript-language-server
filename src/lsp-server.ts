@@ -223,6 +223,7 @@ export class LspServer {
                         Commands.APPLY_RENAME_FILE,
                         Commands.SOURCE_DEFINITION,
                         Commands.TS_SERVER_REQUEST,
+                        ...this.commandManager.registeredIds,
                     ],
                 },
                 hoverProvider: true,
