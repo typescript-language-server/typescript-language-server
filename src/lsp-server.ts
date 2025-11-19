@@ -849,8 +849,8 @@ export class LspServer {
     }
 
     protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, features: SupportedFeatures, token?: lsp.CancellationToken): Promise<ts.server.protocol.ApplicableRefactorInfo[]> {
-        // Make separate request for each "kind" that was specified or a single request otherwise.
-        const kinds = context.only || [undefined];
+        // Make separate request for each refactor "kind" that was specified or a single request otherwise.
+        const kinds = (context.only || [undefined]).filter(kind => kind === undefined || CodeActionKind.Refactor.contains(new CodeActionKind(kind)));
 
         const responses = await Promise.all(kinds.map(async (kind) => {
             const args: ts.server.protocol.GetApplicableRefactorsRequestArgs = {
