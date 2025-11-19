@@ -1,6 +1,6 @@
 {
   "name": "typescript-language-server",
-  "version": "5.1.2",
+  "version": "5.1.3",
   "description": "Language Server Protocol (LSP) implementation for TypeScript using tsserver",
   "author": "TypeFox and others",
   "license": "Apache-2.0",
