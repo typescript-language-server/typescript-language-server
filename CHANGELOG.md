@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.1.3](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.2...v5.1.3) (2025-11-19)
+
+
+### Bug Fixes
+
+* announce all supported commands ([#1053](https://github.com/typescript-language-server/typescript-language-server/issues/1053)) ([e9fe952](https://github.com/typescript-language-server/typescript-language-server/commit/e9fe952baee4030aad6fbc24fb55bf2b84ad98e8))
+* don't send duplicate refactors when more than one context.only ([#1055](https://github.com/typescript-language-server/typescript-language-server/issues/1055)) ([6ca045a](https://github.com/typescript-language-server/typescript-language-server/commit/6ca045aede0931180077c43daa14d586bdccc38f))
+
 ## [5.1.2](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.1...v5.1.2) (2025-11-18)
 
 
