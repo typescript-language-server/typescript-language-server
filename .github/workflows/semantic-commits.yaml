@@ -1,12 +1,8 @@
 name: Conventional Commit Validation
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, edited]
-
-permissions:
-  pull-requests: write
-  repository-projects: write
 
 jobs:
   validate-pr-title:
