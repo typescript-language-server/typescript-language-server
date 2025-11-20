@@ -282,7 +282,7 @@ export class LspDocuments {
             if (detectedLanguageId) {
                 this.lspClient.logMessage({
                     type: lsp.MessageType.Warning,
-                    message: `Invalid langaugeId "${textDocument.languageId}" provided for uri "${textDocument.uri}". Correcting to "${detectedLanguageId}"`,
+                    message: `Invalid languageId "${textDocument.languageId}" provided for uri "${textDocument.uri}". Correcting to "${detectedLanguageId}"`,
                 });
                 textDocument.languageId = detectedLanguageId;
             } else {
