@@ -184,16 +184,22 @@ export class TestLspClient implements LspClient {
         return { applied: true };
     }
 
-    rename(): Promise<void> {
+    rename(_args: lsp.TextDocumentPositionParams): Promise<any> {
         throw new Error('unsupported');
     }
 
-    sendNotification<P>(_type: lsp.NotificationType<P>, _params: P): Promise<void> {
-        throw new Error('unsupported');
+    async sendNotification<P>(_type: lsp.NotificationType<P>, _params: P): Promise<void> {
+        return Promise.resolve();
     }
 
     async getWorkspaceConfiguration(_scopeUri: string, _section: string): Promise<any> {
         return Promise.resolve(undefined);
+    }
+
+    registerFileWatcher(_watchers: lsp.FileSystemWatcher[]): Promise<lsp.Disposable> {
+        return Promise.resolve({
+            dispose: () => {},
+        });
     }
 }
 
