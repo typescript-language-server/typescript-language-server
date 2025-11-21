@@ -96,7 +96,8 @@ export enum CommandTypes {
     PrepareCallHierarchy = 'prepareCallHierarchy',
     ProvideCallHierarchyIncomingCalls = 'provideCallHierarchyIncomingCalls',
     ProvideCallHierarchyOutgoingCalls = 'provideCallHierarchyOutgoingCalls',
-    ProvideInlayHints = 'provideInlayHints'
+    ProvideInlayHints = 'provideInlayHints',
+    WatchChange = 'watchChange',
 }
 
 export enum HighlightSpanKind {
@@ -288,6 +289,9 @@ export const enum EventName {
     surveyReady = 'surveyReady',
     projectLoadingStart = 'projectLoadingStart',
     projectLoadingFinish = 'projectLoadingFinish',
+    createFileWatcher = 'createFileWatcher',
+    createDirectoryWatcher = 'createDirectoryWatcher',
+    closeFileWatcher = 'closeFileWatcher',
 }
 
 export class KindModifiers {
@@ -421,6 +425,10 @@ interface TsserverOptions {
      * @default 'auto'
      */
     useSyntaxServer?: 'auto' | 'never';
+    /**
+     * Whether to opt in to tsserver's watch events mode (using the `--canUseWatchEvents` flag) when supported by the client and TypeScript version.
+     */
+    canUseWatchEvents?: boolean;
 }
 
 export type TypeScriptInitializeParams = lsp.InitializeParams & {

@@ -51,6 +51,7 @@ export namespace TsServerLogLevel {
 export interface LspServerConfiguration {
     readonly logger: Logger;
     readonly lspClient: LspClient;
+    readonly canUseWatchEvents?: boolean;
 }
 
 export const enum SyntaxServerConfiguration {
