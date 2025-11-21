@@ -12,6 +12,7 @@ import { LspClientImpl } from './lsp-client.js';
 
 export interface LspConnectionOptions {
     showMessageLevel: lsp.MessageType;
+    canUseWatchEvents?: boolean;
 }
 
 export function createLspConnection(options: LspConnectionOptions): lsp.Connection {
@@ -21,6 +22,7 @@ export function createLspConnection(options: LspConnectionOptions): lsp.Connecti
     const server: LspServer = new LspServer({
         logger,
         lspClient,
+        canUseWatchEvents: options.canUseWatchEvents,
     });
 
     connection.onInitialize(server.initialize.bind(server));
@@ -31,6 +33,7 @@ export function createLspConnection(options: LspConnectionOptions): lsp.Connecti
     connection.onDidSaveTextDocument(server.didSaveTextDocument.bind(server));
     connection.onDidCloseTextDocument(server.didCloseTextDocument.bind(server));
     connection.onDidChangeTextDocument(server.didChangeTextDocument.bind(server));
+    connection.onDidChangeWatchedFiles(server.didChangeWatchedFiles.bind(server));
 
     connection.onCodeAction(server.codeAction.bind(server));
     connection.onCodeActionResolve(server.codeActionResolve.bind(server));
