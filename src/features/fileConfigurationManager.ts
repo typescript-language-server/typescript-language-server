@@ -12,11 +12,11 @@
 import path from 'node:path';
 import deepmerge from 'deepmerge';
 import lsp from 'vscode-languageserver';
-import { URI } from 'vscode-uri';
-import { CommandTypes, ModuleKind, ScriptTarget, type ts, type TypeScriptInitializationOptions, SupportedFeatures } from '../ts-protocol.js';
-import { ITypeScriptServiceClient } from '../typescriptService.js';
+import type { URI } from 'vscode-uri';
+import { CommandTypes, ModuleKind, ScriptTarget, type ts, type TypeScriptInitializationOptions, type SupportedFeatures } from '../ts-protocol.js';
+import type { ITypeScriptServiceClient } from '../typescriptService.js';
 import { isTypeScriptDocument } from '../configuration/languageIds.js';
-import { LspDocument } from '../document.js';
+import type { LspDocument } from '../document.js';
 import type { LspClient } from '../lsp-client.js';
 import API from '../utils/api.js';
 import { equals } from '../utils/objects.js';

@@ -12,7 +12,7 @@
 import { describe, it, expect } from 'vitest';
 import { URI } from 'vscode-uri';
 import type { ts } from '../ts-protocol.js';
-import { IFilePathToResourceConverter, markdownDocumentation, plainWithLinks, tagsMarkdownPreview } from './previewer.js';
+import { type IFilePathToResourceConverter, markdownDocumentation, plainWithLinks, tagsMarkdownPreview } from './previewer.js';
 
 const noopToResource: IFilePathToResourceConverter = {
     toResource: (path) => URI.file(path),

@@ -14,7 +14,7 @@ import type { LspDocument } from '../../document.js';
 import { CommandTypes, ScriptElementKind, type ts } from '../../ts-protocol.js';
 import { ExecutionTarget } from '../../tsServer/server.js';
 import * as typeConverters from '../../utils/typeConverters.js';
-import { CodeLensType, ReferencesCodeLens, TypeScriptBaseCodeLensProvider, getSymbolRange } from './baseCodeLensProvider.js';
+import { CodeLensType, type ReferencesCodeLens, TypeScriptBaseCodeLensProvider, getSymbolRange } from './baseCodeLensProvider.js';
 
 export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLensProvider {
     protected get type(): CodeLensType {

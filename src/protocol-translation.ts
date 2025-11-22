@@ -6,13 +6,12 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { type TsClient } from './ts-client.js';
-import { HighlightSpanKind, SupportedFeatures } from './ts-protocol.js';
+import { HighlightSpanKind, type SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
+import type { ITypeScriptServiceClient } from './typescriptService.js';
 import { Position, Range } from './utils/typeConverters.js';
-import { type ITypeScriptServiceClient } from './typescriptService.js';
 
-export function toLocation(fileSpan: ts.server.protocol.FileSpan, client: TsClient): lsp.Location {
+export function toLocation(fileSpan: ts.server.protocol.FileSpan, client: ITypeScriptServiceClient): lsp.Location {
     const uri = client.toResourceUri(fileSpan.file);
     return {
         uri,
@@ -62,7 +61,7 @@ function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     }
 }
 
-export function toDiagnostic(diagnostic: ts.server.protocol.Diagnostic, client: TsClient, features: SupportedFeatures): lsp.Diagnostic {
+export function toDiagnostic(diagnostic: ts.server.protocol.Diagnostic, client: ITypeScriptServiceClient, features: SupportedFeatures): lsp.Diagnostic {
     const lspDiagnostic: lsp.Diagnostic = {
         range: {
             start: Position.fromLocation(diagnostic.start),
@@ -91,7 +90,7 @@ function getDiagnosticTags(diagnostic: ts.server.protocol.Diagnostic): lsp.Diagn
     return tags;
 }
 
-function asRelatedInformation(info: ts.server.protocol.DiagnosticRelatedInformation[] | undefined, client: TsClient): lsp.DiagnosticRelatedInformation[] | undefined {
+function asRelatedInformation(info: ts.server.protocol.DiagnosticRelatedInformation[] | undefined, client: ITypeScriptServiceClient): lsp.DiagnosticRelatedInformation[] | undefined {
     if (!info) {
         return undefined;
     }

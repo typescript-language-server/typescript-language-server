@@ -9,15 +9,15 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { URI } from 'vscode-uri';
+import type { URI } from 'vscode-uri';
 import type * as lsp from 'vscode-languageserver-protocol';
-import { type DocumentUri } from 'vscode-languageserver-textdocument';
+import type { DocumentUri } from 'vscode-languageserver-textdocument';
 import type { LspDocument } from './document.js';
 import { CommandTypes } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
-import { PluginManager } from './tsServer/plugins.js';
-import { ExecutionTarget } from './tsServer/server.js';
-import API from './utils/api.js';
+import type { PluginManager } from './tsServer/plugins.js';
+import type { ExecutionTarget } from './tsServer/server.js';
+import type API from './utils/api.js';
 
 export enum ServerType {
     Syntax = 'syntax',
@@ -90,6 +90,8 @@ export interface ITypeScriptServiceClient {
     toResource(filepath: string): URI;
     toResourceUri(filepath: string): string;
 
+    lastFileOrDummy(): string | undefined;
+
     /**
      * Tries to ensure that a document is open on the TS server.
      *
@@ -100,6 +102,9 @@ export interface ITypeScriptServiceClient {
     }): LspDocument | undefined;
 
     hasPendingDiagnostics(resource: URI): boolean;
+    requestDiagnosticsForTesting(): void;
+
+    configurePlugin(pluginName: string, configuration: unknown): void;
 
     /**
      * Checks if `resource` has a given capability.
@@ -144,6 +149,12 @@ export interface ITypeScriptServiceClient {
         command: K,
         args: AsyncTsServerRequests[K][0],
         token: lsp.CancellationToken
+    ): Promise<ServerResponse.Response<ts.server.protocol.Response>>;
+
+    executeCustom<K extends keyof TypeScriptRequestTypes>(
+        command: K,
+        args: TypeScriptRequestTypes[K][0],
+        executeInfo?: ExecuteInfo,
     ): Promise<ServerResponse.Response<ts.server.protocol.Response>>;
 
     /**

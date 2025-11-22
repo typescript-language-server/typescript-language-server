@@ -10,19 +10,19 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import type * as lsp from 'vscode-languageserver';
 import { type ts, CommandTypes } from '../../ts-protocol.js';
 import * as errorCodes from '../../utils/errorCodes.js';
 import * as fixNames from '../../utils/fixNames.js';
 import * as typeConverters from '../../utils/typeConverters.js';
-import { type ITypeScriptServiceClient } from '../../typescriptService.js';
+import type { ITypeScriptServiceClient } from '../../typescriptService.js';
 // import { DiagnosticsManager } from './diagnostics.js';
-import FileConfigurationManager from '../fileConfigurationManager.js';
-import { CodeActionProvider, CodeActionProviderMetadata, TsCodeAction } from './codeActionProvider.js';
+import type FileConfigurationManager from '../fileConfigurationManager.js';
+import { type CodeActionProvider, type CodeActionProviderMetadata, TsCodeAction } from './codeActionProvider.js';
 import { CodeActionKind } from '../../utils/types.js';
 import type { LspDocument } from '../../document.js';
 import { toTextDocumentEdit } from '../../protocol-translation.js';
-import { type DiagnosticsManager } from '../../diagnosticsManager.js';
+import type { DiagnosticsManager } from '../../diagnosticsManager.js';
 
 interface AutoFix {
     readonly codes: Set<number>;

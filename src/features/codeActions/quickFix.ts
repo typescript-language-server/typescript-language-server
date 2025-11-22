@@ -11,22 +11,22 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { URI } from 'vscode-uri';
+import type { URI } from 'vscode-uri';
 import { type ts, CommandTypes, type SupportedFeatures } from '../../ts-protocol.js';
-import { type Command, CommandManager } from '../../commands/commandManager.js';
+import type { Command, CommandManager } from '../../commands/commandManager.js';
 import * as fixNames from '../../utils/fixNames.js';
 import * as typeConverters from '../../utils/typeConverters.js';
-import { type ITypeScriptServiceClient } from '../../typescriptService.js';
+import type { ITypeScriptServiceClient } from '../../typescriptService.js';
 import { Lazy } from '../../utils/lazy.js';
 import { equals } from '../../utils/objects.js';
 // import { DiagnosticsManager } from './diagnostics.js';
-import FileConfigurationManager from '../fileConfigurationManager.js';
+import type FileConfigurationManager from '../fileConfigurationManager.js';
 import { applyCodeActionCommands, getEditForCodeAction } from '../util/codeAction.js';
-import { CodeActionProvider, CodeActionProviderMetadata, TsCodeAction, TsCodeActionProvider } from './codeActionProvider.js';
-import { LspDocument } from '../../document.js';
+import { type CodeActionProvider, type CodeActionProviderMetadata, TsCodeAction, type TsCodeActionProvider } from './codeActionProvider.js';
+import type { LspDocument } from '../../document.js';
 import { toTextDocumentEdit } from '../../protocol-translation.js';
 import { CodeActionKind } from '../../utils/types.js';
-import { type DiagnosticsManager } from '../../diagnosticsManager.js';
+import type { DiagnosticsManager } from '../../diagnosticsManager.js';
 
 type ApplyCodeActionCommand_args = {
     readonly documentUri: string;

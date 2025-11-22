@@ -6,16 +6,16 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { type ITypeScriptServiceClient } from '../../typescriptService.js';
+import type { ITypeScriptServiceClient } from '../../typescriptService.js';
 import type FileConfigurationManager from '../fileConfigurationManager.js';
-import { CommandManager } from '../../commands/commandManager.js';
-import { LspDocument } from '../../document.js';
-import { type CodeActionProvider, type TsCodeAction } from './codeActionProvider.js';
+import type { CommandManager } from '../../commands/commandManager.js';
+import type { LspDocument } from '../../document.js';
+import type { CodeActionProvider, TsCodeAction } from './codeActionProvider.js';
 import { TypeScriptAutoFixProvider } from './fixAll.js';
 import { TypeScriptQuickFixProvider } from './quickFix.js';
 import { nulToken } from '../../utils/cancellation.js';
-import { type SupportedFeatures } from '../../ts-protocol.js';
-import { type DiagnosticsManager } from '../../diagnosticsManager.js';
+import type { SupportedFeatures } from '../../ts-protocol.js';
+import type { DiagnosticsManager } from '../../diagnosticsManager.js';
 
 interface ResolveData {
     globalId?: number;

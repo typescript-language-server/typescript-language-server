@@ -18,7 +18,7 @@ import API from '../utils/api.js';
 import { findPathToModule } from '../utils/modules-resolver.js';
 import type { Logger } from '../utils/logger.js';
 
-export const enum TypeScriptVersionSource {
+export enum TypeScriptVersionSource {
     Bundled = 'bundled',
     UserSetting = 'user-setting',
     Workspace = 'workspace',

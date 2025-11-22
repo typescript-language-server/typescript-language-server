@@ -11,7 +11,7 @@
 
 import { URI } from 'vscode-uri';
 import * as arrays from '../utils/arrays.js';
-import { TypeScriptPlugin } from '../ts-protocol.js';
+import type { TypeScriptPlugin } from '../ts-protocol.js';
 
 export interface TypeScriptServerPlugin {
     readonly uri: URI;

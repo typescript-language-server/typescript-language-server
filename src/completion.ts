@@ -6,15 +6,15 @@
  */
 
 import * as lsp from 'vscode-languageserver';
-import { LspDocument } from './document.js';
+import type { LspDocument } from './document.js';
 import { toTextEdit } from './protocol-translation.js';
 import { Commands } from './commands.js';
-import { type WorkspaceConfigurationCompletionOptions } from './features/fileConfigurationManager.js';
-import { TsClient } from './ts-client.js';
-import { CommandTypes, KindModifiers, ScriptElementKind, SupportedFeatures, SymbolDisplayPartKind, toSymbolDisplayPartKind } from './ts-protocol.js';
+import type { WorkspaceConfigurationCompletionOptions } from './features/fileConfigurationManager.js';
+import { CommandTypes, KindModifiers, ScriptElementKind, type SupportedFeatures, SymbolDisplayPartKind, toSymbolDisplayPartKind } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
+import type { ITypeScriptServiceClient } from './typescriptService.js';
 import * as Previewer from './utils/previewer.js';
-import { IFilePathToResourceConverter } from './utils/previewer.js';
+import type { IFilePathToResourceConverter } from './utils/previewer.js';
 import SnippetString from './utils/SnippetString.js';
 import { Range, Position } from './utils/typeConverters.js';
 
@@ -354,7 +354,7 @@ export async function asResolvedCompletionItem(
     item: lsp.CompletionItem,
     details: ts.server.protocol.CompletionEntryDetails,
     document: LspDocument,
-    client: TsClient,
+    client: ITypeScriptServiceClient,
     options: WorkspaceConfigurationCompletionOptions,
     features: SupportedFeatures,
 ): Promise<lsp.CompletionItem> {
@@ -380,7 +380,7 @@ export async function asResolvedCompletionItem(
     return item;
 }
 
-async function isValidFunctionCompletionContext(position: lsp.Position, client: TsClient, document: LspDocument): Promise<boolean> {
+async function isValidFunctionCompletionContext(position: lsp.Position, client: ITypeScriptServiceClient, document: LspDocument): Promise<boolean> {
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
@@ -497,7 +497,7 @@ function appendJoinedPlaceholders(snippet: SnippetString, parts: ReadonlyArray<t
 function getCodeActions(
     codeActions: ts.server.protocol.CodeAction[],
     filepath: string,
-    client: TsClient,
+    client: ITypeScriptServiceClient,
 ): {
     additionalTextEdits: lsp.TextEdit[] | undefined;
     command: lsp.Command | undefined;

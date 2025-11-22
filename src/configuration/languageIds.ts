@@ -9,7 +9,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { type LspDocument } from '../document.js';
+import type { LspDocument } from '../document.js';
 
 export const typescript = 'typescript';
 export const typescriptreact = 'typescriptreact';

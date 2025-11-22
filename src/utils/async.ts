@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { type Disposable } from 'vscode-jsonrpc';
+import type { Disposable } from 'vscode-jsonrpc';
 
 export interface ITask<T> {
     (): T;

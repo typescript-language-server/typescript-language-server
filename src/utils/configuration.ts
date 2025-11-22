@@ -23,7 +23,7 @@ export namespace TsServerLogLevel {
                 return TsServerLogLevel.Normal;
             case 'terse':
                 return TsServerLogLevel.Terse;
-            case 'requestTime':
+            case 'requesttime':
                 return TsServerLogLevel.RequestTime;
             case 'verbose':
                 return TsServerLogLevel.Verbose;
@@ -53,7 +53,7 @@ export interface LspServerConfiguration {
     readonly lspClient: LspClient;
 }
 
-export const enum SyntaxServerConfiguration {
+export enum SyntaxServerConfiguration {
     Never,
     Always,  // Unused
     Auto,
