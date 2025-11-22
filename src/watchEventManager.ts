@@ -293,7 +293,7 @@ export class WatchEventManager {
 
         try {
             this.registration?.dispose?.();
-            this.registration = await this.options.lspClient.registerFileWatcher(watchers);
+            this.registration = await this.options.lspClient.registerDidChangeWatchedFilesCapability(watchers);
         } catch (err) {
             this.options.logger.warn('Failed to register file watchers for tsserver watch events', err);
         }
