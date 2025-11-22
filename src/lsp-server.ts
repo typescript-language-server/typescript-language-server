@@ -155,7 +155,7 @@ export class LspServer {
         const supportsFileWatcherRegistration = Boolean(workspace?.didChangeWatchedFiles?.dynamicRegistration);
         const supportsRelativePatterns = workspace?.didChangeWatchedFiles?.relativePatternSupport !== false;
         const requestedWatchEvents = tsserver?.useClientFileWatcher ?? false;
-        const typescriptSupportsWatchEvents = typescriptVersion.version?.gte(API.v540);
+        const typescriptSupportsWatchEvents = typescriptVersion.version?.gte(API.v544);
         const canUseWatchEvents = Boolean(requestedWatchEvents && supportsFileWatcherRegistration && supportsRelativePatterns && typescriptSupportsWatchEvents);
 
         if (requestedWatchEvents && !supportsFileWatcherRegistration) {
@@ -163,7 +163,7 @@ export class LspServer {
         } else if (requestedWatchEvents && !supportsRelativePatterns) {
             this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support relative file watcher patterns; tsserver watch events will stay disabled.');
         } else if (requestedWatchEvents && !typescriptSupportsWatchEvents) {
-            this.logger.logIgnoringVerbosity(LogLevel.Warning, 'tsserver watch events require TypeScript 5.4 or newer; disabling useClientFileWatcher.');
+            this.logger.logIgnoringVerbosity(LogLevel.Warning, 'tsserver watch events require TypeScript 5.4.4 or newer; disabling useClientFileWatcher.');
         }
 
         const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver.logVerbosity);
