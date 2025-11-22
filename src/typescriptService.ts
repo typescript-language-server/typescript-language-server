@@ -201,8 +201,7 @@ export interface NoResponseTsServerRequests {
     [CommandTypes.Configure]: [ts.server.protocol.ConfigureRequestArguments, ts.server.protocol.ConfigureResponse];
     [CommandTypes.ConfigurePlugin]: [ts.server.protocol.ConfigurePluginRequestArguments, ts.server.protocol.ConfigurePluginResponse];
     [CommandTypes.Open]: [ts.server.protocol.OpenRequestArgs, null];
-    [CommandTypes.WatchChange]: [ts.server.protocol.WatchChangeRequestArgs | readonly ts.server.protocol.WatchChangeRequestArgs[], null];
-}
+    [CommandTypes.WatchChange]: [ts.server.protocol.WatchChangeRequest['arguments'], null];}
 
 export interface AsyncTsServerRequests {
     [CommandTypes.Geterr]: [ts.server.protocol.GeterrRequestArgs, ts.server.protocol.Response];
