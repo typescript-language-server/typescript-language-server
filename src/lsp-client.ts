@@ -25,6 +25,7 @@ export interface LspClient {
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
     sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void>;
     getWorkspaceConfiguration<R = unknown>(scopeUri: string, section: string): Promise<R>;
+    registerDidChangeWatchedFilesCapability(watchers: lsp.FileSystemWatcher[]): Promise<lsp.Disposable>;
 }
 
 // Hack around the LSP library that makes it otherwise impossible to differentiate between Null and Client-initiated reporter.
@@ -81,5 +82,9 @@ export class LspClientImpl implements LspClient {
 
     async sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void> {
         await this.connection.sendNotification(type, params);
+    }
+
+    async registerDidChangeWatchedFilesCapability(watchers: lsp.FileSystemWatcher[]): Promise<lsp.Disposable> {
+        return await this.connection.client.register(lsp.DidChangeWatchedFilesNotification.type, { watchers });
     }
 }

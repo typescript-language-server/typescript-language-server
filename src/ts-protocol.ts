@@ -96,7 +96,8 @@ export enum CommandTypes {
     PrepareCallHierarchy = 'prepareCallHierarchy',
     ProvideCallHierarchyIncomingCalls = 'provideCallHierarchyIncomingCalls',
     ProvideCallHierarchyOutgoingCalls = 'provideCallHierarchyOutgoingCalls',
-    ProvideInlayHints = 'provideInlayHints'
+    ProvideInlayHints = 'provideInlayHints',
+    WatchChange = 'watchChange',
 }
 
 export enum HighlightSpanKind {
@@ -288,6 +289,9 @@ export enum EventName {
     surveyReady = 'surveyReady',
     projectLoadingStart = 'projectLoadingStart',
     projectLoadingFinish = 'projectLoadingFinish',
+    createFileWatcher = 'createFileWatcher',
+    createDirectoryWatcher = 'createDirectoryWatcher',
+    closeFileWatcher = 'closeFileWatcher',
 }
 
 export class KindModifiers {
@@ -411,6 +415,11 @@ interface TsserverOptions {
      * @default 'off'
      */
     trace?: TraceValue;
+    /**
+     * Use client's file watcher instead of TypeScript's built-in one. Requires TypeScript 5.4.4+ in the workspace.
+     * @default false
+     */
+    useClientFileWatcher?: boolean;
     /**
      * Whether a dedicated server is launched to more quickly handle syntax related operations, such as computing diagnostics or code folding.
      *

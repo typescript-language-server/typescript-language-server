@@ -154,6 +154,7 @@ export interface TsClientOptions {
     plugins: TypeScriptPlugin[];
     onEvent?: (event: ts.server.protocol.Event) => void;
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
+    useClientFileWatcher: boolean;
     useSyntaxServer: SyntaxServerConfiguration;
 }
 
@@ -344,6 +345,10 @@ export class TsClient implements ITypeScriptServiceClient {
         if (this.apiVersion.gte(API.v314)) {
             this.executeWithoutWaitingForResponse(CommandTypes.ConfigurePlugin, { pluginName, configuration });
         }
+    }
+
+    public sendWatchChanges(args: ts.server.protocol.WatchChangeRequestArgs | readonly ts.server.protocol.WatchChangeRequestArgs[]): void {
+        this.executeWithoutWaitingForResponse(CommandTypes.WatchChange, args);
     }
 
     start(
