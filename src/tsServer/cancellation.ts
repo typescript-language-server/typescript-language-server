@@ -11,7 +11,7 @@
 
 import fs from 'node:fs';
 import { temporaryFile } from 'tempy';
-import Tracer from './tracer.js';
+import type Tracer from './tracer.js';
 
 export interface OngoingRequestCanceller {
     readonly cancellationPipeName: string | undefined;

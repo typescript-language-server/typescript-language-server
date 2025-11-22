@@ -7,8 +7,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import { SourceDefinitionCommand } from './features/source-definition.js';
-import { TypeScriptVersionSource } from './tsServer/versionProvider.js';
-import { TSServerRequestCommand } from './commands/tsserverRequests.js';
+import type { TypeScriptVersionSource } from './tsServer/versionProvider.js';
 
 export const Commands = {
     APPLY_REFACTORING: '_typescript.applyRefactoring',
@@ -19,7 +18,6 @@ export const Commands = {
     /** Commands below should be implemented by the client */
     SELECT_REFACTORING: '_typescript.selectRefactoring',
     SOURCE_DEFINITION: SourceDefinitionCommand.id,
-    TS_SERVER_REQUEST: TSServerRequestCommand.id,
 };
 
 type TypescriptVersionNotificationParams = {

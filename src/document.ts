@@ -10,7 +10,7 @@ import { URI } from 'vscode-uri';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as languageModeIds from './configuration/languageIds.js';
-import { LspClient } from './lsp-client.js';
+import type { LspClient } from './lsp-client.js';
 import { CommandTypes, type ts } from './ts-protocol.js';
 import { ClientCapability, type ITypeScriptServiceClient } from './typescriptService.js';
 import API from './utils/api.js';

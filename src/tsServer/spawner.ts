@@ -11,19 +11,19 @@
 
 import path from 'node:path';
 import API from '../utils/api.js';
-import { ClientCapabilities, ClientCapability, ServerType } from '../typescriptService.js';
-import { Logger, LogLevel } from '../utils/logger.js';
+import { type ClientCapabilities, ClientCapability, ServerType } from '../typescriptService.js';
+import { type Logger, LogLevel } from '../utils/logger.js';
 import type { TsClientOptions } from '../ts-client.js';
 import { nodeRequestCancellerFactory } from './cancellation.js';
 import type { ILogDirectoryProvider } from './logDirectoryProvider.js';
 import type { PluginManager } from './plugins.js';
-import { ITypeScriptServer, SingleTsServer, SyntaxRoutingTsServer, TsServerDelegate, TsServerProcessKind } from './server.js';
+import { type ITypeScriptServer, SingleTsServer, SyntaxRoutingTsServer, type TsServerDelegate, TsServerProcessKind } from './server.js';
 import { NodeTsServerProcessFactory } from './serverProcess.js';
 import type Tracer from './tracer.js';
 import type { TypeScriptVersion } from './versionProvider.js';
 import { SyntaxServerConfiguration, TsServerLogLevel } from '../utils/configuration.js';
 
-const enum CompositeServerType {
+enum CompositeServerType {
     /** Run a single server that handles all commands  */
     Single,
 

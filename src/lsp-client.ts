@@ -7,7 +7,7 @@
 
 import * as lsp from 'vscode-languageserver';
 import { MessageType } from 'vscode-languageserver';
-import { ProgressContext, attachWorkDone } from 'vscode-languageserver/lib/common/progress.js';
+import { type ProgressContext, attachWorkDone } from 'vscode-languageserver/lib/common/progress.js';
 import { TypeScriptRenameRequest } from './ts-protocol.js';
 
 export interface WithProgressOptions {

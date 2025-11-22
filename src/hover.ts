@@ -12,7 +12,7 @@
 import * as lsp from 'vscode-languageserver';
 import type { ts } from './ts-protocol.js';
 import * as Previewer from './utils/previewer.js';
-import { IFilePathToResourceConverter } from './utils/previewer.js';
+import type { IFilePathToResourceConverter } from './utils/previewer.js';
 
 export function asSignatureHelp(
     info: ts.server.protocol.SignatureHelpItems,

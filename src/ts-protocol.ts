@@ -274,7 +274,7 @@ export enum OrganizeImportsMode {
 
 // END: Duplicated from typescript/lib/tsserverlibrary.js since we don't want to depend on typescript at runtime
 
-export const enum EventName {
+export enum EventName {
     syntaxDiag = 'syntaxDiag',
     semanticDiag = 'semanticDiag',
     suggestionDiag = 'suggestionDiag',

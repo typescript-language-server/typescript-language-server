@@ -12,7 +12,7 @@
 import ChildProcess from 'node:child_process';
 import path from 'node:path';
 import type { Readable } from 'node:stream';
-import { TsServerProcess, TsServerProcessFactory, TsServerProcessKind } from './server.js';
+import { type TsServerProcess, type TsServerProcessFactory, TsServerProcessKind } from './server.js';
 import type { ts } from '../ts-protocol.js';
 import type { TsClientOptions } from '../ts-client.js';
 import API from '../utils/api.js';

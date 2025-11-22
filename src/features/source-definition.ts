@@ -9,13 +9,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as lsp from 'vscode-languageserver';
+import type * as lsp from 'vscode-languageserver';
 import API from '../utils/api.js';
 import { Position } from '../utils/typeConverters.js';
 import { toLocation } from '../protocol-translation.js';
-import type { TsClient } from '../ts-client.js';
 import type { LspClient } from '../lsp-client.js';
 import { CommandTypes } from '../ts-protocol.js';
+import type { ITypeScriptServiceClient } from '../typescriptService.js';
 
 export class SourceDefinitionCommand {
     public static readonly id = '_typescript.goToSourceDefinition';
@@ -24,7 +24,7 @@ export class SourceDefinitionCommand {
     public static async execute(
         uri: lsp.DocumentUri | undefined,
         position: lsp.Position | undefined,
-        client: TsClient,
+        client: ITypeScriptServiceClient,
         lspClient: LspClient,
         reporter: lsp.WorkDoneProgressReporter,
         token?: lsp.CancellationToken,

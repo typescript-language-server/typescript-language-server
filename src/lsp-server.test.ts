@@ -9,8 +9,9 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, TestLspServer, openDocumentAndWaitForDiagnostics, range, lastRange } from './test-utils.js';
+import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, type TestLspServer, openDocumentAndWaitForDiagnostics, range, lastRange } from './test-utils.js';
 import { Commands } from './commands.js';
+import { TSServerRequestCommand } from './commands/tsserverRequests.js';
 import { CommandTypes, SemicolonPreference } from './ts-protocol.js';
 import { CodeActionKind } from './utils/types.js';
 import { ExecutionTarget } from './tsServer/server.js';
@@ -2043,7 +2044,7 @@ describe('executeCommand', () => {
         await openDocumentAndWaitForDiagnostics(server, doc);
 
         const result = await server.executeCommand({
-            command: Commands.TS_SERVER_REQUEST,
+            command: TSServerRequestCommand.ID,
             arguments: [
                 CommandTypes.ProjectInfo,
                 {

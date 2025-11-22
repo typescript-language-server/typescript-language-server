@@ -5,14 +5,14 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import type * as lsp from 'vscode-languageserver';
 import debounce from 'p-debounce';
-import { Logger } from './utils/logger.js';
+import type { Logger } from './utils/logger.js';
 import { toDiagnostic } from './protocol-translation.js';
-import { SupportedFeatures } from './ts-protocol.js';
+import type { SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
-import { DiagnosticKind, type TsClient } from './ts-client.js';
-import { ClientCapability } from './typescriptService.js';
+import { DiagnosticKind } from './ts-client.js';
+import { ClientCapability, type ITypeScriptServiceClient } from './typescriptService.js';
 
 class FileDiagnostics {
     private closed = false;
@@ -22,7 +22,7 @@ class FileDiagnostics {
     constructor(
         protected readonly uri: string,
         protected readonly onPublishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
-        protected readonly client: TsClient,
+        protected readonly client: ITypeScriptServiceClient,
         protected readonly features: SupportedFeatures,
     ) { }
 
@@ -79,7 +79,7 @@ export class DiagnosticsManager {
 
     constructor(
         protected readonly publishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
-        protected readonly client: TsClient,
+        protected readonly client: ITypeScriptServiceClient,
         protected readonly features: SupportedFeatures,
         protected readonly logger: Logger,
     ) { }

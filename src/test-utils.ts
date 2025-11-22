@@ -12,9 +12,9 @@ import deepmerge from 'deepmerge';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { WorkspaceConfiguration } from './features/fileConfigurationManager.js';
-import { TypeScriptInitializationOptions } from './ts-protocol.js';
-import { LspClient, WithProgressOptions } from './lsp-client.js';
+import type { WorkspaceConfiguration } from './features/fileConfigurationManager.js';
+import type { TypeScriptInitializationOptions } from './ts-protocol.js';
+import type { LspClient, WithProgressOptions } from './lsp-client.js';
 import { LspServer } from './lsp-server.js';
 import { ConsoleLogger, LogLevel } from './utils/logger.js';
 

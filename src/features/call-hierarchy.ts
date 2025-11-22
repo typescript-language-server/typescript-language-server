@@ -11,12 +11,11 @@
 
 import path from 'node:path';
 import * as lsp from 'vscode-languageserver';
-import { type TsClient } from '../ts-client.js';
-import { ScriptElementKind, ScriptElementKindModifier } from '../ts-protocol.js';
-import type { ts } from '../ts-protocol.js';
+import { type ts, ScriptElementKind, ScriptElementKindModifier } from '../ts-protocol.js';
+import type { ITypeScriptServiceClient } from '../typescriptService.js';
 import { Range } from '../utils/typeConverters.js';
 
-export function fromProtocolCallHierarchyItem(item: ts.server.protocol.CallHierarchyItem, client: TsClient, workspaceRoot: string | undefined): lsp.CallHierarchyItem {
+export function fromProtocolCallHierarchyItem(item: ts.server.protocol.CallHierarchyItem, client: ITypeScriptServiceClient, workspaceRoot: string | undefined): lsp.CallHierarchyItem {
     const useFileName = isSourceFileItem(item);
     const name = useFileName ? path.basename(item.file) : item.name;
     const detail = useFileName
@@ -38,14 +37,14 @@ export function fromProtocolCallHierarchyItem(item: ts.server.protocol.CallHiera
     return result;
 }
 
-export function fromProtocolCallHierarchyIncomingCall(item: ts.server.protocol.CallHierarchyIncomingCall, client: TsClient, workspaceRoot: string | undefined): lsp.CallHierarchyIncomingCall {
+export function fromProtocolCallHierarchyIncomingCall(item: ts.server.protocol.CallHierarchyIncomingCall, client: ITypeScriptServiceClient, workspaceRoot: string | undefined): lsp.CallHierarchyIncomingCall {
     return {
         from: fromProtocolCallHierarchyItem(item.from, client, workspaceRoot),
         fromRanges: item.fromSpans.map(Range.fromTextSpan),
     };
 }
 
-export function fromProtocolCallHierarchyOutgoingCall(item: ts.server.protocol.CallHierarchyOutgoingCall, client: TsClient, workspaceRoot: string | undefined): lsp.CallHierarchyOutgoingCall {
+export function fromProtocolCallHierarchyOutgoingCall(item: ts.server.protocol.CallHierarchyOutgoingCall, client: ITypeScriptServiceClient, workspaceRoot: string | undefined): lsp.CallHierarchyOutgoingCall {
     return {
         to: fromProtocolCallHierarchyItem(item.to, client, workspaceRoot),
         fromRanges: item.fromSpans.map(Range.fromTextSpan),

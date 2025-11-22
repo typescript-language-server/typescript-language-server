@@ -11,13 +11,13 @@
 
 import type * as lsp from 'vscode-languageserver-protocol';
 import { Range as LspRange, CodeLens } from 'vscode-languageserver-protocol';
-import FileConfigurationManager from '../fileConfigurationManager.js';
+import type FileConfigurationManager from '../fileConfigurationManager.js';
 import type { LspDocument } from '../../document.js';
-import { CachedResponse } from '../../tsServer/cachedResponse.js';
+import type { CachedResponse } from '../../tsServer/cachedResponse.js';
 import type { ts } from '../../ts-protocol.js';
 import { CommandTypes } from '../../ts-protocol.js';
 import { Range } from '../../utils/typeConverters.js';
-import { ITypeScriptServiceClient } from '../../typescriptService.js';
+import type { ITypeScriptServiceClient } from '../../typescriptService.js';
 import { escapeRegExp } from '../../utils/regexp.js';
 
 export enum CodeLensType {

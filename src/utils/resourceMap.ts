@@ -9,7 +9,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { URI } from 'vscode-uri';
+import type { URI } from 'vscode-uri';
 import { looksLikeAbsoluteWindowsPath } from './fs.js';
 
 /**

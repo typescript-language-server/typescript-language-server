@@ -12,16 +12,15 @@ import * as lsp from 'vscode-languageserver';
 import { getDignosticsKind, TsClient } from './ts-client.js';
 import { DiagnosticsManager } from './diagnosticsManager.js';
 import { toDocumentHighlight, toSymbolKind, toLocation, toSelectionRange, toTextEdit } from './protocol-translation.js';
-import { LspDocument } from './document.js';
-import { asCompletionItems, asResolvedCompletionItem, CompletionContext, CompletionDataCache, getCompletionTriggerCharacter } from './completion.js';
+import type { LspDocument } from './document.js';
+import { asCompletionItems, asResolvedCompletionItem, type CompletionContext, CompletionDataCache, getCompletionTriggerCharacter } from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
 import { TSServerRequestCommand } from './commands/tsserverRequests.js';
 import { provideRefactors } from './refactor.js';
 import { organizeImportsCommands, provideOrganizeImports } from './organize-imports.js';
-import { CommandTypes, EventName, OrganizeImportsMode, TypeScriptInitializeParams, TypeScriptInitializationOptions, SupportedFeatures } from './ts-protocol.js';
+import { CommandTypes, EventName, OrganizeImportsMode, type TypeScriptInitializeParams, type TypeScriptInitializationOptions, type SupportedFeatures } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
-import { type TypeScriptRequestTypes, type ExecuteInfo } from './typescriptService.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
 import { fromProtocolCallHierarchyItem, fromProtocolCallHierarchyIncomingCall, fromProtocolCallHierarchyOutgoingCall } from './features/call-hierarchy.js';
 import FileConfigurationManager, { type WorkspaceConfiguration } from './features/fileConfigurationManager.js';
@@ -34,11 +33,11 @@ import { SourceDefinitionCommand } from './features/source-definition.js';
 import { CachedResponse } from './tsServer/cachedResponse.js';
 import { LogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { Trace } from './tsServer/tracer.js';
-import { TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
+import { type TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
 import API from './utils/api.js';
-import { toSyntaxServerConfiguration, TsServerLogLevel, LspServerConfiguration } from './utils/configuration.js';
+import { toSyntaxServerConfiguration, TsServerLogLevel, type LspServerConfiguration } from './utils/configuration.js';
 import { onCaseInsensitiveFileSystem } from './utils/fs.js';
-import { Logger, LogLevel, PrefixingLogger } from './utils/logger.js';
+import { type Logger, LogLevel, PrefixingLogger } from './utils/logger.js';
 import { MarkdownString } from './utils/MarkdownString.js';
 import * as Previewer from './utils/previewer.js';
 import { Position, Range } from './utils/typeConverters.js';
@@ -74,6 +73,7 @@ export class LspServer {
             this.logger,
         );
         this.codeActionsManager = new CodeActionManager(this.tsClient, this.fileConfigurationManager, this.commandManager, this.diagnosticsManager, this.features);
+        this.commandManager.register(new TSServerRequestCommand(this.tsClient));
     }
 
     closeAllForTesting(): void {
@@ -222,7 +222,6 @@ export class LspServer {
                         Commands.ORGANIZE_IMPORTS,
                         Commands.APPLY_RENAME_FILE,
                         Commands.SOURCE_DEFINITION,
-                        Commands.TS_SERVER_REQUEST,
                         ...this.commandManager.registeredIds,
                     ],
                 },
@@ -871,9 +870,9 @@ export class LspServer {
     }
 
     async executeCommand(params: lsp.ExecuteCommandParams, token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<unknown> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        if (await this.commandManager.handle(params.command, ...params.arguments || [])) {
-            // handled by command manager
+        if (this.commandManager.handlesCommand(params.command)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            return await this.commandManager.handle(params.command, ...params.arguments || []);
         } else if (params.command === Commands.APPLY_REFACTORING && params.arguments) {
             const args = params.arguments[0] as ts.server.protocol.GetEditsForRefactorRequestArgs;
             const response = await this.tsClient.execute(CommandTypes.GetEditsForRefactor, args, token);
@@ -964,12 +963,6 @@ export class LspServer {
             const [uri, position] = (params.arguments || []) as [lsp.DocumentUri?, lsp.Position?];
             const reporter = await this.options.lspClient.createProgressReporter(token, workDoneProgress);
             return SourceDefinitionCommand.execute(uri, position, this.tsClient, this.options.lspClient, reporter, token);
-        } else if (params.command === Commands.TS_SERVER_REQUEST) {
-            const [command, args, config] = (params.arguments || []) as [keyof TypeScriptRequestTypes, unknown?, ExecuteInfo?];
-            if (typeof command !== 'string') {
-                throw new Error(`"Command" argument must be a string, got: ${typeof command}`);
-            }
-            return TSServerRequestCommand.execute(this.tsClient, command, args, config, token);
         } else {
             this.logger.error(`Unknown command ${params.command}.`);
         }

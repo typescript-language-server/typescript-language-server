@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as lsp from 'vscode-languageserver';
+import type * as lsp from 'vscode-languageserver';
 import { toSymbolKind } from './protocol-translation.js';
 import { ScriptElementKind } from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';

@@ -12,12 +12,12 @@
 import * as lsp from 'vscode-languageserver';
 import API from '../utils/api.js';
 import type { LspDocument } from '../document.js';
-import FileConfigurationManager from './fileConfigurationManager.js';
+import type FileConfigurationManager from './fileConfigurationManager.js';
 import { CommandTypes } from '../ts-protocol.js';
 import type { ts } from '../ts-protocol.js';
-import type { TsClient } from '../ts-client.js';
+import type { ITypeScriptServiceClient } from '../typescriptService.js';
 import type { LspClient } from '../lsp-client.js';
-import { IFilePathToResourceConverter } from '../utils/previewer.js';
+import type { IFilePathToResourceConverter } from '../utils/previewer.js';
 import { Location, Position } from '../utils/typeConverters.js';
 
 export class TypeScriptInlayHintsProvider {
@@ -26,7 +26,7 @@ export class TypeScriptInlayHintsProvider {
     public static async provideInlayHints(
         textDocument: lsp.TextDocumentIdentifier,
         range: lsp.Range,
-        client: TsClient,
+        client: ITypeScriptServiceClient,
         lspClient: LspClient,
         fileConfigurationManager: FileConfigurationManager,
         token?: lsp.CancellationToken,

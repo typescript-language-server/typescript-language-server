@@ -11,9 +11,8 @@
 
 import * as lsp from 'vscode-languageserver';
 import { toTextDocumentEdit } from './protocol-translation.js';
-import { type TsClient } from './ts-client.js';
-import { OrganizeImportsMode } from './ts-protocol.js';
-import type { ts } from './ts-protocol.js';
+import { type ts, OrganizeImportsMode } from './ts-protocol.js';
+import type { ITypeScriptServiceClient } from './typescriptService.js';
 import API from './utils/api.js';
 import { CodeActionKind } from './utils/types.js';
 
@@ -50,7 +49,7 @@ export const organizeImportsCommands = [
     removeUnusedImportsCommand,
 ];
 
-export function provideOrganizeImports(command: OrganizeImportsCommand, response: ts.server.protocol.OrganizeImportsResponse, client: TsClient): lsp.CodeAction[] {
+export function provideOrganizeImports(command: OrganizeImportsCommand, response: ts.server.protocol.OrganizeImportsResponse, client: ITypeScriptServiceClient): lsp.CodeAction[] {
     if (!response || response.body.length === 0) {
         return [];
     }

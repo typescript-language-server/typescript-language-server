@@ -14,7 +14,7 @@ import { Location, Position, Range } from 'vscode-languageserver-protocol';
 import type { LspDocument } from '../../document.js';
 import { CommandTypes, ScriptElementKind, type ts } from '../../ts-protocol.js';
 import * as typeConverters from '../../utils/typeConverters.js';
-import { CodeLensType, ReferencesCodeLens, TypeScriptBaseCodeLensProvider, getSymbolRange } from './baseCodeLensProvider.js';
+import { CodeLensType, type ReferencesCodeLens, TypeScriptBaseCodeLensProvider, getSymbolRange } from './baseCodeLensProvider.js';
 import { ExecutionTarget } from '../../tsServer/server.js';
 
 export default class TypeScriptImplementationsCodeLensProvider extends TypeScriptBaseCodeLensProvider {

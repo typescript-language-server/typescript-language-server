@@ -8,35 +8,35 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import * as lsp from 'vscode-languageserver';
-import type { TsClient } from '../ts-client.js';
-import { type ExecuteInfo, type TypeScriptRequestTypes } from '../typescriptService.js';
+import type { ITypeScriptServiceClient, ExecuteInfo, TypeScriptRequestTypes } from '../typescriptService.js';
+import type { Command } from './commandManager.js';
 
 interface RequestArgs {
     readonly file?: unknown;
 }
 
-export class TSServerRequestCommand {
-    public static readonly id = 'typescript.tsserverRequest';
+export class TSServerRequestCommand implements Command {
+    public static readonly ID = 'typescript.tsserverRequest';
+    public readonly id = TSServerRequestCommand.ID;
 
-    public static execute(
-        client: TsClient,
-        command: keyof TypeScriptRequestTypes,
-        args?: any,
+    public constructor(
+        private readonly tsClient: ITypeScriptServiceClient,
+    ) { }
+
+    public async execute<K extends keyof TypeScriptRequestTypes>(
+        command: K,
+        args: TypeScriptRequestTypes[K][0],
         config?: ExecuteInfo,
-        token?: lsp.CancellationToken,
     ): Promise<unknown> {
         if (args && typeof args === 'object' && !Array.isArray(args)) {
             const requestArgs = args as RequestArgs;
             const hasFile = typeof requestArgs.file === 'string';
             if (hasFile) {
-                const newArgs = { ...args };
+                const newArgs: TypeScriptRequestTypes[K][0] & { file?: string; } = { ...args };
                 if (hasFile) {
-                    const document = client.toOpenDocument(requestArgs.file);
+                    const document = this.tsClient.toOpenDocument(requestArgs.file);
                     if (document) {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         newArgs.file = document.filepath;
                     }
                 }
@@ -44,10 +44,6 @@ export class TSServerRequestCommand {
             }
         }
 
-        if (config && token && typeof config === 'object' && !Array.isArray(config)) {
-            config.token = token;
-        }
-
-        return client.executeCustom(command, args, config);
+        return await this.tsClient.executeCustom(command, args, config);
     }
 }

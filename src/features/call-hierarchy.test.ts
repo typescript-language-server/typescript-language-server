@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
-import * as lsp from 'vscode-languageserver';
-import { uri, createServer, TestLspServer, positionAfter, documentFromFile, openDocumentAndWaitForDiagnostics } from '../test-utils.js';
+import type * as lsp from 'vscode-languageserver';
+import { uri, createServer, type TestLspServer, positionAfter, documentFromFile, openDocumentAndWaitForDiagnostics } from '../test-utils.js';
 
 const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 let server: TestLspServer;

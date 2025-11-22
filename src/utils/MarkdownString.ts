@@ -11,7 +11,7 @@
 
 import type * as lsp from 'vscode-languageserver/node.js';
 
-export const enum MarkdownStringTextNewlineStyle {
+export enum MarkdownStringTextNewlineStyle {
     Paragraph = 0,
     Break = 1,
 }

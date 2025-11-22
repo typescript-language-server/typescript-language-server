@@ -10,7 +10,7 @@
  */
 
 import type { ts } from '../ts-protocol.js';
-import { Logger } from '../utils/logger.js';
+import type { Logger } from '../utils/logger.js';
 
 export enum Trace {
     Off,

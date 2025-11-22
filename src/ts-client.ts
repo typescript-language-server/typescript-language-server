@@ -13,7 +13,7 @@ import path from 'node:path';
 import { URI } from 'vscode-uri';
 import { ResponseError } from 'vscode-languageserver';
 import type lsp from 'vscode-languageserver';
-import { type DocumentUri } from 'vscode-languageserver-textdocument';
+import type { DocumentUri } from 'vscode-languageserver-textdocument';
 import { type CancellationToken, CancellationTokenSource } from 'vscode-jsonrpc';
 import { type LspDocument, LspDocuments } from './document.js';
 import * as fileSchemes from './configuration/fileSchemes.js';
@@ -21,17 +21,17 @@ import * as languageModeIds from './configuration/languageIds.js';
 import { CommandTypes, EventName } from './ts-protocol.js';
 import type { TypeScriptPlugin, ts } from './ts-protocol.js';
 import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
-import { AsyncTsServerRequests, ClientCapabilities, ClientCapability, ExecConfig, NoResponseTsServerRequests, ITypeScriptServiceClient, ServerResponse, StandardTsServerRequests, TypeScriptRequestTypes, ExecuteInfo } from './typescriptService.js';
+import { type AsyncTsServerRequests, ClientCapabilities, ClientCapability, type ExecConfig, type NoResponseTsServerRequests, type ITypeScriptServiceClient, ServerResponse, type StandardTsServerRequests, type TypeScriptRequestTypes, type ExecuteInfo } from './typescriptService.js';
 import { PluginManager } from './tsServer/plugins.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
 import { TypeScriptServerError } from './tsServer/serverError.js';
 import { TypeScriptServerSpawner } from './tsServer/spawner.js';
-import Tracer, { Trace } from './tsServer/tracer.js';
-import { TypeScriptVersion, TypeScriptVersionSource } from './tsServer/versionProvider.js';
+import Tracer, { type Trace } from './tsServer/tracer.js';
+import { type TypeScriptVersion, TypeScriptVersionSource } from './tsServer/versionProvider.js';
 import type { LspClient } from './lsp-client.js';
 import API from './utils/api.js';
-import { SyntaxServerConfiguration, TsServerLogLevel } from './utils/configuration.js';
-import { Logger, PrefixingLogger } from './utils/logger.js';
+import { SyntaxServerConfiguration, type TsServerLogLevel } from './utils/configuration.js';
+import { type Logger, PrefixingLogger } from './utils/logger.js';
 import type { WorkspaceFolder } from './utils/types.js';
 import { ZipfileURI } from './utils/uri.js';
 
@@ -41,7 +41,7 @@ interface ToCancelOnResourceChanged {
 }
 
 namespace ServerState {
-    export const enum Type {
+    export enum Type {
         None,
         Running,
         Errored
@@ -89,7 +89,7 @@ namespace ServerState {
     export type State = typeof None | Running | Errored;
 }
 
-export const enum DiagnosticKind {
+export enum DiagnosticKind {
     Syntax,
     Semantic,
     Suggestion,
@@ -546,7 +546,7 @@ export class TsClient implements ITypeScriptServiceClient {
     // For use by TSServerRequestCommand.
     public executeCustom<K extends keyof TypeScriptRequestTypes>(
         command: K,
-        args: any,
+        args: TypeScriptRequestTypes[K][0],
         executeInfo?: ExecuteInfo,
     ): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
         const updatedExecuteInfo: ExecuteInfo = {

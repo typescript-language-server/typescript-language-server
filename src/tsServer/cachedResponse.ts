@@ -9,8 +9,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { LspDocument } from '../document.js';
-import { ServerResponse } from '../typescriptService.js';
+import type { LspDocument } from '../document.js';
+import type { ServerResponse } from '../typescriptService.js';
 import type { ts } from '../ts-protocol.js';
 
 type Resolve<T extends ts.server.protocol.Response> = () => Promise<ServerResponse.Response<T>>;

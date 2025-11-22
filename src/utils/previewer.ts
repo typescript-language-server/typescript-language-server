@@ -9,8 +9,8 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { URI } from 'vscode-uri';
-import * as lsp from 'vscode-languageserver';
+import type { URI } from 'vscode-uri';
+import type * as lsp from 'vscode-languageserver';
 import { MarkdownString } from './MarkdownString.js';
 import type { ts } from '../ts-protocol.js';
 

@@ -34,12 +34,15 @@ export class CommandManager {
         return Array.from(this.commands.keys());
     }
 
-    public async handle(commandId: Command['id'], ...args: unknown[]): Promise<boolean> {
+    public handlesCommand(commandId: Command['id']): boolean {
+        return this.commands.has(commandId);
+    }
+
+    public async handle(commandId: Command['id'], ...args: unknown[]): Promise<unknown> {
         const entry = this.commands.get(commandId);
         if (entry) {
-            await entry.execute(...args);
-            return true;
+            return await entry.execute(...args);
         }
-        return false;
+        return null;
     }
 }
