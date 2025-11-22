@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.1.4](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.3...v5.1.4) (2025-11-22)
+
+
+### Refactors
+
+* pass ITypeScriptServiceClient around instead of TsClient ([e91bd52](https://github.com/typescript-language-server/typescript-language-server/commit/e91bd52a47c05ffd946e0abd27f242eb631b7604))
+
 ## [5.1.3](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.2...v5.1.3) (2025-11-19)
 
 
