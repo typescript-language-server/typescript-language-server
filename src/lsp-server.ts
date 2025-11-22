@@ -152,18 +152,23 @@ export class LspServer {
             useLabelDetailsInCompletionEntries: this.features.completionLabelDetails,
         });
 
-        const supportsFileWatcherRegistration = Boolean(workspace?.didChangeWatchedFiles?.dynamicRegistration);
-        const supportsRelativePatterns = workspace?.didChangeWatchedFiles?.relativePatternSupport !== false;
         const requestedWatchEvents = tsserver?.useClientFileWatcher ?? false;
-        const typescriptSupportsWatchEvents = typescriptVersion.version?.gte(API.v544);
-        const canUseWatchEvents = Boolean(requestedWatchEvents && supportsFileWatcherRegistration && supportsRelativePatterns && typescriptSupportsWatchEvents);
+        let canUseWatchEvents = false;
 
-        if (requestedWatchEvents && !supportsFileWatcherRegistration) {
-            this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support dynamic file watcher registration; tsserver watch events will stay disabled.');
-        } else if (requestedWatchEvents && !supportsRelativePatterns) {
-            this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support relative file watcher patterns; tsserver watch events will stay disabled.');
-        } else if (requestedWatchEvents && !typescriptSupportsWatchEvents) {
-            this.logger.logIgnoringVerbosity(LogLevel.Warning, 'tsserver watch events require TypeScript 5.4.4 or newer; disabling useClientFileWatcher.');
+        if (requestedWatchEvents) {
+            const supportsFileWatcherRegistration = Boolean(workspace?.didChangeWatchedFiles?.dynamicRegistration);
+            const supportsRelativePatterns = workspace?.didChangeWatchedFiles?.relativePatternSupport === true;
+            const typescriptSupportsWatchEvents = typescriptVersion.version?.gte(API.v544);
+
+            if (!supportsFileWatcherRegistration) {
+                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support dynamic file watcher registration; falling back to tsserver file watching.');
+            } else if (!supportsRelativePatterns) {
+                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support relative file watcher patterns; falling back to tsserver file watching.');
+            } else if (!typescriptSupportsWatchEvents) {
+                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client-side file watching requires TypeScript 5.4.4 or newer; disabling useClientFileWatcher.');
+            } else {
+                canUseWatchEvents = true;
+            }
         }
 
         const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver.logVerbosity);
