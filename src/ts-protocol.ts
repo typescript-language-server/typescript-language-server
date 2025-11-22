@@ -417,6 +417,7 @@ interface TsserverOptions {
     trace?: TraceValue;
     /**
      * Use client's file watcher instead of TypeScript's built-in one. Requires TypeScript 5.4.4+ in the workspace.
+     * @default false
      */
     useClientFileWatcher?: boolean;
     /**
