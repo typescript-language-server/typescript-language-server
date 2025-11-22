@@ -416,6 +416,10 @@ interface TsserverOptions {
      */
     trace?: TraceValue;
     /**
+     * Use client's file watcher instead of TypeScript's built-in one. Requires TypeScript 5.4+ in the workspace.
+     */
+    useClientFileWatcher?: boolean;
+    /**
      * Whether a dedicated server is launched to more quickly handle syntax related operations, such as computing diagnostics or code folding.
      *
      * Allowed values:
@@ -425,10 +429,6 @@ interface TsserverOptions {
      * @default 'auto'
      */
     useSyntaxServer?: 'auto' | 'never';
-    /**
-     * Whether to opt in to tsserver's watch events mode (using the `--canUseWatchEvents` flag) when supported by the client and TypeScript version.
-     */
-    canUseWatchEvents?: boolean;
 }
 
 export type TypeScriptInitializeParams = lsp.InitializeParams & {

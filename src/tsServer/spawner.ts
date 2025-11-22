@@ -221,7 +221,7 @@ export class TypeScriptServerSpawner {
             args.push('--npmLocation', `"${npmLocation}"`);
         }
 
-        if (configuration.canUseWatchEvents && apiVersion.gte(API.v540)) {
+        if (configuration.useClientFileWatcher && apiVersion.gte(API.v540)) {
             args.push('--canUseWatchEvents');
         }
 

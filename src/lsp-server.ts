@@ -154,7 +154,7 @@ export class LspServer {
 
         const supportsFileWatcherRegistration = Boolean(workspace?.didChangeWatchedFiles?.dynamicRegistration);
         const supportsRelativePatterns = workspace?.didChangeWatchedFiles?.relativePatternSupport !== false;
-        const requestedWatchEvents = userInitializationOptions.tsserver?.canUseWatchEvents ?? this.options.canUseWatchEvents ?? false;
+        const requestedWatchEvents = tsserver?.useClientFileWatcher ?? false;
         const typescriptSupportsWatchEvents = typescriptVersion.version?.gte(API.v540);
         const canUseWatchEvents = Boolean(requestedWatchEvents && supportsFileWatcherRegistration && supportsRelativePatterns && typescriptSupportsWatchEvents);
 
@@ -163,7 +163,7 @@ export class LspServer {
         } else if (requestedWatchEvents && !supportsRelativePatterns) {
             this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support relative file watcher patterns; tsserver watch events will stay disabled.');
         } else if (requestedWatchEvents && !typescriptSupportsWatchEvents) {
-            this.logger.logIgnoringVerbosity(LogLevel.Warning, 'tsserver watch events require TypeScript 5.4 or newer; disabling canUseWatchEvents.');
+            this.logger.logIgnoringVerbosity(LogLevel.Warning, 'tsserver watch events require TypeScript 5.4 or newer; disabling useClientFileWatcher.');
         }
 
         const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver.logVerbosity);
@@ -187,8 +187,8 @@ export class LspServer {
                         throw new Error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
                     }
                 },
-                useSyntaxServer: toSyntaxServerConfiguration(userInitializationOptions.tsserver?.useSyntaxServer),
-                canUseWatchEvents,
+                useClientFileWatcher: tsserver?.useClientFileWatcher ?? false,
+                useSyntaxServer: toSyntaxServerConfiguration(tsserver?.useSyntaxServer),
             });
         if (!started) {
             throw new Error('tsserver process has failed to start.');

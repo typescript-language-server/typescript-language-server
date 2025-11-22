@@ -17,10 +17,9 @@ const program = new Command('typescript-language-server')
     .version(version)
     .requiredOption('--stdio', 'use stdio')
     .option<number>('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.', value => parseInt(value, 10), 2)
-    .option('--canUseWatchEvents', 'Opt-in to tsserver watch events mode when supported by the client')
     .parse(process.argv);
 
-const options = program.opts<{ logLevel: number; canUseWatchEvents?: boolean; }>();
+const options = program.opts<{ logLevel: number; }>();
 
 let logLevel = DEFAULT_LOG_LEVEL;
 if (options.logLevel && (options.logLevel < 1 || options.logLevel > 4)) {
@@ -30,5 +29,4 @@ if (options.logLevel && (options.logLevel < 1 || options.logLevel > 4)) {
 
 createLspConnection({
     showMessageLevel: logLevel as lsp.MessageType,
-    canUseWatchEvents: options.canUseWatchEvents,
 }).listen();

@@ -12,7 +12,6 @@ import { LspClientImpl } from './lsp-client.js';
 
 export interface LspConnectionOptions {
     showMessageLevel: lsp.MessageType;
-    canUseWatchEvents?: boolean;
 }
 
 export function createLspConnection(options: LspConnectionOptions): lsp.Connection {
@@ -22,7 +21,6 @@ export function createLspConnection(options: LspConnectionOptions): lsp.Connecti
     const server: LspServer = new LspServer({
         logger,
         lspClient,
-        canUseWatchEvents: options.canUseWatchEvents,
     });
 
     connection.onInitialize(server.initialize.bind(server));

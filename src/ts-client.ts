@@ -154,8 +154,8 @@ export interface TsClientOptions {
     plugins: TypeScriptPlugin[];
     onEvent?: (event: ts.server.protocol.Event) => void;
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
+    useClientFileWatcher: boolean;
     useSyntaxServer: SyntaxServerConfiguration;
-    canUseWatchEvents?: boolean;
 }
 
 export class TsClient implements ITypeScriptServiceClient {
@@ -174,7 +174,6 @@ export class TsClient implements ITypeScriptServiceClient {
     private useSyntaxServer: SyntaxServerConfiguration = SyntaxServerConfiguration.Auto;
     private onEvent?: (event: ts.server.protocol.Event) => void;
     private onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
-    private canUseWatchEvents: boolean = false;
 
     constructor(
         onCaseInsensitiveFileSystem: boolean,
@@ -349,9 +348,6 @@ export class TsClient implements ITypeScriptServiceClient {
     }
 
     public sendWatchChanges(args: ts.server.protocol.WatchChangeRequestArgs | readonly ts.server.protocol.WatchChangeRequestArgs[]): void {
-        if (!this.canUseWatchEvents) {
-            return;
-        }
         this.executeWithoutWaitingForResponse(CommandTypes.WatchChange, args);
     }
 
@@ -365,7 +361,6 @@ export class TsClient implements ITypeScriptServiceClient {
         this.tracer = new Tracer(this.tsserverLogger, options.trace);
         this.workspaceFolders = workspaceRoot ? [{ uri: URI.file(workspaceRoot) }] : [];
         this.useSyntaxServer = options.useSyntaxServer;
-        this.canUseWatchEvents = Boolean(options.canUseWatchEvents && this.apiVersion.gte(API.v540));
         this.onEvent = options.onEvent;
         this.onExit = options.onExit;
         this.pluginManager.setPlugins(options.plugins);
