@@ -126,6 +126,14 @@ export type TypeScriptInlayHintsPreferences = Pick<
 
 interface WorkspaceConfigurationDiagnosticsOptions {
     ignoredCodes?: number[];
+    /**
+     * When true, diagnostics for a file are cleared immediately when the file changes, before
+     * fresh diagnostics arrive from tsserver. This prevents stale diagnostics from persisting
+     * between an edit and the subsequent reanalysis.
+     *
+     * @default false
+     */
+    eagerClear?: boolean;
 }
 
 export interface WorkspaceConfigurationCompletionOptions {

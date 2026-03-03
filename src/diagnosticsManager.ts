@@ -116,6 +116,26 @@ export class DiagnosticsManager {
     }
 
     /**
+     * Immediately publish empty diagnostics for a file. Used to clear stale diagnostics
+     * when a file changes, before fresh diagnostics arrive from tsserver.
+     */
+    public clearDiagnosticsForFile(file: string): void {
+        if (!this.features.diagnosticsSupport) {
+            return;
+        }
+        const uri = this.client.toResourceUri(file);
+        const diagnosticsForFile = this.diagnostics.get(uri);
+        if (diagnosticsForFile) {
+            // onDidClose clears per-kind state, publishes empty diagnostics,
+            // and sets closed=true to neutralize any pending debounced publish.
+            diagnosticsForFile.onDidClose();
+            this.diagnostics.delete(uri);
+        } else {
+            this.publishDiagnostics({ uri, diagnostics: [] });
+        }
+    }
+
+    /**
      * A testing function to clear existing file diagnostics, request fresh ones and wait for all to arrive.
      */
     public async waitForDiagnosticsForTesting(file: string): Promise<void> {

@@ -1038,6 +1038,68 @@ describe('editing', () => {
     });
 });
 
+describe('eager diagnostic invalidation', () => {
+    it('clears diagnostics synchronously on didChange when eagerClear is enabled', async () => {
+        server.updateWorkspaceSettings({ diagnostics: { eagerClear: true } });
+
+        const doc = {
+            uri: uri('eagerClearEnabled.ts'),
+            languageId: 'typescript',
+            version: 1,
+            // Type error: 'missing' is not defined.
+            text: `export function foo(): void { missing('test'); }`,
+        };
+
+        await openDocumentAndWaitForDiagnostics(server, doc);
+
+        // Confirm we have diagnostics before the change.
+        expect(diagnostics.get(doc.uri)?.diagnostics.length).toBeGreaterThan(0);
+
+        // Send a change - eagerClear should synchronously publish empty diagnostics.
+        server.didChangeTextDocument({
+            textDocument: { uri: doc.uri, version: 2 },
+            contentChanges: [{ text: `export function foo(): void {}` }],
+        });
+
+        // Synchronous check: diagnostics must be empty immediately after didChange returns.
+        const result = diagnostics.get(doc.uri);
+        expect(result).toBeDefined();
+        expect(result!.diagnostics).toHaveLength(0);
+
+        // Restore default settings so subsequent tests are unaffected.
+        server.updateWorkspaceSettings({ diagnostics: { eagerClear: false } });
+    });
+
+    it('does NOT clear diagnostics synchronously on didChange when eagerClear is disabled', async () => {
+        server.updateWorkspaceSettings({ diagnostics: { eagerClear: false } });
+
+        const doc = {
+            uri: uri('eagerClearDisabled.ts'),
+            languageId: 'typescript',
+            version: 1,
+            // Type error: 'missing' is not defined.
+            text: `export function foo(): void { missing('test'); }`,
+        };
+
+        await openDocumentAndWaitForDiagnostics(server, doc);
+
+        // Confirm we have diagnostics before the change.
+        const before = diagnostics.get(doc.uri)?.diagnostics ?? [];
+        expect(before.length).toBeGreaterThan(0);
+
+        // Send a change - without eagerClear the diagnostics map should NOT be emptied synchronously.
+        server.didChangeTextDocument({
+            textDocument: { uri: doc.uri, version: 2 },
+            contentChanges: [{ text: `export function foo(): void {}` }],
+        });
+
+        // Synchronous check: the previous (non-empty) diagnostics should still be present.
+        const result = diagnostics.get(doc.uri);
+        expect(result).toBeDefined();
+        expect(result!.diagnostics.length).toBeGreaterThan(0);
+    });
+});
+
 describe('references', () => {
     it('respects "includeDeclaration" in the request', async () => {
         const doc = {
