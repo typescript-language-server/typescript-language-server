@@ -1047,7 +1047,7 @@ describe('eager diagnostic invalidation', () => {
             languageId: 'typescript',
             version: 1,
             // Type error: 'missing' is not defined.
-            text: `export function foo(): void { missing('test'); }`,
+            text: 'export function foo(): void { missing(\'test\'); }',
         };
 
         await openDocumentAndWaitForDiagnostics(server, doc);
@@ -1058,7 +1058,7 @@ describe('eager diagnostic invalidation', () => {
         // Send a change - eagerClear should synchronously publish empty diagnostics.
         server.didChangeTextDocument({
             textDocument: { uri: doc.uri, version: 2 },
-            contentChanges: [{ text: `export function foo(): void {}` }],
+            contentChanges: [{ text: 'export function foo(): void {}' }],
         });
 
         // Synchronous check: diagnostics must be empty immediately after didChange returns.
@@ -1078,7 +1078,7 @@ describe('eager diagnostic invalidation', () => {
             languageId: 'typescript',
             version: 1,
             // Type error: 'missing' is not defined.
-            text: `export function foo(): void { missing('test'); }`,
+            text: 'export function foo(): void { missing(\'test\'); }',
         };
 
         await openDocumentAndWaitForDiagnostics(server, doc);
@@ -1090,7 +1090,7 @@ describe('eager diagnostic invalidation', () => {
         // Send a change - without eagerClear the diagnostics map should NOT be emptied synchronously.
         server.didChangeTextDocument({
             textDocument: { uri: doc.uri, version: 2 },
-            contentChanges: [{ text: `export function foo(): void {}` }],
+            contentChanges: [{ text: 'export function foo(): void {}' }],
         });
 
         // Synchronous check: the previous (non-empty) diagnostics should still be present.
