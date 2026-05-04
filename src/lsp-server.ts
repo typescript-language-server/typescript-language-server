@@ -585,14 +585,13 @@ export class LspServer {
     }
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
-        let document = undefined;
         const data = item.data as { cacheId?: number; } | undefined;
         if (data?.cacheId !== undefined) {
             const cachedData = this.completionDataCache.get(data.cacheId);
             item.data = cachedData;
             if (cachedData?.file) {
                 const uri = this.tsClient.toResourceUri(cachedData.file);
-                document = this.tsClient.toOpenDocument(uri);
+                const document = this.tsClient.toOpenDocument(uri);
                 if (document) {
                     const response = await this.tsClient.interruptGetErr(() => this.tsClient.execute(CommandTypes.CompletionDetails, cachedData, token));
                     if (response.type !== 'response' || !response.body?.length) {

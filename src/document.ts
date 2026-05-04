@@ -349,10 +349,10 @@ export class LspDocuments {
         this.client.cancelInflightRequestsForResource(document.uri);
 
         for (const change of params.contentChanges) {
-            let line = 0;
-            let offset = 0;
-            let endLine = 0;
-            let endOffset = 0;
+            let line;
+            let offset;
+            let endLine;
+            let endOffset;
             if (lsp.TextDocumentContentChangeEvent.isIncremental(change)) {
                 line = change.range.start.line + 1;
                 offset = change.range.start.character + 1;
