@@ -184,6 +184,7 @@ function asCompletionItem(
             item.kind = lsp.CompletionItemKind.Color;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         if (entry.kind as ScriptElementKind === ScriptElementKind.scriptElement as ScriptElementKind) {
             for (const extModifier of KindModifiers.fileExtensionKindModifiers) {
                 if (kindModifiers.has(extModifier)) {
@@ -326,6 +327,7 @@ function asCommitCharacters(
     entry: ts.server.protocol.CompletionEntry,
     defaultCommitCharacters: readonly string[] | undefined,
 ): string[] | undefined {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const kind = entry.kind as ScriptElementKind;
     let commitCharacters = entry.commitCharacters ?? (defaultCommitCharacters ? Array.from(defaultCommitCharacters) : undefined);
     if (commitCharacters) {
@@ -387,6 +389,7 @@ async function isValidFunctionCompletionContext(position: lsp.Position, client: 
         const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(document.filepath, position);
         const response = await client.execute(CommandTypes.Quickinfo, args);
         if (response.type === 'response' && response.body) {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             switch (response.body.kind as ScriptElementKind) {
                 case ScriptElementKind.variableElement:
                 case ScriptElementKind.letElement:

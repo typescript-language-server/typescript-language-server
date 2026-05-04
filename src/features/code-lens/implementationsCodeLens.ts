@@ -88,6 +88,7 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
         item: ts.server.protocol.NavigationTree,
         _parent: ts.server.protocol.NavigationTree | undefined,
     ): lsp.Range | undefined {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         switch (item.kind as ScriptElementKind) {
             case ScriptElementKind.interfaceElement:
                 return getSymbolRange(document, item);

@@ -138,7 +138,7 @@ export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, cli
 
 export function toDocumentHighlight(item: ts.server.protocol.DocumentHighlightsItem): lsp.DocumentHighlight[] {
     return item.highlightSpans.map(i => {
-        return <lsp.DocumentHighlight>{
+        return {
             kind: toDocumentHighlightKind(i.kind),
             range: {
                 start: Position.fromLocation(i.start),

@@ -1090,7 +1090,7 @@ export class LspServer {
             return [];
         }
         return response.body.map(item => {
-            return <lsp.SymbolInformation>{
+            return {
                 location: {
                     uri: this.tsClient.toResourceUri(item.file),
                     range: {
