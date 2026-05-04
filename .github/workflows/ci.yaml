@@ -21,7 +21,7 @@ jobs:
       CI: true
     name: ${{ matrix.os }} (Node.js ${{ matrix.node-version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup node
         uses: actions/setup-node@v6
         with:
