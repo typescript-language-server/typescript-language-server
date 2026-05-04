@@ -41,6 +41,7 @@
     }
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@rollup/plugin-commonjs": "^29.0.2",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^0.4.4",
@@ -58,6 +59,7 @@
     "deepmerge": "^4.3.1",
     "eslint": "^10.3.0",
     "fs-extra": "^11.3.4",
+    "globals": "^17.6.0",
     "husky": "4.3.8",
     "p-debounce": "^5.1.0",
     "package-up": "^5.0.0",
