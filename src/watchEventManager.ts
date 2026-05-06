@@ -67,7 +67,7 @@ export class WatchEventManager {
     }
 
     public dispose(): void {
-        void this.registration?.dispose?.();
+        void this.registration?.dispose();
         this.watchers.clear();
         this.coverage.clear();
         this.coverageUsage.clear();
