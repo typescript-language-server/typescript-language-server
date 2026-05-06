@@ -226,12 +226,7 @@ class ProtocolBuffer {
     private buffer: Buffer = Buffer.allocUnsafe(defaultSize);
 
     public append(data: string | Buffer): void {
-        let toAppend: Buffer | null = null;
-        if (Buffer.isBuffer(data)) {
-            toAppend = data;
-        } else {
-            toAppend = Buffer.from(data, 'utf8');
-        }
+        const toAppend = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8');
         if (this.buffer.length - this.index >= toAppend.length) {
             toAppend.copy(this.buffer, this.index, 0, toAppend.length);
         } else {

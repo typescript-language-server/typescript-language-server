@@ -1,20 +1,20 @@
 {
     "include": [
         "src/**/*.ts",
-        "test-data/**/*.ts",
+        "test-data/**/*.{ts,js}",
         "eslint.config.js",
         "rollup.config.ts",
         "vitest.config.ts",
     ],
     "compilerOptions": {
-        "allowJs": true,
+        "checkJs": true,
         "declaration": false,
         "declarationMap": false,
         "noEmit": true,
         "esModuleInterop": true,
-        "lib": ["es2020"],
-        "module": "Node16",
-        "moduleResolution": "Node16",
+        "lib": ["ES2022"],
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "outDir": "lib",
@@ -22,6 +22,10 @@
         "rootDir": "src",
         "sourceMap": true,
         "strict": true,
-        "target": "es2020",
+        "target": "ES2022",
+        "types": [
+            "fs-extra",
+            "node",
+        ]
     }
 }

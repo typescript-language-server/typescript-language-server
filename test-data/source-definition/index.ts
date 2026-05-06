@@ -1,2 +1,2 @@
-import { a } from "./a"
-a/*identifier*/
+import { a } from './a.js';
+a;/*identifier*/

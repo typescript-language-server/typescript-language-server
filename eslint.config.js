@@ -1,11 +1,12 @@
-import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
+import js from '@eslint/js';
 import globals from 'globals';
 import tsEslint from 'typescript-eslint';
 import stylistic from '@stylistic/eslint-plugin';
 import vitest from '@vitest/eslint-plugin';
 
-export default tsEslint.config([
-    eslint.configs.recommended,
+export default defineConfig([
+    js.configs.recommended,
     tsEslint.configs.recommendedTypeChecked,
     {
         languageOptions: {
@@ -13,7 +14,6 @@ export default tsEslint.config([
             globals: globals.node,
             parserOptions: {
                 projectService: true,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 tsconfigRootDir: import.meta.dirname,
             },
         },
@@ -73,7 +73,7 @@ export default tsEslint.config([
         },
     },
     {
-        files: ['**/*.ts'],
+        files: ['**/*.{ts,js}'],
         rules: {
             '@stylistic/indent': [
                 'error', 4, {

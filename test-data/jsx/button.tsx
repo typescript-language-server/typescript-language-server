@@ -1,7 +1,3 @@
-const Button: React.FC<{ title: string }> = ({ title }) => {
-  return (
-    <button>{title}</button>
-  )
+export default function Button({ title }: { title: string }) {
+    return <button>{title}</button>;
 }
-
-export default Button

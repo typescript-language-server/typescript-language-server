@@ -157,10 +157,10 @@ export class TypeScriptServerSpawner {
         apiVersion: API,
         pluginManager: PluginManager,
         cancellationPipeName: string | undefined,
-    ): { args: string[]; tsServerLogFile: string | undefined; tsServerTraceDirectory: string | undefined; } {
+    ): { args: string[]; tsServerLogFile: string | undefined; tsServerTraceDirectory?: never; } {
         const args: string[] = [];
         let tsServerLogFile: string | undefined;
-        let tsServerTraceDirectory: string | undefined;
+        // let tsServerTraceDirectory: string | undefined;
 
         if (kind === TsServerProcessKind.Syntax) {
             if (apiVersion.gte(API.v401)) {
@@ -229,7 +229,7 @@ export class TypeScriptServerSpawner {
         // args.push('--noGetErrOnBackgroundUpdate');
         args.push('--validateDefaultNpmLocation');
 
-        return { args, tsServerLogFile, tsServerTraceDirectory };
+        return { args, tsServerLogFile/*, tsServerTraceDirectory*/ };
     }
 
     private isLoggingEnabled(configuration: TsClientOptions) {

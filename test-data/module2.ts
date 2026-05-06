@@ -1,4 +1,4 @@
-import { doStuff } from './module1';
+import { doStuff } from './module1.js';
 
 /**
  * A regular class

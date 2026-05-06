@@ -68,10 +68,12 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
         item: ts.server.protocol.NavigationTree,
         parent: ts.server.protocol.NavigationTree | undefined,
     ): lsp.Range | undefined {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         if (parent && (parent.kind as ScriptElementKind) === ScriptElementKind.enumElement) {
             return getSymbolRange(document, item);
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         switch (item.kind as ScriptElementKind) {
             case ScriptElementKind.functionElement: {
                 const showOnAllFunctions = this.fileConfigurationManager.getWorkspacePreferencesForFile(document).referencesCodeLens?.showOnAllFunctions;

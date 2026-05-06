@@ -83,7 +83,7 @@ export class TypeScriptVersion {
 
         this.logger.log(`Reading version from package.json at "${fileName}"`);
         const contents = fs.readFileSync(fileName).toString();
-        let desc: { version?: string; } | null = null;
+        let desc: { version?: string; };
         try {
             desc = JSON.parse(contents) as { version?: string; };
         } catch {

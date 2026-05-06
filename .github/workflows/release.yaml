@@ -8,17 +8,17 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         if: ${{ steps.release.outputs.release_created }}
       - uses: actions/setup-node@v6
         if: ${{ steps.release.outputs.release_created }}
         with:
-          node-version: 20.19.5
+          node-version: 20.20.2
           registry-url: https://registry.npmjs.org
       - run: corepack enable
       - name: Lint and Test
