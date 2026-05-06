@@ -401,9 +401,6 @@ export class LspServer {
     }
 
     private getWorkspaceFolders(): URI[] {
-        if (this.initializeParams?.workspaceFolders?.length) {
-            return this.initializeParams.workspaceFolders.map(folder => URI.parse(folder.uri));
-        }
         if (this.workspaceRoot) {
             return [URI.file(this.workspaceRoot)];
         }
