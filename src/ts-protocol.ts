@@ -221,6 +221,7 @@ export enum ScriptElementKindModifier {
 }
 
 export enum ScriptTarget {
+    /** @deprecated */
     ES3 = 'es3',
     ES5 = 'es5',
     ES6 = 'es6',
@@ -232,6 +233,8 @@ export enum ScriptTarget {
     ES2020 = 'es2020',
     ES2021 = 'es2021',
     ES2022 = 'es2022',
+    ES2023 = 'es2023',
+    ES2024 = 'es2024',
     ESNext = 'esnext',
     JSON = 'json',
     // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
