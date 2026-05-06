@@ -1,1 +1,1 @@
-import { a } from './export';
+import { a } from './export.js';

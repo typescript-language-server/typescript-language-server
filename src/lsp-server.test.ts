@@ -65,7 +65,7 @@ describe('completion', () => {
 
     it('simple JS test', async () => {
         const doc = {
-            uri: uri('bar.js'),
+            uri: uri('foo.js'),
             languageId: 'javascript',
             version: 1,
             text: `
@@ -75,8 +75,8 @@ describe('completion', () => {
       `,
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const pos = position(doc, 'console');
-        const proposals = await server.completion({ textDocument: doc, position: pos });
+        let pos = positionAfter(doc, '{');
+        let proposals = await server.completion({ textDocument: doc, position: pos });
         expect(proposals).not.toBeNull();
         expect(proposals!.items.length).toBeGreaterThan(800);
         const item = proposals!.items.find(i => i.label === 'addEventListener');
@@ -84,17 +84,14 @@ describe('completion', () => {
         const resolvedItem = await server.completionResolve(item!);
         expect(resolvedItem.detail).toBeDefined();
 
-        const containsInvalidCompletions = proposals!.items.reduce((accumulator, current) => {
-            if (accumulator) {
-                return accumulator;
-            }
-
-            // console.log as a warning is erroneously mapped to a non-function type
-            return current.label === 'log' &&
-                (current.kind !== lsp.CompletionItemKind.Function && current.kind !== lsp.CompletionItemKind.Method);
-        }, false);
-
-        expect(containsInvalidCompletions).toBeFalsy();
+        pos = positionAfter(doc, 'console.');
+        proposals = await server.completion({ textDocument: doc, position: pos });
+        const consoleLogCompletion = proposals!.items.find(i => i.label === 'log');
+        expect(consoleLogCompletion).toBeDefined();
+        const { kind } = consoleLogCompletion!;
+        // console.log as a warning is erroneously mapped to a non-function type
+        const containsInvalidCompletions = kind !== lsp.CompletionItemKind.Function && kind !== lsp.CompletionItemKind.Method;
+        expect(containsInvalidCompletions).toBe(false);
     });
 
     it('deprecated by JSDoc', async () => {
@@ -697,7 +694,7 @@ describe('definition', () => {
         await openDocumentAndWaitForDiagnostics(server, indexDoc);
         const definitions = await server.definition({
             textDocument: indexDoc,
-            position: position(indexDoc, 'a/*identifier*/'),
+            position: position(indexDoc, 'a;/*identifier*/'),
         }) as lsp.Location[];
         expect(Array.isArray(definitions)).toBeTruthy();
         expect(definitions).toHaveLength(1);
@@ -759,7 +756,7 @@ describe('definition (definition link supported)', () => {
         localServer.didOpenTextDocument({ textDocument: indexDoc });
         const definitions = await localServer.definition({
             textDocument: indexDoc,
-            position: position(indexDoc, 'a/*identifier*/'),
+            position: position(indexDoc, 'a;/*identifier*/'),
         }) as lsp.DefinitionLink[];
         expect(Array.isArray(definitions)).toBeTruthy();
         expect(definitions).toHaveLength(1);
@@ -802,7 +799,7 @@ describe('definition (definition link supported)', () => {
 describe('diagnostics', () => {
     it('simple test', async () => {
         const doc = {
-            uri: uri('diagnosticsBar.ts'),
+            uri: uri('foo.ts'),
             languageId: 'typescript',
             version: 1,
             text: `
@@ -821,7 +818,7 @@ describe('diagnostics', () => {
 
     it('supports diagnostic tags', async () => {
         const doc = {
-            uri: uri('diagnosticsBar.ts'),
+            uri: uri('foo.ts'),
             languageId: 'typescript',
             version: 1,
             text: `
@@ -2081,7 +2078,7 @@ describe('executeCommand', () => {
             command: Commands.SOURCE_DEFINITION,
             arguments: [
                 indexUri,
-                position(indexDoc, '/*identifier*/'),
+                position(indexDoc, ';/*identifier*/'),
             ],
         }) as lsp.Location[] | null;
         expect(result).not.toBeNull();
@@ -2549,6 +2546,7 @@ describe('completions without client snippet support', () => {
         const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        expect(completion).toBeDefined();
         expect(completion!.insertTextFormat).not.toBe(lsp.InsertTextFormat.Snippet);
         expect(completion!.label).toBe('readFile');
         const resolvedItem = await localServer.completionResolve(completion!);
@@ -2618,9 +2616,9 @@ describe('fileOperations', () => {
             {
                 range: {
                     start:{ line: 0, character: 25 },
-                    end: { line: 0, character: 34 },
+                    end: { line: 0, character: 37 },
                 },
-                newText:'./new_module1_name',
+                newText:'./new_module1_name.js',
             },
         ]);
     });
@@ -2637,9 +2635,9 @@ describe('fileOperations', () => {
             {
                 range: {
                     start:{ line: 0, character: 31 },
-                    end: { line: 0, character: 44 },
+                    end: { line: 0, character: 47 },
                 },
-                newText:'./rename2/var',
+                newText:'./rename2/var.js',
             },
         ]);
     });
@@ -2691,18 +2689,18 @@ describe('fileOperations', () => {
                     {
                         range: {
                             start:{ line: 0, character: 19 },
-                            end: { line: 0, character: 27 },
+                            end: { line: 0, character: 30 },
                         },
-                        newText:'./export2',
+                        newText:'./export2.js',
                     },
                 ],
                 [import2Uri]: [
                     {
                         range: {
                             start:{ line: 0, character: 19 },
-                            end: { line: 0, character: 27 },
+                            end: { line: 0, character: 30 },
                         },
-                        newText:'./export2',
+                        newText:'./export2.js',
                     },
                 ],
             },
