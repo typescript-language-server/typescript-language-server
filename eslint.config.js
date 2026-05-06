@@ -73,7 +73,7 @@ export default defineConfig([
         },
     },
     {
-        files: ['**/*.ts'],
+        files: ['**/*.{ts,js}'],
         rules: {
             '@stylistic/indent': [
                 'error', 4, {
