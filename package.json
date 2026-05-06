@@ -58,7 +58,7 @@
     "cross-env": "^10.1.0",
     "deepmerge": "^4.3.1",
     "eslint": "^10.3.0",
-    "fs-extra": "^11.3.4",
+    "fs-extra": "^11.3.5",
     "globals": "^17.6.0",
     "husky": "4.3.8",
     "p-debounce": "^5.1.0",
