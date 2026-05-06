@@ -1,3 +1,4 @@
+// sync: file[extensions/typescript-language-features/src/tsconfig.ts] sha[c17280fcc113f1b7f83eef73332f031acb4270ff]
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -44,6 +45,10 @@ export function getInferredProjectCompilerOptions(
 
     if (workspaceConfig.strictFunctionTypes) {
         projectConfig.strictFunctionTypes = true;
+    }
+
+    if (workspaceConfig.strict) {
+        projectConfig.strict = true;
     }
 
     if (workspaceConfig.module) {
