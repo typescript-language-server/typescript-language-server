@@ -409,9 +409,13 @@ export class TsClient implements ITypeScriptServiceClient {
             case EventName.syntaxDiag:
             case EventName.semanticDiag:
             case EventName.suggestionDiag:
-            case EventName.configFileDiag: {
-                // This event also roughly signals that projects have been loaded successfully (since the TS server is synchronous)
+            case EventName.configFileDiag:
+                // These events also roughly signal that project have been loaded successfully (since the TS server is synchronous).
                 this.loadingIndicator.reset();
+                // falls through
+            case EventName.createDirectoryWatcher:
+            case EventName.createFileWatcher:
+            case EventName.closeFileWatcher: {
                 this.onEvent?.(event);
                 break;
             }
