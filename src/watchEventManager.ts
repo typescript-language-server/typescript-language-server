@@ -19,7 +19,7 @@ type CoverageEntry = {
     readonly key: string;
     readonly normalizedBase: string;
     readonly watcher: Omit<lsp.FileSystemWatcher, 'globPattern'> & { globPattern: lsp.RelativePattern; };
-    watchKind: lsp.WatchKind;
+    readonly watchKind: lsp.WatchKind;
     /** Permanent entries (workspace folders) are never removed when individual watchers close. */
     readonly permanent: boolean;
 };
@@ -106,7 +106,6 @@ export class WatchEventManager {
             const uri = URI.parse(change.uri);
             const fsPath = uri.fsPath;
             const normalizedFsPath = this.normalizePath(fsPath);
-            const tsserverPath = this.toTsserverPath(fsPath);
 
             for (const watcher of this.watchers.values()) {
                 if (!this.watcherMatchesPath(watcher, normalizedFsPath)) {
@@ -120,13 +119,13 @@ export class WatchEventManager {
                 const changes = this.ensureChangeBucket(collected, watcher.id);
                 switch (change.type) {
                     case lsp.FileChangeType.Created:
-                        changes.created.push(tsserverPath);
+                        changes.created.push(normalizedFsPath);
                         break;
                     case lsp.FileChangeType.Deleted:
-                        changes.deleted.push(tsserverPath);
+                        changes.deleted.push(normalizedFsPath);
                         break;
                     case lsp.FileChangeType.Changed:
-                        changes.updated.push(tsserverPath);
+                        changes.updated.push(normalizedFsPath);
                         break;
                 }
             }
@@ -319,8 +318,8 @@ export class WatchEventManager {
         return this.workspacePaths.some(base => normalizedPath === base || normalizedPath.startsWith(base + '/'));
     }
 
-    private normalizePath(input: string): string {
-        const normalized = path.normalize(input).replace(/\\/g, '/');
+    private normalizePath(filePath: string): string {
+        const normalized = path.normalize(filePath).replace(/\\/g, '/');
         const isDriveRoot = /^[a-zA-Z]:\/?$/.test(normalized);
         const isPosixRoot = normalized === '/';
         const trimmed = isDriveRoot || isPosixRoot ? normalized.replace(/\/+$/, '/') : normalized.replace(/\/+$/, '');
@@ -334,9 +333,5 @@ export class WatchEventManager {
 
     private coverageKey(basePath: string, pattern: string) {
         return `${this.normalizePath(basePath)}|${pattern}`;
-    }
-
-    private toTsserverPath(fsPath: string): string {
-        return fsPath.replace(/\\/g, '/');
     }
 }
