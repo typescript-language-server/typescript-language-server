@@ -1,7 +1,7 @@
 import path from 'node:path';
 import * as lsp from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import type { ts } from './ts-protocol.js';
+import { EventName, ts } from './ts-protocol.js';
 import type { LspClient } from './lsp-client.js';
 import type { Logger } from './utils/logger.js';
 
@@ -18,8 +18,9 @@ type TsserverWatcher = {
 type CoverageEntry = {
     readonly key: string;
     readonly normalizedBase: string;
-    readonly watcher: lsp.FileSystemWatcher;
+    readonly watcher: Omit<lsp.FileSystemWatcher, 'globPattern'> & { globPattern: lsp.RelativePattern; };
     watchKind: lsp.WatchKind;
+    /** Permanent entries (workspace folders) are never removed when individual watchers close. */
     readonly permanent: boolean;
 };
 
@@ -37,13 +38,14 @@ export class WatchEventManager {
     private readonly coverageUsage = new Map<string, number>();
     private readonly workspacePaths: readonly string[];
     private registration: lsp.Disposable | undefined;
-    private registrationSignature: string | undefined;
+    private registrationHash: string | undefined;
     private readyForRegistration = false;
 
     constructor(private readonly options: WatchEventManagerOptions) {
         this.workspacePaths = options.workspaceFolders.map(folder => this.normalizePath(folder.fsPath));
         for (const folder of options.workspaceFolders) {
             const key = this.coverageKey(folder.fsPath, '**/*');
+            const kind = lsp.WatchKind.Create | lsp.WatchKind.Change | lsp.WatchKind.Delete;
             const entry: CoverageEntry = {
                 key,
                 normalizedBase: this.normalizePath(folder.fsPath),
@@ -52,9 +54,9 @@ export class WatchEventManager {
                         baseUri: folder.toString(),
                         pattern: '**/*',
                     },
-                    kind: lsp.WatchKind.Create | lsp.WatchKind.Change | lsp.WatchKind.Delete,
+                    kind,
                 },
-                watchKind: lsp.WatchKind.Create | lsp.WatchKind.Change | lsp.WatchKind.Delete,
+                watchKind: kind,
                 permanent: true,
             };
             this.coverage.set(key, entry);
@@ -74,14 +76,14 @@ export class WatchEventManager {
     }
 
     public handleTsserverEvent(event: ts.server.protocol.Event): boolean {
-        switch (event.event) {
-            case 'createFileWatcher':
+        switch (event.event as EventName) {
+            case EventName.createFileWatcher:
                 this.addFileWatcher((event as ts.server.protocol.CreateFileWatcherEvent).body);
                 return true;
-            case 'createDirectoryWatcher':
+            case EventName.createDirectoryWatcher:
                 this.addDirectoryWatcher((event as ts.server.protocol.CreateDirectoryWatcherEvent).body);
                 return true;
-            case 'closeFileWatcher':
+            case EventName.closeFileWatcher:
                 this.closeWatcher((event as ts.server.protocol.CloseFileWatcherEvent).body);
                 return true;
             default:
@@ -196,7 +198,7 @@ export class WatchEventManager {
             const coverage = this.coverage.get(watcher.coverageKey);
             if (coverage && !coverage.permanent) {
                 this.coverage.delete(watcher.coverageKey);
-                this.registrationSignature = undefined;
+                this.registrationHash = undefined;
                 void this.updateRegistration();
             }
         } else {
@@ -237,7 +239,7 @@ export class WatchEventManager {
 
         this.coverageUsage.set(coverageKey, (this.coverageUsage.get(coverageKey) ?? 0) + 1);
         if (coverageChanged) {
-            this.registrationSignature = undefined;
+            this.registrationHash = undefined;
             void this.updateRegistration();
         }
         return coverageKey;
@@ -268,28 +270,18 @@ export class WatchEventManager {
         if (!watchers.length) {
             this.registration?.dispose();
             this.registration = undefined;
-            this.registrationSignature = undefined;
+            this.registrationHash = undefined;
             return;
         }
-        const signature = JSON.stringify(watchers.map(watcher => {
-            const globPattern = watcher.globPattern;
-            if (typeof globPattern === 'string') {
-                return { pattern: globPattern, kind: watcher.kind };
-            }
-
-            if ('baseUri' in globPattern) {
-                const baseUri = globPattern.baseUri;
-                const baseUriString = typeof baseUri === 'string' ? baseUri : baseUri.uri;
-                return { baseUri: baseUriString, pattern: globPattern.pattern, kind: watcher.kind };
-            }
-
-            // Fallback for unexpected shapes
-            return { pattern: String(globPattern), kind: watcher.kind };
-        }));
-        if (signature === this.registrationSignature) {
+        const hash = watchers.map(watcher => {
+            const { baseUri, pattern } = watcher.globPattern;
+            const baseUriString = typeof baseUri === 'string' ? baseUri : baseUri.uri;
+            return `${baseUriString}|${pattern}|${watcher.kind}`;
+        }).join('-');
+        if (hash === this.registrationHash) {
             return;
         }
-        this.registrationSignature = signature;
+        this.registrationHash = hash;
 
         try {
             this.registration?.dispose?.();
