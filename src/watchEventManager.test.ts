@@ -102,6 +102,7 @@ describe('WatchEventManager', () => {
 
             const result = manager.handleTsserverEvent(createFileWatcherEvent(1, '/outside/file.ts'));
             expect(result).toBe(true);
+            await flushPromises();
             // registration should update since a new coverage entry was added
             expect(registerSpy).toHaveBeenCalledTimes(2); // once for workspace init, once for new file
         });
@@ -179,6 +180,101 @@ describe('WatchEventManager', () => {
             await flushPromises();
             expect(firstReg.disposed).toBe(true);
             expect(registrations).toHaveLength(2);
+        });
+
+        it('does not leak registrations when two slow updates are triggered before the first resolves', async () => {
+            // Simulate slow async registration so both calls are in-flight simultaneously.
+            let resolveFirst!: (d: TestDisposable) => void;
+            const firstRegistration = makeDisposable();
+            const secondRegistration = makeDisposable();
+            let callCount = 0;
+            const slowRegisterSpy = vi.fn(async (_watchers: lsp.FileSystemWatcher[]) => {
+                callCount++;
+                if (callCount === 1) {
+                    return new Promise<TestDisposable>(resolve => {
+                        resolveFirst = resolve;
+                    });
+                }
+                return secondRegistration;
+            });
+
+            const manager = new WatchEventManager({
+                lspClient: { registerDidChangeWatchedFilesCapability: slowRegisterSpy } as unknown as LspClient,
+                logger: makeLogger(),
+                workspaceFolders: [URI.file('/workspace')],
+                sendWatchChanges: vi.fn(),
+                caseInsensitive: false,
+            });
+
+            // Start update 1 (workspace), then yield so doUpdateRegistration runs up to
+            // its first await — at that point slowRegisterSpy has been called and resolveFirst is set.
+            manager.onInitialized();
+            await Promise.resolve();
+
+            // Queue update 2 while update 1 is still awaiting its registration promise.
+            manager.handleTsserverEvent(createFileWatcherEvent(1, '/outside/a.ts'));
+
+            // Resolve the first registration; with the serial queue, update 2 then runs,
+            // disposes firstRegistration, and registers secondRegistration.
+            resolveFirst(firstRegistration);
+            await flushPromises();
+
+            // With serial execution: update 1 completes (sets firstRegistration), then update 2
+            // runs, disposes firstRegistration, and registers secondRegistration.
+            expect(firstRegistration.disposed).toBe(true);
+            expect(secondRegistration.disposed).toBe(false);
+            expect(slowRegisterSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('does not leak registrations when two quick updates are triggered before the first resolves', async () => {
+            const { manager, registerSpy } = await createManager();
+            expect(registerSpy).toHaveBeenCalledTimes(1);
+            manager.handleTsserverEvent(createFileWatcherEvent(1, '/outside/file.ts'));
+            manager.handleTsserverEvent(createFileWatcherEvent(1, '/outside/file2.ts'));
+            await flushPromises();
+            // Two manual watchers were collapsed into one registration.
+            expect(registerSpy).toHaveBeenCalledTimes(2);
+            const firstRegistration = registerSpy.mock.results[0];
+            expect(firstRegistration.type).toBe('return');
+            if (firstRegistration.type === 'return') {
+                expect(firstRegistration.value.disposed).toBe(true);
+            }
+            const secondRegistration = registerSpy.mock.results[1];
+            expect(secondRegistration.type).toBe('return');
+            if (secondRegistration.type === 'return') {
+                expect(secondRegistration.value.disposed).toBe(false);
+            }
+        });
+
+        it('disposes registration when manager goes away during registration', async () => {
+            // Simulate slow async registration.
+            let resolveFirst!: (d: TestDisposable) => void;
+            const firstRegistration = makeDisposable();
+            const slowRegisterSpy = vi.fn(async (_watchers: lsp.FileSystemWatcher[]) => {
+                return new Promise<TestDisposable>(resolve => {
+                    resolveFirst = resolve;
+                });
+            });
+
+            const manager = new WatchEventManager({
+                lspClient: { registerDidChangeWatchedFilesCapability: slowRegisterSpy } as unknown as LspClient,
+                logger: makeLogger(),
+                workspaceFolders: [URI.file('/workspace')],
+                sendWatchChanges: vi.fn(),
+                caseInsensitive: false,
+            });
+
+            // Start update 1 (workspace), then yield so doUpdateRegistration runs up to
+            // its first await — at that point slowRegisterSpy has been called and resolveFirst is set.
+            manager.onInitialized();
+            await flushPromises();
+
+            // Dispose the manager before resolving the first registration.
+            manager.dispose();
+            resolveFirst(firstRegistration);
+            await flushPromises();
+            expect(slowRegisterSpy).toHaveBeenCalledTimes(1);
+            expect(firstRegistration.disposed).toBe(true);
         });
 
         it('unregisters all watchers when no workspace folders', async () => {

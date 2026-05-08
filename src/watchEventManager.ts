@@ -39,7 +39,9 @@ export class WatchEventManager {
     private readonly workspacePaths: readonly string[];
     private registration: lsp.Disposable | undefined;
     private registrationHash: string | undefined;
+    private updateRegistrationQueue: Promise<void> = Promise.resolve();
     private readyForRegistration = false;
+    private disposed = false;
 
     constructor(private readonly options: WatchEventManagerOptions) {
         this.workspacePaths = options.workspaceFolders.map(folder => this.normalizePath(folder.fsPath));
@@ -65,11 +67,13 @@ export class WatchEventManager {
 
     public onInitialized(): void {
         this.readyForRegistration = true;
-        void this.updateRegistration();
+        this.updateRegistration();
     }
 
     public dispose(): void {
-        void this.registration?.dispose();
+        this.disposed = true;
+        this.registration?.dispose();
+        this.registration = undefined;
         this.watchers.clear();
         this.coverage.clear();
         this.coverageUsage.clear();
@@ -199,7 +203,7 @@ export class WatchEventManager {
             if (coverage && !coverage.permanent) {
                 this.coverage.delete(watcher.coverageKey);
                 this.registrationHash = undefined;
-                void this.updateRegistration();
+                this.updateRegistration();
             }
         } else {
             this.coverageUsage.set(watcher.coverageKey, usage);
@@ -240,7 +244,7 @@ export class WatchEventManager {
         this.coverageUsage.set(coverageKey, (this.coverageUsage.get(coverageKey) ?? 0) + 1);
         if (coverageChanged) {
             this.registrationHash = undefined;
-            void this.updateRegistration();
+            this.updateRegistration();
         }
         return coverageKey;
     }
@@ -261,8 +265,12 @@ export class WatchEventManager {
         };
     }
 
-    private async updateRegistration(): Promise<void> {
-        if (!this.readyForRegistration) {
+    private updateRegistration(): void {
+        this.updateRegistrationQueue = this.updateRegistrationQueue.then(() => this.doUpdateRegistration());
+    }
+
+    private async doUpdateRegistration(): Promise<void> {
+        if (this.disposed || !this.readyForRegistration) {
             return;
         }
 
@@ -284,8 +292,12 @@ export class WatchEventManager {
         this.registrationHash = hash;
 
         try {
-            this.registration?.dispose?.();
+            this.registration?.dispose();
             this.registration = await this.options.lspClient.registerDidChangeWatchedFilesCapability(watchers);
+            if (this.disposed) {
+                this.registration.dispose();
+                this.registration = undefined;
+            }
         } catch (err) {
             this.options.logger.warn('Failed to register file watchers for tsserver watch events', err);
         }
