@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/typescript-language-server/typescript-language-server.git"
+    "url": "git+https://github.com/typescript-language-server/typescript-language-server.git"
   },
   "type": "module",
   "engines": {
@@ -17,7 +17,7 @@
     "lib"
   ],
   "bin": {
-    "typescript-language-server": "./lib/cli.mjs"
+    "typescript-language-server": "lib/cli.mjs"
   },
   "scripts": {
     "dev": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript --watch",
