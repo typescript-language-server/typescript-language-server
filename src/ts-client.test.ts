@@ -38,6 +38,7 @@ describe('ts server client', () => {
                 plugins: [],
                 trace: Trace.Off,
                 typescriptVersion: bundled!,
+                useClientFileWatcher: false,
                 useSyntaxServer: SyntaxServerConfiguration.Never,
             },
         );

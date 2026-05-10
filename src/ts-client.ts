@@ -154,6 +154,7 @@ export interface TsClientOptions {
     plugins: TypeScriptPlugin[];
     onEvent?: (event: ts.server.protocol.Event) => void;
     onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
+    useClientFileWatcher: boolean;
     useSyntaxServer: SyntaxServerConfiguration;
 }
 
@@ -346,6 +347,10 @@ export class TsClient implements ITypeScriptServiceClient {
         }
     }
 
+    public sendWatchChanges(args: ts.server.protocol.WatchChangeRequestArgs | readonly ts.server.protocol.WatchChangeRequestArgs[]): void {
+        this.executeWithoutWaitingForResponse(CommandTypes.WatchChange, args);
+    }
+
     start(
         workspaceRoot: string | undefined,
         options: TsClientOptions,
@@ -404,9 +409,13 @@ export class TsClient implements ITypeScriptServiceClient {
             case EventName.syntaxDiag:
             case EventName.semanticDiag:
             case EventName.suggestionDiag:
-            case EventName.configFileDiag: {
-                // This event also roughly signals that projects have been loaded successfully (since the TS server is synchronous)
+            case EventName.configFileDiag:
+                // These events also roughly signal that project have been loaded successfully (since the TS server is synchronous).
                 this.loadingIndicator.reset();
+                // falls through
+            case EventName.createDirectoryWatcher:
+            case EventName.createFileWatcher:
+            case EventName.closeFileWatcher: {
                 this.onEvent?.(event);
                 break;
             }

@@ -161,7 +161,7 @@ export class TestLspClient implements LspClient {
     }
 
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void {
-        return this.options.publishDiagnostics(args);
+        this.options.publishDiagnostics(args);
     }
 
     showErrorMessage(message: string): void {
@@ -184,7 +184,7 @@ export class TestLspClient implements LspClient {
         return { applied: true };
     }
 
-    rename(): Promise<void> {
+    rename(_args: lsp.TextDocumentPositionParams): Promise<any> {
         throw new Error('unsupported');
     }
 
@@ -194,6 +194,10 @@ export class TestLspClient implements LspClient {
 
     async getWorkspaceConfiguration(_scopeUri: string, _section: string): Promise<any> {
         return Promise.resolve(undefined);
+    }
+
+    registerDidChangeWatchedFilesCapability(_watchers: lsp.FileSystemWatcher[]): Promise<lsp.Disposable> {
+        throw new Error('unsupported');
     }
 }
 

@@ -44,6 +44,7 @@ import { Position, Range } from './utils/typeConverters.js';
 import { CodeActionKind } from './utils/types.js';
 import { CommandManager } from './commands/commandManager.js';
 import { CodeActionManager } from './features/codeActions/codeActionManager.js';
+import { WatchEventManager } from './watchEventManager.js';
 
 export class LspServer {
     private tsClient: TsClient;
@@ -60,6 +61,7 @@ export class LspServer {
     private cachedNavTreeResponse = new CachedResponse<ts.server.protocol.NavTreeResponse>();
     private implementationsCodeLensProvider: TypeScriptImplementationsCodeLensProvider | null = null;
     private referencesCodeLensProvider: TypeScriptReferencesCodeLensProvider | null = null;
+    private watchEventManager: WatchEventManager | null = null;
 
     constructor(private options: LspServerConfiguration) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
@@ -91,6 +93,8 @@ export class LspServer {
     }
 
     shutdown(): void {
+        this.watchEventManager?.dispose();
+        this.watchEventManager = null;
         this.tsClient.shutdown();
     }
 
@@ -148,6 +152,25 @@ export class LspServer {
             useLabelDetailsInCompletionEntries: this.features.completionLabelDetails,
         });
 
+        const requestedWatchEvents = tsserver?.useClientFileWatcher ?? false;
+        let canUseWatchEvents = false;
+
+        if (requestedWatchEvents) {
+            const supportsFileWatcherRegistration = Boolean(workspace?.didChangeWatchedFiles?.dynamicRegistration);
+            const supportsRelativePatterns = workspace?.didChangeWatchedFiles?.relativePatternSupport === true;
+            const typescriptSupportsWatchEvents = typescriptVersion.version?.gte(API.v544);
+
+            if (!supportsFileWatcherRegistration) {
+                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support dynamic file watcher registration; falling back to tsserver file watching.');
+            } else if (!supportsRelativePatterns) {
+                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support relative file watcher patterns; falling back to tsserver file watching.');
+            } else if (!typescriptSupportsWatchEvents) {
+                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client-side file watching requires TypeScript 5.4.4 or newer; disabling useClientFileWatcher.');
+            } else {
+                canUseWatchEvents = true;
+            }
+        }
+
         const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver.logVerbosity);
         const started = this.tsClient.start(
             this.workspaceRoot,
@@ -169,7 +192,8 @@ export class LspServer {
                         throw new Error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
                     }
                 },
-                useSyntaxServer: toSyntaxServerConfiguration(userInitializationOptions.tsserver?.useSyntaxServer),
+                useClientFileWatcher: tsserver?.useClientFileWatcher ?? false,
+                useSyntaxServer: toSyntaxServerConfiguration(tsserver?.useSyntaxServer),
             });
         if (!started) {
             throw new Error('tsserver process has failed to start.');
@@ -180,6 +204,16 @@ export class LspServer {
         process.on('SIGINT', () => {
             process.exit();
         });
+
+        if (canUseWatchEvents) {
+            this.watchEventManager = new WatchEventManager({
+                lspClient: this.options.lspClient,
+                logger: this.logger,
+                workspaceFolders: this.getWorkspaceFolders(),
+                sendWatchChanges: changes => this.tsClient.sendWatchChanges(changes),
+                caseInsensitive: onCaseInsensitiveFileSystem(),
+            });
+        }
 
         this.fileConfigurationManager.setGlobalConfiguration(this.workspaceRoot, hostInfo);
         this.registerHandlers();
@@ -318,6 +352,7 @@ export class LspServer {
             version: apiVersion.displayName,
             source: typescriptVersionSource,
         });
+        this.watchEventManager?.onInitialized();
     }
 
     private findTypescriptVersion(userTsserverPath: string | undefined, fallbackTsserverPath: string | undefined): TypeScriptVersion | null {
@@ -365,6 +400,13 @@ export class LspServer {
         return undefined;
     }
 
+    private getWorkspaceFolders(): URI[] {
+        if (this.workspaceRoot) {
+            return [URI.file(this.workspaceRoot)];
+        }
+        return [];
+    }
+
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
         this.fileConfigurationManager.setWorkspaceConfiguration((params.settings || {}) as WorkspaceConfiguration);
         const ignoredDiagnosticCodes = this.fileConfigurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
@@ -409,6 +451,10 @@ export class LspServer {
 
     didSaveTextDocument(_params: lsp.DidSaveTextDocumentParams): void {
         // do nothing
+    }
+
+    didChangeWatchedFiles(params: lsp.DidChangeWatchedFilesParams): void {
+        this.watchEventManager?.handleFileChanges(params);
     }
 
     async definition(params: lsp.DefinitionParams, token?: lsp.CancellationToken): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
@@ -1167,6 +1213,9 @@ export class LspServer {
     }
 
     protected onTsEvent(event: ts.server.protocol.Event): void {
+        if (this.watchEventManager?.handleTsserverEvent(event)) {
+            return;
+        }
         const eventName = event.event as EventName;
         if (eventName === EventName.semanticDiag || eventName === EventName.syntaxDiag || eventName === EventName.suggestionDiag) {
             const diagnosticEvent = event as ts.server.protocol.DiagnosticEvent;

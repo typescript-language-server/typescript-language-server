@@ -221,6 +221,10 @@ export class TypeScriptServerSpawner {
             args.push('--npmLocation', `"${npmLocation}"`);
         }
 
+        if (configuration.useClientFileWatcher && apiVersion.gte(API.v544)) {
+            args.push('--canUseWatchEvents');
+        }
+
         args.push('--locale', locale || 'en');
         // args.push('--noGetErrOnBackgroundUpdate');
         args.push('--validateDefaultNpmLocation');

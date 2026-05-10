@@ -25,7 +25,7 @@ The language server accepts various settings through the `initializationOptions`
 | plugins           | object[] | An array of `{ name: string, location: string, languages?: string[] }` objects for registering a Typescript plugins. **Default**: [] |
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See [`preferences` options](#preferences-options) for more details. |
 | supportsMoveToFileCodeAction | boolean | Whether the client supports the "Move to file" interactive code action. See [`supportsMoveToFileCodeAction` option](#supportsmovetofilecodeaction-option) for more details. |
-| tsserver          | object   | Options related to the `tsserver` process. See below for more |
+| tsserver          | object   | Options related to the `tsserver` process. See [tsserver options](#tsserver-options). |
 
 ### `plugins` option
 
@@ -73,6 +73,8 @@ Specifies additional options related to the internal `tsserver` process, like tr
 **fallbackPath** [string] The path to the `tsserver.js` file or the typescript lib directory to use when `tsserver.path` is unspecified/invalid and the `tsserver` isn't available via the current workspace. For example: `/Users/me/typescript/lib/tsserver.js`. Note: The path should point at the `[...]/typescript/lib/tssserver.js` file or the `[...]/typescript/lib/` directory and not the shell script (`[...]/node_modules/.bin/tsserver`) but for backward-compatibility reasons, the server will try to do the right thing even when passed a path to the shell script. **Default**: `undefined`
 
 **trace** [string] The verbosity of logging of the tsserver communication. Delivered through the LSP messages and not related to file logging. Allowed values are: `'off'`, `'messages'`, `'verbose'`. **Default**: `'off'`
+
+**useClientFileWatcher** [boolean] Use client's file watcher instead of TypeScript's built-in one. Requires TypeScript 5.4.4+ in the workspace. **Default**: `false`
 
 **useSyntaxServer** [string] Whether a dedicated server is launched to more quickly handle syntax related operations, such as computing diagnostics or code folding. **Default**: `'auto'`. Allowed values:
   - `'auto'`: Spawn both a full server and a lighter weight server dedicated to syntax operations. The syntax server is used to speed up syntax operations and provide IntelliSense while projects are loading.
