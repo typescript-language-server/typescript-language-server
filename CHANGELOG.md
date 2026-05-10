@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.3...v5.2.0) (2026-05-10)
+
+
+### Features
+
+* add opt-in eager diagnostic clearing on didChange ([#1064](https://github.com/typescript-language-server/typescript-language-server/issues/1064)) ([d3acbf4](https://github.com/typescript-language-server/typescript-language-server/commit/d3acbf4bb850837c20ce8f10744f8188aea4f1c6))
+* Add support for client-side file watcher ([#1057](https://github.com/typescript-language-server/typescript-language-server/issues/1057)) ([b962129](https://github.com/typescript-language-server/typescript-language-server/commit/b9621294c0006e6076c984e98a5db31e6b8dd8c2))
+* update implicit project defaults ([#1077](https://github.com/typescript-language-server/typescript-language-server/issues/1077)) ([7ff6ede](https://github.com/typescript-language-server/typescript-language-server/commit/7ff6edea01f1d7e07b5906f4da07086fe9bc6ddb))
+
+
+### Refactors
+
+* pass ITypeScriptServiceClient around instead of TsClient ([e91bd52](https://github.com/typescript-language-server/typescript-language-server/commit/e91bd52a47c05ffd946e0abd27f242eb631b7604))
+
 ## [5.1.3](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.2...v5.1.3) (2025-11-19)
 
 
