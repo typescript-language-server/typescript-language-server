@@ -1,3 +1,5 @@
+// sync: file[extensions/typescript-language-features/src/configuration/configuration.ts] sha[c17280fcc113f1b7f83eef73332f031acb4270ff]
+// sync: file[extensions/typescript-language-features/src/typescriptServiceClient.ts] sha[c17280fcc113f1b7f83eef73332f031acb4270ff]
 /**
  * Copyright (C) 2023 TypeFox and others.
  *
@@ -74,9 +76,10 @@ const DEFAULT_IMPLICIT_PROJECT_CONFIGURATION: Required<WorkspaceConfigurationImp
     checkJs: false,
     experimentalDecorators: false,
     module: ModuleKind.ESNext,
+    strict: true,
     strictFunctionTypes: true,
     strictNullChecks: true,
-    target: ScriptTarget.ES2020,
+    target: ScriptTarget.ES2024,
 };
 
 const DEFAULT_WORKSPACE_CONFIGURATION: WorkspaceConfiguration = {
@@ -107,6 +110,7 @@ export interface WorkspaceConfigurationImplicitProjectConfigurationOptions {
     checkJs?: boolean;
     experimentalDecorators?: boolean;
     module?: string;
+    strict?: boolean;
     strictFunctionTypes?: boolean;
     strictNullChecks?: boolean;
     target?: string;
