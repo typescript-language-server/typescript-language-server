@@ -446,6 +446,12 @@ export class LspServer {
     }
 
     didChangeTextDocument(params: lsp.DidChangeTextDocumentParams): void {
+        if (this.fileConfigurationManager.workspaceConfiguration.diagnostics?.eagerClear) {
+            const document = this.tsClient.toOpenDocument(params.textDocument.uri);
+            if (document) {
+                this.diagnosticsManager.clearDiagnosticsForFile(document.filepath);
+            }
+        }
         this.tsClient.onDidChangeTextDocument(params);
     }
 

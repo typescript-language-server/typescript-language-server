@@ -228,6 +228,8 @@ completions.completeFunctionCalls: boolean;
 // Diagnostics code to be omitted when reporting diagnostics.
 // See https://github.com/microsoft/TypeScript/blob/master/src/compiler/diagnosticMessages.json for a full list of valid codes.
 diagnostics.ignoredCodes: number[];
+// Clear diagnostics immediately on each change to prevent stale diagnostics from persisting between edits. Default: false
+diagnostics.eagerClear: boolean;
 /**
  * Enable/disable semantic checking of JavaScript files. Existing `jsconfig.json` or `tsconfig.json` files override this setting.
  *
