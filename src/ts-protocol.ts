@@ -354,13 +354,14 @@ export interface SupportedFeatures {
     codeActionDisabledSupport?: boolean;
     codeActionResolveSupport?: lsp.CodeActionClientCapabilities['resolveSupport'];
     completionCommitCharactersSupport?: boolean;
+    completionDisableFilterText?: boolean;
     completionInsertReplaceSupport?: boolean;
     completionLabelDetails?: boolean;
     completionSnippets?: boolean;
-    completionDisableFilterText?: boolean;
     definitionLinkSupport?: boolean;
     diagnosticsSupport?: boolean;
     diagnosticsTagSupport?: boolean;
+    hoverVerbositySupport?: boolean;
     moveToFileCodeActionSupport?: boolean;
     workspaceConfigurationSuppport?: boolean;
 }
@@ -380,6 +381,7 @@ export interface TypeScriptInitializationOptions {
     npmLocation?: string;
     plugins?: TypeScriptPlugin[];
     preferences?: ts.server.protocol.UserPreferences;
+    supportsHoverVerbosity?: boolean;
     supportsMoveToFileCodeAction?: boolean;
     tsserver?: TsserverOptions;
 }
