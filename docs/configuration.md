@@ -4,6 +4,7 @@
 - [Configuration](#configuration)
   - [initializationOptions](#initializationoptions)
     - [`plugins` option](#plugins-option)
+    - [`supportsHoverVerbosity` option](#supportsHoverVerbosity-option)
     - [`supportsMoveToFileCodeAction` option](#supportsmovetofilecodeaction-option)
     - [`tsserver` options](#tsserver-options)
     - [`preferences` options](#preferences-options)
@@ -24,6 +25,7 @@ The language server accepts various settings through the `initializationOptions`
 | locale            | string   | The locale to use to show error messages. |
 | plugins           | object[] | An array of `{ name: string, location: string, languages?: string[] }` objects for registering a Typescript plugins. **Default**: [] |
 | preferences       | object   | Preferences passed to the Typescript (`tsserver`) process. See [`preferences` options](#preferences-options) for more details. |
+| supportsHoverVerbosity | boolean | Whether the client supports hover verbosity. When enabled, a `verbosityLevel` number may be passed in hover requests and a `canIncreaseVerbosityLevel` boolean will be included in hover responses. Requires TypeScript 5.9+. See [`supportsHoverVerbosity` option](#supportsHoverVerbosity-option) for more details. **Default**: `false` |
 | supportsMoveToFileCodeAction | boolean | Whether the client supports the "Move to file" interactive code action. See [`supportsMoveToFileCodeAction` option](#supportsmovetofilecodeaction-option) for more details. |
 | tsserver          | object   | Options related to the `tsserver` process. See [tsserver options](#tsserver-options). |
 
@@ -32,6 +34,36 @@ The language server accepts various settings through the `initializationOptions`
 Accepts a list of `tsserver` (typescript) plugins.
 The `name` and the `location` are required. The `location` is a path to the package or a directory in which `tsserver` will try to import the plugin `name` using Node's `require` API.
 The `languages` property specifies which extra language IDs the language server should accept. This is required when plugin enables support for language IDs that this server does not support by default (so other than `typescript`, `typescriptreact`, `javascript`, `javascriptreact`). It's an optional property and only affects which file types the language server allows to be opened and do not concern the `tsserver` itself.
+
+### `supportsHoverVerbosity` option
+
+TypeScript 5.9+ can return progressively more detailed hover information by expanding type aliases and other abbreviated representations. Setting `supportsHoverVerbosity: true` opts the client into this protocol extension.
+
+When enabled, two custom fields are added to the hover exchange:
+
+- **Request** — `verbosityLevel` (`number`, optional): the verbosity level to request from `tsserver`. `0` is the default (least verbose). Clients should start at `0` and increment by `1` each time the user asks for more detail.
+- **Response** — `canIncreaseVerbosityLevel` (`boolean`, optional): when `true`, the server can return more information if the next hover request is made with a higher `verbosityLevel`.
+
+Example request with verbosity:
+```json
+{
+  "method": "textDocument/hover",
+  "params": {
+    "textDocument": { "uri": "file:///path/to/file.ts" },
+    "position": { "line": 4, "character": 12 },
+    "verbosityLevel": 1
+  }
+}
+```
+
+Example response indicating more detail is available:
+```json
+{
+  "contents": { "kind": "markdown", "value": "```typescript\ntype Foo = ...\n```" },
+  "range": { "start": { "line": 4, "character": 10 }, "end": { "line": 4, "character": 13 } },
+  "canIncreaseVerbosityLevel": true
+}
+```
 
 ### `supportsMoveToFileCodeAction` option
 

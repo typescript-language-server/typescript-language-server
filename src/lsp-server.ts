@@ -120,6 +120,8 @@ export class LspServer {
         this.features.moveToFileCodeActionSupport =
             userInitializationOptions.supportsMoveToFileCodeAction &&
             typescriptVersion.version?.gte(API.v520);
+        this.features.hoverVerbositySupport = userInitializationOptions.supportsHoverVerbosity &&
+            typescriptVersion.version?.gte(API.v590);
         const { textDocument, workspace } = clientCapabilities;
         if (textDocument) {
             const { codeAction, completion, definition, publishDiagnostics } = textDocument;
@@ -657,18 +659,21 @@ export class LspServer {
         return item;
     }
 
-    async hover(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.Hover | null> {
+    async hover(params: lsp.HoverParams & { verbosityLevel?: number; }, token?: lsp.CancellationToken): Promise<lsp.Hover & { canIncreaseVerbosityLevel?: boolean; } | null> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return { contents: [] };
         }
+
+        const supportsVerbosity = this.features.hoverVerbositySupport;
+        const verbosityLevel = supportsVerbosity ? Math.max(0, params.verbosityLevel ?? 0) : undefined;
 
         const result = await this.tsClient.interruptGetErr(async () => {
             await this.fileConfigurationManager.ensureConfigurationForDocument(document, token);
 
             const response = await this.tsClient.execute(
                 CommandTypes.Quickinfo,
-                Position.toFileLocationRequestArgs(document.filepath, params.position),
+                { ...Position.toFileLocationRequestArgs(document.filepath, params.position), verbosityLevel },
                 token,
             );
 
@@ -689,6 +694,7 @@ export class LspServer {
         return {
             contents: contents.toMarkupContent(),
             range: Range.fromTextSpan(result),
+            ...supportsVerbosity && { canIncreaseVerbosityLevel: result.canIncreaseVerbosityLevel },
         };
     }
 

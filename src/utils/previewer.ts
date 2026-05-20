@@ -83,6 +83,24 @@ function getTagBodyText(
     return processInlineTags(text);
 }
 
+function getTagBody(
+    tag: ts.server.protocol.JSDocTagInfo,
+    filePathConverter: IFilePathToResourceConverter,
+): string[] | undefined {
+    if (tag.name === 'template') {
+        const parts = tag.text;
+        if (parts && typeof parts !== 'string') {
+            const params = parts.filter(p => p.kind === 'typeParameterName').map(p => p.text).join(', ');
+            const docs = parts
+                .filter(p => p.kind === 'text')
+                .map(p => convertLinkTags(p.text.replace(/^\s*-?\s*/, ''), filePathConverter))
+                .join(' ');
+            return params ? ['', params, docs] : undefined;
+        }
+    }
+    return convertLinkTags(tag.text, filePathConverter).split(/^(\S+)\s*-?\s*/);
+}
+
 function getTagDocumentation(
     tag: ts.server.protocol.JSDocTagInfo,
     filePathConverter: IFilePathToResourceConverter,
@@ -92,7 +110,7 @@ function getTagDocumentation(
         case 'extends':
         case 'param':
         case 'template': {
-            const body = convertLinkTags(tag.text, filePathConverter).split(/^(\S+)\s*-?\s*/);
+            const body = getTagBody(tag, filePathConverter);
             if (body?.length === 3) {
                 const param = body[1];
                 const doc = body[2];
@@ -102,6 +120,14 @@ function getTagDocumentation(
                 }
                 return label + (doc.match(/\r\n|\n/g) ? '  \n' + processInlineTags(doc) : ` \u2014 ${processInlineTags(doc)}`);
             }
+            break;
+        }
+        case 'return':
+        case 'returns': {
+            if (!tag.text?.length) {
+                return undefined;
+            }
+            break;
         }
     }
 

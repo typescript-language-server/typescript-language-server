@@ -196,7 +196,7 @@ export interface StandardTsServerRequests {
     [CommandTypes.ProvideCallHierarchyOutgoingCalls]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ProvideCallHierarchyOutgoingCallsResponse];
     [CommandTypes.ProjectInfo]: [ts.server.protocol.ProjectInfoRequestArgs, ts.server.protocol.ProjectInfoResponse];
     [CommandTypes.ProvideInlayHints]: [ts.server.protocol.InlayHintsRequestArgs, ts.server.protocol.InlayHintsResponse];
-    [CommandTypes.Quickinfo]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.QuickInfoResponse];
+    [CommandTypes.Quickinfo]: [ts.server.protocol.QuickInfoRequestArgs, ts.server.protocol.QuickInfoResponse];
     [CommandTypes.References]: [ts.server.protocol.FileLocationRequestArgs, ts.server.protocol.ReferencesResponse];
     [CommandTypes.Rename]: [ts.server.protocol.RenameRequestArgs, ts.server.protocol.RenameResponse];
     [CommandTypes.SelectionRange]: [ts.server.protocol.SelectionRangeRequestArgs, ts.server.protocol.SelectionRangeResponse];
