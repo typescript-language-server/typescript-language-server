@@ -23,6 +23,8 @@ export interface LspClient {
     logMessage(args: lsp.LogMessageParams): void;
     applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult>;
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
+    codeLensRefresh(): Promise<void>;
+    inlayHintRefresh(): Promise<void>;
     sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void>;
     getWorkspaceConfiguration<R = unknown>(scopeUri: string, section: string): Promise<R>;
     registerDidChangeWatchedFilesCapability(watchers: lsp.FileSystemWatcher[]): Promise<lsp.Disposable>;
@@ -78,6 +80,14 @@ export class LspClientImpl implements LspClient {
 
     async rename(args: lsp.TextDocumentPositionParams): Promise<any> {
         return this.connection.sendRequest(TypeScriptRenameRequest.type, args);
+    }
+
+    async codeLensRefresh(): Promise<void> {
+        await this.connection.sendRequest(lsp.CodeLensRefreshRequest.type);
+    }
+
+    async inlayHintRefresh(): Promise<void> {
+        await this.connection.sendRequest(lsp.InlayHintRefreshRequest.type);
     }
 
     async sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void> {

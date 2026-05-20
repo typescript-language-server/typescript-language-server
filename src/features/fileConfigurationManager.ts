@@ -195,7 +195,34 @@ export default class FileConfigurationManager {
     }
 
     public setWorkspaceConfiguration(configuration: WorkspaceConfiguration): void {
-        this.workspaceConfiguration = deepmerge(DEFAULT_WORKSPACE_CONFIGURATION, configuration);
+        const updatedConfiguration = deepmerge(DEFAULT_WORKSPACE_CONFIGURATION, configuration);
+
+        if (this.features.codeLensRefreshSupport) {
+            const settingKeys = [
+                'javascript.implementationsCodeLens',
+                'typescript.implementationsCodeLens',
+                'javascript.referencesCodeLens',
+                'typescript.referencesCodeLens',
+            ];
+            const oldCodeLens = getValueForConfigurationKeys(settingKeys, this.workspaceConfiguration);
+            const newCodeLens = getValueForConfigurationKeys(settingKeys, updatedConfiguration);
+            if (!equals(oldCodeLens, newCodeLens)) {
+                void this.lspClient.codeLensRefresh();
+            }
+        }
+        if (this.features.inlayHintRefreshSupport) {
+            const settingKeys = [
+                'javascript.inlayHints',
+                'typescript.inlayHints',
+            ];
+            const oldInlayHints = getValueForConfigurationKeys(settingKeys, this.workspaceConfiguration);
+            const newInlayHints = getValueForConfigurationKeys(settingKeys, updatedConfiguration);
+            if (!equals(oldInlayHints, newInlayHints)) {
+                void this.lspClient.inlayHintRefresh();
+            }
+        }
+
+        this.workspaceConfiguration = updatedConfiguration;
         this.setCompilerOptionsForInferredProjects();
     }
 
@@ -389,4 +416,24 @@ export default class FileConfigurationManager {
                         `/**/${slashNormalized}`;
         });
     }
+}
+
+function getValueForConfigurationKeys(keys: string[], configuration: WorkspaceConfiguration): any[] {
+    const result: any[] = [];
+    for (const key of keys) {
+        let resolvedValue: any = configuration;
+        for (const component of key.split('.')) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            resolvedValue = resolvedValue[component];
+            if (!isPlainObject(resolvedValue)) {
+                break;
+            }
+        }
+        result.push(resolvedValue);
+    }
+    return result;
+}
+
+function isPlainObject(val: any): boolean {
+    return Object.prototype.toString.call(val) === '[object Object]';
 }

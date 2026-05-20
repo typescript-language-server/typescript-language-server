@@ -146,6 +146,12 @@ export class LspServer {
             this.features.diagnosticsSupport = Boolean(publishDiagnostics);
             this.features.diagnosticsTagSupport = Boolean(publishDiagnostics?.tagSupport);
         }
+        if (workspace?.codeLens?.refreshSupport) {
+            this.features.codeLensRefreshSupport = true;
+        }
+        if (workspace?.inlayHint?.refreshSupport) {
+            this.features.inlayHintRefreshSupport = true;
+        }
         if (workspace?.configuration) {
             this.features.workspaceConfigurationSuppport = true;
         }
