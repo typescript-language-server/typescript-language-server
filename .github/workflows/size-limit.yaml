@@ -24,8 +24,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
-      - name: pnpm install
-        run: pnpm install
+      - name: pnpm i
+        run: pnpm i
       - name: build
         run: pnpm build
       - name: Check bundle sizes
@@ -33,3 +33,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           build_script: size
+          package_manager: pnpm
