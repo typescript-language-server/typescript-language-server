@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [5.3.0](https://github.com/typescript-language-server/typescript-language-server/compare/v5.2.0...v5.3.0) (2026-05-21)
+
+
+### Features
+
+* hover info verbosity ([#1092](https://github.com/typescript-language-server/typescript-language-server/issues/1092)) ([b73207c](https://github.com/typescript-language-server/typescript-language-server/commit/b73207c610912dd278cf64733a0c5c7ce26b3a58))
+* refresh inlay hints and code lens on relevant configuration change ([#1095](https://github.com/typescript-language-server/typescript-language-server/issues/1095)) ([fd53d0e](https://github.com/typescript-language-server/typescript-language-server/commit/fd53d0e5948f84c12fa8a90b512cad9b2a604fce))
+
 ## [5.2.0](https://github.com/typescript-language-server/typescript-language-server/compare/v5.1.3...v5.2.0) (2026-05-10)
 
 
