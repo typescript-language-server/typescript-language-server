@@ -1,0 +1,1 @@
+NO_COLOR=1 concurrently -n build,lint,test "pnpm build" "pnpm lint" "pnpm test:commit"

@@ -1,4 +1,3 @@
----
 name: size
 
 on:
@@ -16,19 +15,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20.x]
+        node-version: [22.x]
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
       - name: Setup node
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-          cache: yarn
-      - run: corepack enable
-      - name: yarn install
-        run: yarn
+          cache: pnpm
+      - name: pnpm install
+        run: pnpm install
       - name: build
-        run: yarn build
+        run: pnpm build
       - name: Check bundle sizes
         uses: andresz1/size-limit-action@v1
         with:

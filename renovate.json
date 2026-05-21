@@ -3,13 +3,14 @@
     "config:recommended",
     ":prHourlyLimit4",
     ":semanticCommitTypeAll(chore)",
+    "security:minimumReleaseAgeNpm",
     "schedule:daily"
   ],
   "meteor": {
     "enabled": false
   },
   "postUpdateOptions": [
-    "yarnDedupeFewer"
+    "pnpmDedupe"
   ],
   "rangeStrategy": "bump",
   "npm": {
