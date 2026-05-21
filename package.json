@@ -27,7 +27,7 @@
     "test:commit": "cross-env CONSOLE_LOG_LEVEL=warning vitest run",
     "lint": "eslint --ext \".js,.ts\" src",
     "fix": "eslint --ext \".js,.ts\" --fix src",
-    "size": "size-limit",
+    "size": "pnpm build && size-limit",
     "postversion": "git push --follow-tags",
     "prepare": "husky"
   },
