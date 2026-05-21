@@ -353,6 +353,7 @@ export function toSymbolDisplayPartKind(kind: string): SymbolDisplayPartKind {
 export interface SupportedFeatures {
     codeActionDisabledSupport?: boolean;
     codeActionResolveSupport?: lsp.CodeActionClientCapabilities['resolveSupport'];
+    codeLensRefreshSupport?: boolean;
     completionCommitCharactersSupport?: boolean;
     completionDisableFilterText?: boolean;
     completionInsertReplaceSupport?: boolean;
@@ -362,6 +363,7 @@ export interface SupportedFeatures {
     diagnosticsSupport?: boolean;
     diagnosticsTagSupport?: boolean;
     hoverVerbositySupport?: boolean;
+    inlayHintRefreshSupport?: boolean;
     moveToFileCodeActionSupport?: boolean;
     workspaceConfigurationSuppport?: boolean;
 }

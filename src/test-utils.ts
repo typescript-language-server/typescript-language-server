@@ -188,6 +188,14 @@ export class TestLspClient implements LspClient {
         throw new Error('unsupported');
     }
 
+    codeLensRefresh(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    inlayHintRefresh(): Promise<void> {
+        return Promise.resolve();
+    }
+
     sendNotification<P>(_type: lsp.NotificationType<P>, _params: P): Promise<void> {
         throw new Error('unsupported');
     }
