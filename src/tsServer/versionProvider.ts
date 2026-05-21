@@ -99,7 +99,7 @@ export class TypeScriptVersion {
     }
 }
 
-export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib'];
+export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib', '.pnpm/sdks/typescript/lib'];
 
 export class TypeScriptVersionProvider {
     public constructor(private userTsserverPath: string | undefined, private logger: Logger) {}

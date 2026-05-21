@@ -3,13 +3,14 @@
     "config:recommended",
     ":prHourlyLimit4",
     ":semanticCommitTypeAll(chore)",
+    "security:minimumReleaseAgeNpm",
     "schedule:daily"
   ],
   "meteor": {
     "enabled": false
   },
   "postUpdateOptions": [
-    "yarnDedupeFewer"
+    "pnpmDedupe"
   ],
   "rangeStrategy": "bump",
   "npm": {
@@ -45,18 +46,6 @@
       },
       "matchPackageNames": [
         "!typescript"
-      ]
-    },
-    {
-      "groupName": "size-limit",
-      "matchFileNames": [
-        "package.json"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "matchPackageNames": [
-        "/^@?size-limit/"
       ]
     },
     {

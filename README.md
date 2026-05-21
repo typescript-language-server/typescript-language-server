@@ -319,7 +319,7 @@ Server asks the client (provided client supports `workspace/configuration` capab
 ### Build
 
 ```sh
-yarn build
+pnpm build
 ```
 
 ### Dev
@@ -327,13 +327,13 @@ yarn build
 Build and rebuild on change.
 
 ```sh
-yarn dev
+pnpm dev
 ```
 
 ### Test
 
- - `yarn test` - run all tests in watch mode for developing
- - `yarn test:commit` - run all tests once
+ - `pnpm test` - run all tests in watch mode for developing
+ - `pnpm test:commit` - run all tests once
 
 By default only console logs of level `warning` and higher are printed to the console. You can override the `CONSOLE_LOG_LEVEL` level in `package.json` to either `log`, `info`, `warning` or `error` to log other levels.
 

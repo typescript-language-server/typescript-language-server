@@ -1,0 +1,9 @@
+packages:
+  - test-data/jsx
+
+minimumReleaseAgeExclude:
+  - semver@7.8.1
+
+overrides:
+  rolldown: ^1.0.2
+  vscode-jsonrpc: ^8.2.1
