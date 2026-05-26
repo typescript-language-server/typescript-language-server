@@ -31,9 +31,6 @@
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "matchFileNames": [
-        "package.json"
-      ],
       "matchUpdateTypes": [
         "minor",
         "patch"
