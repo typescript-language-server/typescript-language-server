@@ -17,9 +17,7 @@
     "commitMessageTopic": "{{prettyDepType}} {{depName}}"
   },
   "lockFileMaintenance": {
-    "enabled": true,
-    "branchTopic": "lock-file-maintenance-{{packageFile}}",
-    "commitMessageExtra": "({{packageFile}})"
+    "enabled": true
   },
   "packageRules": [
     {
@@ -35,12 +33,6 @@
         "minor",
         "patch"
       ],
-      "lockFileMaintenance": {
-        "enabled": true,
-        "extends": [
-          "schedule:weekly"
-        ]
-      },
       "matchPackageNames": [
         "!typescript"
       ]
