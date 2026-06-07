@@ -6,15 +6,15 @@ settings:
 
 overrides:
   rolldown: ^1.0.2
-  vscode-jsonrpc: ^8.2.1
+  vscode-jsonrpc: ^9.0.0
 
 importers:
 
   .:
     dependencies:
       vscode-jsonrpc:
-        specifier: ^8.2.1
-        version: 8.2.1
+        specifier: ^9.0.0
+        version: 9.0.0
       vscode-languageserver-protocol:
         specifier: ^3.15.0
         version: 3.17.5
@@ -1540,8 +1540,8 @@ packages:
       jsdom:
         optional: true
 
-  vscode-jsonrpc@8.2.1:
-    resolution: {integrity: sha512-kdjOSJ2lLIn7r1rtrMbbNCHjyMPfRnowdKjBQ+mGq6NAW5QY2bEZC/khaC5OR8svbbjvLEaIXkOq45e2X9BIbQ==}
+  vscode-jsonrpc@9.0.0:
+    resolution: {integrity: sha512-+VvMmQPJhtvJ+8O+zu2JKIRiLxXF8NW7krWgyMGeOHrp4Cn23T5hc0v2LknNeopDOB70wghHAds7mKtcZ0I4Sg==}
     engines: {node: '>=14.0.0'}
 
   vscode-languageserver-protocol@3.17.5:
@@ -2817,11 +2817,11 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vscode-jsonrpc@8.2.1: {}
+  vscode-jsonrpc@9.0.0: {}
 
   vscode-languageserver-protocol@3.17.5:
     dependencies:
-      vscode-jsonrpc: 8.2.1
+      vscode-jsonrpc: 9.0.0
       vscode-languageserver-types: 3.17.5
 
   vscode-languageserver-textdocument@1.0.12: {}
