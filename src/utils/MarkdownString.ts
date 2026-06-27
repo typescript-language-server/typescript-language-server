@@ -9,7 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type * as lsp from 'vscode-languageserver/node.js';
+import type * as lsp from 'vscode-languageserver/node';
 
 export enum MarkdownStringTextNewlineStyle {
     Paragraph = 0,

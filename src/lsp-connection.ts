@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import lsp from 'vscode-languageserver/node.js';
+import lsp from 'vscode-languageserver/node';
 import { LspClientLogger } from './utils/logger.js';
 import { LspServer } from './lsp-server.js';
 import { LspClientImpl } from './lsp-client.js';

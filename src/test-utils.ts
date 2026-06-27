@@ -196,7 +196,7 @@ export class TestLspClient implements LspClient {
         return Promise.resolve();
     }
 
-    sendNotification<P>(_type: lsp.NotificationType<P>, _params: P): Promise<void> {
+    sendNotification<P>(_type: lsp.NotificationType<P>, _params: lsp.RequestParam<P>): Promise<void> {
         throw new Error('unsupported');
     }
 
