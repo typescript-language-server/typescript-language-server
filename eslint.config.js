@@ -95,6 +95,11 @@ export default defineConfig([
             '@stylistic/no-extra-semi': 'error',
             '@stylistic/quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: 'never' }],
             '@stylistic/semi': ['error', 'always'],
+        },
+    },
+    {
+        files: ['**/*.ts'],
+        rules: {
             // TODO: Try to remove existing uses.
             // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/explicit-function-return-type.md
             '@typescript-eslint/explicit-function-return-type': [

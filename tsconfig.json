@@ -19,7 +19,6 @@
         "noUnusedParameters": true,
         "outDir": "lib",
         "resolveJsonModule": true,
-        "rootDir": "src",
         "sourceMap": true,
         "strict": true,
         "target": "ES2022",

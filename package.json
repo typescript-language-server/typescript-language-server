@@ -20,11 +20,12 @@
     "typescript-language-server": "lib/cli.mjs"
   },
   "scripts": {
-    "dev": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript --watch",
-    "build": "rimraf lib && rollup --config rollup.config.ts --configPlugin typescript",
+    "dev": "rimraf lib && rollup --config rollup.config.ts --configPlugin \"typescript={sourceMap: false}\" --watch",
+    "build": "rimraf lib && rollup --config rollup.config.ts --configPlugin \"typescript={sourceMap: false}\"",
     "clean": "rimraf lib *.tsbuildinfo",
     "test": "cross-env CONSOLE_LOG_LEVEL=warning vitest --coverage",
     "test:commit": "cross-env CONSOLE_LOG_LEVEL=warning vitest run",
+    "typecheck": "tsc",
     "lint": "eslint --ext \".js,.ts\" src",
     "fix": "eslint --ext \".js,.ts\" --fix src",
     "size": "pnpm build && size-limit",
