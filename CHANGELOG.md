@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [6.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v5.3.0...v6.0.0) (2026-06-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* Node.js >=22.22.2 is required.
+
+### chore
+
+* migrate from yarn to pnpm ([#1096](https://github.com/typescript-language-server/typescript-language-server/issues/1096)) ([7e792e6](https://github.com/typescript-language-server/typescript-language-server/commit/7e792e6942aa3bf12af9d560cbb44cbe24bc3698))
+
 ## [5.3.0](https://github.com/typescript-language-server/typescript-language-server/compare/v5.2.0...v5.3.0) (2026-05-21)
 
 
