@@ -6,12 +6,15 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { rollupForceExit } from './rollup-exit-plugin.js';
 
 // These plugins ship CJS with a single unconditional `types` entry that nodenext resolves as a
-// namespace (`{ default: fn }`), while at runtime the ESM build's default export is the plugin
-// function itself. Cast the default import to its callable `.default` type so the config both
-// type-checks and runs (the cast is a no-op at runtime; plugin options stay type-checked).
-const terser = terserPlugin as unknown as typeof terserPlugin.default;
-const commonJS = commonjsPlugin as unknown as typeof commonjsPlugin.default;
-const typescript = typescriptPlugin as unknown as typeof typescriptPlugin.default;
+// namespace (`{ default: fn }`), so `tsc` types the default import as the namespace rather than the
+// callable function. At runtime the ESM build's default export is the function itself (no `.default`).
+// `fn.default ?? fn` reconciles both: it picks the callable in either shape, type-checks (the result
+// is the function type, with options still checked), and stays plain JS so rollup's config loader can
+// parse this file on any Node version — a TS-only cast here breaks the loader on Node without type
+// stripping.
+const terser = terserPlugin.default ?? terserPlugin;
+const commonJS = commonjsPlugin.default ?? commonjsPlugin;
+const typescript = typescriptPlugin.default ?? typescriptPlugin;
 
 export default defineConfig({
     // Fail the build on TypeScript diagnostics instead of only logging them as warnings.
