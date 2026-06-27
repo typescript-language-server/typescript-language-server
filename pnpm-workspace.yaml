@@ -5,5 +5,4 @@ minimumReleaseAgeExclude:
   - semver@7.8.1
 
 overrides:
-  rolldown: ^1.0.2
   vscode-jsonrpc: ^9.0.0
