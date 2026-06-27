@@ -7,7 +7,6 @@
 
 import * as lsp from 'vscode-languageserver';
 import { MessageType } from 'vscode-languageserver';
-import { type ProgressContext, attachWorkDone } from 'vscode-languageserver/lib/common/progress.js';
 import { TypeScriptRenameRequest } from './ts-protocol.js';
 
 export interface WithProgressOptions {
@@ -25,20 +24,25 @@ export interface LspClient {
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
     codeLensRefresh(): Promise<void>;
     inlayHintRefresh(): Promise<void>;
-    sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void>;
+    sendNotification<P>(type: lsp.NotificationType<P>, params: lsp.RequestParam<P>): Promise<void>;
     getWorkspaceConfiguration<R = unknown>(scopeUri: string, section: string): Promise<R>;
     registerDidChangeWatchedFilesCapability(watchers: lsp.FileSystemWatcher[]): Promise<lsp.Disposable>;
 }
 
-// Hack around the LSP library that makes it otherwise impossible to differentiate between Null and Client-initiated reporter.
-const nullProgressReporter = attachWorkDone(undefined as any as ProgressContext, /* params */ undefined);
+function isNullProgressReporter(reporter: lsp.WorkDoneProgressReporter) {
+    // We can't tell if this is a NullProgressReporter (well because this type isn't exposed from vscode-languageserver),
+    // but we're going to assume if the toString for the begin method is empty, then it's a NullProgressReporter.
+    const beginStr = reporter.begin.toString();
+    const contents = beginStr.substring(beginStr.indexOf('{') + 1, beginStr.lastIndexOf('}'));
+    return contents.trim() === '';
+}
 
 export class LspClientImpl implements LspClient {
     constructor(protected connection: lsp.Connection) {}
 
     async createProgressReporter(_?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter> {
         let reporter: lsp.WorkDoneProgressReporter;
-        if (workDoneProgress && workDoneProgress.constructor !== nullProgressReporter.constructor) {
+        if (workDoneProgress && !isNullProgressReporter(workDoneProgress)) {
             reporter = workDoneProgress;
         } else {
             reporter = workDoneProgress || await this.connection.window.createWorkDoneProgress();
@@ -90,7 +94,7 @@ export class LspClientImpl implements LspClient {
         await this.connection.sendRequest(lsp.InlayHintRefreshRequest.type);
     }
 
-    async sendNotification<P>(type: lsp.NotificationType<P>, params: P): Promise<void> {
+    async sendNotification<P>(type: lsp.NotificationType<P>, params: lsp.RequestParam<P>): Promise<void> {
         await this.connection.sendNotification(type, params);
     }
 
