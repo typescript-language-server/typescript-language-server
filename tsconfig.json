@@ -1,10 +1,7 @@
 {
     "include": [
-        "src/**/*.ts",
-        "test-data/**/*.{ts,js}",
-        "eslint.config.js",
-        "rollup.config.ts",
-        "vitest.config.ts",
+        "src/**/*.*",
+        "*.*",
     ],
     "compilerOptions": {
         "checkJs": true,
