@@ -25,7 +25,7 @@ export default defineConfig({
     ],
     plugins: [
         commonJS(),
-        resolve(),
+        nodeResolve({ exportConditions: ['node'] }),
         typescript(),
         rollupForceExit('rollup-build', 5),
     ],
