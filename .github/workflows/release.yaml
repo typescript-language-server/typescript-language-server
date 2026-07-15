@@ -26,7 +26,7 @@ jobs:
       - uses: pnpm/action-setup@v6
         if: ${{ steps.release.outputs.release_created }}
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         if: ${{ steps.release.outputs.release_created }}
         with:
           node-version: 24.18.0
