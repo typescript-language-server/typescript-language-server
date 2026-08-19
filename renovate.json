@@ -62,6 +62,12 @@
         "patch"
       ],
       "semanticCommitType": "fix"
+    },
+    {
+      "matchDatasources": [
+        "npm"
+      ],
+      "minimumReleaseAge": "7 days"
     }
   ]
 }
