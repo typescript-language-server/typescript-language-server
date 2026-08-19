@@ -19,6 +19,7 @@ export interface LspClient {
     withProgress<R>(options: WithProgressOptions, task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>): Promise<R>;
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
     showErrorMessage(message: string): void;
+    showWarningMessage(message: string): void;
     logMessage(args: lsp.LogMessageParams): void;
     applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult>;
     rename(args: lsp.TextDocumentPositionParams): Promise<any>;
@@ -67,6 +68,11 @@ export class LspClientImpl implements LspClient {
     showErrorMessage(message: string): void {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connection.sendNotification(lsp.ShowMessageNotification.type, { type: MessageType.Error, message });
+    }
+
+    showWarningMessage(message: string): void {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.connection.sendNotification(lsp.ShowMessageNotification.type, { type: MessageType.Warning, message });
     }
 
     logMessage(args: lsp.LogMessageParams): void {

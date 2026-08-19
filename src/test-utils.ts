@@ -168,6 +168,10 @@ export class TestLspClient implements LspClient {
         this.logger.error(`[showErrorMessage] ${message}`);
     }
 
+    showWarningMessage(message: string): void {
+        this.logger.warn(`[showWarningMessage] ${message}`);
+    }
+
     logMessage(args: lsp.LogMessageParams): void {
         this.logger.log('logMessage', JSON.stringify(args));
     }

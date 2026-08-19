@@ -33,7 +33,7 @@ import { SourceDefinitionCommand } from './features/source-definition.js';
 import { CachedResponse } from './tsServer/cachedResponse.js';
 import { LogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { Trace } from './tsServer/tracer.js';
-import { type TypeScriptVersion, TypeScriptVersionProvider } from './tsServer/versionProvider.js';
+import { type TypeScriptVersion, TypeScriptVersionProvider, type UnusableTypeScriptInstallation } from './tsServer/versionProvider.js';
 import API from './utils/api.js';
 import { toSyntaxServerConfiguration, TsServerLogLevel, type LspServerConfiguration } from './utils/configuration.js';
 import { onCaseInsensitiveFileSystem } from './utils/fs.js';
@@ -45,6 +45,17 @@ import { CodeActionKind } from './utils/types.js';
 import { CommandManager } from './commands/commandManager.js';
 import { CodeActionManager } from './features/codeActions/codeActionManager.js';
 import { WatchEventManager } from './watchEventManager.js';
+
+interface FindTypescriptVersionResult {
+    version: TypeScriptVersion | null;
+    /** Workspace TypeScript installations that were skipped because they provide no tsserver.js. */
+    unusableWorkspaceVersions: UnusableTypeScriptInstallation[];
+}
+
+function describeUnusableWorkspaceVersions(unusable: UnusableTypeScriptInstallation[]): string {
+    const descriptions = unusable.map(({ libFolder, versionString }) => `${versionString ? `TypeScript ${versionString}` : 'TypeScript'} at "${libFolder}"`);
+    return `The TypeScript of the workspace (${descriptions.join(', ')}) provides no tsserver.js.`;
+}
 
 export class LspServer {
     private tsClient: TsClient;
@@ -106,9 +117,18 @@ export class LspServer {
         const userInitializationOptions = (this.initializeParams.initializationOptions || {}) as TypeScriptInitializationOptions;
         const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale, plugins, tsserver } = userInitializationOptions;
 
-        const typescriptVersion = this.findTypescriptVersion(tsserver?.path, tsserver?.fallbackPath);
+        const { version: typescriptVersion, unusableWorkspaceVersions } = this.findTypescriptVersion(tsserver?.path, tsserver?.fallbackPath);
         if (typescriptVersion) {
             this.options.lspClient.logMessage({ type: lsp.MessageType.Info, message: `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"` });
+            // Unusable installations are only reported when no valid workspace TypeScript was found.
+            if (unusableWorkspaceVersions.length) {
+                this.options.lspClient.showWarningMessage(
+                    `${describeUnusableWorkspaceVersions(unusableWorkspaceVersions)} ` +
+                    `Using (${typescriptVersion.source}) TypeScript ${typescriptVersion.versionString} instead - ` +
+                    'language features will not reflect the TypeScript of the workspace.');
+            }
+        } else if (unusableWorkspaceVersions.length) {
+            throw Error(`${describeUnusableWorkspaceVersions(unusableWorkspaceVersions)} No other valid TypeScript installation was found. Exiting.`);
         } else {
             throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid `tsserver.path` is specified. Exiting.');
         }
@@ -363,21 +383,24 @@ export class LspServer {
         this.watchEventManager?.onInitialized();
     }
 
-    private findTypescriptVersion(userTsserverPath: string | undefined, fallbackTsserverPath: string | undefined): TypeScriptVersion | null {
+    private findTypescriptVersion(userTsserverPath: string | undefined, fallbackTsserverPath: string | undefined): FindTypescriptVersionResult {
         const typescriptVersionProvider = new TypeScriptVersionProvider(userTsserverPath, this.logger);
+        // Workspace TypeScript installations that provide no tsserver.js.
+        let unusableWorkspaceVersions: UnusableTypeScriptInstallation[] = [];
         // User-provided tsserver path.
         const userSettingVersion = typescriptVersionProvider.getUserSettingVersion();
         if (userSettingVersion) {
             if (userSettingVersion.isValid) {
-                return userSettingVersion;
+                return { version: userSettingVersion, unusableWorkspaceVersions };
             }
             this.logger.logIgnoringVerbosity(LogLevel.Warning, `Typescript specified through user setting ignored due to invalid path "${userSettingVersion.path}"`);
         }
         // Workspace version.
         if (this.workspaceRoot) {
             const workspaceVersion = typescriptVersionProvider.getWorkspaceVersion([this.workspaceRoot]);
-            if (workspaceVersion) {
-                return workspaceVersion;
+            unusableWorkspaceVersions = workspaceVersion.unusable;
+            if (workspaceVersion.version) {
+                return { version: workspaceVersion.version, unusableWorkspaceVersions };
             }
         }
 
@@ -385,7 +408,7 @@ export class LspServer {
         const fallbackSettingVersion = fallbackVersionProvider.getUserSettingVersion();
         if (fallbackSettingVersion) {
             if (fallbackSettingVersion.isValid) {
-                return fallbackSettingVersion;
+                return { version: fallbackSettingVersion, unusableWorkspaceVersions };
             }
             this.logger.logIgnoringVerbosity(LogLevel.Warning, `Typescript specified through fallback setting ignored due to invalid path "${fallbackSettingVersion.path}"`);
         }
@@ -393,9 +416,9 @@ export class LspServer {
         // Bundled version
         const bundledVersion = typescriptVersionProvider.bundledVersion();
         if (bundledVersion?.isValid) {
-            return bundledVersion;
+            return { version: bundledVersion, unusableWorkspaceVersions };
         }
-        return null;
+        return { version: null, unusableWorkspaceVersions };
     }
 
     private getLogDirectoryPath(initializationOptions: TypeScriptInitializationOptions): string | undefined {
