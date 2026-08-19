@@ -27,7 +27,7 @@ export class TSServerRequestCommand implements Command {
     public async execute<K extends keyof TypeScriptRequestTypes>(
         command: K,
         args: TypeScriptRequestTypes[K][0],
-        config?: ExecuteInfo,
+        config?: Partial<ExecuteInfo>,
     ): Promise<unknown> {
         if (args && typeof args === 'object' && !Array.isArray(args)) {
             const requestArgs = args as RequestArgs;

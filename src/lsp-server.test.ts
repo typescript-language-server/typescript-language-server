@@ -2126,6 +2126,32 @@ describe('executeCommand', () => {
         });
     });
 
+    it('send custom tsserver command without expecting a result', async () => {
+        const fooUri = uri('foo.ts');
+        const doc = {
+            uri: fooUri,
+            languageId: 'typescript',
+            version: 1,
+            text: 'export function fn(): void {}',
+        };
+        await openDocumentAndWaitForDiagnostics(server, doc);
+
+        // `close` produces no tsserver response so the command must resolve instead of failing.
+        const result = await server.executeCommand({
+            command: TSServerRequestCommand.ID,
+            arguments: [
+                CommandTypes.Close,
+                {
+                    file: filePath('foo.ts'),
+                },
+                {
+                    expectsResult: false,
+                },
+            ],
+        });
+        expect(result).toMatchObject({ type: 'noContent' });
+    });
+
     it('go to source definition', async () => {
         // NOTE: This test needs to reference files that physically exist for the feature to work.
         const indexUri = uri('source-definition', 'index.ts');
