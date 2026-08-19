@@ -154,7 +154,7 @@ export interface ITypeScriptServiceClient {
     executeCustom<K extends keyof TypeScriptRequestTypes>(
         command: K,
         args: TypeScriptRequestTypes[K][0],
-        executeInfo?: ExecuteInfo,
+        executeInfo?: Partial<ExecuteInfo>,
     ): Promise<ServerResponse.Response<ts.server.protocol.Response>>;
 
     /**

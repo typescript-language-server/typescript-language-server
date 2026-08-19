@@ -556,16 +556,22 @@ export class TsClient implements ITypeScriptServiceClient {
     public executeCustom<K extends keyof TypeScriptRequestTypes>(
         command: K,
         args: TypeScriptRequestTypes[K][0],
-        executeInfo?: ExecuteInfo,
+        executeInfo?: Partial<ExecuteInfo>,
     ): Promise<ServerResponse.Response<ts.server.protocol.Response>> {
         const updatedExecuteInfo: ExecuteInfo = {
             expectsResult: true,
             isAsync: false,
             ...executeInfo,
         };
-        const executions = this.executeImpl(command, args, updatedExecuteInfo);
+        const execution = this.executeImpl(command, args, updatedExecuteInfo)[0];
 
-        return executions[0]!.catch(error => {
+        // Commands sent with `expectsResult: false` (like `open` or `close`) produce no
+        // tsserver response so there is no promise to wait for.
+        if (!execution) {
+            return Promise.resolve(ServerResponse.NoContent);
+        }
+
+        return execution.catch(error => {
             throw new ResponseError(1, (error as Error).message);
         });
     }
