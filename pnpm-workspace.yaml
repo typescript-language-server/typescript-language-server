@@ -6,3 +6,6 @@ minimumReleaseAgeExclude:
 
 overrides:
   vscode-jsonrpc: ^9.0.0
+
+blockExoticSubdeps: true
+minimumReleaseAge: 10080 # 7 days
