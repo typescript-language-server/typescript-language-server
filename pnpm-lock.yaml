@@ -34,8 +34,8 @@ importers:
         specifier: ^12.3.0
         version: 12.3.0(rollup@4.62.2)(tslib@2.8.1)(typescript@6.0.3)
       '@size-limit/file':
-        specifier: ^12.1.0
-        version: 12.1.0(size-limit@12.1.0)
+        specifier: ^13.0.3
+        version: 13.0.3(size-limit@13.0.3)
       '@stylistic/eslint-plugin':
         specifier: ^5.10.0
         version: 5.10.0(eslint@10.5.0)
@@ -97,8 +97,8 @@ importers:
         specifier: ^7.8.5
         version: 7.8.5
       size-limit:
-        specifier: ^12.1.0
-        version: 12.1.0
+        specifier: ^13.0.3
+        version: 13.0.3
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
@@ -549,11 +549,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@size-limit/file@12.1.0':
-    resolution: {integrity: sha512-eGwDcIufnNnvJRzv3liDOn6MAOGgmOTUdpeGQ2KuRTlgIgO54AJH1ilvktlJc6PIjNfwpYY0dOGyap1QgM1swQ==}
+  '@size-limit/file@13.0.3':
+    resolution: {integrity: sha512-PWTITIXH5p9aGIf6qq2Fruihn/b9nBQyfkyoAyb6DzFJgS1Ek9MSPJYKxKFLO8jdo0aqSgBPd3sevbS6PyBiJw==}
     engines: {node: ^20.0.0 || ^22.0.0 || >=24.0.0}
     peerDependencies:
-      size-limit: 12.1.0
+      size-limit: 13.0.3
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -1312,15 +1312,10 @@ packages:
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
 
-  size-limit@12.1.0:
-    resolution: {integrity: sha512-VnDS2fycANrJFVPQwjaD+h+hkISY7EB3LsPsYWje4lBCjQwwsZLxjwwRwVJKHrcj2ZqyG+DdXykWm9mbZklZrw==}
-    engines: {node: ^20.0.0 || ^22.0.0 || >=24.0.0}
+  size-limit@13.0.3:
+    resolution: {integrity: sha512-KVb2aNEU49BwTR21SVjD+2QHP9gBV/nWsTHzNB/heRwXtHyA7lLQiDZDQ1TiNh/B/TZXKAZrHYyTt+cvBUrzYw==}
+    engines: {node: ^22.18.0 || ^24.0.0 || >=26.0.0}
     hasBin: true
-    peerDependencies:
-      jiti: ^2.0.0
-    peerDependenciesMeta:
-      jiti:
-        optional: true
 
   smob@1.6.2:
     resolution: {integrity: sha512-RQsvleCbF8cVHEv+xuDGaA4pOizFqJ0GgjtMSRo6oP8pnN7WsigHgVGey6aILRBKv4W2YOMHLqbKdnB6hpB9fw==}
@@ -1876,9 +1871,9 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.62.2':
     optional: true
 
-  '@size-limit/file@12.1.0(size-limit@12.1.0)':
+  '@size-limit/file@13.0.3(size-limit@13.0.3)':
     dependencies:
-      size-limit: 12.1.0
+      size-limit: 13.0.3
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -2637,13 +2632,11 @@ snapshots:
 
   siginfo@2.0.0: {}
 
-  size-limit@12.1.0:
+  size-limit@13.0.3:
     dependencies:
       bytes-iec: 3.1.1
       lilconfig: 3.1.3
       nanospinner: 1.2.2
-      picocolors: 1.1.1
-      tinyglobby: 0.2.17
 
   smob@1.6.2: {}
 
