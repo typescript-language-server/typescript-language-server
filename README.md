@@ -45,7 +45,7 @@ Currently Microsoft is working on [TypeScript 7](https://github.com/microsoft/ty
 ## Installing
 
 ```sh
-npm install -g typescript-language-server typescript
+npm install -g typescript-language-server typescript@6
 ```
 
 ## Running the language server
