@@ -101,6 +101,31 @@ export class TypeScriptVersion {
 
 export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib', '.pnpm/sdks/typescript/lib'];
 
+function readPackageVersion(packageFolder: string, logger: Logger): string | null {
+    try {
+        const contents = fs.readFileSync(path.join(packageFolder, 'package.json')).toString();
+        const desc = JSON.parse(contents) as { version?: string; };
+        return desc.version ?? null;
+    } catch {
+        logger.log(`Failed reading version from package.json in "${packageFolder}".`);
+        return null;
+    }
+}
+
+export interface UnusableTypeScriptInstallation {
+    /** Path to the "lib" folder of the TypeScript installation. */
+    libFolder: string;
+    /** Version read from the installation's package.json or null if it could not be read. */
+    versionString: string | null;
+}
+
+export interface WorkspaceVersionResult {
+    /** Valid TypeScript installation found in the workspace, if any. */
+    version: TypeScriptVersion | null;
+    /** Workspace TypeScript installations that exist but provide no tsserver.js. */
+    unusable: UnusableTypeScriptInstallation[];
+}
+
 export class TypeScriptVersionProvider {
     public constructor(private userTsserverPath: string | undefined, private logger: Logger) {}
 
@@ -148,18 +173,26 @@ export class TypeScriptVersionProvider {
         return new TypeScriptVersion(TypeScriptVersionSource.UserSetting, resolvedPath, this.logger);
     }
 
-    public getWorkspaceVersion(workspaceFolders: string[]): TypeScriptVersion | null {
+    public getWorkspaceVersion(workspaceFolders: string[]): WorkspaceVersionResult {
+        const unusable: UnusableTypeScriptInstallation[] = [];
         for (const p of workspaceFolders) {
             const libFolder = findPathToModule(p, MODULE_FOLDERS);
             if (libFolder) {
                 const tsServerPath = path.join(libFolder, 'tsserver.js');
                 const version = new TypeScriptVersion(TypeScriptVersionSource.Workspace, tsServerPath, this.logger);
                 if (version.isValid) {
-                    return version;
+                    return { version, unusable };
+                }
+                if (!fs.existsSync(tsServerPath)) {
+                    this.logger.log(`Workspace TypeScript at "${libFolder}" provides no tsserver.js.`);
+                    unusable.push({
+                        libFolder,
+                        versionString: readPackageVersion(path.dirname(libFolder), this.logger),
+                    });
                 }
             }
         }
-        return null;
+        return { version: null, unusable };
     }
 
     public bundledVersion(): TypeScriptVersion | null {
