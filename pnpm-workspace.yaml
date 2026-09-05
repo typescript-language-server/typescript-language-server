@@ -5,7 +5,7 @@ minimumReleaseAgeExclude:
   - semver@7.8.1
 
 overrides:
-  vscode-jsonrpc: ^9.0.1
+  vscode-jsonrpc: ^9.0.2
 
 blockExoticSubdeps: true
 minimumReleaseAge: 10080 # 7 days
