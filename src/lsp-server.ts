@@ -216,9 +216,11 @@ export class LspServer {
                 onEvent: this.onTsEvent.bind(this),
                 onExit: (exitCode, signal) => {
                     this.shutdown();
-                    if (exitCode) {
-                        throw new Error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
-                    }
+                    // Only an exit the server did not ask for gets here (the client disposes
+                    // its exit handlers before killing tsserver), so this is a crash whether
+                    // it comes with an exit code or with a signal (`exitCode` is null then:
+                    // SIGKILL from the OOM killer, SIGABRT from Node's own out-of-memory abort).
+                    throw new Error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
                 },
                 useClientFileWatcher: tsserver?.useClientFileWatcher ?? false,
                 useSyntaxServer: toSyntaxServerConfiguration(tsserver?.useSyntaxServer),

@@ -5,6 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import type { ChildProcess } from 'node:child_process';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { TsClient } from './ts-client.js';
 import { ConsoleLogger } from './utils/logger.js';
@@ -133,5 +134,57 @@ describe('ts server client', () => {
         expect(response.body).not.toBeNull();
         expect(response.body!.some(({ file }) => file.endsWith('module2.ts'))).toBeTruthy();
         expect(response.body!.some(({ file: file_1 }) => file_1.endsWith('module1.ts'))).toBeFalsy();
+    });
+});
+
+describe('ts server client exit', () => {
+    type OnExit = (exitCode: number | null, signal: NodeJS.Signals | null) => void;
+
+    function startClient(onExit: OnExit): TsClient {
+        const client = new TsClient(onCaseInsensitiveFileSystem(), logger, lspClient);
+        client.start(
+            undefined,
+            {
+                logDirectoryProvider: noopLogDirectoryProvider,
+                logVerbosity: TsServerLogLevel.Off,
+                onExit,
+                plugins: [],
+                trace: Trace.Off,
+                typescriptVersion: bundled!,
+                useClientFileWatcher: false,
+                useSyntaxServer: SyntaxServerConfiguration.Never,
+            },
+        );
+        return client;
+    }
+
+    // The tsserver child process, reached through private state: the tests need to bring it
+    // down from underneath the client, as a crash would.
+    function tsserverProcess(client: TsClient): ChildProcess {
+        return (client as unknown as { serverState: { server: { _process: { _process: ChildProcess; }; }; }; }).serverState.server._process._process;
+    }
+
+    it('reports a tsserver killed by a signal through onExit, with a null exit code', async () => {
+        let onExit: OnExit = () => {};
+        const exited = new Promise<[number | null, NodeJS.Signals | null]>(resolve => {
+            onExit = (exitCode, signal) => resolve([exitCode, signal]);
+        });
+        const client = startClient((exitCode, signal) => onExit(exitCode, signal));
+        tsserverProcess(client).kill('SIGKILL');
+        const [exitCode, signal] = await exited;
+        expect(exitCode).toBeNull();
+        expect(signal).toBe('SIGKILL');
+    });
+
+    it('does not report its own shutdown through onExit', async () => {
+        let exits = 0;
+        const client = startClient(() => {
+            exits++;
+        });
+        const process = tsserverProcess(client);
+        const gone = new Promise<void>(resolve => process.once('exit', () => resolve()));
+        client.shutdown();
+        await gone;
+        expect(exits).toBe(0);
     });
 });
