@@ -220,7 +220,11 @@ export class LspServer {
                     // its exit handlers before killing tsserver), so this is a crash whether
                     // it comes with an exit code or with a signal (`exitCode` is null then:
                     // SIGKILL from the OOM killer, SIGABRT from Node's own out-of-memory abort).
-                    throw new Error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
+                    // Throw from a microtask rather than from the exit handler itself, so that the
+                    // remaining exit handlers and the tsserver client's cleanup run first.
+                    queueMicrotask(() => {
+                        throw new Error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
+                    });
                 },
                 useClientFileWatcher: tsserver?.useClientFileWatcher ?? false,
                 useSyntaxServer: toSyntaxServerConfiguration(tsserver?.useSyntaxServer),

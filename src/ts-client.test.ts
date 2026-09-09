@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import type { ChildProcess } from 'node:child_process';
+import { ChildProcess } from 'node:child_process';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { TsClient } from './ts-client.js';
 import { ConsoleLogger } from './utils/logger.js';
@@ -159,9 +159,14 @@ describe('ts server client exit', () => {
     }
 
     // The tsserver child process, reached through private state: the tests need to bring it
-    // down from underneath the client, as a crash would.
+    // down from underneath the client, as a crash would. Checked at runtime so that a change to
+    // the private layout fails here with a clear message rather than with a TypeError further on.
     function tsserverProcess(client: TsClient): ChildProcess {
-        return (client as unknown as { serverState: { server: { _process: { _process: ChildProcess; }; }; }; }).serverState.server._process._process;
+        const process = (client as unknown as { serverState?: { server?: { _process?: { _process?: unknown; }; }; }; }).serverState?.server?._process?._process;
+        if (!(process instanceof ChildProcess)) {
+            throw new Error('Expected the tsserver ChildProcess at TsClient.serverState.server._process._process; the private layout has changed');
+        }
+        return process;
     }
 
     it('reports a tsserver killed by a signal through onExit, with a null exit code', async () => {
