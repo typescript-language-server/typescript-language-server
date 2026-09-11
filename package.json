@@ -47,7 +47,7 @@
     "@types/node": "^22.20.1",
     "@types/semver": "^7.8.0",
     "@types/which": "^3.0.4",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "5.0.0",
     "@vitest/eslint-plugin": "^1.6.27",
     "commander": "^15.0.0",
     "concurrently": "^10.0.5",
