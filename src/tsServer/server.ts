@@ -94,6 +94,7 @@ export class SingleTsServer implements ITypeScriptServer {
     private readonly _exitHandlers = new Set<OnExitHandler>();
     private readonly _errorHandlers = new Set<OnErrorHandler>();
     private readonly _stdErrHandlers = new Set<OnStdErrHandler>();
+    private _deadCause: string | undefined;
 
     constructor(
         private readonly _serverId: string,
@@ -116,13 +117,13 @@ export class SingleTsServer implements ITypeScriptServer {
         this._process.onExit((code, signal) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             this._exitHandlers.forEach(handler => handler({ code, signal }));
-            this._callbacks.destroy('server exited');
+            this.markDead('server exited');
         });
 
         this._process.onError(error => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             this._errorHandlers.forEach(handler => handler(error));
-            this._callbacks.destroy('server errored');
+            this.markDead('server errored');
         });
     }
 
@@ -161,6 +162,17 @@ export class SingleTsServer implements ITypeScriptServer {
     public kill(): void {
         this.dispose();
         this._process.kill();
+    }
+
+    /**
+     * The process can no longer answer. Cancel everything in flight and everything that comes later,
+     * so that no request waits forever for a response (a pending response also blocks the queue).
+     */
+    private markDead(cause: string): void {
+        this._deadCause ??= cause;
+        this._pendingResponses.clear();
+        this._callbacks.destroy(cause);
+        this.sendNextRequests();
     }
 
     private dispatchMessage(message: ts.server.protocol.Message) {
@@ -275,6 +287,10 @@ export class SingleTsServer implements ITypeScriptServer {
 
     private sendRequest(requestItem: RequestItem): void {
         const serverRequest = requestItem.request;
+        if (this._deadCause) {
+            this.fetchCallback(serverRequest.seq)?.onSuccess(new ServerResponse.Cancelled(this._deadCause));
+            return;
+        }
         this._tracer.traceRequest(this._serverId, serverRequest, requestItem.expectsResponse, this._requestQueue.length);
 
         if (requestItem.expectsResponse && !requestItem.isAsync) {
@@ -527,8 +543,17 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
             this.syntaxServer.kill();
         });
 
+        // Without the syntax server, the requests routed to it can no longer be answered.
+        this.syntaxServer.onExit(event => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            this._exitHandlers.forEach(handler => handler(event));
+            this.semanticServer.kill();
+        });
+
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         this.semanticServer.onError(event => this._errorHandlers.forEach(handler => handler(event)));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        this.syntaxServer.onError(event => this._errorHandlers.forEach(handler => handler(event)));
     }
 
     private get projectLoading() {
