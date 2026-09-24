@@ -223,7 +223,8 @@ export class LspServer {
                     // Throw from a microtask rather than from the exit handler itself, so that the
                     // remaining exit handlers and the tsserver client's cleanup run first.
                     queueMicrotask(() => {
-                        throw new Error(`tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`);
+                        const message = `tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`;
+                        throw new Error(message);
                     });
                 },
                 useClientFileWatcher: tsserver?.useClientFileWatcher ?? false,

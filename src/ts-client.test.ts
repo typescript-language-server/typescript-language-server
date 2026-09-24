@@ -140,7 +140,7 @@ describe('ts server client', () => {
 describe('ts server client exit', () => {
     type OnExit = (exitCode: number | null, signal: NodeJS.Signals | null) => void;
 
-    function startClient(onExit: OnExit): TsClient {
+    function startClient(onExit: OnExit, useSyntaxServer = SyntaxServerConfiguration.Never): TsClient {
         const client = new TsClient(onCaseInsensitiveFileSystem(), logger, lspClient);
         client.start(
             undefined,
@@ -152,7 +152,7 @@ describe('ts server client exit', () => {
                 trace: Trace.Off,
                 typescriptVersion: bundled!,
                 useClientFileWatcher: false,
-                useSyntaxServer: SyntaxServerConfiguration.Never,
+                useSyntaxServer,
             },
         );
         return client;
@@ -161,12 +161,14 @@ describe('ts server client exit', () => {
     // The tsserver child process, reached through private state: the tests need to bring it
     // down from underneath the client, as a crash would. Checked at runtime so that a change to
     // the private layout fails here with a clear message rather than with a TypeError further on.
-    function tsserverProcess(client: TsClient): ChildProcess {
-        const process = (client as unknown as { serverState?: { server?: { _process?: { _process?: unknown; }; }; }; }).serverState?.server?._process?._process;
-        if (!(process instanceof ChildProcess)) {
-            throw new Error('Expected the tsserver ChildProcess at TsClient.serverState.server._process._process; the private layout has changed');
+    type ServerWithProcess = { _process?: { _process?: unknown; }; };
+    function tsserverProcess(client: TsClient, kind?: 'syntaxServer' | 'semanticServer'): ChildProcess {
+        const server = (client as unknown as { serverState?: { server?: ServerWithProcess & Record<string, ServerWithProcess | undefined>; }; }).serverState?.server;
+        const tsserverProcess = (kind ? server?.[kind] : server)?._process?._process;
+        if (!(tsserverProcess instanceof ChildProcess)) {
+            throw new Error(`Expected the tsserver ChildProcess at TsClient.serverState.server${kind ? `.${kind}` : ''}._process._process; the private layout has changed`);
         }
-        return process;
+        return tsserverProcess;
     }
 
     it('reports a tsserver killed by a signal through onExit, with a null exit code', async () => {
@@ -179,6 +181,22 @@ describe('ts server client exit', () => {
         const [exitCode, signal] = await exited;
         expect(exitCode).toBeNull();
         expect(signal).toBe('SIGKILL');
+    });
+
+    it.each(['syntaxServer', 'semanticServer'] as const)('reports a killed %s of a syntax routing server through onExit', async kind => {
+        let onExit: OnExit = () => {};
+        const exited = new Promise<[number | null, NodeJS.Signals | null]>(resolve => {
+            onExit = (exitCode, signal) => resolve([exitCode, signal]);
+        });
+        const client = startClient((exitCode, signal) => onExit(exitCode, signal), SyntaxServerConfiguration.Auto);
+        const other = tsserverProcess(client, kind === 'syntaxServer' ? 'semanticServer' : 'syntaxServer');
+        const otherGone = new Promise<void>(resolve => other.once('exit', () => resolve()));
+        tsserverProcess(client, kind).kill('SIGKILL');
+        const [exitCode, signal] = await exited;
+        expect(exitCode).toBeNull();
+        expect(signal).toBe('SIGKILL');
+        // The remaining server is stopped as well.
+        await otherGone;
     });
 
     it('does not report its own shutdown through onExit', async () => {
