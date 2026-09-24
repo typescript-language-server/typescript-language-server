@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [6.0.1](https://github.com/typescript-language-server/typescript-language-server/compare/v6.0.0...v6.0.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* stop the server on syntax server crash ([#1132](https://github.com/typescript-language-server/typescript-language-server/issues/1132)) ([a024366](https://github.com/typescript-language-server/typescript-language-server/commit/a0243665a84b0d565143ad860d1dfca6e7b17714))
+* stop the server when tsserver is killed by a signal ([#1125](https://github.com/typescript-language-server/typescript-language-server/issues/1125)) ([db557ce](https://github.com/typescript-language-server/typescript-language-server/commit/db557cee861cb5b6d27e6a024d2254f23f2e9308))
+
 ## [6.0.0](https://github.com/typescript-language-server/typescript-language-server/compare/v5.3.0...v6.0.0) (2026-08-20)
 
 
