@@ -17,6 +17,7 @@ import { packageUpSync } from 'package-up';
 import API from '../utils/api.js';
 import { findPathToModule } from '../utils/modules-resolver.js';
 import type { Logger } from '../utils/logger.js';
+import packageJson from '../../package.json' with { type: 'json' };
 
 export enum TypeScriptVersionSource {
     Bundled = 'bundled',
@@ -101,17 +102,6 @@ export class TypeScriptVersion {
 
 export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib', '.pnpm/sdks/typescript/lib'];
 
-function readPackageVersion(packageFolder: string, logger: Logger): string | null {
-    try {
-        const contents = fs.readFileSync(path.join(packageFolder, 'package.json')).toString();
-        const desc = JSON.parse(contents) as { version?: string; };
-        return desc.version ?? null;
-    } catch {
-        logger.log(`Failed reading version from package.json in "${packageFolder}".`);
-        return null;
-    }
-}
-
 export interface UnusableTypeScriptInstallation {
     /** Path to the "lib" folder of the TypeScript installation. */
     libFolder: string;
@@ -187,7 +177,7 @@ export class TypeScriptVersionProvider {
                     this.logger.log(`Workspace TypeScript at "${libFolder}" provides no tsserver.js.`);
                     unusable.push({
                         libFolder,
-                        versionString: readPackageVersion(path.dirname(libFolder), this.logger),
+                        versionString: packageJson.version
                     });
                 }
             }
