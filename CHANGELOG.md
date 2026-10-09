@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [6.0.2](https://github.com/typescript-language-server/typescript-language-server/compare/v6.0.1...v6.0.2) (2026-10-09)
+
+
+### Refactors
+
+* inline server version ([#1142](https://github.com/typescript-language-server/typescript-language-server/issues/1142)) ([102d9cf](https://github.com/typescript-language-server/typescript-language-server/commit/102d9cfdd358330b138b45f1e33baf08a55d1527))
+
 ## [6.0.1](https://github.com/typescript-language-server/typescript-language-server/compare/v6.0.0...v6.0.1) (2026-09-24)
 
 
