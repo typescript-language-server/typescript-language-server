@@ -5,13 +5,13 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
 import lsp from 'vscode-languageserver';
+import packageJson from '../package.json' with { type: 'json' };
 import { createLspConnection } from './lsp-connection.js';
 
 const DEFAULT_LOG_LEVEL = lsp.MessageType.Info;
-const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' })) as { version: string; };
+const { version } = packageJson;
 
 const program = new Command('typescript-language-server')
     .version(version)
