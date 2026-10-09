@@ -1,4 +1,5 @@
 import { defineConfig } from 'rollup';
+import jsonPlugin from '@rollup/plugin-json';
 import terserPlugin from '@rollup/plugin-terser';
 import commonjsPlugin from '@rollup/plugin-commonjs';
 import typescriptPlugin from '@rollup/plugin-typescript';
@@ -12,6 +13,7 @@ import { rollupForceExit } from './rollup-exit-plugin.js';
 // is the function type, with options still checked), and stays plain JS so rollup's config loader can
 // parse this file on any Node version — a TS-only cast here breaks the loader on Node without type
 // stripping.
+const json = jsonPlugin.default ?? jsonPlugin;
 const terser = terserPlugin.default ?? terserPlugin;
 const commonJS = commonjsPlugin.default ?? commonjsPlugin;
 const typescript = typescriptPlugin.default ?? typescriptPlugin;
@@ -44,6 +46,7 @@ export default defineConfig({
     plugins: [
         commonJS(),
         nodeResolve({ exportConditions: ['node'] }),
+        json(),
         typescript(),
         rollupForceExit('rollup-build', 5),
     ],

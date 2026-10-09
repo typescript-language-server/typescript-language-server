@@ -5,16 +5,15 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
 import lsp from 'vscode-languageserver';
 import { createLspConnection } from './lsp-connection.js';
+import packageJson from '../package.json' with { type: 'json' };
 
 const DEFAULT_LOG_LEVEL = lsp.MessageType.Info;
-const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), { encoding: 'utf8' })) as { version: string; };
 
 const program = new Command('typescript-language-server')
-    .version(version)
+    .version(packageJson.version)
     .requiredOption('--stdio', 'use stdio')
     .option<number>('--log-level <logLevel>', 'A number indicating the log level (4 = log, 3 = info, 2 = warn, 1 = error). Defaults to `2`.', value => parseInt(value, 10), 2)
     .parse(process.argv);
