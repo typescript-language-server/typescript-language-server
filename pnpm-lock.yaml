@@ -236,8 +236,8 @@ importers:
         specifier: ^9.1.7
         version: 9.1.7
       p-debounce:
-        specifier: ^5.1.1
-        version: 5.1.1
+        specifier: ^6.0.0
+        version: 6.0.0
       package-up:
         specifier: ^5.0.0
         version: 5.0.0
@@ -1342,9 +1342,9 @@ packages:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
 
-  p-debounce@5.1.1:
-    resolution: {integrity: sha512-BHp4jJ6t45tLOWzC/m9X2LIbZJz2mlay+pAwQrm/oRJlvLJhxyJrwtTUW6bz/+99coiC+iNpnk1P0s8/RfXd0A==}
-    engines: {node: '>=20'}
+  p-debounce@6.0.0:
+    resolution: {integrity: sha512-0US2ZjYKL4B24gEBXMUq3LPBGPY+R62s2ZA691BZcXftOqS6nbtQ/IpuP4TjZMacizzdCleR3yyyA4OnZcoHHA==}
+    engines: {node: '>=22'}
 
   p-limit@3.1.0:
     resolution: {integrity: sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==}
@@ -2600,7 +2600,7 @@ snapshots:
       type-check: 0.4.0
       word-wrap: 1.2.5
 
-  p-debounce@5.1.1: {}
+  p-debounce@6.0.0: {}
 
   p-limit@3.1.0:
     dependencies:
