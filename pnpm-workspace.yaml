@@ -5,7 +5,7 @@ minimumReleaseAgeExclude:
   - semver@7.8.1
 
 overrides:
-  vscode-jsonrpc: ^9.0.3
+  vscode-jsonrpc: ^10.0.0
 
 blockExoticSubdeps: true
 # Match the 3-day minimum release age enforced by the Renovate preset

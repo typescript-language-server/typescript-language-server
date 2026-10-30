@@ -69,7 +69,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.3",
-    "vscode-jsonrpc": "^9.0.3",
+    "vscode-jsonrpc": "^10.0.0",
     "vscode-languageserver": "^10.1.2",
     "vscode-languageserver-protocol": "^3.18.4",
     "vscode-languageserver-textdocument": "1.0.15",
