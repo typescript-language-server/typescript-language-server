@@ -12,7 +12,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import path from 'node:path';
-import deepmerge from 'deepmerge';
 import lsp from 'vscode-languageserver';
 import type { URI } from 'vscode-uri';
 import { CommandTypes, ModuleKind, ScriptTarget, type ts, type TypeScriptInitializationOptions, type SupportedFeatures } from '../ts-protocol.js';
@@ -21,7 +20,7 @@ import { isTypeScriptDocument } from '../configuration/languageIds.js';
 import type { LspDocument } from '../document.js';
 import type { LspClient } from '../lsp-client.js';
 import API from '../utils/api.js';
-import { equals } from '../utils/objects.js';
+import { deepMerge, equals } from '../utils/objects.js';
 import { ResourceMap } from '../utils/resourceMap.js';
 import { getInferredProjectCompilerOptions } from '../utils/tsconfig.js';
 
@@ -154,8 +153,8 @@ function areFileConfigurationsEqual(a: FileConfiguration, b: FileConfiguration):
 }
 
 export default class FileConfigurationManager {
-    public tsPreferences: Required<ts.server.protocol.UserPreferences> = deepmerge({}, DEFAULT_TSSERVER_PREFERENCES);
-    public workspaceConfiguration: WorkspaceConfiguration = deepmerge({}, DEFAULT_WORKSPACE_CONFIGURATION);
+    public tsPreferences: Required<ts.server.protocol.UserPreferences> = deepMerge({}, DEFAULT_TSSERVER_PREFERENCES);
+    public workspaceConfiguration: WorkspaceConfiguration = deepMerge({}, DEFAULT_WORKSPACE_CONFIGURATION);
     private readonly fileOptionsCache: ResourceMap<Promise<FileConfiguration | undefined>>;
     private readonly formatOptionsCache: ResourceMap<Partial<lsp.FormattingOptions>>;
     private readonly initialConfigurationRequestsMap: ResourceMap<lsp.CancellationTokenSource>;
@@ -191,11 +190,11 @@ export default class FileConfigurationManager {
     }
 
     public mergeTsPreferences(preferences: ts.server.protocol.UserPreferences): void {
-        this.tsPreferences = deepmerge(this.tsPreferences, preferences);
+        this.tsPreferences = deepMerge(this.tsPreferences, preferences);
     }
 
     public setWorkspaceConfiguration(configuration: WorkspaceConfiguration): void {
-        const updatedConfiguration = deepmerge(DEFAULT_WORKSPACE_CONFIGURATION, configuration);
+        const updatedConfiguration = deepMerge(DEFAULT_WORKSPACE_CONFIGURATION, configuration);
 
         if (this.features.codeLensRefreshSupport) {
             const settingKeys = [
