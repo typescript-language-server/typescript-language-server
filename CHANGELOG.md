@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [6.0.3](https://github.com/typescript-language-server/typescript-language-server/compare/v6.0.2...v6.0.3) (2026-11-02)
+
+
+### Bug Fixes
+
+* replace bundled deepmerge with local helper ([#1156](https://github.com/typescript-language-server/typescript-language-server/issues/1156)) ([91df985](https://github.com/typescript-language-server/typescript-language-server/commit/91df9853aa84b791c3fc6020c5a8a1ca36e7b068))
+
 ## [6.0.2](https://github.com/typescript-language-server/typescript-language-server/compare/v6.0.1...v6.0.2) (2026-10-09)
 
 
