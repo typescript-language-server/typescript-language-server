@@ -1,6 +1,7 @@
 {
   "extends": [
     "config:recommended",
+    "helpers:pinGitHubActionDigests",
     ":prHourlyLimit4",
     ":semanticCommitTypeAll(chore)",
     "security:minimumReleaseAgeNpm",
