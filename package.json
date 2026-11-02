@@ -53,7 +53,6 @@
     "commander": "^15.0.0",
     "concurrently": "^10.0.6",
     "cross-env": "^10.1.0",
-    "deepmerge": "^4.3.1",
     "eslint": "^10.13.0",
     "fs-extra": "^11.4.1",
     "globals": "^17.13.0",

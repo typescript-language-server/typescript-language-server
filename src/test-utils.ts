@@ -8,7 +8,7 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import deepmerge from 'deepmerge';
+import { deepMerge } from './utils/objects.js';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -218,7 +218,7 @@ export class TestLspServer extends LspServer {
 
     updateWorkspaceSettings(settings: WorkspaceConfiguration): void {
         const configuration: lsp.DidChangeConfigurationParams = {
-            settings: deepmerge(DEFAULT_WORKSPACE_SETTINGS, settings),
+            settings: deepMerge(DEFAULT_WORKSPACE_SETTINGS, settings),
         };
         this.didChangeConfiguration(configuration);
     }
@@ -248,8 +248,8 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         rootPath: undefined,
         rootUri: options.rootUri,
         processId: 42,
-        capabilities: deepmerge(DEFAULT_TEST_CLIENT_CAPABILITIES, options.clientCapabilitiesOverride || {}),
-        initializationOptions: deepmerge(DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS, options.initializationOptionsOverrides || {}),
+        capabilities: deepMerge(DEFAULT_TEST_CLIENT_CAPABILITIES, options.clientCapabilitiesOverride || {}),
+        initializationOptions: deepMerge(DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS, options.initializationOptionsOverrides || {}),
         workspaceFolders: null,
     });
     server.updateWorkspaceSettings({});
