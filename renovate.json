@@ -39,6 +39,15 @@
       ]
     },
     {
+      "groupName": "vscode-languageserver",
+      "matchPackageNames": [
+        "vscode-jsonrpc",
+        "vscode-languageserver",
+        "vscode-languageserver-protocol",
+        "vscode-languageserver-types"
+      ]
+    },
+    {
       "groupName": "size-limit",
       "matchFileNames": [
         "package.json"
