@@ -36,10 +36,7 @@ const DEFAULT_TEST_CLIENT_CAPABILITIES: lsp.ClientCapabilities = {
         },
         publishDiagnostics: {
             tagSupport: {
-                valueSet: [
-                    lsp.DiagnosticTag.Unnecessary,
-                    lsp.DiagnosticTag.Deprecated,
-                ],
+                valueSet: [lsp.DiagnosticTag.Unnecessary, lsp.DiagnosticTag.Deprecated],
             },
         },
         moniker: {},
@@ -74,7 +71,10 @@ const DEFAULT_WORKSPACE_SETTINGS: WorkspaceConfiguration = {};
 
 export const isWindows = process.platform === 'win32';
 
-export async function openDocumentAndWaitForDiagnostics(server: TestLspServer, textDocument: lsp.TextDocumentItem): Promise<void> {
+export async function openDocumentAndWaitForDiagnostics(
+    server: TestLspServer,
+    textDocument: lsp.TextDocumentItem,
+): Promise<void> {
     server.didOpenTextDocument({ textDocument });
     await server.waitForDiagnosticsForFile(textDocument.uri);
 }
@@ -92,7 +92,13 @@ export function readContents(path: string): string {
     return fs.readFileSync(path, 'utf-8').toString();
 }
 
-export function documentFromFile({ path, languageId = 'typescript' }: { path: string; languageId?: string; }): lsp.TextDocumentItem {
+export function documentFromFile({
+    path,
+    languageId = 'typescript',
+}: {
+    path: string;
+    languageId?: string;
+}): lsp.TextDocumentItem {
     const pathComponents = path.split('/');
     return {
         languageId,
@@ -124,10 +130,7 @@ export function lastPosition(document: lsp.TextDocumentItem, match: string): lsp
 }
 
 export function range(document: lsp.TextDocumentItem, match: string): lsp.Range {
-    return lsp.Range.create(
-        position(document, match),
-        positionAfter(document, match),
-    );
+    return lsp.Range.create(position(document, match), positionAfter(document, match));
 }
 
 export function lastRange(document: lsp.TextDocumentItem, match: string): lsp.Range {
@@ -145,17 +148,23 @@ export class TestLspClient implements LspClient {
         protected logger: ConsoleLogger,
     ) {}
 
-    // eslint-disable-next-line @typescript-eslint/require-await
-    async createProgressReporter(_token?: lsp.CancellationToken, _workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter> {
-        const reporter = new class implements lsp.WorkDoneProgressReporter {
+    // oxlint-disable-next-line typescript/require-await
+    async createProgressReporter(
+        _token?: lsp.CancellationToken,
+        _workDoneProgress?: lsp.WorkDoneProgressReporter,
+    ): Promise<lsp.WorkDoneProgressReporter> {
+        const reporter = new (class implements lsp.WorkDoneProgressReporter {
             begin(_title: string, _percentage?: number, _message?: string, _cancellable?: boolean): void {}
             report(_message: any): void {}
             done(): void {}
-        };
+        })();
         return reporter;
     }
 
-    async withProgress<R = void>(_options: WithProgressOptions, task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>): Promise<R> {
+    async withProgress<R = void>(
+        _options: WithProgressOptions,
+        task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>,
+    ): Promise<R> {
         const progress = await this.createProgressReporter();
         return await task(progress);
     }
@@ -180,7 +189,7 @@ export class TestLspClient implements LspClient {
         this.workspaceEditsListener = listener;
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
+    // oxlint-disable-next-line typescript/require-await
     async applyWorkspaceEdit(args: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {
         if (this.workspaceEditsListener) {
             this.workspaceEditsListener(args);
@@ -231,7 +240,7 @@ interface TestLspServerOptions {
     initializationOptionsOverrides?: TypeScriptInitializationOptions;
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
+// oxlint-disable-next-line typescript/require-await
 export async function createServer(options: TestLspServerOptions): Promise<TestLspServer> {
     const logger = new ConsoleLogger(CONSOLE_LOG_LEVEL);
     const lspClient = new TestLspClient(options, logger);
@@ -249,7 +258,10 @@ export async function createServer(options: TestLspServerOptions): Promise<TestL
         rootUri: options.rootUri,
         processId: 42,
         capabilities: deepMerge(DEFAULT_TEST_CLIENT_CAPABILITIES, options.clientCapabilitiesOverride || {}),
-        initializationOptions: deepMerge(DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS, options.initializationOptionsOverrides || {}),
+        initializationOptions: deepMerge(
+            DEFAULT_TEST_CLIENT_INITIALIZATION_OPTIONS,
+            options.initializationOptionsOverrides || {},
+        ),
         workspaceFolders: null,
     });
     server.updateWorkspaceSettings({});

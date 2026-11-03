@@ -26,14 +26,14 @@ export class ResourceMap<T> {
         return resource.toString(true);
     };
 
-    private readonly _map = new Map<string, { readonly resource: URI; value: T; }>();
+    private readonly _map = new Map<string, { readonly resource: URI; value: T }>();
 
     constructor(
         protected readonly _normalizePath: (resource: URI) => string | undefined = ResourceMap.defaultPathNormalizer,
         protected readonly config: {
             readonly onCaseInsensitiveFileSystem: boolean;
         },
-    ) { }
+    ) {}
 
     public get size(): number {
         return this._map.size;
@@ -81,7 +81,7 @@ export class ResourceMap<T> {
         return Array.from(this._map.values(), x => x.value);
     }
 
-    public entries(): Iterable<{ resource: URI; value: T; }> {
+    public entries(): Iterable<{ resource: URI; value: T }> {
         return this._map.values();
     }
 

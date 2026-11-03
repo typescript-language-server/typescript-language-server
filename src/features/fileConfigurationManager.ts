@@ -14,7 +14,14 @@
 import path from 'node:path';
 import lsp from 'vscode-languageserver';
 import type { URI } from 'vscode-uri';
-import { CommandTypes, ModuleKind, ScriptTarget, type ts, type TypeScriptInitializationOptions, type SupportedFeatures } from '../ts-protocol.js';
+import {
+    CommandTypes,
+    ModuleKind,
+    ScriptTarget,
+    type ts,
+    type TypeScriptInitializationOptions,
+    type SupportedFeatures,
+} from '../ts-protocol.js';
 import type { ITypeScriptServiceClient } from '../typescriptService.js';
 import { isTypeScriptDocument } from '../configuration/languageIds.js';
 import type { LspDocument } from '../document.js';
@@ -117,14 +124,14 @@ export interface WorkspaceConfigurationImplicitProjectConfigurationOptions {
 
 export type TypeScriptInlayHintsPreferences = Pick<
     ts.server.protocol.UserPreferences,
-    'includeInlayParameterNameHints' |
-    'includeInlayParameterNameHintsWhenArgumentMatchesName' |
-    'includeInlayFunctionParameterTypeHints' |
-    'includeInlayVariableTypeHints' |
-    'includeInlayVariableTypeHintsWhenTypeMatchesName' |
-    'includeInlayPropertyDeclarationTypeHints' |
-    'includeInlayFunctionLikeReturnTypeHints' |
-    'includeInlayEnumMemberValueHints'
+    | 'includeInlayParameterNameHints'
+    | 'includeInlayParameterNameHintsWhenArgumentMatchesName'
+    | 'includeInlayFunctionParameterTypeHints'
+    | 'includeInlayVariableTypeHints'
+    | 'includeInlayVariableTypeHintsWhenTypeMatchesName'
+    | 'includeInlayPropertyDeclarationTypeHints'
+    | 'includeInlayFunctionLikeReturnTypeHints'
+    | 'includeInlayEnumMemberValueHints'
 >;
 
 interface WorkspaceConfigurationDiagnosticsOptions {
@@ -210,10 +217,7 @@ export default class FileConfigurationManager {
             }
         }
         if (this.features.inlayHintRefreshSupport) {
-            const settingKeys = [
-                'javascript.inlayHints',
-                'typescript.inlayHints',
-            ];
+            const settingKeys = ['javascript.inlayHints', 'typescript.inlayHints'];
             const oldInlayHints = getValueForConfigurationKeys(settingKeys, this.workspaceConfiguration);
             const newInlayHints = getValueForConfigurationKeys(settingKeys, updatedConfiguration);
             if (!equals(oldInlayHints, newInlayHints)) {
@@ -225,45 +229,42 @@ export default class FileConfigurationManager {
         this.setCompilerOptionsForInferredProjects();
     }
 
-    public setGlobalConfiguration(workspaceFolder: string | undefined, hostInfo?: TypeScriptInitializationOptions['hostInfo']): void {
+    public setGlobalConfiguration(
+        workspaceFolder: string | undefined,
+        hostInfo?: TypeScriptInitializationOptions['hostInfo'],
+    ): void {
         const formatOptions: ts.server.protocol.FormatCodeSettings = {
             // We can use \n here since the editor should normalize later on to its line endings.
             newLineCharacter: '\n',
         };
 
-        this.client.executeWithoutWaitingForResponse(
-            CommandTypes.Configure,
-            {
-                ...hostInfo ? { hostInfo } : {},
-                formatOptions,
-                preferences: {
-                    ...this.tsPreferences,
-                    autoImportFileExcludePatterns: this.getAutoImportFileExcludePatternsPreference(workspaceFolder),
-                },
+        this.client.executeWithoutWaitingForResponse(CommandTypes.Configure, {
+            ...(hostInfo ? { hostInfo } : {}),
+            formatOptions,
+            preferences: {
+                ...this.tsPreferences,
+                autoImportFileExcludePatterns: this.getAutoImportFileExcludePatternsPreference(workspaceFolder),
             },
-        );
+        });
         this.setCompilerOptionsForInferredProjects();
     }
 
     private setCompilerOptionsForInferredProjects(): void {
-        this.client.executeWithoutWaitingForResponse(
-            CommandTypes.CompilerOptionsForInferredProjects,
-            {
-                options: {
-                    ...getInferredProjectCompilerOptions(this.client.apiVersion, this.workspaceConfiguration.implicitProjectConfiguration!),
-                    allowJs: true,
-                    allowNonTsExtensions: true,
-                    allowSyntheticDefaultImports: true,
-                    resolveJsonModule: true,
-                },
+        this.client.executeWithoutWaitingForResponse(CommandTypes.CompilerOptionsForInferredProjects, {
+            options: {
+                ...getInferredProjectCompilerOptions(
+                    this.client.apiVersion,
+                    this.workspaceConfiguration.implicitProjectConfiguration!,
+                ),
+                allowJs: true,
+                allowNonTsExtensions: true,
+                allowSyntheticDefaultImports: true,
+                resolveJsonModule: true,
             },
-        );
+        });
     }
 
-    public async ensureConfigurationForDocument(
-        document: LspDocument,
-        token?: lsp.CancellationToken,
-    ): Promise<void> {
+    public async ensureConfigurationForDocument(document: LspDocument, token?: lsp.CancellationToken): Promise<void> {
         const formattingOptions = await this.getFormattingOptions(document);
         return this.ensureConfigurationOptions(document, formattingOptions, token);
     }
@@ -274,10 +275,12 @@ export default class FileConfigurationManager {
             return formatOptionsCached;
         }
 
-        const formatConfiguration =
-            this.features.workspaceConfigurationSuppport
-                ? await this.lspClient.getWorkspaceConfiguration<Partial<lsp.FormattingOptions> | undefined>(document.uri.toString(), 'formattingOptions') || {}
-                : {};
+        const formatConfiguration = this.features.workspaceConfigurationSuppport
+            ? (await this.lspClient.getWorkspaceConfiguration<Partial<lsp.FormattingOptions> | undefined>(
+                  document.uri.toString(),
+                  'formattingOptions',
+              )) || {}
+            : {};
 
         const options: Partial<lsp.FormattingOptions> = {};
 
@@ -312,7 +315,11 @@ export default class FileConfigurationManager {
 
         const task = (async () => {
             try {
-                const response = await this.client.execute(CommandTypes.Configure, { file: document.filepath, ...currentOptions }, token);
+                const response = await this.client.execute(
+                    CommandTypes.Configure,
+                    { file: document.filepath, ...currentOptions },
+                    token,
+                );
                 return response.type === 'response' ? currentOptions : undefined;
             } catch {
                 return undefined;
@@ -341,10 +348,7 @@ export default class FileConfigurationManager {
         this.initialConfigurationRequestsMap.clear();
     }
 
-    private getFileOptions(
-        document: LspDocument,
-        options?: Partial<lsp.FormattingOptions>,
-    ): FileConfiguration {
+    private getFileOptions(document: LspDocument, options?: Partial<lsp.FormattingOptions>): FileConfiguration {
         return {
             formatOptions: this.getFormatOptions(document, options),
             preferences: this.getPreferences(document),
@@ -381,11 +385,11 @@ export default class FileConfigurationManager {
 
     public getPreferences(document: LspDocument): ts.server.protocol.UserPreferences {
         const workspacePreferences = this.getWorkspacePreferencesForFile(document);
-        const preferences = Object.assign<ts.server.protocol.UserPreferences, ts.server.protocol.UserPreferences, ts.server.protocol.UserPreferences>(
-            {},
-            this.tsPreferences,
-            workspacePreferences?.inlayHints || {},
-        );
+        const preferences = Object.assign<
+            ts.server.protocol.UserPreferences,
+            ts.server.protocol.UserPreferences,
+            ts.server.protocol.UserPreferences
+        >({}, this.tsPreferences, workspacePreferences?.inlayHints || {});
 
         return {
             ...preferences,
@@ -395,9 +399,12 @@ export default class FileConfigurationManager {
 
     private getQuoteStylePreference(preferences: ts.server.protocol.UserPreferences) {
         switch (preferences.quotePreference) {
-            case 'single': return 'single';
-            case 'double': return 'double';
-            default: return this.client.apiVersion.gte(API.v333) ? 'auto' : undefined;
+            case 'single':
+                return 'single';
+            case 'double':
+                return 'double';
+            default:
+                return this.client.apiVersion.gte(API.v333) ? 'auto' : undefined;
         }
     }
 
@@ -409,10 +416,13 @@ export default class FileConfigurationManager {
             // Normalization rules: https://github.com/microsoft/TypeScript/pull/49578
             const slashNormalized = p.replace(/\\/g, '/');
             const isRelative = /^\.\.?($|\/)/.test(slashNormalized);
-            return path.posix.isAbsolute(p) ? p :
-                p.startsWith('*') ? `/${slashNormalized}` :
-                    isRelative ? path.posix.join(workspaceFolder, p) :
-                        `/**/${slashNormalized}`;
+            return path.posix.isAbsolute(p)
+                ? p
+                : p.startsWith('*')
+                  ? `/${slashNormalized}`
+                  : isRelative
+                    ? path.posix.join(workspaceFolder, p)
+                    : `/**/${slashNormalized}`;
         });
     }
 }
@@ -422,7 +432,7 @@ function getValueForConfigurationKeys(keys: string[], configuration: WorkspaceCo
     for (const key of keys) {
         let resolvedValue: any = configuration;
         for (const component of key.split('.')) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access
             resolvedValue = resolvedValue[component];
             if (!isPlainObject(resolvedValue)) {
                 break;

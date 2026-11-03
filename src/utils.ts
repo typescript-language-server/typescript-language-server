@@ -6,7 +6,7 @@
  */
 
 export class Deferred<T> {
-    resolve: (value: T) => void = (_) => {};
+    resolve: (value: T) => void = _ => {};
     reject: (err?: unknown) => void = (_?) => {};
 
     promise = new Promise<T>((resolve, reject) => {

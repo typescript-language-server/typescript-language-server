@@ -9,7 +9,19 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import fs from 'fs-extra';
 import * as lsp from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uri, createServer, position, lastPosition, filePath, positionAfter, readContents, type TestLspServer, openDocumentAndWaitForDiagnostics, range, lastRange } from './test-utils.js';
+import {
+    uri,
+    createServer,
+    position,
+    lastPosition,
+    filePath,
+    positionAfter,
+    readContents,
+    type TestLspServer,
+    openDocumentAndWaitForDiagnostics,
+    range,
+    lastRange,
+} from './test-utils.js';
 import { Commands } from './commands.js';
 import { TSServerRequestCommand } from './commands/tsserverRequests.js';
 import { CommandTypes, SemicolonPreference } from './ts-protocol.js';
@@ -90,7 +102,8 @@ describe('completion', () => {
         expect(consoleLogCompletion).toBeDefined();
         const { kind } = consoleLogCompletion!;
         // console.log as a warning is erroneously mapped to a non-function type
-        const containsInvalidCompletions = kind !== lsp.CompletionItemKind.Function && kind !== lsp.CompletionItemKind.Method;
+        const containsInvalidCompletions =
+            kind !== lsp.CompletionItemKind.Function && kind !== lsp.CompletionItemKind.Method;
         expect(containsInvalidCompletions).toBe(false);
     });
 
@@ -277,25 +290,27 @@ describe('completion', () => {
         expect(proposals).not.toBeNull();
         const completion = proposals!.items.find(completion => completion.label === 'readFile');
         expect(completion).toBeDefined();
-        expect(completion).toStrictEqual(expect.objectContaining({
-            label: 'readFile',
-            kind: lsp.CompletionItemKind.Function,
-            insertTextFormat: lsp.InsertTextFormat.Snippet,
-            detail: 'fs',
-            textEdit: {
-                newText: 'import { readFile$1 } from "fs";',
-                range: {
-                    start: {
-                        line: 0,
-                        character: 0,
-                    },
-                    end: {
-                        line: 0,
-                        character: 19,
+        expect(completion).toStrictEqual(
+            expect.objectContaining({
+                label: 'readFile',
+                kind: lsp.CompletionItemKind.Function,
+                insertTextFormat: lsp.InsertTextFormat.Snippet,
+                detail: 'fs',
+                textEdit: {
+                    newText: 'import { readFile$1 } from "fs";',
+                    range: {
+                        start: {
+                            line: 0,
+                            character: 0,
+                        },
+                        end: {
+                            line: 0,
+                            character: 19,
+                        },
                     },
                 },
-            },
-        }));
+            }),
+        );
     });
 
     it('includes detail field with package name for auto-imports', async () => {
@@ -413,10 +428,10 @@ describe('completion', () => {
         expect(resolvedItem).toMatchObject({
             label: 'readFile',
             insertTextFormat: lsp.InsertTextFormat.Snippet,
-            // eslint-disable-next-line no-template-curly-in-string
+            // oxlint-disable-next-line no-template-curly-in-string
             insertText: 'readFile(${1:path}, ${2:options}, ${3:callback})$0',
             textEdit: {
-                // eslint-disable-next-line no-template-curly-in-string
+                // oxlint-disable-next-line no-template-curly-in-string
                 newText: 'readFile(${1:path}, ${2:options}, ${3:callback})$0',
                 insert: {
                     start: {
@@ -662,22 +677,18 @@ describe('completion', () => {
         });
         expect(proposals).not.toBeNull();
         expect(proposals!.items).toHaveLength(2);
-        expect(proposals!.items[0]).toMatchObject(
-            {
-                label: 'bar',
-                kind: lsp.CompletionItemKind.Method,
+        expect(proposals!.items[0]).toMatchObject({
+            label: 'bar',
+            kind: lsp.CompletionItemKind.Method,
+        });
+        expect(proposals!.items[1]).toMatchObject({
+            label: 'bar',
+            labelDetails: {
+                detail: '(x)',
             },
-        );
-        expect(proposals!.items[1]).toMatchObject(
-            {
-                label: 'bar',
-                labelDetails: {
-                    detail: '(x)',
-                },
-                kind: lsp.CompletionItemKind.Method,
-                insertText: 'bar(x) {\n    $0\n},',
-            },
-        );
+            kind: lsp.CompletionItemKind.Method,
+            insertText: 'bar(x) {\n    $0\n},',
+        });
     });
 });
 
@@ -692,10 +703,10 @@ describe('definition', () => {
             text: readContents(filePath('source-definition', 'index.ts')),
         };
         await openDocumentAndWaitForDiagnostics(server, indexDoc);
-        const definitions = await server.definition({
+        const definitions = (await server.definition({
             textDocument: indexDoc,
             position: position(indexDoc, 'a;/*identifier*/'),
-        }) as lsp.Location[];
+        })) as lsp.Location[];
         expect(Array.isArray(definitions)).toBeTruthy();
         expect(definitions).toHaveLength(1);
         expect(definitions[0]).toMatchObject({
@@ -754,10 +765,10 @@ describe('definition (definition link supported)', () => {
             text: readContents(filePath('source-definition', 'index.ts')),
         };
         localServer.didOpenTextDocument({ textDocument: indexDoc });
-        const definitions = await localServer.definition({
+        const definitions = (await localServer.definition({
             textDocument: indexDoc,
             position: position(indexDoc, 'a;/*identifier*/'),
-        }) as lsp.DefinitionLink[];
+        })) as lsp.DefinitionLink[];
         expect(Array.isArray(definitions)).toBeTruthy();
         expect(definitions).toHaveLength(1);
         expect(definitions[0]).toMatchObject({
@@ -968,7 +979,7 @@ Box
       `,
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const symbols = await server.documentSymbol({ textDocument: doc }) as lsp.DocumentSymbol[];
+        const symbols = (await server.documentSymbol({ textDocument: doc })) as lsp.DocumentSymbol[];
         const expectation = `
 Foo
   foo
@@ -978,7 +989,10 @@ Foo
   myFunction
 `;
         expect(symbolsAsString(symbols) + '\n').toBe(expectation);
-        expect(symbols[0].selectionRange).toMatchObject({ start: { line: 1, character: 21 }, end: { line: 1, character: 24 } });
+        expect(symbols[0].selectionRange).toMatchObject({
+            start: { line: 1, character: 21 },
+            end: { line: 1, character: 24 },
+        });
         expect(symbols[0].range).toMatchObject({ start: { line: 1, character: 8 }, end: { line: 5, character: 9 } });
 
         expect(symbols[1].selectionRange).toMatchObject(symbols[1].range);
@@ -987,19 +1001,21 @@ Foo
 });
 
 function symbolsAsString(symbols: (lsp.DocumentSymbol | lsp.SymbolInformation)[], indentation = ''): string {
-    return symbols.map(symbol => {
-        let result = '\n' + indentation + symbol.name;
-        if (lsp.DocumentSymbol.is(symbol)) {
-            if (symbol.children) {
-                result = result + symbolsAsString(symbol.children, `${indentation}  `);
+    return symbols
+        .map(symbol => {
+            let result = '\n' + indentation + symbol.name;
+            if (lsp.DocumentSymbol.is(symbol)) {
+                if (symbol.children) {
+                    result = result + symbolsAsString(symbol.children, `${indentation}  `);
+                }
+            } else {
+                if (symbol.containerName) {
+                    result = `${result} in ${symbol.containerName}`;
+                }
             }
-        } else {
-            if (symbol.containerName) {
-                result = `${result} in ${symbol.containerName}`;
-            }
-        }
-        return result;
-    }).join('');
+            return result;
+        })
+        .join('');
 }
 
 describe('editing', () => {
@@ -1044,7 +1060,7 @@ describe('eager diagnostic invalidation', () => {
             languageId: 'typescript',
             version: 1,
             // Type error: 'missing' is not defined.
-            text: 'export function foo(): void { missing(\'test\'); }',
+            text: "export function foo(): void { missing('test'); }",
         };
 
         await openDocumentAndWaitForDiagnostics(server, doc);
@@ -1075,7 +1091,7 @@ describe('eager diagnostic invalidation', () => {
             languageId: 'typescript',
             version: 1,
             // Type error: 'missing' is not defined.
-            text: 'export function foo(): void { missing(\'test\'); }',
+            text: "export function foo(): void { missing('test'); }",
         };
 
         await openDocumentAndWaitForDiagnostics(server, doc);
@@ -1147,7 +1163,10 @@ describe('formatting', () => {
     it('full document formatting', async () => {
         const text = 'export  function foo (     )   :  void   {   }';
         const textDocument = {
-            uri: uriString, languageId, version, text,
+            uri: uriString,
+            languageId,
+            version,
+            text,
         };
         await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
@@ -1164,7 +1183,10 @@ describe('formatting', () => {
     it('indent settings (3 spaces)', async () => {
         const text = 'function foo() {\n// some code\n}';
         const textDocument = {
-            uri: uriString, languageId, version, text,
+            uri: uriString,
+            languageId,
+            version,
+            text,
         };
         await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
@@ -1181,7 +1203,10 @@ describe('formatting', () => {
     it('indent settings (tabs)', async () => {
         const text = 'function foo() {\n// some code\n}';
         const textDocument = {
-            uri: uriString, languageId, version, text,
+            uri: uriString,
+            languageId,
+            version,
+            text,
         };
         await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentFormatting({
@@ -1198,7 +1223,10 @@ describe('formatting', () => {
     it('formatting setting set through workspace configuration', async () => {
         const text = 'function foo() {\n// some code\n}';
         const textDocument = {
-            uri: uriString, languageId, version, text,
+            uri: uriString,
+            languageId,
+            version,
+            text,
         };
         await openDocumentAndWaitForDiagnostics(server, textDocument);
 
@@ -1225,7 +1253,10 @@ describe('formatting', () => {
     it('considers last character in the file', async () => {
         const text = 'const first = 1;\nconst second = 2';
         const textDocument = {
-            uri: uriString, languageId, version, text,
+            uri: uriString,
+            languageId,
+            version,
+            text,
         };
         await openDocumentAndWaitForDiagnostics(server, textDocument);
 
@@ -1249,9 +1280,13 @@ describe('formatting', () => {
     });
 
     it('selected range', async () => {
-        const text = 'function foo() {\nconst first = 1;\nconst second = 2;\nconst val = foo( "something" );\n//const fourth = 4;\n}';
+        const text =
+            'function foo() {\nconst first = 1;\nconst second = 2;\nconst val = foo( "something" );\n//const fourth = 4;\n}';
         const textDocument = {
-            uri: uriString, languageId, version, text,
+            uri: uriString,
+            languageId,
+            version,
+            text,
         };
         await openDocumentAndWaitForDiagnostics(server, textDocument);
         const edits = await server.documentRangeFormatting({
@@ -1272,7 +1307,9 @@ describe('formatting', () => {
             },
         });
         const result = TextDocument.applyEdits(TextDocument.create(uriString, languageId, version, text), edits);
-        expect('function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}').toBe(result);
+        expect(
+            'function foo() {\nconst first = 1;\n    const second = 2;\n    const val = foo("something");\n//const fourth = 4;\n}',
+        ).toBe(result);
     });
 });
 
@@ -1296,14 +1333,18 @@ describe('signatureHelp', () => {
 
         expect(result.signatures).toHaveLength(2);
 
-        expect(result.signatures[result.activeSignature!].parameters![result.activeParameter!].label).toBe('bar: string');
+        expect(result.signatures[result.activeSignature!].parameters![result.activeParameter!].label).toBe(
+            'bar: string',
+        );
 
         result = (await server.signatureHelp({
             textDocument: doc,
             position: position(doc, 'param2'),
         }))!;
 
-        expect(result.signatures[result.activeSignature!].parameters![result.activeParameter!].label).toBe('baz?: boolean');
+        expect(result.signatures[result.activeSignature!].parameters![result.activeParameter!].label).toBe(
+            'baz?: boolean',
+        );
     });
 
     it('retrigger with specific signature active', async () => {
@@ -1332,7 +1373,7 @@ describe('signatureHelp', () => {
                 triggerKind: lsp.SignatureHelpTriggerKind.Invoked,
                 activeSignatureHelp: {
                     signatures: result!.signatures,
-                    activeSignature: 1,  // select second signature
+                    activeSignature: 1, // select second signature
                 },
             },
         }))!;
@@ -1357,23 +1398,25 @@ describe('code actions', () => {
 
     it('can provide quickfix code actions', async () => {
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const result = await server.codeAction({
+        const result = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: { line: 1, character: 25 },
                 end: { line: 1, character: 49 },
             },
             context: {
-                diagnostics: [{
-                    range: {
-                        start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 },
+                diagnostics: [
+                    {
+                        range: {
+                            start: { line: 1, character: 25 },
+                            end: { line: 1, character: 49 },
+                        },
+                        code: 6133,
+                        message: 'unused arg',
                     },
-                    code: 6133,
-                    message: 'unused arg',
-                }],
+                ],
             },
-        }) as lsp.CodeAction[];
+        })) as lsp.CodeAction[];
 
         // 1 quickfix + 2 refactorings
         expect(result).toHaveLength(3);
@@ -1429,7 +1472,9 @@ describe('code actions', () => {
             },
             kind: 'quickfix',
         });
-        const refactorAction = result.find(diagnostic => diagnostic.kind === 'refactor.rewrite.parameters.toDestructured');
+        const refactorAction = result.find(
+            diagnostic => diagnostic.kind === 'refactor.rewrite.parameters.toDestructured',
+        );
         expect(refactorAction).toBeDefined();
         expect(refactorAction).toMatchObject({
             title: 'Convert parameters to destructured object',
@@ -1482,14 +1527,16 @@ describe('code actions', () => {
                 end: { line: 1, character: 49 },
             },
             context: {
-                diagnostics: [{
-                    range: {
-                        start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 },
+                diagnostics: [
+                    {
+                        range: {
+                            start: { line: 1, character: 25 },
+                            end: { line: 1, character: 49 },
+                        },
+                        code: 6133,
+                        message: 'unused arg',
                     },
-                    code: 6133,
-                    message: 'unused arg',
-                }],
+                ],
                 only: ['refactor.rewrite', 'invalid-action'],
             },
         });
@@ -1577,19 +1624,23 @@ describe('code actions', () => {
                 end: { line: 1, character: 53 },
             },
             context: {
-                diagnostics: [{
-                    range: {
-                        start: { line: 1, character: 25 },
-                        end: { line: 1, character: 49 },
+                diagnostics: [
+                    {
+                        range: {
+                            start: { line: 1, character: 25 },
+                            end: { line: 1, character: 49 },
+                        },
+                        code: 6133,
+                        message: 'unused arg',
                     },
-                    code: 6133,
-                    message: 'unused arg',
-                }],
+                ],
                 only: [CodeActionKind.SourceOrganizeImportsTs.value],
             },
         });
 
-        expect(result.filter(action => 'kind' in action && action.kind === CodeActionKind.SourceOrganizeImportsTs.value)).toStrictEqual([]);
+        expect(
+            result.filter(action => 'kind' in action && action.kind === CodeActionKind.SourceOrganizeImportsTs.value),
+        ).toStrictEqual([]);
     });
 
     it('provides organize imports when there are no errors', async () => {
@@ -1666,7 +1717,7 @@ accessSync('t');`,
             uri: uri('bar.ts'),
             languageId: 'typescript',
             version: 1,
-            text: 'existsSync(\'t\');',
+            text: "existsSync('t');",
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
         const result = await server.codeAction({
@@ -1776,7 +1827,7 @@ accessSync('t');`,
             uri: uri('bar.ts'),
             languageId: 'typescript',
             version: 1,
-            text: 'import { existsSync } from \'fs\';',
+            text: "import { existsSync } from 'fs';",
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
         const result = await server.codeAction({
@@ -2030,7 +2081,7 @@ describe('executeCommand', () => {
             text: 'export function fn(): void {}\nexport function newFn(): void {}',
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
-        const codeActions = await server.codeAction({
+        const codeActions = (await server.codeAction({
             textDocument: doc,
             range: {
                 start: position(doc, 'newFn'),
@@ -2039,9 +2090,11 @@ describe('executeCommand', () => {
             context: {
                 diagnostics: [],
             },
-        }) as lsp.CodeAction[];
+        })) as lsp.CodeAction[];
         // Find refactoring code action.
-        const applyRefactoringAction = codeActions.find(action => action.command?.command === Commands.APPLY_REFACTORING);
+        const applyRefactoringAction = codeActions.find(
+            action => action.command?.command === Commands.APPLY_REFACTORING,
+        );
         expect(applyRefactoringAction).toBeDefined();
         // Execute refactoring action.
         await server.executeCommand({
@@ -2072,8 +2125,7 @@ describe('executeCommand', () => {
                 },
                 newText: '',
             },
-        ],
-        );
+        ]);
         expect(change2).toMatchObject([
             {
                 range: {
@@ -2088,8 +2140,7 @@ describe('executeCommand', () => {
                 },
                 newText: 'export function newFn(): void { }\n',
             },
-        ],
-        );
+        ]);
     });
 
     it('send custom tsserver command', async () => {
@@ -2102,7 +2153,7 @@ describe('executeCommand', () => {
         };
         await openDocumentAndWaitForDiagnostics(server, doc);
 
-        const result = await server.executeCommand({
+        const result = (await server.executeCommand({
             command: TSServerRequestCommand.ID,
             arguments: [
                 CommandTypes.ProjectInfo,
@@ -2117,7 +2168,7 @@ describe('executeCommand', () => {
                     lowPriority: true,
                 },
             ],
-        }) as {body: {configFileName: string;};};
+        })) as { body: { configFileName: string } };
         expect(result).toBeDefined();
 
         expect(result.body).toMatchObject({
@@ -2162,13 +2213,10 @@ describe('executeCommand', () => {
             text: readContents(filePath('source-definition', 'index.ts')),
         };
         await openDocumentAndWaitForDiagnostics(server, indexDoc);
-        const result = await server.executeCommand({
+        const result = (await server.executeCommand({
             command: Commands.SOURCE_DEFINITION,
-            arguments: [
-                indexUri,
-                position(indexDoc, ';/*identifier*/'),
-            ],
-        }) as lsp.Location[] | null;
+            arguments: [indexUri, position(indexDoc, ';/*identifier*/')],
+        })) as lsp.Location[] | null;
         expect(result).not.toBeNull();
         expect(result).toHaveLength(1);
         expect(result![0]).toMatchObject({
@@ -2405,7 +2453,9 @@ describe('codeLens', () => {
             },
         ]);
 
-        const resolvedCodeLenses = await Promise.all(codeLenses.map(codeLens => server.codeLensResolve(codeLens, lsp.CancellationToken.None)));
+        const resolvedCodeLenses = await Promise.all(
+            codeLenses.map(codeLens => server.codeLensResolve(codeLens, lsp.CancellationToken.None)),
+        );
         expect(resolvedCodeLenses).toMatchObject([
             {
                 command: {
@@ -2452,11 +2502,7 @@ describe('codeLens', () => {
                 command: {
                     title: '0 references',
                     command: '',
-                    arguments: [
-                        doc.uri,
-                        position(doc, 'pet'),
-                        [],
-                    ],
+                    arguments: [doc.uri, position(doc, 'pet'), []],
                 },
             },
             {
@@ -2577,10 +2623,7 @@ describe('inlayHints', () => {
         expect(inlayHints).toBeDefined();
         expect(inlayHints).toHaveLength(1);
         expect(inlayHints![0]).toMatchObject({
-            label: [
-                { value: ': ' },
-                { value: 'number' },
-            ],
+            label: [{ value: ': ' }, { value: 'number' }],
             position: { line: 1, character: 29 },
             kind: lsp.InlayHintKind.Type,
             paddingLeft: true,
@@ -2682,12 +2725,10 @@ describe('completions without client snippet support', () => {
         });
         expect(proposals).not.toBeNull();
         expect(proposals!.items).toHaveLength(1);
-        expect(proposals!.items[0]).toMatchObject(
-            {
-                label: 'bar',
-                kind: 2,
-            },
-        );
+        expect(proposals!.items[0]).toMatchObject({
+            label: 'bar',
+            kind: 2,
+        });
     });
 });
 
@@ -2703,10 +2744,10 @@ describe('fileOperations', () => {
         expect(edit.changes![uri('module2.ts')]).toStrictEqual([
             {
                 range: {
-                    start:{ line: 0, character: 25 },
+                    start: { line: 0, character: 25 },
                     end: { line: 0, character: 37 },
                 },
-                newText:'./new_module1_name.js',
+                newText: './new_module1_name.js',
             },
         ]);
     });
@@ -2722,10 +2763,10 @@ describe('fileOperations', () => {
         expect(edit.changes![uri('module3.ts')]).toStrictEqual([
             {
                 range: {
-                    start:{ line: 0, character: 31 },
+                    start: { line: 0, character: 31 },
                     end: { line: 0, character: 47 },
                 },
-                newText:'./rename2/var.js',
+                newText: './rename2/var.js',
             },
         ]);
     });
@@ -2764,35 +2805,35 @@ describe('fileOperations', () => {
         server.didCloseTextDocument({ textDocument: import1Document });
 
         const edit = await server.willRenameFiles({
-            files: [{
-                oldUri: uri(filesDirectory, exportFileName),
-                newUri: uri(filesDirectory, exportNewFileName),
-            }],
+            files: [
+                {
+                    oldUri: uri(filesDirectory, exportFileName),
+                    newUri: uri(filesDirectory, exportNewFileName),
+                },
+            ],
         });
         expect(edit.changes).toBeDefined();
         expect(Object.keys(edit.changes!)).toHaveLength(2);
-        expect(edit.changes!).toStrictEqual(
-            {
-                [import1Uri]: [
-                    {
-                        range: {
-                            start:{ line: 0, character: 19 },
-                            end: { line: 0, character: 30 },
-                        },
-                        newText:'./export2.js',
+        expect(edit.changes!).toStrictEqual({
+            [import1Uri]: [
+                {
+                    range: {
+                        start: { line: 0, character: 19 },
+                        end: { line: 0, character: 30 },
                     },
-                ],
-                [import2Uri]: [
-                    {
-                        range: {
-                            start:{ line: 0, character: 19 },
-                            end: { line: 0, character: 30 },
-                        },
-                        newText:'./export2.js',
+                    newText: './export2.js',
+                },
+            ],
+            [import2Uri]: [
+                {
+                    range: {
+                        start: { line: 0, character: 19 },
+                        end: { line: 0, character: 30 },
                     },
-                ],
-            },
-        );
+                    newText: './export2.js',
+                },
+            ],
+        });
     });
 });
 

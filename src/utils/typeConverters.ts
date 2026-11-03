@@ -19,10 +19,16 @@ export namespace Range {
 
     export const fromLocations = (start: ts.server.protocol.Location, end: ts.server.protocol.Location): lsp.Range =>
         LspRange.create(
-            Math.max(0, start.line - 1), Math.max(start.offset - 1, 0),
-            Math.max(0, end.line - 1), Math.max(0, end.offset - 1));
+            Math.max(0, start.line - 1),
+            Math.max(start.offset - 1, 0),
+            Math.max(0, end.line - 1),
+            Math.max(0, end.offset - 1),
+        );
 
-    export const toFileRangeRequestArgs = (file: string, range: lsp.Range): ts.server.protocol.FileRangeRequestArgs => ({
+    export const toFileRangeRequestArgs = (
+        file: string,
+        range: lsp.Range,
+    ): ts.server.protocol.FileRangeRequestArgs => ({
         file,
         startLine: range.start.line + 1,
         startOffset: range.start.character + 1,
@@ -72,7 +78,10 @@ export namespace Position {
         offset: position.character + 1,
     });
 
-    export const toFileLocationRequestArgs = (file: string, position: lsp.Position): ts.server.protocol.FileLocationRequestArgs => ({
+    export const toFileLocationRequestArgs = (
+        file: string,
+        position: lsp.Position,
+    ): ts.server.protocol.FileLocationRequestArgs => ({
         file,
         line: position.line + 1,
         offset: position.character + 1,

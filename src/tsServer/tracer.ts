@@ -44,10 +44,14 @@ export default class Tracer {
     constructor(
         private readonly logger: Logger,
         private readonly trace: Trace,
-    ) {
-    }
+    ) {}
 
-    public traceRequest(serverId: string, request: ts.server.protocol.Request, responseExpected: boolean, queueLength: number): void {
+    public traceRequest(
+        serverId: string,
+        request: ts.server.protocol.Request,
+        responseExpected: boolean,
+        queueLength: number,
+    ): void {
         if (this.trace === Trace.Off) {
             return;
         }
@@ -55,10 +59,18 @@ export default class Tracer {
         if (this.trace === Trace.Verbose && request.arguments) {
             data = `Arguments: ${JSON.stringify(request.arguments, null, 4)}`;
         }
-        this.logTrace(serverId, `Sending request: ${request.command} (${request.seq}). Response expected: ${responseExpected ? 'yes' : 'no'}. Current queue length: ${queueLength}`, data);
+        this.logTrace(
+            serverId,
+            `Sending request: ${request.command} (${request.seq}). Response expected: ${responseExpected ? 'yes' : 'no'}. Current queue length: ${queueLength}`,
+            data,
+        );
     }
 
-    public traceResponse(serverId: string, response: ts.server.protocol.Response, meta: RequestExecutionMetadata): void {
+    public traceResponse(
+        serverId: string,
+        response: ts.server.protocol.Response,
+        meta: RequestExecutionMetadata,
+    ): void {
         if (this.trace === Trace.Off) {
             return;
         }
@@ -66,14 +78,26 @@ export default class Tracer {
         if (this.trace === Trace.Verbose && response.body) {
             data = `Result: ${JSON.stringify(response.body, null, 4)}`;
         }
-        this.logTrace(serverId, `Response received: ${response.command} (${response.request_seq}). Request took ${Date.now() - meta.queuingStartTime} ms. Success: ${response.success} ${!response.success ? `. Message: ${response.message}` : ''}`, data);
+        this.logTrace(
+            serverId,
+            `Response received: ${response.command} (${response.request_seq}). Request took ${Date.now() - meta.queuingStartTime} ms. Success: ${response.success} ${!response.success ? `. Message: ${response.message}` : ''}`,
+            data,
+        );
     }
 
-    public traceRequestCompleted(serverId: string, command: string, request_seq: number, meta: RequestExecutionMetadata): any {
+    public traceRequestCompleted(
+        serverId: string,
+        command: string,
+        request_seq: number,
+        meta: RequestExecutionMetadata,
+    ): any {
         if (this.trace === Trace.Off) {
             return;
         }
-        this.logTrace(serverId, `Async response received: ${command} (${request_seq}). Request took ${Date.now() - meta.queuingStartTime} ms.`);
+        this.logTrace(
+            serverId,
+            `Async response received: ${command} (${request_seq}). Request took ${Date.now() - meta.queuingStartTime} ms.`,
+        );
     }
 
     public traceEvent(serverId: string, event: ts.server.protocol.Event): void {

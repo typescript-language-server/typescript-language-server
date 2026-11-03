@@ -22,7 +22,12 @@ import { equals } from '../../utils/objects.js';
 // import { DiagnosticsManager } from './diagnostics.js';
 import type FileConfigurationManager from '../fileConfigurationManager.js';
 import { applyCodeActionCommands, getEditForCodeAction } from '../util/codeAction.js';
-import { type CodeActionProvider, type CodeActionProviderMetadata, TsCodeAction, type TsCodeActionProvider } from './codeActionProvider.js';
+import {
+    type CodeActionProvider,
+    type CodeActionProviderMetadata,
+    TsCodeAction,
+    type TsCodeActionProvider,
+} from './codeActionProvider.js';
 import type { LspDocument } from '../../document.js';
 import { toTextDocumentEdit } from '../../protocol-translation.js';
 import { CodeActionKind } from '../../utils/types.js';
@@ -41,7 +46,7 @@ class ApplyCodeActionCommand implements Command {
     constructor(
         private readonly client: ITypeScriptServiceClient,
         // private readonly diagnosticManager: DiagnosticsManager,
-    ) { }
+    ) {}
 
     // public async execute({ documentUri, action, diagnostic }: ApplyCodeActionCommand_args): Promise<boolean> {
     public async execute({ action }: ApplyCodeActionCommand_args): Promise<boolean> {
@@ -62,7 +67,7 @@ class ApplyFixAllCodeAction implements Command {
     constructor(
         private readonly client: ITypeScriptServiceClient,
         private readonly tsCodeActionProvider: TsCodeActionProvider,
-    ) { }
+    ) {}
 
     public async execute(args: ApplyFixAllCodeAction_args): Promise<void> {
         const tsAction = this.tsCodeActionProvider.getQuickFixAllTsCodeActionByFixName(args.tsActionId);
@@ -89,9 +94,7 @@ class DiagnosticsSet {
         return `${diagnostic.code}-${start.line},${start.character}-${end.line},${end.character}`;
     }
 
-    private constructor(
-        private readonly _values: Map<string, lsp.Diagnostic>,
-    ) { }
+    private constructor(private readonly _values: Map<string, lsp.Diagnostic>) {}
 
     public get values(): Iterable<lsp.Diagnostic> {
         return this._values.values();
@@ -170,19 +173,21 @@ class CodeActionSet {
 }
 
 class SupportedCodeActionProvider {
-    public constructor(
-        private readonly client: ITypeScriptServiceClient,
-    ) { }
+    public constructor(private readonly client: ITypeScriptServiceClient) {}
 
     public async getFixableDiagnosticsForContext(diagnostics: readonly lsp.Diagnostic[]): Promise<DiagnosticsSet> {
         const fixableCodes = await this.fixableDiagnosticCodes.value;
         return DiagnosticsSet.from(
-            diagnostics.filter(diagnostic => typeof diagnostic.code !== 'undefined' && fixableCodes.has(diagnostic.code + '')));
+            diagnostics.filter(
+                diagnostic => typeof diagnostic.code !== 'undefined' && fixableCodes.has(diagnostic.code + ''),
+            ),
+        );
     }
 
     private readonly fixableDiagnosticCodes = new Lazy<Thenable<Set<string>>>(() => {
-        return this.client.execute(CommandTypes.GetSupportedCodeFixes, null)
-            .then(response => response.type === 'response' ? response.body || [] : [])
+        return this.client
+            .execute(CommandTypes.GetSupportedCodeFixes, null)
+            .then(response => (response.type === 'response' ? response.body || [] : []))
             .then(codes => new Set(codes));
     });
 }
@@ -200,7 +205,7 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
         private readonly diagnosticsManager: DiagnosticsManager,
         private features: SupportedFeatures,
     ) {
-        commandManager.register(new ApplyCodeActionCommand(client/*, diagnosticsManager*/));
+        commandManager.register(new ApplyCodeActionCommand(client /*, diagnosticsManager*/));
         commandManager.register(new ApplyFixAllCodeAction(client, this));
 
         this.supportedCodeActionProvider = new SupportedCodeActionProvider(client);
@@ -223,7 +228,7 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
         let diagnostics = context.diagnostics;
         if (this.client.hasPendingDiagnostics(document.uri)) {
             // Delay for 500ms when there are pending diagnostics before recomputing up-to-date diagnostics.
-            await new Promise((resolve) => {
+            await new Promise(resolve => {
                 setTimeout(resolve, 500);
             });
 
@@ -273,7 +278,10 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
         return codeAction instanceof TsQuickFixAllCodeAction;
     }
 
-    public async resolveCodeAction(codeAction: TsQuickFixCodeAction, token: lsp.CancellationToken): Promise<TsQuickFixCodeAction> {
+    public async resolveCodeAction(
+        codeAction: TsQuickFixCodeAction,
+        token: lsp.CancellationToken,
+    ): Promise<TsQuickFixCodeAction> {
         if (!this.isCodeActionResolvable(codeAction) || !codeAction.tsAction.fixId) {
             return codeAction;
         }
@@ -289,7 +297,9 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
         const response = await this.client.execute(CommandTypes.GetCombinedCodeFix, arg, token);
         if (response.type === 'response') {
             codeAction.combinedResponse = response;
-            codeAction.edit = { documentChanges: response.body.changes.map(change => toTextDocumentEdit(change, this.client)) };
+            codeAction.edit = {
+                documentChanges: response.body.changes.map(change => toTextDocumentEdit(change, this.client)),
+            };
         }
 
         return codeAction;
@@ -307,7 +317,7 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
     ): Promise<CodeActionSet> {
         const args: ts.server.protocol.CodeFixRequestArgs = {
             ...typeConverters.Range.toFileRangeRequestArgs(document.filepath, diagnostic.range),
-            errorCodes: [+(diagnostic.code!)],
+            errorCodes: [+diagnostic.code!],
         };
         const response = await this.client.execute(CommandTypes.GetCodeFixes, args, token);
         if (response.type !== 'response' || !response.body) {
@@ -336,7 +346,9 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
         codeAction.diagnostics = [diagnostic];
         codeAction.command = {
             command: ApplyCodeActionCommand.ID,
-            arguments: [{ action, diagnostic, documentUri: document.uri.toString() } satisfies ApplyCodeActionCommand_args],
+            arguments: [
+                { action, diagnostic, documentUri: document.uri.toString() } satisfies ApplyCodeActionCommand_args,
+            ],
             title: '',
         };
         actions.push(codeAction);
@@ -355,13 +367,18 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
         }
 
         // Make sure there are multiple different diagnostics of the same type in the file
-        if (!this.diagnosticsManager.getDiagnosticsForFile(file).some(x => {
-            if (x === diagnostic) {
-                return false;
-            }
-            return x.code === diagnostic.code
-                || fixAllErrorCodes.has(x.code as number) && fixAllErrorCodes.get(x.code as number) === fixAllErrorCodes.get(diagnostic.code as number);
-        })) {
+        if (
+            !this.diagnosticsManager.getDiagnosticsForFile(file).some(x => {
+                if (x === diagnostic) {
+                    return false;
+                }
+                return (
+                    x.code === diagnostic.code ||
+                    (fixAllErrorCodes.has(x.code as number) &&
+                        fixAllErrorCodes.get(x.code as number) === fixAllErrorCodes.get(diagnostic.code as number))
+                );
+            })
+        ) {
             return results;
         }
 
@@ -369,7 +386,8 @@ export class TypeScriptQuickFixProvider implements CodeActionProvider<TsQuickFix
             tsAction,
             file,
             tsAction.fixAllDescription || `${tsAction.description} (Fix all in file)`,
-            lsp.CodeActionKind.QuickFix);
+            lsp.CodeActionKind.QuickFix,
+        );
 
         action.diagnostics = [diagnostic];
         action.command = {
@@ -391,7 +409,7 @@ const fixAllErrorCodes = new Map<number, number>([
     [2345, 2339],
 ]);
 
-const preferredFixes = new Map<string, { readonly priority: number; readonly thereCanOnlyBeOne?: boolean; }>([
+const preferredFixes = new Map<string, { readonly priority: number; readonly thereCanOnlyBeOne?: boolean }>([
     [fixNames.annotateWithTypeFromJSDoc, { priority: 2 }],
     [fixNames.constructorForDerivedNeedSuperCall, { priority: 2 }],
     [fixNames.extendsInterfaceBecomesImplements, { priority: 2 }],
@@ -409,10 +427,7 @@ const preferredFixes = new Map<string, { readonly priority: number; readonly the
     [fixNames.fixImport, { priority: 1, thereCanOnlyBeOne: true }],
 ]);
 
-function isPreferredFix(
-    action: TsQuickFixCodeAction,
-    allActions: readonly TsQuickFixCodeAction[],
-): boolean {
+function isPreferredFix(action: TsQuickFixCodeAction, allActions: readonly TsQuickFixCodeAction[]): boolean {
     if (action instanceof TsQuickFixAllCodeAction) {
         return false;
     }

@@ -24,11 +24,10 @@ function makeLogger() {
         log: vi.fn(),
         logIgnoringVerbosity: vi.fn(),
         trace: vi.fn(),
-
     };
 }
 
-type TestDisposable = lsp.Disposable & { disposed: boolean; };
+type TestDisposable = lsp.Disposable & { disposed: boolean };
 
 function makeDisposable(): TestDisposable {
     const d = {
@@ -47,9 +46,15 @@ interface ManagerSetup {
     registrations: TestDisposable[];
 }
 
-async function createManager(opts: Partial<WatchEventManagerOptions> & { workspacePaths?: string[]; caseInsensitive?: boolean; initialize?: boolean; } = {}): Promise<ManagerSetup> {
+async function createManager(
+    opts: Partial<WatchEventManagerOptions> & {
+        workspacePaths?: string[];
+        caseInsensitive?: boolean;
+        initialize?: boolean;
+    } = {},
+): Promise<ManagerSetup> {
     const registrations: TestDisposable[] = [];
-    const registerSpy = vi.fn((_watchers) => {
+    const registerSpy = vi.fn(_watchers => {
         const d = makeDisposable();
         registrations.push(d);
         return d;
@@ -81,8 +86,18 @@ function createFileWatcherEvent(id: number, filePath: string): ts.server.protoco
     return { event: EventName.createFileWatcher, seq: 0, type: 'event', body: { id, path: filePath } };
 }
 
-function createDirectoryWatcherEvent(id: number, dirPath: string, recursive = false, ignoreUpdate = false): ts.server.protocol.CreateDirectoryWatcherEvent {
-    return { event: EventName.createDirectoryWatcher, seq: 0, type: 'event', body: { id, path: dirPath, recursive, ignoreUpdate } };
+function createDirectoryWatcherEvent(
+    id: number,
+    dirPath: string,
+    recursive = false,
+    ignoreUpdate = false,
+): ts.server.protocol.CreateDirectoryWatcherEvent {
+    return {
+        event: EventName.createDirectoryWatcher,
+        seq: 0,
+        type: 'event',
+        body: { id, path: dirPath, recursive, ignoreUpdate },
+    };
 }
 
 function closeWatcherEvent(id: number): ts.server.protocol.CloseFileWatcherEvent {
@@ -436,7 +451,9 @@ describe('WatchEventManager', () => {
         });
 
         it('is a no-op when there are no watchers', () => {
-            setup.manager.handleFileChanges({ changes: [fileChange('file:///workspace/a.ts', lsp.FileChangeType.Changed)] });
+            setup.manager.handleFileChanges({
+                changes: [fileChange('file:///workspace/a.ts', lsp.FileChangeType.Changed)],
+            });
             expect(setup.sendWatchChanges).not.toHaveBeenCalled();
         });
 
@@ -571,7 +588,9 @@ describe('WatchEventManager', () => {
             });
             const arg = setup.sendWatchChanges.mock.calls[0][0];
             expect(Array.isArray(arg)).toBe(true);
-            expect((arg as ts.server.protocol.WatchChangeRequestArgs[]).map(a => a.id).sort()).toEqual([1, 2]);
+            expect((arg as ts.server.protocol.WatchChangeRequestArgs[]).map(a => a.id).sort((a, b) => a - b)).toEqual([
+                1, 2,
+            ]);
         });
 
         it('batches multiple changes to the same watcher into one args entry', () => {

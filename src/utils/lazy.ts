@@ -15,9 +15,7 @@ export class Lazy<T> {
     private _value?: T;
     private _error: Error | undefined;
 
-    constructor(
-        private readonly executor: () => T,
-    ) { }
+    constructor(private readonly executor: () => T) {}
 
     /**
      * True if the lazy value has been resolved.

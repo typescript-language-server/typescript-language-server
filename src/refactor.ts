@@ -14,7 +14,11 @@ namespace CodeActionKind {
     export const RefactorMove = 'refactor.move';
 }
 
-export function provideRefactors(refactors: ts.server.protocol.ApplicableRefactorInfo[], args: ts.server.protocol.FileRangeRequestArgs, features: SupportedFeatures): lsp.CodeAction[] {
+export function provideRefactors(
+    refactors: ts.server.protocol.ApplicableRefactorInfo[],
+    args: ts.server.protocol.FileRangeRequestArgs,
+    features: SupportedFeatures,
+): lsp.CodeAction[] {
     const actions: lsp.CodeAction[] = [];
     for (const refactor of refactors) {
         if (refactor.inlineable === false) {
@@ -37,7 +41,10 @@ export function provideRefactors(refactors: ts.server.protocol.ApplicableRefacto
     return actions;
 }
 
-export function asSelectRefactoring(refactor: ts.server.protocol.ApplicableRefactorInfo, args: ts.server.protocol.FileRangeRequestArgs): lsp.CodeAction {
+export function asSelectRefactoring(
+    refactor: ts.server.protocol.ApplicableRefactorInfo,
+    args: ts.server.protocol.FileRangeRequestArgs,
+): lsp.CodeAction {
     return lsp.CodeAction.create(
         refactor.description,
         lsp.Command.create(refactor.description, Commands.SELECT_REFACTORING, refactor, args),
@@ -45,20 +52,20 @@ export function asSelectRefactoring(refactor: ts.server.protocol.ApplicableRefac
     );
 }
 
-export function asApplyRefactoring(action: ts.server.protocol.RefactorActionInfo, refactor: ts.server.protocol.ApplicableRefactorInfo, args: ts.server.protocol.FileRangeRequestArgs): lsp.CodeAction {
+export function asApplyRefactoring(
+    action: ts.server.protocol.RefactorActionInfo,
+    refactor: ts.server.protocol.ApplicableRefactorInfo,
+    args: ts.server.protocol.FileRangeRequestArgs,
+): lsp.CodeAction {
     const codeAction = lsp.CodeAction.create(action.description, asKind(action));
     if (action.notApplicableReason) {
         codeAction.disabled = { reason: action.notApplicableReason };
     } else {
-        codeAction.command = lsp.Command.create(
-            action.description,
-            Commands.APPLY_REFACTORING,
-            {
-                ...args,
-                refactor: refactor.name,
-                action: action.name,
-            },
-        );
+        codeAction.command = lsp.Command.create(action.description, Commands.APPLY_REFACTORING, {
+            ...args,
+            refactor: refactor.name,
+            action: action.name,
+        });
     }
     return codeAction;
 }
@@ -94,7 +101,7 @@ function asKind(action: ts.server.protocol.RefactorActionInfo): lsp.CodeActionKi
     if (action.name.startsWith('Convert parameters to destructured object')) {
         return `${lsp.CodeActionKind.RefactorRewrite}.parameters.toDestructured`;
     }
-    if (action.name.startsWith('Generate \'get\' and \'set\' accessors')) {
+    if (action.name.startsWith("Generate 'get' and 'set' accessors")) {
         return `${lsp.CodeActionKind.RefactorRewrite}.property.generateAccessors`;
     }
     return lsp.CodeActionKind.Refactor;

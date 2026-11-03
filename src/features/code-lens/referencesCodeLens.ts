@@ -14,7 +14,12 @@ import type { LspDocument } from '../../document.js';
 import { CommandTypes, ScriptElementKind, type ts } from '../../ts-protocol.js';
 import { ExecutionTarget } from '../../tsServer/server.js';
 import * as typeConverters from '../../utils/typeConverters.js';
-import { CodeLensType, type ReferencesCodeLens, TypeScriptBaseCodeLensProvider, getSymbolRange } from './baseCodeLensProvider.js';
+import {
+    CodeLensType,
+    type ReferencesCodeLens,
+    TypeScriptBaseCodeLensProvider,
+    getSymbolRange,
+} from './baseCodeLensProvider.js';
 
 export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLensProvider {
     protected get type(): CodeLensType {
@@ -38,16 +43,18 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
             cancelOnResourceChange: codeLens.data!.uri,
         });
         if (response.type !== 'response' || !response.body) {
-            codeLens.command = response.type === 'cancelled'
-                ? TypeScriptBaseCodeLensProvider.cancelledCommand
-                : TypeScriptBaseCodeLensProvider.errorCommand;
+            codeLens.command =
+                response.type === 'cancelled'
+                    ? TypeScriptBaseCodeLensProvider.cancelledCommand
+                    : TypeScriptBaseCodeLensProvider.errorCommand;
             return codeLens;
         }
 
         const locations = response.body.refs
             .filter(reference => !reference.isDefinition)
             .map(reference =>
-                typeConverters.Location.fromTextSpan(this.client.toResourceUri(reference.file), reference));
+                typeConverters.Location.fromTextSpan(this.client.toResourceUri(reference.file), reference),
+            );
 
         codeLens.command = {
             title: this.getCodeLensLabel(locations),
@@ -58,9 +65,7 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
     }
 
     private getCodeLensLabel(locations: ReadonlyArray<lsp.Location>): string {
-        return locations.length === 1
-            ? '1 reference'
-            : `${locations.length} references`;
+        return locations.length === 1 ? '1 reference' : `${locations.length} references`;
     }
 
     protected extractSymbol(
@@ -68,15 +73,15 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
         item: ts.server.protocol.NavigationTree,
         parent: ts.server.protocol.NavigationTree | undefined,
     ): lsp.Range | undefined {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         if (parent && (parent.kind as ScriptElementKind) === ScriptElementKind.enumElement) {
             return getSymbolRange(document, item);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         switch (item.kind as ScriptElementKind) {
             case ScriptElementKind.functionElement: {
-                const showOnAllFunctions = this.fileConfigurationManager.getWorkspacePreferencesForFile(document).referencesCodeLens?.showOnAllFunctions;
+                const showOnAllFunctions =
+                    this.fileConfigurationManager.getWorkspacePreferencesForFile(document).referencesCodeLens
+                        ?.showOnAllFunctions;
                 if (showOnAllFunctions) {
                     return getSymbolRange(document, item);
                 }
@@ -110,7 +115,8 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
             case ScriptElementKind.memberVariableElement:
                 // Don't show if child and parent have same start
                 // For https://github.com/microsoft/vscode/issues/90396
-                if (parent &&
+                if (
+                    parent &&
                     typeConverters.Position.isEqual(
                         typeConverters.Position.fromLocation(parent.spans[0].start),
                         typeConverters.Position.fromLocation(item.spans[0].start),

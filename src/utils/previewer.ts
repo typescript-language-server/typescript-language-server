@@ -22,17 +22,22 @@ export interface IFilePathToResourceConverter {
 }
 
 function replaceLinks(text: string): string {
-    return text
-        // Http(s) links
-        .replace(/\{@(link|linkplain|linkcode) (https?:\/\/[^ |}]+?)(?:[| ]([^{}\n]+?))?\}/gi, (_, tag: string, link: string, text?: string) => {
-            switch (tag) {
-                case 'linkcode':
-                    return `[\`${text ? text.trim() : link}\`](${link})`;
+    return (
+        text
+            // Http(s) links
+            .replace(
+                /\{@(link|linkplain|linkcode) (https?:\/\/[^ |}]+?)(?:[| ]([^{}\n]+?))?\}/gi,
+                (_, tag: string, link: string, text?: string) => {
+                    switch (tag) {
+                        case 'linkcode':
+                            return `[\`${text ? text.trim() : link}\`](${link})`;
 
-                default:
-                    return `[${text ? text.trim() : link}](${link})`;
-            }
-        });
+                        default:
+                            return `[${text ? text.trim() : link}](${link})`;
+                    }
+                },
+            )
+    );
 }
 
 function processInlineTags(text: string): string {
@@ -90,7 +95,10 @@ function getTagBody(
     if (tag.name === 'template') {
         const parts = tag.text;
         if (parts && typeof parts !== 'string') {
-            const params = parts.filter(p => p.kind === 'typeParameterName').map(p => p.text).join(', ');
+            const params = parts
+                .filter(p => p.kind === 'typeParameterName')
+                .map(p => p.text)
+                .join(', ');
             const docs = parts
                 .filter(p => p.kind === 'text')
                 .map(p => convertLinkTags(p.text.replace(/^\s*-?\s*/, ''), filePathConverter))
@@ -118,7 +126,10 @@ function getTagDocumentation(
                 if (!doc) {
                     return label;
                 }
-                return label + (doc.match(/\r\n|\n/g) ? '  \n' + processInlineTags(doc) : ` \u2014 ${processInlineTags(doc)}`);
+                return (
+                    label +
+                    (doc.match(/\r\n|\n/g) ? '  \n' + processInlineTags(doc) : ` \u2014 ${processInlineTags(doc)}`)
+                );
             }
             break;
         }
@@ -164,18 +175,21 @@ function convertLinkTags(
 
     const out: string[] = [];
 
-    let currentLink: { name?: string; target?: ts.server.protocol.FileSpan; text?: string; readonly linkcode: boolean; } | undefined;
+    let currentLink:
+        | { name?: string; target?: ts.server.protocol.FileSpan; text?: string; readonly linkcode: boolean }
+        | undefined;
     for (const part of parts) {
         switch (part.kind) {
             case 'link':
                 if (currentLink) {
                     if (currentLink.target) {
-                        const link = filePathConverter.toResource(currentLink.target.file)
-                            .with({
-                                fragment: `L${currentLink.target.start.line},${currentLink.target.start.offset}`,
-                            });
+                        const link = filePathConverter.toResource(currentLink.target.file).with({
+                            fragment: `L${currentLink.target.start.line},${currentLink.target.start.offset}`,
+                        });
 
-                        const linkText = currentLink.text ? currentLink.text : escapeMarkdownSyntaxTokensForCode(currentLink.name ?? '');
+                        const linkText = currentLink.text
+                            ? currentLink.text
+                            : escapeMarkdownSyntaxTokensForCode(currentLink.name ?? '');
                         out.push(`[${currentLink.linkcode ? '`' + linkText + '`' : linkText}](${link.toString()})`);
                     } else {
                         const text = currentLink.text ?? currentLink.name;
@@ -186,7 +200,9 @@ function convertLinkTags(
                                     out.push(parts[0]);
                                 } else if (parts.length > 1) {
                                     const linkText = escapeMarkdownSyntaxTokensForCode(parts.slice(1).join(' '));
-                                    out.push(`[${currentLink.linkcode ? '`' + linkText + '`' : linkText}](${parts[0]})`);
+                                    out.push(
+                                        `[${currentLink.linkcode ? '`' + linkText + '`' : linkText}](${parts[0]})`,
+                                    );
                                 }
                             } else {
                                 out.push(escapeMarkdownSyntaxTokensForCode(text));

@@ -55,7 +55,11 @@ export class TypeScriptInlayHintsProvider {
         const start = document.offsetAt(range.start);
         const length = document.offsetAt(range.end) - start;
 
-        const response = await client.execute(CommandTypes.ProvideInlayHints, { file: document.filepath, start, length }, token);
+        const response = await client.execute(
+            CommandTypes.ProvideInlayHints,
+            { file: document.filepath, start, length },
+            token,
+        );
         if (response.type !== 'response' || !response.success || !response.body) {
             return [];
         }
@@ -64,7 +68,8 @@ export class TypeScriptInlayHintsProvider {
             const inlayHint = lsp.InlayHint.create(
                 Position.fromLocation(hint.position),
                 TypeScriptInlayHintsProvider.convertInlayHintText(hint, client),
-                fromProtocolInlayHintKind(hint.kind));
+                fromProtocolInlayHintKind(hint.kind),
+            );
             if (hint.whitespaceBefore) {
                 inlayHint.paddingLeft = true;
             }
@@ -83,7 +88,10 @@ export class TypeScriptInlayHintsProvider {
             return tsHint.displayParts.map((part): lsp.InlayHintLabelPart => {
                 const out = lsp.InlayHintLabelPart.create(part.text);
                 if (part.span) {
-                    out.location = Location.fromTextSpan(filePathConverter.toResource(part.span.file).toString(), part.span);
+                    out.location = Location.fromTextSpan(
+                        filePathConverter.toResource(part.span.file).toString(),
+                        part.span,
+                    );
                 }
                 return out;
             });
@@ -98,23 +106,29 @@ function areInlayHintsEnabledForFile(fileConfigurationManager: FileConfiguration
 
     // Doesn't need to include `includeInlayVariableTypeHintsWhenTypeMatchesName` and
     // `includeInlayVariableTypeHintsWhenTypeMatchesName` as those depend on other preferences being enabled.
-    return preferences.includeInlayParameterNameHints === 'literals' ||
+    return (
+        preferences.includeInlayParameterNameHints === 'literals' ||
         preferences.includeInlayParameterNameHints === 'all' ||
         preferences.includeInlayEnumMemberValueHints ||
         preferences.includeInlayFunctionLikeReturnTypeHints ||
         preferences.includeInlayFunctionParameterTypeHints ||
         preferences.includeInlayPropertyDeclarationTypeHints ||
-        preferences.includeInlayVariableTypeHints;
+        preferences.includeInlayVariableTypeHints
+    );
 }
 
 function fromProtocolInlayHintKind(kind: ts.server.protocol.InlayHintKind): lsp.InlayHintKind | undefined {
     switch (kind) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-        case 'Parameter': return lsp.InlayHintKind.Parameter;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-        case 'Type': return lsp.InlayHintKind.Type;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-        case 'Enum': return undefined;
-        default: return undefined;
+        // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+        case 'Parameter':
+            return lsp.InlayHintKind.Parameter;
+        // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+        case 'Type':
+            return lsp.InlayHintKind.Type;
+        // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+        case 'Enum':
+            return undefined;
+        default:
+            return undefined;
     }
 }

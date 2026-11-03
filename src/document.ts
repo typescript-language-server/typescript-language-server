@@ -20,10 +20,14 @@ import { ResourceMap } from './utils/resourceMap.js';
 
 function mode2ScriptKind(mode: string): ts.server.protocol.ScriptKindName | undefined {
     switch (mode) {
-        case languageModeIds.typescript: return 'TS';
-        case languageModeIds.typescriptreact: return 'TSX';
-        case languageModeIds.javascript: return 'JS';
-        case languageModeIds.javascriptreact: return 'JSX';
+        case languageModeIds.typescript:
+            return 'TS';
+        case languageModeIds.typescriptreact:
+            return 'TSX';
+        case languageModeIds.javascript:
+            return 'JS';
+        case languageModeIds.javascriptreact:
+            return 'JSX';
     }
     return undefined;
 }
@@ -61,11 +65,7 @@ class PendingDiagnostics extends ResourceMap<number> {
 }
 
 class GetErrRequest {
-    public static executeGetErrRequest(
-        client: ITypeScriptServiceClient,
-        files: ResourceMap<void>,
-        onDone: () => void,
-    ) {
+    public static executeGetErrRequest(client: ITypeScriptServiceClient, files: ResourceMap<void>, onDone: () => void) {
         return new GetErrRequest(client, files, onDone);
     }
 
@@ -84,21 +84,27 @@ class GetErrRequest {
         }
 
         const supportsSyntaxGetErr = this.client.apiVersion.gte(API.v440);
-        const allFiles = coalesce(Array.from(files.entries())
-            .filter(entry => supportsSyntaxGetErr || client.hasCapabilityForResource(entry.resource, ClientCapability.Semantic))
-            .map(entry => client.toTsFilePath(entry.resource.toString())));
+        const allFiles = coalesce(
+            Array.from(files.entries())
+                .filter(
+                    entry =>
+                        supportsSyntaxGetErr ||
+                        client.hasCapabilityForResource(entry.resource, ClientCapability.Semantic),
+                )
+                .map(entry => client.toTsFilePath(entry.resource.toString())),
+        );
 
         if (!allFiles.length) {
             this._done = true;
             setImmediate(onDone);
         } else {
             const request = this.areProjectDiagnosticsEnabled()
-                // Note that geterrForProject is almost certainly not the api we want here as it ends up computing far
-                // too many diagnostics
-                ? client.executeAsync(CommandTypes.GeterrForProject, { delay: 0, file: allFiles[0] }, this._token.token)
+                ? // Note that geterrForProject is almost certainly not the api we want here as it ends up computing far
+                  // too many diagnostics
+                  client.executeAsync(CommandTypes.GeterrForProject, { delay: 0, file: allFiles[0] }, this._token.token)
                 : client.executeAsync(CommandTypes.Geterr, { delay: 0, files: allFiles }, this._token.token);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            // oxlint-disable-next-line typescript/no-floating-promises
             request.finally(() => {
                 if (this._done) {
                     return;
@@ -204,10 +210,7 @@ export class LspDocument {
     }
 
     getFullRange(): lsp.Range {
-        return lsp.Range.create(
-            lsp.Position.create(0, 0),
-            this.getLineEnd(Math.max(this.lineCount - 1, 0)),
-        );
+        return lsp.Range.create(lsp.Position.create(0, 0), this.getLineEnd(Math.max(this.lineCount - 1, 0)));
     }
 
     applyEdit(version: number, change: lsp.TextDocumentContentChangeEvent): void {
@@ -236,11 +239,7 @@ export class LspDocuments {
     private readonly diagnosticDelayer: Delayer<any>;
     private pendingGetErr: GetErrRequest | undefined;
 
-    constructor(
-        client: ITypeScriptServiceClient,
-        lspClient: LspClient,
-        onCaseInsensitiveFileSystem: boolean,
-    ) {
+    constructor(client: ITypeScriptServiceClient, lspClient: LspClient, onCaseInsensitiveFileSystem: boolean) {
         this.client = client;
         this.lspClient = lspClient;
 
@@ -389,7 +388,7 @@ export class LspDocuments {
     public interruptGetErr<R>(f: () => R): R {
         if (
             !this.pendingGetErr
-            /*|| this.client.configuration.enableProjectDiagnostics*/  // `geterr` happens on separate server so no need to cancel it.
+            /*|| this.client.configuration.enableProjectDiagnostics*/ // `geterr` happens on separate server so no need to cancel it.
         ) {
             return f();
         }
@@ -444,7 +443,7 @@ export class LspDocuments {
     }
 
     private triggerDiagnostics(delay: number = 200): void {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.diagnosticDelayer.trigger(() => {
             this.sendPendingDiagnostics();
         }, delay);
@@ -484,11 +483,11 @@ export class LspDocuments {
         }
 
         if (orderedFileSet.size) {
-            const getErr = this.pendingGetErr = GetErrRequest.executeGetErrRequest(this.client, orderedFileSet, () => {
+            const getErr = (this.pendingGetErr = GetErrRequest.executeGetErrRequest(this.client, orderedFileSet, () => {
                 if (this.pendingGetErr === getErr) {
                     this.pendingGetErr = undefined;
                 }
-            });
+            }));
         }
 
         this.pendingDiagnostics.clear();

@@ -17,12 +17,7 @@ export const javascript = 'javascript';
 export const javascriptreact = 'javascriptreact';
 export const jsxTags = 'jsx-tags';
 
-export const jsTsLanguageModes = [
-    javascript,
-    javascriptreact,
-    typescript,
-    typescriptreact,
-];
+export const jsTsLanguageModes = [javascript, javascriptreact, typescript, typescriptreact];
 
 export function isSupportedLanguageMode(doc: LspDocument): boolean {
     return [typescript, typescriptreact, javascript, javascriptreact].includes(doc.languageId);

@@ -90,9 +90,7 @@ function getTssDebugBrk(): string | undefined {
 }
 
 class IpcChildServerProcess implements TsServerProcess {
-    constructor(
-        private readonly _process: ChildProcess.ChildProcess,
-    ) {}
+    constructor(private readonly _process: ChildProcess.ChildProcess) {}
 
     write(serverRequest: ts.server.protocol.Request): void {
         this._process.send(serverRequest);
@@ -122,9 +120,7 @@ class IpcChildServerProcess implements TsServerProcess {
 class StdioChildServerProcess implements TsServerProcess {
     private _reader: Reader<ts.server.protocol.Response> | null;
 
-    constructor(
-        private readonly _process: ChildProcess.ChildProcess,
-    ) {
+    constructor(private readonly _process: ChildProcess.ChildProcess) {
         this._reader = new Reader<ts.server.protocol.Response>(this._process.stdout!);
     }
 
@@ -245,7 +241,12 @@ class ProtocolBuffer {
         let result = -1;
         let current = 0;
         // we are utf8 encoding...
-        while (current < this.index && (this.buffer[current] === blank || this.buffer[current] === backslashR || this.buffer[current] === backslashN)) {
+        while (
+            current < this.index &&
+            (this.buffer[current] === blank ||
+                this.buffer[current] === backslashR ||
+                this.buffer[current] === backslashN)
+        ) {
             current++;
         }
         if (this.index < current + contentLengthSize) {
@@ -256,7 +257,12 @@ class ProtocolBuffer {
         while (current < this.index && this.buffer[current] !== backslashR) {
             current++;
         }
-        if (current + 3 >= this.index || this.buffer[current + 1] !== backslashN || this.buffer[current + 2] !== backslashR || this.buffer[current + 3] !== backslashN) {
+        if (
+            current + 3 >= this.index ||
+            this.buffer[current + 1] !== backslashN ||
+            this.buffer[current + 2] !== backslashR ||
+            this.buffer[current + 3] !== backslashN
+        ) {
             return result;
         }
         const data = this.buffer.toString('utf8', start, current);
@@ -272,7 +278,10 @@ class ProtocolBuffer {
         }
         const result = this.buffer.toString('utf8', 0, length);
         let sourceStart = length;
-        while (sourceStart < this.index && (this.buffer[sourceStart] === backslashR || this.buffer[sourceStart] === backslashN)) {
+        while (
+            sourceStart < this.index &&
+            (this.buffer[sourceStart] === backslashR || this.buffer[sourceStart] === backslashN)
+        ) {
             sourceStart++;
         }
         this.buffer.copy(this.buffer, 0, sourceStart);

@@ -43,13 +43,13 @@ const removeUnusedImportsCommand: OrganizeImportsCommand = {
     mode: OrganizeImportsMode.RemoveUnused,
 };
 
-export const organizeImportsCommands = [
-    organizeImportsCommand,
-    sortImportsCommand,
-    removeUnusedImportsCommand,
-];
+export const organizeImportsCommands = [organizeImportsCommand, sortImportsCommand, removeUnusedImportsCommand];
 
-export function provideOrganizeImports(command: OrganizeImportsCommand, response: ts.server.protocol.OrganizeImportsResponse, client: ITypeScriptServiceClient): lsp.CodeAction[] {
+export function provideOrganizeImports(
+    command: OrganizeImportsCommand,
+    response: ts.server.protocol.OrganizeImportsResponse,
+    client: ITypeScriptServiceClient,
+): lsp.CodeAction[] {
     if (!response || response.body.length === 0) {
         return [];
     }
@@ -59,5 +59,6 @@ export function provideOrganizeImports(command: OrganizeImportsCommand, response
             command.title,
             { documentChanges: response.body.map(edit => toTextDocumentEdit(edit, client)) },
             command.kind.value,
-        )];
+        ),
+    ];
 }

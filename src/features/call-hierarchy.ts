@@ -15,12 +15,18 @@ import { type ts, ScriptElementKind, ScriptElementKindModifier } from '../ts-pro
 import type { ITypeScriptServiceClient } from '../typescriptService.js';
 import { Range } from '../utils/typeConverters.js';
 
-export function fromProtocolCallHierarchyItem(item: ts.server.protocol.CallHierarchyItem, client: ITypeScriptServiceClient, workspaceRoot: string | undefined): lsp.CallHierarchyItem {
+export function fromProtocolCallHierarchyItem(
+    item: ts.server.protocol.CallHierarchyItem,
+    client: ITypeScriptServiceClient,
+    workspaceRoot: string | undefined,
+): lsp.CallHierarchyItem {
     const useFileName = isSourceFileItem(item);
     const name = useFileName ? path.basename(item.file) : item.name;
     const detail = useFileName
-        ? workspaceRoot ? path.relative(workspaceRoot, path.dirname(item.file)) : path.dirname(item.file)
-        : item.containerName ?? '';
+        ? workspaceRoot
+            ? path.relative(workspaceRoot, path.dirname(item.file))
+            : path.dirname(item.file)
+        : (item.containerName ?? '');
     const result: lsp.CallHierarchyItem = {
         kind: fromProtocolScriptElementKind(item.kind),
         name,
@@ -37,14 +43,22 @@ export function fromProtocolCallHierarchyItem(item: ts.server.protocol.CallHiera
     return result;
 }
 
-export function fromProtocolCallHierarchyIncomingCall(item: ts.server.protocol.CallHierarchyIncomingCall, client: ITypeScriptServiceClient, workspaceRoot: string | undefined): lsp.CallHierarchyIncomingCall {
+export function fromProtocolCallHierarchyIncomingCall(
+    item: ts.server.protocol.CallHierarchyIncomingCall,
+    client: ITypeScriptServiceClient,
+    workspaceRoot: string | undefined,
+): lsp.CallHierarchyIncomingCall {
     return {
         from: fromProtocolCallHierarchyItem(item.from, client, workspaceRoot),
         fromRanges: item.fromSpans.map(Range.fromTextSpan),
     };
 }
 
-export function fromProtocolCallHierarchyOutgoingCall(item: ts.server.protocol.CallHierarchyOutgoingCall, client: ITypeScriptServiceClient, workspaceRoot: string | undefined): lsp.CallHierarchyOutgoingCall {
+export function fromProtocolCallHierarchyOutgoingCall(
+    item: ts.server.protocol.CallHierarchyOutgoingCall,
+    client: ITypeScriptServiceClient,
+    workspaceRoot: string | undefined,
+): lsp.CallHierarchyOutgoingCall {
     return {
         to: fromProtocolCallHierarchyItem(item.to, client, workspaceRoot),
         fromRanges: item.fromSpans.map(Range.fromTextSpan),
@@ -52,35 +66,63 @@ export function fromProtocolCallHierarchyOutgoingCall(item: ts.server.protocol.C
 }
 
 function isSourceFileItem(item: ts.server.protocol.CallHierarchyItem) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-    return item.kind === ScriptElementKind.scriptElement || item.kind === ScriptElementKind.moduleElement && item.selectionSpan.start.line === 1 && item.selectionSpan.start.offset === 1;
+    const kind = item.kind as ScriptElementKind;
+    return (
+        kind === ScriptElementKind.scriptElement ||
+        (kind === ScriptElementKind.moduleElement &&
+            item.selectionSpan.start.line === 1 &&
+            item.selectionSpan.start.offset === 1)
+    );
 }
 
 function fromProtocolScriptElementKind(kind: ScriptElementKind): lsp.SymbolKind {
     switch (kind) {
-        case ScriptElementKind.moduleElement:return lsp.SymbolKind.Module;
-        case ScriptElementKind.classElement:return lsp.SymbolKind.Class;
-        case ScriptElementKind.enumElement:return lsp.SymbolKind.Enum;
-        case ScriptElementKind.enumMemberElement:return lsp.SymbolKind.EnumMember;
-        case ScriptElementKind.interfaceElement:return lsp.SymbolKind.Interface;
-        case ScriptElementKind.indexSignatureElement:return lsp.SymbolKind.Method;
-        case ScriptElementKind.callSignatureElement:return lsp.SymbolKind.Method;
-        case ScriptElementKind.memberFunctionElement:return lsp.SymbolKind.Method;
-        case ScriptElementKind.memberVariableElement:return lsp.SymbolKind.Property;
-        case ScriptElementKind.memberGetAccessorElement:return lsp.SymbolKind.Property;
-        case ScriptElementKind.memberSetAccessorElement:return lsp.SymbolKind.Property;
-        case ScriptElementKind.variableElement:return lsp.SymbolKind.Variable;
-        case ScriptElementKind.letElement:return lsp.SymbolKind.Variable;
-        case ScriptElementKind.constElement:return lsp.SymbolKind.Variable;
-        case ScriptElementKind.localVariableElement:return lsp.SymbolKind.Variable;
-        case ScriptElementKind.alias:return lsp.SymbolKind.Variable;
-        case ScriptElementKind.functionElement:return lsp.SymbolKind.Function;
-        case ScriptElementKind.localFunctionElement:return lsp.SymbolKind.Function;
-        case ScriptElementKind.constructSignatureElement:return lsp.SymbolKind.Constructor;
-        case ScriptElementKind.constructorImplementationElement:return lsp.SymbolKind.Constructor;
-        case ScriptElementKind.typeParameterElement:return lsp.SymbolKind.TypeParameter;
-        case ScriptElementKind.string:return lsp.SymbolKind.String;
-        default: return lsp.SymbolKind.Variable;
+        case ScriptElementKind.moduleElement:
+            return lsp.SymbolKind.Module;
+        case ScriptElementKind.classElement:
+            return lsp.SymbolKind.Class;
+        case ScriptElementKind.enumElement:
+            return lsp.SymbolKind.Enum;
+        case ScriptElementKind.enumMemberElement:
+            return lsp.SymbolKind.EnumMember;
+        case ScriptElementKind.interfaceElement:
+            return lsp.SymbolKind.Interface;
+        case ScriptElementKind.indexSignatureElement:
+            return lsp.SymbolKind.Method;
+        case ScriptElementKind.callSignatureElement:
+            return lsp.SymbolKind.Method;
+        case ScriptElementKind.memberFunctionElement:
+            return lsp.SymbolKind.Method;
+        case ScriptElementKind.memberVariableElement:
+            return lsp.SymbolKind.Property;
+        case ScriptElementKind.memberGetAccessorElement:
+            return lsp.SymbolKind.Property;
+        case ScriptElementKind.memberSetAccessorElement:
+            return lsp.SymbolKind.Property;
+        case ScriptElementKind.variableElement:
+            return lsp.SymbolKind.Variable;
+        case ScriptElementKind.letElement:
+            return lsp.SymbolKind.Variable;
+        case ScriptElementKind.constElement:
+            return lsp.SymbolKind.Variable;
+        case ScriptElementKind.localVariableElement:
+            return lsp.SymbolKind.Variable;
+        case ScriptElementKind.alias:
+            return lsp.SymbolKind.Variable;
+        case ScriptElementKind.functionElement:
+            return lsp.SymbolKind.Function;
+        case ScriptElementKind.localFunctionElement:
+            return lsp.SymbolKind.Function;
+        case ScriptElementKind.constructSignatureElement:
+            return lsp.SymbolKind.Constructor;
+        case ScriptElementKind.constructorImplementationElement:
+            return lsp.SymbolKind.Constructor;
+        case ScriptElementKind.typeParameterElement:
+            return lsp.SymbolKind.TypeParameter;
+        case ScriptElementKind.string:
+            return lsp.SymbolKind.String;
+        default:
+            return lsp.SymbolKind.Variable;
     }
 }
 

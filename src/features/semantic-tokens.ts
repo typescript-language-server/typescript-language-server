@@ -3,7 +3,7 @@ import type { LspDocument } from '../document.js';
 // copied from https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts
 enum TokenEncodingConsts {
     typeOffset = 8,
-    modifierMask = (1 << typeOffset) - 1
+    modifierMask = (1 << typeOffset) - 1,
 }
 
 /**
@@ -12,7 +12,7 @@ enum TokenEncodingConsts {
  * @param spans the spans given by ts-server
  * @returns lsp compatible spans
  */
-export function transformSpans(doc: LspDocument, spans: number[]) : number[] {
+export function transformSpans(doc: LspDocument, spans: number[]): number[] {
     const lspSpans: number[] = [];
     let previousLine = 0;
     let previousTokenStart = 0;

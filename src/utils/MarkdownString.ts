@@ -19,7 +19,10 @@ export enum MarkdownStringTextNewlineStyle {
 export class MarkdownString {
     constructor(public value = '') {}
 
-    appendText(value: string, newlineStyle: MarkdownStringTextNewlineStyle = MarkdownStringTextNewlineStyle.Paragraph): MarkdownString {
+    appendText(
+        value: string,
+        newlineStyle: MarkdownStringTextNewlineStyle = MarkdownStringTextNewlineStyle.Paragraph,
+    ): MarkdownString {
         this.value += escapeMarkdownSyntaxTokens(value)
             .replace(/([ \t]+)/g, (_match, g1: string) => '&nbsp;'.repeat(g1.length))
             .replace(/>/gm, '\\>')

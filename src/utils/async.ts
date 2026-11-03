@@ -31,7 +31,7 @@ export class Delayer<T> {
         }
 
         if (!this.completionPromise) {
-            this.completionPromise = new Promise<T | undefined>((resolve) => {
+            this.completionPromise = new Promise<T | undefined>(resolve => {
                 this.onSuccess = resolve;
             }).then(() => {
                 this.completionPromise = null;
@@ -43,10 +43,13 @@ export class Delayer<T> {
         }
 
         if (delay >= 0 || this.timeout === null) {
-            this.timeout = setTimeout(() => {
-                this.timeout = null;
-                this.onSuccess?.(undefined);
-            }, delay >= 0 ? delay : this.defaultDelay);
+            this.timeout = setTimeout(
+                () => {
+                    this.timeout = null;
+                    this.onSuccess?.(undefined);
+                },
+                delay >= 0 ? delay : this.defaultDelay,
+            );
         }
 
         return this.completionPromise;
@@ -62,11 +65,11 @@ export class Delayer<T> {
 
 export function setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
     if (global.setImmediate) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        // oxlint-disable-next-line typescript/no-unsafe-argument
         const handle = global.setImmediate(callback, ...args);
         return { dispose: () => global.clearImmediate(handle) };
     } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        // oxlint-disable-next-line typescript/no-unsafe-argument
         const handle = setTimeout(callback, 0, ...args);
         return { dispose: () => clearTimeout(handle) };
     }

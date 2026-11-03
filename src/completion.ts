@@ -10,7 +10,14 @@ import type { LspDocument } from './document.js';
 import { toTextEdit } from './protocol-translation.js';
 import { Commands } from './commands.js';
 import type { WorkspaceConfigurationCompletionOptions } from './features/fileConfigurationManager.js';
-import { CommandTypes, KindModifiers, ScriptElementKind, type SupportedFeatures, SymbolDisplayPartKind, toSymbolDisplayPartKind } from './ts-protocol.js';
+import {
+    CommandTypes,
+    KindModifiers,
+    ScriptElementKind,
+    type SupportedFeatures,
+    SymbolDisplayPartKind,
+    toSymbolDisplayPartKind,
+} from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import type { ITypeScriptServiceClient } from './typescriptService.js';
 import * as Previewer from './utils/previewer.js';
@@ -36,7 +43,7 @@ export interface CompletionContext {
 }
 
 export class CompletionDataCache {
-    private store = new Map<number, ts.server.protocol.CompletionDetailsRequestArgs>;
+    private store = new Map<number, ts.server.protocol.CompletionDetailsRequestArgs>();
     private lastCacheId = 0;
 
     public reset(): void {
@@ -69,7 +76,18 @@ export function asCompletionItems(
 ): lsp.CompletionItem[] {
     const completions: lsp.CompletionItem[] = [];
     for (const entry of entries) {
-        const completion = asCompletionItem(entry, completionDataCache, file, position, document, filePathConverter, options, features, completionContext, defaultCommitCharacters);
+        const completion = asCompletionItem(
+            entry,
+            completionDataCache,
+            file,
+            position,
+            document,
+            filePathConverter,
+            options,
+            features,
+            completionContext,
+            defaultCommitCharacters,
+        );
         if (!completion) {
             continue;
         }
@@ -95,11 +113,13 @@ function asCompletionItem(
         line: position.line + 1,
         offset: position.character + 1,
         entryNames: [
-            entry.source || entry.data ? {
-                name: entry.name,
-                source: entry.source,
-                data: entry.data,
-            } : entry.name,
+            entry.source || entry.data
+                ? {
+                      name: entry.name,
+                      source: entry.source,
+                      data: entry.data,
+                  }
+                : entry.name,
         ],
     });
 
@@ -184,8 +204,7 @@ function asCompletionItem(
             item.kind = lsp.CompletionItemKind.Color;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        if (entry.kind as ScriptElementKind === ScriptElementKind.scriptElement as ScriptElementKind) {
+        if ((entry.kind as ScriptElementKind) === (ScriptElementKind.scriptElement as ScriptElementKind)) {
             for (const extModifier of KindModifiers.fileExtensionKindModifiers) {
                 if (kindModifiers.has(extModifier)) {
                     if (entry.name.toLowerCase().endsWith(extModifier)) {
@@ -216,7 +235,7 @@ function getRangeFromReplacementSpan(
     position: lsp.Position,
     document: LspDocument,
     features: SupportedFeatures,
-): { insert?: lsp.Range; replace: lsp.Range; } | undefined {
+): { insert?: lsp.Range; replace: lsp.Range } | undefined {
     if (replacementSpan) {
         // If TS provides an explicit replacement span with an entry, we should use it and not provide an insert.
         return {
@@ -232,7 +251,12 @@ function getRangeFromReplacementSpan(
     }
 }
 
-function getFilterText(entry: ts.server.protocol.CompletionEntry, wordRange: lsp.Range | undefined, line: string, insertText: string | undefined): string | undefined {
+function getFilterText(
+    entry: ts.server.protocol.CompletionEntry,
+    wordRange: lsp.Range | undefined,
+    line: string,
+    insertText: string | undefined,
+): string | undefined {
     // Handle private field completions
     if (entry.name.startsWith('#')) {
         const wordStart = wordRange ? line.charAt(wordRange.start.character) : undefined;
@@ -327,20 +351,23 @@ function asCommitCharacters(
     entry: ts.server.protocol.CompletionEntry,
     defaultCommitCharacters: readonly string[] | undefined,
 ): string[] | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const kind = entry.kind as ScriptElementKind;
-    let commitCharacters = entry.commitCharacters ?? (defaultCommitCharacters ? Array.from(defaultCommitCharacters) : undefined);
+    let commitCharacters =
+        entry.commitCharacters ?? (defaultCommitCharacters ? Array.from(defaultCommitCharacters) : undefined);
     if (commitCharacters) {
-        if (context.enableCallCompletions
-            && !context.isNewIdentifierLocation
-            && kind !== ScriptElementKind.warning
-            && kind !== ScriptElementKind.string) {
+        if (
+            context.enableCallCompletions &&
+            !context.isNewIdentifierLocation &&
+            kind !== ScriptElementKind.warning &&
+            kind !== ScriptElementKind.string
+        ) {
             commitCharacters.push('(');
         }
         return commitCharacters;
     }
 
-    if (kind === ScriptElementKind.warning || kind === ScriptElementKind.string) { // Ambient JS word based suggestion, strings
+    if (kind === ScriptElementKind.warning || kind === ScriptElementKind.string) {
+        // Ambient JS word based suggestion, strings
         return undefined;
     }
 
@@ -382,14 +409,20 @@ export async function asResolvedCompletionItem(
     return item;
 }
 
-async function isValidFunctionCompletionContext(position: lsp.Position, client: ITypeScriptServiceClient, document: LspDocument): Promise<boolean> {
+async function isValidFunctionCompletionContext(
+    position: lsp.Position,
+    client: ITypeScriptServiceClient,
+    document: LspDocument,
+): Promise<boolean> {
     // Workaround for https://github.com/Microsoft/TypeScript/issues/12677
     // Don't complete function calls inside of destructive assigments or imports
     try {
-        const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(document.filepath, position);
+        const args: ts.server.protocol.FileLocationRequestArgs = Position.toFileLocationRequestArgs(
+            document.filepath,
+            position,
+        );
         const response = await client.execute(CommandTypes.Quickinfo, args);
         if (response.type === 'response' && response.body) {
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             switch (response.body.kind as ScriptElementKind) {
                 case ScriptElementKind.variableElement:
                 case ScriptElementKind.letElement:
@@ -408,11 +441,20 @@ async function isValidFunctionCompletionContext(position: lsp.Position, client: 
     return after.match(/^[a-z_$0-9]*\s*\(/gi) === null;
 }
 
-function canCreateSnippetOfFunctionCall(kind: lsp.CompletionItemKind | undefined, options: WorkspaceConfigurationCompletionOptions): boolean {
-    return options.completeFunctionCalls === true && (kind === lsp.CompletionItemKind.Function || kind === lsp.CompletionItemKind.Method);
+function canCreateSnippetOfFunctionCall(
+    kind: lsp.CompletionItemKind | undefined,
+    options: WorkspaceConfigurationCompletionOptions,
+): boolean {
+    return (
+        options.completeFunctionCalls === true &&
+        (kind === lsp.CompletionItemKind.Function || kind === lsp.CompletionItemKind.Method)
+    );
 }
 
-function createSnippetOfFunctionCall(item: lsp.CompletionItem, detail: ts.server.protocol.CompletionEntryDetails): void {
+function createSnippetOfFunctionCall(
+    item: lsp.CompletionItem,
+    detail: ts.server.protocol.CompletionEntryDetails,
+): void {
     const { displayParts } = detail;
     const parameterListParts = getParameterListParts(displayParts);
     const snippet = new SnippetString();
@@ -487,7 +529,11 @@ function getParameterListParts(displayParts: ReadonlyArray<ts.server.protocol.Sy
     return { hasOptionalParameters, parts };
 }
 
-function appendJoinedPlaceholders(snippet: SnippetString, parts: ReadonlyArray<ts.server.protocol.SymbolDisplayPart>, joiner: string): void {
+function appendJoinedPlaceholders(
+    snippet: SnippetString,
+    parts: ReadonlyArray<ts.server.protocol.SymbolDisplayPart>,
+    joiner: string,
+): void {
     for (let i = 0; i < parts.length; ++i) {
         const paramterPart = parts[i];
         snippet.appendPlaceholder(paramterPart.text);
@@ -532,11 +578,14 @@ function getCodeActions(
         command = {
             title: '',
             command: Commands.APPLY_COMPLETION_CODE_ACTION,
-            arguments: [filepath, codeActions.map(codeAction => ({
-                commands: codeAction.commands,
-                description: codeAction.description,
-                changes: codeAction.changes.filter(x => x.fileName !== filepath),
-            }))],
+            arguments: [
+                filepath,
+                codeActions.map(codeAction => ({
+                    commands: codeAction.commands,
+                    description: codeAction.description,
+                    changes: codeAction.changes.filter(x => x.fileName !== filepath),
+                })),
+            ],
         };
     }
 
@@ -562,14 +611,16 @@ function asDetail(
     return result.join('\n');
 }
 
-export function getCompletionTriggerCharacter(character: string | undefined): ts.server.protocol.CompletionsTriggerCharacter | undefined {
+export function getCompletionTriggerCharacter(
+    character: string | undefined,
+): ts.server.protocol.CompletionsTriggerCharacter | undefined {
     switch (character) {
         case '@':
         case '#':
         case ' ':
         case '.':
         case '"':
-        case '\'':
+        case "'":
         case '`':
         case '/':
         case '<':

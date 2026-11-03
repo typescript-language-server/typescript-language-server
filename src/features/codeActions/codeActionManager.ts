@@ -27,9 +27,9 @@ interface ResolveData {
  * and are cached for the purpose of codeAction/resolve request.
  */
 export class CodeActionManager {
-    private providerMap = new Map<number, CodeActionProvider>;
+    private providerMap = new Map<number, CodeActionProvider>();
     private nextProviderId = 1;
-    private resolveCodeActionsMap = new Map<number, TsCodeAction>;
+    private resolveCodeActionsMap = new Map<number, TsCodeAction>();
     private nextGlobalCodeActionId = 1;
 
     constructor(
@@ -40,20 +40,33 @@ export class CodeActionManager {
         private readonly features: SupportedFeatures,
     ) {
         this.addProvider(new TypeScriptAutoFixProvider(client, fileConfigurationManager, diagnosticsManager));
-        this.addProvider(new TypeScriptQuickFixProvider(client, fileConfigurationManager, commandManager, diagnosticsManager, features));
+        this.addProvider(
+            new TypeScriptQuickFixProvider(
+                client,
+                fileConfigurationManager,
+                commandManager,
+                diagnosticsManager,
+                features,
+            ),
+        );
     }
 
     public get kinds(): lsp.CodeActionKind[] {
         const allKinds: lsp.CodeActionKind[] = [];
 
         for (const [_, provider] of this.providerMap) {
-            allKinds.push(...provider.getMetadata().providedCodeActionKinds || []);
+            allKinds.push(...(provider.getMetadata().providedCodeActionKinds || []));
         }
 
         return allKinds;
     }
 
-    public async provideCodeActions(document: LspDocument, range: lsp.Range, context: lsp.CodeActionContext, token?: lsp.CancellationToken): Promise<(lsp.Command | lsp.CodeAction)[]> {
+    public async provideCodeActions(
+        document: LspDocument,
+        range: lsp.Range,
+        context: lsp.CodeActionContext,
+        token?: lsp.CancellationToken,
+    ): Promise<(lsp.Command | lsp.CodeAction)[]> {
         this.resolveCodeActionsMap.clear();
 
         const allCodeActions: (lsp.Command | lsp.CodeAction)[] = [];
@@ -93,7 +106,7 @@ export class CodeActionManager {
             return codeAction;
         }
 
-        const { globalId, providerId } = codeAction.data as ResolveData || {};
+        const { globalId, providerId } = (codeAction.data as ResolveData) || {};
         if (globalId === undefined || providerId === undefined) {
             return codeAction;
         }
@@ -116,7 +129,7 @@ export class CodeActionManager {
         const lspCodeAction = resolvedTsCodeAction.toLspCodeAction();
         for (const property of this.features.codeActionResolveSupport.properties as Array<keyof lsp.CodeAction>) {
             if (property in lspCodeAction) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                // oxlint-disable-next-line typescript/no-unsafe-assignment
                 codeAction[property] = lspCodeAction[property];
             }
         }

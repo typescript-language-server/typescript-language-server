@@ -22,7 +22,7 @@ import { escapeRegExp } from '../../utils/regexp.js';
 
 export enum CodeLensType {
     Reference,
-    Implementation
+    Implementation,
 }
 
 export interface ReferencesCodeLens extends CodeLens {
@@ -50,18 +50,19 @@ export abstract class TypeScriptBaseCodeLensProvider {
         protected client: ITypeScriptServiceClient,
         private readonly cachedResponse: CachedResponse<ts.server.protocol.NavTreeResponse>,
         protected fileConfigurationManager: FileConfigurationManager,
-    ) { }
+    ) {}
 
     async provideCodeLenses(document: LspDocument, token: lsp.CancellationToken): Promise<ReferencesCodeLens[]> {
         const configuration = this.fileConfigurationManager.getWorkspacePreferencesForFile(document);
-        if (this.type === CodeLensType.Implementation && !configuration.implementationsCodeLens?.enabled
-            || this.type === CodeLensType.Reference && !configuration.referencesCodeLens?.enabled) {
+        if (
+            (this.type === CodeLensType.Implementation && !configuration.implementationsCodeLens?.enabled) ||
+            (this.type === CodeLensType.Reference && !configuration.referencesCodeLens?.enabled)
+        ) {
             return [];
         }
 
-        const response = await this.cachedResponse.execute(
-            document,
-            () => this.client.execute(CommandTypes.NavTree, { file: document.filepath }, token),
+        const response = await this.cachedResponse.execute(document, () =>
+            this.client.execute(CommandTypes.NavTree, { file: document.filepath }, token),
         );
         if (response.type !== 'response') {
             return [];
@@ -75,7 +76,7 @@ export abstract class TypeScriptBaseCodeLensProvider {
     protected abstract extractSymbol(
         document: LspDocument,
         item: ts.server.protocol.NavigationTree,
-        parent: ts.server.protocol.NavigationTree | undefined
+        parent: ts.server.protocol.NavigationTree | undefined,
     ): lsp.Range | undefined;
 
     private walkNavTree(
@@ -93,10 +94,7 @@ export abstract class TypeScriptBaseCodeLensProvider {
     }
 }
 
-export function getSymbolRange(
-    document: LspDocument,
-    item: ts.server.protocol.NavigationTree,
-): lsp.Range | undefined {
+export function getSymbolRange(document: LspDocument, item: ts.server.protocol.NavigationTree): lsp.Range | undefined {
     if (item.nameSpan) {
         return Range.fromTextSpan(item.nameSpan);
     }
@@ -114,8 +112,5 @@ export function getSymbolRange(
     const match = identifierMatch.exec(text);
     const prefixLength = match ? match.index + match[1].length : 0;
     const startOffset = document.offsetAt(range.start) + prefixLength;
-    return LspRange.create(
-        document.positionAt(startOffset),
-        document.positionAt(startOffset + item.text.length),
-    );
+    return LspRange.create(document.positionAt(startOffset), document.positionAt(startOffset + item.text.length));
 }
