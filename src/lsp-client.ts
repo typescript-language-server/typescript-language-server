@@ -15,8 +15,14 @@ export interface WithProgressOptions {
 }
 
 export interface LspClient {
-    createProgressReporter(token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter>;
-    withProgress<R>(options: WithProgressOptions, task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>): Promise<R>;
+    createProgressReporter(
+        token?: lsp.CancellationToken,
+        workDoneProgress?: lsp.WorkDoneProgressReporter,
+    ): Promise<lsp.WorkDoneProgressReporter>;
+    withProgress<R>(
+        options: WithProgressOptions,
+        task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>,
+    ): Promise<R>;
     publishDiagnostics(args: lsp.PublishDiagnosticsParams): void;
     showErrorMessage(message: string): void;
     showWarningMessage(message: string): void;
@@ -41,17 +47,23 @@ function isNullProgressReporter(reporter: lsp.WorkDoneProgressReporter) {
 export class LspClientImpl implements LspClient {
     constructor(protected connection: lsp.Connection) {}
 
-    async createProgressReporter(_?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<lsp.WorkDoneProgressReporter> {
+    async createProgressReporter(
+        _?: lsp.CancellationToken,
+        workDoneProgress?: lsp.WorkDoneProgressReporter,
+    ): Promise<lsp.WorkDoneProgressReporter> {
         let reporter: lsp.WorkDoneProgressReporter;
         if (workDoneProgress && !isNullProgressReporter(workDoneProgress)) {
             reporter = workDoneProgress;
         } else {
-            reporter = workDoneProgress || await this.connection.window.createWorkDoneProgress();
+            reporter = workDoneProgress || (await this.connection.window.createWorkDoneProgress());
         }
         return reporter;
     }
 
-    async withProgress<R = unknown>(options: WithProgressOptions, task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>): Promise<R> {
+    async withProgress<R = unknown>(
+        options: WithProgressOptions,
+        task: (progress: lsp.WorkDoneProgressReporter) => Promise<R>,
+    ): Promise<R> {
         const { message, reporter } = options;
         reporter.begin(message);
         return task(reporter).then(result => {
@@ -61,27 +73,27 @@ export class LspClientImpl implements LspClient {
     }
 
     publishDiagnostics(params: lsp.PublishDiagnosticsParams): void {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.connection.sendDiagnostics(params);
     }
 
     showErrorMessage(message: string): void {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.connection.sendNotification(lsp.ShowMessageNotification.type, { type: MessageType.Error, message });
     }
 
     showWarningMessage(message: string): void {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.connection.sendNotification(lsp.ShowMessageNotification.type, { type: MessageType.Warning, message });
     }
 
     logMessage(args: lsp.LogMessageParams): void {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.connection.sendNotification(lsp.LogMessageNotification.type, args);
     }
 
     async getWorkspaceConfiguration<R = unknown>(scopeUri: string, section: string): Promise<R> {
-        return await this.connection.workspace.getConfiguration({ scopeUri, section }) as R;
+        return (await this.connection.workspace.getConfiguration({ scopeUri, section })) as R;
     }
 
     async applyWorkspaceEdit(params: lsp.ApplyWorkspaceEditParams): Promise<lsp.ApplyWorkspaceEditResult> {

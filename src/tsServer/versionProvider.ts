@@ -83,9 +83,9 @@ export class TypeScriptVersion {
 
         this.logger.log(`Reading version from package.json at "${fileName}"`);
         const contents = fs.readFileSync(fileName).toString();
-        let desc: { version?: string; };
+        let desc: { version?: string };
         try {
-            desc = JSON.parse(contents) as { version?: string; };
+            desc = JSON.parse(contents) as { version?: string };
         } catch {
             this.logger.log('Failed parsing contents of package.json.');
             return null;
@@ -99,12 +99,17 @@ export class TypeScriptVersion {
     }
 }
 
-export const MODULE_FOLDERS = ['node_modules/typescript/lib', '.vscode/pnpify/typescript/lib', '.yarn/sdks/typescript/lib', '.pnpm/sdks/typescript/lib'];
+export const MODULE_FOLDERS = [
+    'node_modules/typescript/lib',
+    '.vscode/pnpify/typescript/lib',
+    '.yarn/sdks/typescript/lib',
+    '.pnpm/sdks/typescript/lib',
+];
 
 function readPackageVersion(packageFolder: string, logger: Logger): string | null {
     try {
         const contents = fs.readFileSync(path.join(packageFolder, 'package.json')).toString();
-        const desc = JSON.parse(contents) as { version?: string; };
+        const desc = JSON.parse(contents) as { version?: string };
         return desc.version ?? null;
     } catch {
         logger.log(`Failed reading version from package.json in "${packageFolder}".`);
@@ -127,7 +132,10 @@ export interface WorkspaceVersionResult {
 }
 
 export class TypeScriptVersionProvider {
-    public constructor(private userTsserverPath: string | undefined, private logger: Logger) {}
+    public constructor(
+        private userTsserverPath: string | undefined,
+        private logger: Logger,
+    ) {}
 
     public getUserSettingVersion(): TypeScriptVersion | null {
         if (!this.userTsserverPath) {
@@ -137,7 +145,7 @@ export class TypeScriptVersionProvider {
         let resolvedPath = this.userTsserverPath;
         // Resolve full path to the binary if path is not absolute.
         if (!path.isAbsolute(resolvedPath)) {
-            const binaryPath = which.sync(resolvedPath, { nothrow:true });
+            const binaryPath = which.sync(resolvedPath, { nothrow: true });
             if (binaryPath) {
                 resolvedPath = binaryPath;
             }

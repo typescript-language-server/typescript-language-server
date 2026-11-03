@@ -54,16 +54,19 @@ export class SourceDefinitionCommand {
         }
 
         const args = Position.toFileLocationRequestArgs(file, position);
-        return await lspClient.withProgress<lsp.Location[] | void>({
-            message: 'Finding source definitions…',
-            reporter,
-        }, async () => {
-            const response = await client.execute(CommandTypes.FindSourceDefinition, args, token);
-            if (response.type !== 'response' || !response.body) {
-                lspClient.showErrorMessage('No source definitions found.');
-                return;
-            }
-            return response.body.map(reference => toLocation(reference, client));
-        });
+        return await lspClient.withProgress<lsp.Location[] | void>(
+            {
+                message: 'Finding source definitions…',
+                reporter,
+            },
+            async () => {
+                const response = await client.execute(CommandTypes.FindSourceDefinition, args, token);
+                if (response.type !== 'response' || !response.body) {
+                    lspClient.showErrorMessage('No source definitions found.');
+                    return;
+                }
+                return response.body.map(reference => toLocation(reference, client));
+            },
+        );
     }
 }

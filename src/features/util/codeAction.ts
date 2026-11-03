@@ -33,7 +33,7 @@ export async function applyCodeAction(
 ): Promise<boolean> {
     const workspaceEdit = getEditForCodeAction(client, action);
     if (workspaceEdit) {
-        if (!await lspClient.applyWorkspaceEdit({ edit: workspaceEdit })) {
+        if (!(await lspClient.applyWorkspaceEdit({ edit: workspaceEdit }))) {
             return false;
         }
     }

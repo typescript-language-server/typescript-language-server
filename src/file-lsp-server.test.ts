@@ -6,7 +6,16 @@
  */
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
-import { uri, createServer, lastPosition, filePath, readContents, positionAfter, openDocumentAndWaitForDiagnostics, type TestLspServer } from './test-utils.js';
+import {
+    uri,
+    createServer,
+    lastPosition,
+    filePath,
+    readContents,
+    positionAfter,
+    openDocumentAndWaitForDiagnostics,
+    type TestLspServer,
+} from './test-utils.js';
 
 let server: TestLspServer;
 
@@ -14,7 +23,7 @@ describe('documentHighlight', () => {
     beforeAll(async () => {
         server = await createServer({
             rootUri: uri(),
-            publishDiagnostics: () => { },
+            publishDiagnostics: () => {},
         });
     });
 
@@ -47,7 +56,7 @@ describe('completions', () => {
     beforeAll(async () => {
         server = await createServer({
             rootUri: uri(),
-            publishDiagnostics: () => { },
+            publishDiagnostics: () => {},
         });
     });
 

@@ -81,7 +81,7 @@ function mergeInto(target: Record<string, unknown>, source: Record<string, unkno
         const targetValue = Object.prototype.hasOwnProperty.call(target, key) ? target[key] : undefined;
         let value: unknown;
         if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-            value = [...targetValue as unknown[], ...sourceValue as unknown[]].map(cloneValue);
+            value = [...(targetValue as unknown[]), ...(sourceValue as unknown[])].map(cloneValue);
         } else if (isPlainObject(targetValue) && isPlainObject(sourceValue)) {
             value = mergeInto(mergeInto({}, targetValue), sourceValue);
         } else {

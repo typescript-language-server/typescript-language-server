@@ -46,7 +46,15 @@ class FakeProcess implements TsServerProcess {
 }
 
 function createServer(process: FakeProcess): SingleTsServer {
-    return new SingleTsServer('test', ServerType.Syntax, process, undefined, noopRequestCancellerFactory.create('test', tracer), bundled, tracer);
+    return new SingleTsServer(
+        'test',
+        ServerType.Syntax,
+        process,
+        undefined,
+        noopRequestCancellerFactory.create('test', tracer),
+        bundled,
+        tracer,
+    );
 }
 
 function navTree(server: SingleTsServer) {

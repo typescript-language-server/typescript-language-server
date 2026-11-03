@@ -26,8 +26,7 @@ export class TsCodeAction implements lsp.CodeAction {
     constructor(
         public readonly title: string,
         public readonly kind: lsp.CodeActionKind,
-    ) {
-    }
+    ) {}
 
     toLspCodeAction(): lsp.CodeAction {
         const codeAction = lsp.CodeAction.create(this.title, this.kind);
@@ -63,7 +62,12 @@ export interface CodeActionProvider<T extends TsCodeAction = TsCodeAction> {
     /**
      * Get code actions for a given range in a document.
      */
-    provideCodeActions(document: LspDocument, range: lsp.Range, context: lsp.CodeActionContext, token: lsp.CancellationToken): ProviderResult<(lsp.Command | T)[]>;
+    provideCodeActions(
+        document: LspDocument,
+        range: lsp.Range,
+        context: lsp.CodeActionContext,
+        token: lsp.CancellationToken,
+    ): ProviderResult<(lsp.Command | T)[]>;
 
     /**
      * Whether given code action can be resolved with `resolveCodeAction`.

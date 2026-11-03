@@ -18,7 +18,7 @@ type TsserverWatcher = {
 type CoverageEntry = {
     readonly key: string;
     readonly normalizedBase: string;
-    readonly watcher: Omit<lsp.FileSystemWatcher, 'globPattern'> & { globPattern: lsp.RelativePattern; };
+    readonly watcher: Omit<lsp.FileSystemWatcher, 'globPattern'> & { globPattern: lsp.RelativePattern };
     readonly watchKind: lsp.WatchKind;
     /** Permanent entries (workspace folders) are never removed when individual watchers close. */
     readonly permanent: boolean;
@@ -28,7 +28,9 @@ export interface WatchEventManagerOptions {
     readonly lspClient: LspClient;
     readonly logger: Logger;
     readonly workspaceFolders: readonly URI[];
-    readonly sendWatchChanges: (args: ts.server.protocol.WatchChangeRequestArgs | readonly ts.server.protocol.WatchChangeRequestArgs[]) => void;
+    readonly sendWatchChanges: (
+        args: ts.server.protocol.WatchChangeRequestArgs | readonly ts.server.protocol.WatchChangeRequestArgs[],
+    ) => void;
     readonly caseInsensitive: boolean;
 }
 
@@ -100,7 +102,7 @@ export class WatchEventManager {
             return;
         }
 
-        type ChangeBucket = { created: string[]; deleted: string[]; updated: string[]; };
+        type ChangeBucket = { created: string[]; deleted: string[]; updated: string[] };
         const collected = new Map<number, ChangeBucket>();
         for (const change of params.changes) {
             const uri = URI.parse(change.uri);
@@ -147,7 +149,10 @@ export class WatchEventManager {
         this.options.sendWatchChanges(payload.length === 1 ? payload[0] : payload);
     }
 
-    private ensureChangeBucket(collected: Map<number, { created: string[]; deleted: string[]; updated: string[]; }>, id: number) {
+    private ensureChangeBucket(
+        collected: Map<number, { created: string[]; deleted: string[]; updated: string[] }>,
+        id: number,
+    ) {
         let bucket = collected.get(id);
         if (!bucket) {
             bucket = { created: [], deleted: [], updated: [] };
@@ -215,9 +220,7 @@ export class WatchEventManager {
         }
 
         const basePath = watcher.kind === 'file' ? path.dirname(watcher.path) : watcher.path;
-        const pattern = watcher.kind === 'file'
-            ? path.basename(watcher.path)
-            : watcher.recursive ? '**/*' : '*';
+        const pattern = watcher.kind === 'file' ? path.basename(watcher.path) : watcher.recursive ? '**/*' : '*';
         const coverageKey = this.coverageKey(basePath, pattern);
         const desiredWatchKind = watcher.ignoreUpdate
             ? lsp.WatchKind.Create | lsp.WatchKind.Delete
@@ -226,9 +229,10 @@ export class WatchEventManager {
         const existing = this.coverage.get(coverageKey);
         let coverageChanged = false;
         if (existing) {
-            const addedChangeWatch = desiredWatchKind !== existing.watchKind
-                && (existing.watchKind & lsp.WatchKind.Change) === 0
-                && (desiredWatchKind & lsp.WatchKind.Change) !== 0;
+            const addedChangeWatch =
+                desiredWatchKind !== existing.watchKind &&
+                (existing.watchKind & lsp.WatchKind.Change) === 0 &&
+                (desiredWatchKind & lsp.WatchKind.Change) !== 0;
             if (addedChangeWatch) {
                 const updated = this.createCoverageEntry(basePath, pattern, desiredWatchKind, coverageKey, false);
                 this.coverage.set(coverageKey, updated);
@@ -248,7 +252,13 @@ export class WatchEventManager {
         return coverageKey;
     }
 
-    private createCoverageEntry(basePath: string, pattern: string, watchKind: lsp.WatchKind, key: string, permanent: boolean): CoverageEntry {
+    private createCoverageEntry(
+        basePath: string,
+        pattern: string,
+        watchKind: lsp.WatchKind,
+        key: string,
+        permanent: boolean,
+    ): CoverageEntry {
         return {
             key,
             watchKind,
@@ -280,11 +290,13 @@ export class WatchEventManager {
             this.registrationHash = undefined;
             return;
         }
-        const hash = watchers.map(watcher => {
-            const { baseUri, pattern } = watcher.globPattern;
-            const baseUriString = typeof baseUri === 'string' ? baseUri : baseUri.uri;
-            return `${baseUriString}|${pattern}|${watcher.kind}`;
-        }).join('-');
+        const hash = watchers
+            .map(watcher => {
+                const { baseUri, pattern } = watcher.globPattern;
+                const baseUriString = typeof baseUri === 'string' ? baseUri : baseUri.uri;
+                return `${baseUriString}|${pattern}|${watcher.kind}`;
+            })
+            .join('-');
         if (hash === this.registrationHash) {
             return;
         }

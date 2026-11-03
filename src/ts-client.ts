@@ -21,7 +21,18 @@ import * as languageModeIds from './configuration/languageIds.js';
 import { CommandTypes, EventName } from './ts-protocol.js';
 import type { TypeScriptPlugin, ts } from './ts-protocol.js';
 import type { ILogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
-import { type AsyncTsServerRequests, ClientCapabilities, ClientCapability, type ExecConfig, type NoResponseTsServerRequests, type ITypeScriptServiceClient, ServerResponse, type StandardTsServerRequests, type TypeScriptRequestTypes, type ExecuteInfo } from './typescriptService.js';
+import {
+    type AsyncTsServerRequests,
+    ClientCapabilities,
+    ClientCapability,
+    type ExecConfig,
+    type NoResponseTsServerRequests,
+    type ITypeScriptServiceClient,
+    ServerResponse,
+    type StandardTsServerRequests,
+    type TypeScriptRequestTypes,
+    type ExecuteInfo,
+} from './typescriptService.js';
 import { PluginManager } from './tsServer/plugins.js';
 import type { ITypeScriptServer, TypeScriptServerExitEvent } from './tsServer/server.js';
 import { TypeScriptServerError } from './tsServer/serverError.js';
@@ -44,7 +55,7 @@ namespace ServerState {
     export enum Type {
         None,
         Running,
-        Errored
+        Errored,
     }
 
     export const None = { type: Type.None } as const;
@@ -65,7 +76,7 @@ namespace ServerState {
              */
             public tsserverVersion: string | undefined,
             public languageServiceEnabled: boolean,
-        ) { }
+        ) {}
 
         public readonly toCancelOnResourceChange = new Set<ToCancelOnResourceChanged>();
 
@@ -83,7 +94,7 @@ namespace ServerState {
         constructor(
             public readonly error: Error,
             public readonly tsServerLogFile: string | undefined,
-        ) { }
+        ) {}
     }
 
     export type State = typeof None | Running | Errored;
@@ -97,9 +108,12 @@ export enum DiagnosticKind {
 
 export function getDignosticsKind(event: ts.server.protocol.Event): DiagnosticKind {
     switch (event.event) {
-        case 'syntaxDiag': return DiagnosticKind.Syntax;
-        case 'semanticDiag': return DiagnosticKind.Semantic;
-        case 'suggestionDiag': return DiagnosticKind.Suggestion;
+        case 'syntaxDiag':
+            return DiagnosticKind.Syntax;
+        case 'semanticDiag':
+            return DiagnosticKind.Semantic;
+        case 'suggestionDiag':
+            return DiagnosticKind.Suggestion;
     }
     throw new Error('Unknown dignostics kind');
 }
@@ -114,7 +128,7 @@ class ServerInitializingIndicator {
         if (this._task) {
             const task = this._task;
             this._task = undefined;
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            // oxlint-disable-next-line typescript/no-floating-promises
             task.then(reporter => reporter.done());
         }
     }
@@ -126,7 +140,7 @@ class ServerInitializingIndicator {
 
         this._loadingProjectName = projectName;
         this._task = this.lspClient.createProgressReporter();
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this._task.then(reporter => reporter.begin('Initializing JS/TS language features…'));
     }
 
@@ -175,11 +189,7 @@ export class TsClient implements ITypeScriptServiceClient {
     private onEvent?: (event: ts.server.protocol.Event) => void;
     private onExit?: (exitCode: number | null, signal: NodeJS.Signals | null) => void;
 
-    constructor(
-        onCaseInsensitiveFileSystem: boolean,
-        logger: Logger,
-        lspClient: LspClient,
-    ) {
+    constructor(onCaseInsensitiveFileSystem: boolean, logger: Logger, lspClient: LspClient) {
         this.pluginManager = new PluginManager();
         this.documents = new LspDocuments(this, lspClient, onCaseInsensitiveFileSystem);
         this.logger = new PrefixingLogger(logger, '[tsclient]');
@@ -225,14 +235,21 @@ export class TsClient implements ITypeScriptServiceClient {
             return resource.fsPath;
         }
 
-        return inMemoryResourcePrefix
-            + '/' + resource.scheme
-            + '/' + (resource.authority || emptyAuthority)
-            + (resource.path.startsWith('/') ? resource.path : '/' + resource.path)
-            + (resource.fragment ? '#' + resource.fragment : '');
+        return (
+            inMemoryResourcePrefix +
+            '/' +
+            resource.scheme +
+            '/' +
+            (resource.authority || emptyAuthority) +
+            (resource.path.startsWith('/') ? resource.path : '/' + resource.path) +
+            (resource.fragment ? '#' + resource.fragment : '')
+        );
     }
 
-    public toOpenDocument(textDocumentUri: DocumentUri, options: { suppressAlertOnFailure?: boolean; } = {}): LspDocument | undefined {
+    public toOpenDocument(
+        textDocumentUri: DocumentUri,
+        options: { suppressAlertOnFailure?: boolean } = {},
+    ): LspDocument | undefined {
         const filepath = this.toTsFilePath(textDocumentUri);
         const document = filepath && this.documents.get(filepath);
         if (!document) {
@@ -266,7 +283,9 @@ export class TsClient implements ITypeScriptServiceClient {
         if (filepath.startsWith(inMemoryResourcePrefix)) {
             const parts = filepath.match(RE_IN_MEMORY_FILEPATH);
             if (parts) {
-                const resource = URI.parse(parts[1] + '://' + (parts[2] === emptyAuthority ? '' : parts[2]) + '/' + parts[3]);
+                const resource = URI.parse(
+                    parts[1] + '://' + (parts[2] === emptyAuthority ? '' : parts[2]) + '/' + parts[3],
+                );
                 const tsFilepath = this.toTsFilePath(resource.toString());
                 const document = tsFilepath && this.documents.get(tsFilepath);
                 return document ? document.uri : resource;
@@ -308,21 +327,18 @@ export class TsClient implements ITypeScriptServiceClient {
 
     public get capabilities(): ClientCapabilities {
         if (this.useSyntaxServer === SyntaxServerConfiguration.Always) {
-            return new ClientCapabilities(
-                ClientCapability.Syntax,
-                ClientCapability.EnhancedSyntax);
+            return new ClientCapabilities(ClientCapability.Syntax, ClientCapability.EnhancedSyntax);
         }
 
         if (this.apiVersion.gte(API.v400)) {
             return new ClientCapabilities(
                 ClientCapability.Syntax,
                 ClientCapability.EnhancedSyntax,
-                ClientCapability.Semantic);
+                ClientCapability.Semantic,
+            );
         }
 
-        return new ClientCapabilities(
-            ClientCapability.Syntax,
-            ClientCapability.Semantic);
+        return new ClientCapabilities(ClientCapability.Syntax, ClientCapability.Semantic);
     }
 
     public hasCapabilityForResource(resource: URI, capability: ClientCapability): boolean {
@@ -347,14 +363,13 @@ export class TsClient implements ITypeScriptServiceClient {
         }
     }
 
-    public sendWatchChanges(args: ts.server.protocol.WatchChangeRequestArgs | readonly ts.server.protocol.WatchChangeRequestArgs[]): void {
+    public sendWatchChanges(
+        args: ts.server.protocol.WatchChangeRequestArgs | readonly ts.server.protocol.WatchChangeRequestArgs[],
+    ): void {
         this.executeWithoutWaitingForResponse(CommandTypes.WatchChange, args);
     }
 
-    start(
-        workspaceRoot: string | undefined,
-        options: TsClientOptions,
-    ): boolean {
+    start(workspaceRoot: string | undefined, options: TsClientOptions): boolean {
         this.apiVersion = options.typescriptVersion.version || API.defaultVersion;
         this.typescriptVersionSource = options.typescriptVersion.source;
         this.isNeovimHost = options.hostInfo === 'neovim';
@@ -370,10 +385,21 @@ export class TsClient implements ITypeScriptServiceClient {
         ];
         this.documents.initialize(modeIds);
 
-        const tsServerSpawner = new TypeScriptServerSpawner(this.apiVersion, options.logDirectoryProvider, this.logger, this.tracer);
-        const tsServer = tsServerSpawner.spawn(options.typescriptVersion, this.capabilities, options, this.pluginManager, {
-            onFatalError: (command, err) => this.fatalError(command, err),
-        });
+        const tsServerSpawner = new TypeScriptServerSpawner(
+            this.apiVersion,
+            options.logDirectoryProvider,
+            this.logger,
+            this.tracer,
+        );
+        const tsServer = tsServerSpawner.spawn(
+            options.typescriptVersion,
+            this.capabilities,
+            options,
+            this.pluginManager,
+            {
+                onFatalError: (command, err) => this.fatalError(command, err),
+            },
+        );
         this.serverState = new ServerState.Running(tsServer, this.apiVersion, undefined, true);
         tsServer.onExit((data: TypeScriptServerExitEvent) => {
             this.serverState = ServerState.None;
@@ -412,7 +438,7 @@ export class TsClient implements ITypeScriptServiceClient {
             case EventName.configFileDiag:
                 // These events also roughly signal that project have been loaded successfully (since the TS server is synchronous).
                 this.loadingIndicator.reset();
-                // falls through
+            // falls through
             case EventName.createDirectoryWatcher:
             case EventName.createFileWatcher:
             case EventName.closeFileWatcher: {
@@ -448,10 +474,14 @@ export class TsClient implements ITypeScriptServiceClient {
             //     this._onTypesInstallerInitializationFailed.fire((event as ts.server.protocol.TypesInstallerInitializationFailedEvent).body);
             //     break;
             case EventName.projectLoadingStart:
-                this.loadingIndicator.startedLoadingProject((event as ts.server.protocol.ProjectLoadingStartEvent).body.projectName);
+                this.loadingIndicator.startedLoadingProject(
+                    (event as ts.server.protocol.ProjectLoadingStartEvent).body.projectName,
+                );
                 break;
             case EventName.projectLoadingFinish:
-                this.loadingIndicator.finishedLoadingProject((event as ts.server.protocol.ProjectLoadingFinishEvent).body.projectName);
+                this.loadingIndicator.finishedLoadingProject(
+                    (event as ts.server.protocol.ProjectLoadingFinishEvent).body.projectName,
+                );
                 break;
         }
     }
@@ -516,8 +546,10 @@ export class TsClient implements ITypeScriptServiceClient {
 
         if (command === CommandTypes.UpdateOpen) {
             // If update open has completed, consider that the project has loaded
-            const executionsWithResults = executions.filter<Promise<ServerResponse.Response<ts.server.protocol.Response>>>(e => e !== undefined);
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            const executionsWithResults = executions.filter<
+                Promise<ServerResponse.Response<ts.server.protocol.Response>>
+            >(e => e !== undefined);
+            // oxlint-disable-next-line typescript/no-floating-promises
             Promise.all(executionsWithResults).then(() => {
                 this.loadingIndicator.reset();
             });
@@ -532,7 +564,7 @@ export class TsClient implements ITypeScriptServiceClient {
         command: K,
         args: NoResponseTsServerRequests[K][0],
     ): void {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.executeImpl(command, args, {
             isAsync: false,
             token: undefined,
@@ -596,7 +628,11 @@ export class TsClient implements ITypeScriptServiceClient {
     //     return this._configuration;
     // }
 
-    private executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: ExecuteInfo): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    private executeImpl(
+        command: keyof TypeScriptRequestTypes,
+        args: any,
+        executeInfo: ExecuteInfo,
+    ): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         const serverState = this.serverState;
         if (serverState.type === ServerState.Type.Running) {
             return serverState.server.executeImpl(command, args, executeInfo);

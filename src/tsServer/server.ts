@@ -23,7 +23,7 @@ import type { TypeScriptVersion } from './versionProvider.js';
 
 export enum ExecutionTarget {
     Semantic,
-    Syntax
+    Syntax,
 }
 
 export interface TypeScriptServerExitEvent {
@@ -50,7 +50,11 @@ export interface ITypeScriptServer {
      * @return A list of all execute requests. If there are multiple entries, the first item is the primary
      * request while the rest are secondary ones.
      */
-    executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: ExecuteInfo): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined>;
+    executeImpl(
+        command: keyof TypeScriptRequestTypes,
+        args: any,
+        executeInfo: ExecuteInfo,
+    ): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined>;
 
     dispose(): void;
 }
@@ -63,7 +67,7 @@ export const enum TsServerProcessKind {
     Main = 'main',
     Syntax = 'syntax',
     Semantic = 'semantic',
-    Diagnostics = 'diagnostics'
+    Diagnostics = 'diagnostics',
 }
 
 export interface TsServerProcessFactory {
@@ -110,18 +114,18 @@ export class SingleTsServer implements ITypeScriptServer {
         });
 
         this._process.onStdErr(error => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            // oxlint-disable-next-line typescript/no-unsafe-return
             this._stdErrHandlers.forEach(handler => handler(error));
         });
 
         this._process.onExit((code, signal) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            // oxlint-disable-next-line typescript/no-unsafe-return
             this._exitHandlers.forEach(handler => handler({ code, signal }));
             this.markDead('server exited');
         });
 
         this._process.onError(error => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            // oxlint-disable-next-line typescript/no-unsafe-return
             this._errorHandlers.forEach(handler => handler(error));
             this.markDead('server errored');
         });
@@ -199,7 +203,7 @@ export class SingleTsServer implements ITypeScriptServer {
                         }
                     } else {
                         this._tracer.traceEvent(this._serverId, event);
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        // oxlint-disable-next-line typescript/no-unsafe-return
                         this._eventHandlers.forEach(handler => handler(event));
                     }
                     break;
@@ -248,7 +252,11 @@ export class SingleTsServer implements ITypeScriptServer {
         }
     }
 
-    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: ExecuteInfo): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    public executeImpl(
+        command: keyof TypeScriptRequestTypes,
+        args: any,
+        executeInfo: ExecuteInfo,
+    ): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         const request = this._requestQueue.createRequest(command, args);
         const requestInfo: RequestItem = {
             request,
@@ -259,7 +267,16 @@ export class SingleTsServer implements ITypeScriptServer {
         let result: Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined;
         if (executeInfo.expectsResult) {
             result = new Promise<ServerResponse.Response<ts.server.protocol.Response>>((resolve, reject) => {
-                this._callbacks.add(request.seq, { onSuccess: resolve as () => ServerResponse.Response<ts.server.protocol.Response> | undefined, onError: reject, queuingStartTime: Date.now(), isAsync: executeInfo.isAsync }, executeInfo.isAsync);
+                this._callbacks.add(
+                    request.seq,
+                    {
+                        onSuccess: resolve as () => ServerResponse.Response<ts.server.protocol.Response> | undefined,
+                        onError: reject,
+                        queuingStartTime: Date.now(),
+                        isAsync: executeInfo.isAsync,
+                    },
+                    executeInfo.isAsync,
+                );
 
                 if (executeInfo.token) {
                     executeInfo.token.onCancellationRequested(() => {
@@ -291,7 +308,12 @@ export class SingleTsServer implements ITypeScriptServer {
             this.fetchCallback(serverRequest.seq)?.onSuccess(new ServerResponse.Cancelled(this._deadCause));
             return;
         }
-        this._tracer.traceRequest(this._serverId, serverRequest, requestItem.expectsResponse, this._requestQueue.length);
+        this._tracer.traceRequest(
+            this._serverId,
+            serverRequest,
+            requestItem.expectsResponse,
+            this._requestQueue.length,
+        );
 
         if (requestItem.expectsResponse && !requestItem.isAsync) {
             this._pendingResponses.add(requestItem.request.seq);
@@ -321,10 +343,7 @@ export class SingleTsServer implements ITypeScriptServer {
 
     private static readonly fenceCommands = new Set(['change', 'close', 'open', 'updateOpen']);
 
-    private static getQueueingType(
-        command: string,
-        lowPriority?: boolean,
-    ): RequestQueueingType {
+    private static getQueueingType(command: string, lowPriority?: boolean): RequestQueueingType {
         if (SingleTsServer.fenceCommands.has(command)) {
             return RequestQueueingType.Fence;
         }
@@ -355,7 +374,7 @@ class RequestRouter {
             canRun?(this: void, command: keyof TypeScriptRequestTypes, executeInfo: ExecuteInfo): boolean;
         }>,
         private readonly delegate: TsServerDelegate,
-    ) { }
+    ) {}
 
     public execute(
         command: keyof TypeScriptRequestTypes,
@@ -391,25 +410,29 @@ class RequestRouter {
                 const request = server.executeImpl(command, args, { ...executeInfo, token })[0];
                 allRequests.push(request);
                 if (request) {
-                    request
-                        .then(result => {
+                    request.then(
+                        result => {
                             requestStates[serverIndex] = RequestState.Resolved;
-                            const erroredRequest = requestStates.find(state => state.type === RequestState.Type.Errored);
+                            const erroredRequest = requestStates.find(
+                                state => state.type === RequestState.Type.Errored,
+                            );
                             if (erroredRequest) {
                                 // We've gone out of sync
                                 this.delegate.onFatalError(command, erroredRequest.err);
                             }
                             return result;
-                        }, err => {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                        },
+                        err => {
+                            // oxlint-disable-next-line typescript/no-unsafe-argument
                             requestStates[serverIndex] = new RequestState.Errored(err);
                             if (requestStates.some(state => state === RequestState.Resolved)) {
                                 // We've gone out of sync
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                                // oxlint-disable-next-line typescript/no-unsafe-argument
                                 this.delegate.onFatalError(command, err);
                             }
                             throw err;
-                        });
+                        },
+                    );
                 }
             }
 
@@ -477,7 +500,7 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
     private readonly _errorHandlers = new Set<OnErrorHandler>();
 
     public constructor(
-        servers: { syntax: ITypeScriptServer; semantic: ITypeScriptServer; },
+        servers: { syntax: ITypeScriptServer; semantic: ITypeScriptServer },
         delegate: TsServerDelegate,
         enableDynamicRouting: boolean,
     ) {
@@ -502,20 +525,26 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
                         if (SyntaxRoutingTsServer.semanticCommands.has(command)) {
                             return false;
                         }
-                        if (enableDynamicRouting && this.projectLoading && SyntaxRoutingTsServer.syntaxAllowedCommands.has(command)) {
+                        if (
+                            enableDynamicRouting &&
+                            this.projectLoading &&
+                            SyntaxRoutingTsServer.syntaxAllowedCommands.has(command)
+                        ) {
                             return true;
                         }
                         return false;
                     },
-                }, {
+                },
+                {
                     server: this.semanticServer,
-                    canRun: undefined, /* gets all other commands */
+                    canRun: undefined /* gets all other commands */,
                 },
             ],
-            delegate);
+            delegate,
+        );
 
         this.syntaxServer.onEvent(event => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            // oxlint-disable-next-line typescript/no-unsafe-return
             this._eventHandlers.forEach(handler => handler(event));
         });
 
@@ -533,26 +562,26 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
                     this._projectLoading = false;
                     break;
             }
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            // oxlint-disable-next-line typescript/no-unsafe-return
             this._eventHandlers.forEach(handler => handler(event));
         });
 
         this.semanticServer.onExit(event => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            // oxlint-disable-next-line typescript/no-unsafe-return
             this._exitHandlers.forEach(handler => handler(event));
             this.syntaxServer.kill();
         });
 
         // Without the syntax server, the requests routed to it can no longer be answered.
         this.syntaxServer.onExit(event => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            // oxlint-disable-next-line typescript/no-unsafe-return
             this._exitHandlers.forEach(handler => handler(event));
             this.semanticServer.kill();
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        // oxlint-disable-next-line typescript/no-unsafe-return
         this.semanticServer.onError(event => this._errorHandlers.forEach(handler => handler(event)));
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        // oxlint-disable-next-line typescript/no-unsafe-return
         this.syntaxServer.onError(event => this._errorHandlers.forEach(handler => handler(event)));
     }
 
@@ -578,8 +607,7 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
         this._errorHandlers.add(handler);
     }
 
-    public onStdErr(_handler: OnStdErrHandler): void {
-    }
+    public onStdErr(_handler: OnStdErrHandler): void {}
 
     public get tsServerLogFile(): string | undefined {
         return this.semanticServer.tsServerLogFile;
@@ -591,13 +619,21 @@ export class SyntaxRoutingTsServer implements ITypeScriptServer {
         this.semanticServer.kill();
     }
 
-    public executeImpl(command: keyof TypeScriptRequestTypes, args: any, executeInfo: ExecuteInfo): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
+    public executeImpl(
+        command: keyof TypeScriptRequestTypes,
+        args: any,
+        executeInfo: ExecuteInfo,
+    ): Array<Promise<ServerResponse.Response<ts.server.protocol.Response>> | undefined> {
         return this.router.execute(command, args, executeInfo);
     }
 }
 
 namespace RequestState {
-    export const enum Type { Unresolved, Resolved, Errored }
+    export const enum Type {
+        Unresolved,
+        Resolved,
+        Errored,
+    }
 
     export const Unresolved = { type: Type.Unresolved } as const;
 
@@ -606,9 +642,7 @@ namespace RequestState {
     export class Errored {
         readonly type = Type.Errored;
 
-        constructor(
-            public readonly err: Error,
-        ) { }
+        constructor(public readonly err: Error) {}
     }
 
     export type State = typeof Unresolved | typeof Resolved | Errored;

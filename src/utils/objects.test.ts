@@ -8,10 +8,10 @@
 import { describe, it, expect } from 'vitest';
 import { deepMerge } from './objects.js';
 
-type Nested = { a?: number; b?: { c?: number; d?: number; e?: number; }; f?: number; };
-type WithArray = { a: number[]; };
-type WithObject = { a: { b?: number; d?: number; }; c: number[]; };
-type Polluted = { polluted?: boolean; nested?: Polluted; safe?: number; };
+type Nested = { a?: number; b?: { c?: number; d?: number; e?: number }; f?: number };
+type WithArray = { a: number[] };
+type WithObject = { a: { b?: number; d?: number }; c: number[] };
+type Polluted = { polluted?: boolean; nested?: Polluted; safe?: number };
 
 describe('deepMerge', () => {
     it('merges nested objects', () => {

@@ -17,9 +17,7 @@ export interface ILogDirectoryProvider {
 }
 
 export class LogDirectoryProvider implements ILogDirectoryProvider {
-    public constructor(
-        private readonly rootPath?: string,
-    ) { }
+    public constructor(private readonly rootPath?: string) {}
 
     public getNewLogDirectory(): string | undefined {
         const root = this.logDirectory();
@@ -48,8 +46,8 @@ export class LogDirectoryProvider implements ILogDirectoryProvider {
     }
 }
 
-export const noopLogDirectoryProvider = new class implements ILogDirectoryProvider {
+export const noopLogDirectoryProvider = new (class implements ILogDirectoryProvider {
     public getNewLogDirectory(): undefined {
         return undefined;
     }
-};
+})();

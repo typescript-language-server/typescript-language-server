@@ -25,5 +25,6 @@ type TypescriptVersionNotificationParams = {
     source: TypeScriptVersionSource;
 };
 
-export const TypescriptVersionNotification = new lsp.NotificationType<TypescriptVersionNotificationParams>('$/typescriptVersion');
-
+export const TypescriptVersionNotification = new lsp.NotificationType<TypescriptVersionNotificationParams>(
+    '$/typescriptVersion',
+);

@@ -71,15 +71,17 @@ export class LspClientLogger implements Logger {
         private level: lsp.MessageType,
     ) {}
 
-    private sendMessage(severity: lsp.MessageType, messageObjects: any[], options?: { overrideLevel?: boolean; }): void {
+    private sendMessage(severity: lsp.MessageType, messageObjects: any[], options?: { overrideLevel?: boolean }): void {
         if (this.level >= severity || options?.overrideLevel) {
-            const message = messageObjects.map(p => {
-                if (typeof p === 'object') {
-                    return JSON.stringify(p, null, 2);
-                } else {
-                    return p as string;
-                }
-            }).join(' ');
+            const message = messageObjects
+                .map(p => {
+                    if (typeof p === 'object') {
+                        return JSON.stringify(p, null, 2);
+                    } else {
+                        return p as string;
+                    }
+                })
+                .join(' ');
 
             this.client.logMessage({
                 type: severity,
@@ -130,14 +132,12 @@ export class LspClientLogger implements Logger {
 }
 
 export class ConsoleLogger implements Logger {
-    constructor(
-        private level: LogLevel = LogLevel.Error,
-    ) {}
+    constructor(private level: LogLevel = LogLevel.Error) {}
 
-    private print(level: LogLevel, args: any[], options?: { overrideLevel?: boolean; }): void {
+    private print(level: LogLevel, args: any[], options?: { overrideLevel?: boolean }): void {
         if (this.level >= level || options?.overrideLevel) {
             // All messages logged to stderr as stdout is reserved for LSP communication.
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            // oxlint-disable-next-line typescript/no-unsafe-argument
             console.error(`[${LogLevel.toString(level)}]`, ...this.toStrings(...args));
         }
     }
@@ -186,27 +186,27 @@ export class PrefixingLogger implements Logger {
     ) {}
 
     error(...args: any[]): void {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        // oxlint-disable-next-line typescript/no-unsafe-argument
         this.logger.error(this.prefix, ...args);
     }
 
     warn(...args: any[]): void {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        // oxlint-disable-next-line typescript/no-unsafe-argument
         this.logger.warn(this.prefix, ...args);
     }
 
     info(...args: any[]): void {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        // oxlint-disable-next-line typescript/no-unsafe-argument
         this.logger.info(this.prefix, ...args);
     }
 
     log(...args: any[]): void {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        // oxlint-disable-next-line typescript/no-unsafe-argument
         this.logger.log(this.prefix, ...args);
     }
 
     logIgnoringVerbosity(level: LogLevel, ...args: any[]): void {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        // oxlint-disable-next-line typescript/no-unsafe-argument
         this.logger.logIgnoringVerbosity(level, this.prefix, ...args);
     }
 
@@ -231,6 +231,6 @@ function data2String(data: any): string {
     if (data instanceof Error) {
         return data.stack || data.message;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call, typescript/no-unsafe-member-access
     return data.success === false && data.message ? data.message : data.toString();
 }

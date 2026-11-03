@@ -21,9 +21,7 @@ export interface TypeScriptServerPlugin {
 
 namespace TypeScriptServerPlugin {
     export function equals(a: TypeScriptServerPlugin, b: TypeScriptServerPlugin): boolean {
-        return a.uri.toString() === b.uri.toString()
-            && a.name === b.name
-            && arrays.equals(a.languages, b.languages);
+        return a.uri.toString() === b.uri.toString() && a.name === b.name && arrays.equals(a.languages, b.languages);
     }
 }
 

@@ -20,9 +20,7 @@ export class TSServerRequestCommand implements Command {
     public static readonly ID = 'typescript.tsserverRequest';
     public readonly id = TSServerRequestCommand.ID;
 
-    public constructor(
-        private readonly tsClient: ITypeScriptServiceClient,
-    ) { }
+    public constructor(private readonly tsClient: ITypeScriptServiceClient) {}
 
     public async execute<K extends keyof TypeScriptRequestTypes>(
         command: K,
@@ -33,7 +31,8 @@ export class TSServerRequestCommand implements Command {
             const requestArgs = args as RequestArgs;
             const hasFile = typeof requestArgs.file === 'string';
             if (hasFile) {
-                const newArgs: TypeScriptRequestTypes[K][0] & { file?: string; } = { ...args };
+                // oxlint-disable-next-line typescript/no-misused-spread
+                const newArgs: TypeScriptRequestTypes[K][0] & { file?: string } = { ...args };
                 if (hasFile) {
                     const document = this.tsClient.toOpenDocument(requestArgs.file);
                     if (document) {

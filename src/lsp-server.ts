@@ -13,16 +13,33 @@ import { getDignosticsKind, TsClient } from './ts-client.js';
 import { DiagnosticsManager } from './diagnosticsManager.js';
 import { toDocumentHighlight, toSymbolKind, toLocation, toSelectionRange, toTextEdit } from './protocol-translation.js';
 import type { LspDocument } from './document.js';
-import { asCompletionItems, asResolvedCompletionItem, type CompletionContext, CompletionDataCache, getCompletionTriggerCharacter } from './completion.js';
+import {
+    asCompletionItems,
+    asResolvedCompletionItem,
+    type CompletionContext,
+    CompletionDataCache,
+    getCompletionTriggerCharacter,
+} from './completion.js';
 import { asSignatureHelp, toTsTriggerReason } from './hover.js';
 import { Commands, TypescriptVersionNotification } from './commands.js';
 import { TSServerRequestCommand } from './commands/tsserverRequests.js';
 import { provideRefactors } from './refactor.js';
 import { organizeImportsCommands, provideOrganizeImports } from './organize-imports.js';
-import { CommandTypes, EventName, OrganizeImportsMode, type TypeScriptInitializeParams, type TypeScriptInitializationOptions, type SupportedFeatures } from './ts-protocol.js';
+import {
+    CommandTypes,
+    EventName,
+    OrganizeImportsMode,
+    type TypeScriptInitializeParams,
+    type TypeScriptInitializationOptions,
+    type SupportedFeatures,
+} from './ts-protocol.js';
 import type { ts } from './ts-protocol.js';
 import { collectDocumentSymbols, collectSymbolInformation } from './document-symbol.js';
-import { fromProtocolCallHierarchyItem, fromProtocolCallHierarchyIncomingCall, fromProtocolCallHierarchyOutgoingCall } from './features/call-hierarchy.js';
+import {
+    fromProtocolCallHierarchyItem,
+    fromProtocolCallHierarchyIncomingCall,
+    fromProtocolCallHierarchyOutgoingCall,
+} from './features/call-hierarchy.js';
 import FileConfigurationManager, { type WorkspaceConfiguration } from './features/fileConfigurationManager.js';
 import { CodeLensType, type ReferencesCodeLens } from './features/code-lens/baseCodeLensProvider.js';
 import TypeScriptImplementationsCodeLensProvider from './features/code-lens/implementationsCodeLens.js';
@@ -33,7 +50,11 @@ import { SourceDefinitionCommand } from './features/source-definition.js';
 import { CachedResponse } from './tsServer/cachedResponse.js';
 import { LogDirectoryProvider } from './tsServer/logDirectoryProvider.js';
 import { Trace } from './tsServer/tracer.js';
-import { type TypeScriptVersion, TypeScriptVersionProvider, type UnusableTypeScriptInstallation } from './tsServer/versionProvider.js';
+import {
+    type TypeScriptVersion,
+    TypeScriptVersionProvider,
+    type UnusableTypeScriptInstallation,
+} from './tsServer/versionProvider.js';
 import API from './utils/api.js';
 import { toSyntaxServerConfiguration, TsServerLogLevel, type LspServerConfiguration } from './utils/configuration.js';
 import { onCaseInsensitiveFileSystem } from './utils/fs.js';
@@ -53,7 +74,10 @@ interface FindTypescriptVersionResult {
 }
 
 function describeUnusableWorkspaceVersions(unusable: UnusableTypeScriptInstallation[]): string {
-    const descriptions = unusable.map(({ libFolder, versionString }) => `${versionString ? `TypeScript ${versionString}` : 'TypeScript'} at "${libFolder}"`);
+    const descriptions = unusable.map(
+        ({ libFolder, versionString }) =>
+            `${versionString ? `TypeScript ${versionString}` : 'TypeScript'} at "${libFolder}"`,
+    );
     return `The TypeScript of the workspace (${descriptions.join(', ')}) provides no tsserver.js.`;
 }
 
@@ -77,7 +101,12 @@ export class LspServer {
     constructor(private options: LspServerConfiguration) {
         this.logger = new PrefixingLogger(options.logger, '[lspserver]');
         this.tsClient = new TsClient(onCaseInsensitiveFileSystem(), this.logger, options.lspClient);
-        this.fileConfigurationManager = new FileConfigurationManager(this.tsClient, this.options.lspClient, this.features, onCaseInsensitiveFileSystem());
+        this.fileConfigurationManager = new FileConfigurationManager(
+            this.tsClient,
+            this.options.lspClient,
+            this.features,
+            onCaseInsensitiveFileSystem(),
+        );
         this.commandManager = new CommandManager();
         this.diagnosticsManager = new DiagnosticsManager(
             diagnostics => this.options.lspClient.publishDiagnostics(diagnostics),
@@ -85,7 +114,13 @@ export class LspServer {
             this.features,
             this.logger,
         );
-        this.codeActionsManager = new CodeActionManager(this.tsClient, this.fileConfigurationManager, this.commandManager, this.diagnosticsManager, this.features);
+        this.codeActionsManager = new CodeActionManager(
+            this.tsClient,
+            this.fileConfigurationManager,
+            this.commandManager,
+            this.diagnosticsManager,
+            this.features,
+        );
         this.commandManager.register(new TSServerRequestCommand(this.tsClient));
     }
 
@@ -112,25 +147,47 @@ export class LspServer {
     initialize(params: TypeScriptInitializeParams): lsp.InitializeResult {
         this.initializeParams = params;
         const clientCapabilities = this.initializeParams.capabilities;
-        this.workspaceRoot = this.initializeParams.rootUri ? URI.parse(this.initializeParams.rootUri).fsPath : this.initializeParams.rootPath || undefined;
+        this.workspaceRoot = this.initializeParams.rootUri
+            ? URI.parse(this.initializeParams.rootUri).fsPath
+            : this.initializeParams.rootPath || undefined;
 
-        const userInitializationOptions = (this.initializeParams.initializationOptions || {}) as TypeScriptInitializationOptions;
-        const { disableAutomaticTypingAcquisition, hostInfo, maxTsServerMemory, npmLocation, locale, plugins, tsserver } = userInitializationOptions;
+        const userInitializationOptions = (this.initializeParams.initializationOptions ||
+            {}) as TypeScriptInitializationOptions;
+        const {
+            disableAutomaticTypingAcquisition,
+            hostInfo,
+            maxTsServerMemory,
+            npmLocation,
+            locale,
+            plugins,
+            tsserver,
+        } = userInitializationOptions;
 
-        const { version: typescriptVersion, unusableWorkspaceVersions } = this.findTypescriptVersion(tsserver?.path, tsserver?.fallbackPath);
+        const { version: typescriptVersion, unusableWorkspaceVersions } = this.findTypescriptVersion(
+            tsserver?.path,
+            tsserver?.fallbackPath,
+        );
         if (typescriptVersion) {
-            this.options.lspClient.logMessage({ type: lsp.MessageType.Info, message: `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"` });
+            this.options.lspClient.logMessage({
+                type: lsp.MessageType.Info,
+                message: `Using Typescript version (${typescriptVersion.source}) ${typescriptVersion.versionString} from path "${typescriptVersion.tsServerPath}"`,
+            });
             // Unusable installations are only reported when no valid workspace TypeScript was found.
             if (unusableWorkspaceVersions.length) {
                 this.options.lspClient.showWarningMessage(
                     `${describeUnusableWorkspaceVersions(unusableWorkspaceVersions)} ` +
-                    `Using (${typescriptVersion.source}) TypeScript ${typescriptVersion.versionString} instead - ` +
-                    'language features will not reflect the TypeScript of the workspace.');
+                        `Using (${typescriptVersion.source}) TypeScript ${typescriptVersion.versionString} instead - ` +
+                        'language features will not reflect the TypeScript of the workspace.',
+                );
             }
         } else if (unusableWorkspaceVersions.length) {
-            throw Error(`${describeUnusableWorkspaceVersions(unusableWorkspaceVersions)} No other valid TypeScript installation was found. Exiting.`);
+            throw Error(
+                `${describeUnusableWorkspaceVersions(unusableWorkspaceVersions)} No other valid TypeScript installation was found. Exiting.`,
+            );
         } else {
-            throw Error('Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid `tsserver.path` is specified. Exiting.');
+            throw Error(
+                'Could not find a valid TypeScript installation. Please ensure that the "typescript" dependency is installed in the workspace or that a valid `tsserver.path` is specified. Exiting.',
+            );
         }
 
         this.fileConfigurationManager.mergeTsPreferences(userInitializationOptions.preferences || {});
@@ -138,10 +195,9 @@ export class LspServer {
         // Setup supported features.
         this.features.completionDisableFilterText = userInitializationOptions.completionDisableFilterText ?? false;
         this.features.moveToFileCodeActionSupport =
-            userInitializationOptions.supportsMoveToFileCodeAction &&
-            typescriptVersion.version?.gte(API.v520);
-        this.features.hoverVerbositySupport = userInitializationOptions.supportsHoverVerbosity &&
-            typescriptVersion.version?.gte(API.v590);
+            userInitializationOptions.supportsMoveToFileCodeAction && typescriptVersion.version?.gte(API.v520);
+        this.features.hoverVerbositySupport =
+            userInitializationOptions.supportsHoverVerbosity && typescriptVersion.version?.gte(API.v590);
         const { textDocument, workspace } = clientCapabilities;
         if (textDocument) {
             const { codeAction, completion, definition, publishDiagnostics } = textDocument;
@@ -152,12 +208,15 @@ export class LspServer {
             if (completion) {
                 const { completionItem } = completion;
                 if (completionItem) {
-                    const { commitCharactersSupport, insertReplaceSupport, labelDetailsSupport, snippetSupport } = completionItem;
+                    const { commitCharactersSupport, insertReplaceSupport, labelDetailsSupport, snippetSupport } =
+                        completionItem;
                     this.features.completionCommitCharactersSupport = commitCharactersSupport;
                     this.features.completionInsertReplaceSupport = insertReplaceSupport;
                     this.features.completionSnippets = snippetSupport;
-                    this.features.completionLabelDetails = this.fileConfigurationManager.tsPreferences.useLabelDetailsInCompletionEntries
-                        && labelDetailsSupport && typescriptVersion.version?.gte(API.v470);
+                    this.features.completionLabelDetails =
+                        this.fileConfigurationManager.tsPreferences.useLabelDetailsInCompletionEntries &&
+                        labelDetailsSupport &&
+                        typescriptVersion.version?.gte(API.v470);
                 }
             }
             if (definition) {
@@ -189,47 +248,54 @@ export class LspServer {
             const typescriptSupportsWatchEvents = typescriptVersion.version?.gte(API.v544);
 
             if (!supportsFileWatcherRegistration) {
-                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support dynamic file watcher registration; falling back to tsserver file watching.');
+                this.logger.logIgnoringVerbosity(
+                    LogLevel.Warning,
+                    'Client does not support dynamic file watcher registration; falling back to tsserver file watching.',
+                );
             } else if (!supportsRelativePatterns) {
-                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client does not support relative file watcher patterns; falling back to tsserver file watching.');
+                this.logger.logIgnoringVerbosity(
+                    LogLevel.Warning,
+                    'Client does not support relative file watcher patterns; falling back to tsserver file watching.',
+                );
             } else if (!typescriptSupportsWatchEvents) {
-                this.logger.logIgnoringVerbosity(LogLevel.Warning, 'Client-side file watching requires TypeScript 5.4.4 or newer; disabling useClientFileWatcher.');
+                this.logger.logIgnoringVerbosity(
+                    LogLevel.Warning,
+                    'Client-side file watching requires TypeScript 5.4.4 or newer; disabling useClientFileWatcher.',
+                );
             } else {
                 canUseWatchEvents = true;
             }
         }
 
         const tsserverLogVerbosity = tsserver?.logVerbosity && TsServerLogLevel.fromString(tsserver.logVerbosity);
-        const started = this.tsClient.start(
-            this.workspaceRoot,
-            {
-                trace: Trace.fromString(tsserver?.trace || 'off'),
-                typescriptVersion,
-                logDirectoryProvider: new LogDirectoryProvider(this.getLogDirectoryPath(userInitializationOptions)),
-                logVerbosity: tsserverLogVerbosity ?? TsServerLogLevel.Off,
-                disableAutomaticTypingAcquisition,
-                maxTsServerMemory,
-                npmLocation,
-                hostInfo,
-                locale,
-                plugins: plugins || [],
-                onEvent: this.onTsEvent.bind(this),
-                onExit: (exitCode, signal) => {
-                    this.shutdown();
-                    // Only an exit the server did not ask for gets here (the client disposes
-                    // its exit handlers before killing tsserver), so this is a crash whether
-                    // it comes with an exit code or with a signal (`exitCode` is null then:
-                    // SIGKILL from the OOM killer, SIGABRT from Node's own out-of-memory abort).
-                    // Throw from a microtask rather than from the exit handler itself, so that the
-                    // remaining exit handlers and the tsserver client's cleanup run first.
-                    queueMicrotask(() => {
-                        const message = `tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`;
-                        throw new Error(message);
-                    });
-                },
-                useClientFileWatcher: tsserver?.useClientFileWatcher ?? false,
-                useSyntaxServer: toSyntaxServerConfiguration(tsserver?.useSyntaxServer),
-            });
+        const started = this.tsClient.start(this.workspaceRoot, {
+            trace: Trace.fromString(tsserver?.trace || 'off'),
+            typescriptVersion,
+            logDirectoryProvider: new LogDirectoryProvider(this.getLogDirectoryPath(userInitializationOptions)),
+            logVerbosity: tsserverLogVerbosity ?? TsServerLogLevel.Off,
+            disableAutomaticTypingAcquisition,
+            maxTsServerMemory,
+            npmLocation,
+            hostInfo,
+            locale,
+            plugins: plugins || [],
+            onEvent: this.onTsEvent.bind(this),
+            onExit: (exitCode, signal) => {
+                this.shutdown();
+                // Only an exit the server did not ask for gets here (the client disposes
+                // its exit handlers before killing tsserver), so this is a crash whether
+                // it comes with an exit code or with a signal (`exitCode` is null then:
+                // SIGKILL from the OOM killer, SIGABRT from Node's own out-of-memory abort).
+                // Throw from a microtask rather than from the exit handler itself, so that the
+                // remaining exit handlers and the tsserver client's cleanup run first.
+                queueMicrotask(() => {
+                    const message = `tsserver process has exited (exit code: ${exitCode}, signal: ${signal}). Stopping the server.`;
+                    throw new Error(message);
+                });
+            },
+            useClientFileWatcher: tsserver?.useClientFileWatcher ?? false,
+            useSyntaxServer: toSyntaxServerConfiguration(tsserver?.useSyntaxServer),
+        });
         if (!started) {
             throw new Error('tsserver process has failed to start.');
         }
@@ -259,23 +325,26 @@ export class LspServer {
             capabilities: {
                 textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
                 completionProvider: {
-                    triggerCharacters: ['.', '"', '\'', '/', '@', '<'],
+                    triggerCharacters: ['.', '"', "'", '/', '@', '<'],
                     resolveProvider: true,
                 },
-                codeActionProvider: codeActionLiteralSupport || codeActionResolveSupport
-                    ? {
-                        ...codeActionLiteralSupport ? {
-                            codeActionKinds: [
-                                ...this.codeActionsManager.kinds,
-                                CodeActionKind.SourceOrganizeImportsTs.value,
-                                CodeActionKind.SourceRemoveUnusedImportsTs.value,
-                                CodeActionKind.SourceSortImportsTs.value,
-                                CodeActionKind.Refactor.value,
-                            ],
-                        } : {},
-                        ...codeActionResolveSupport ? { resolveProvider: true } : {},
-                    }
-                    : true,
+                codeActionProvider:
+                    codeActionLiteralSupport || codeActionResolveSupport
+                        ? {
+                              ...(codeActionLiteralSupport
+                                  ? {
+                                        codeActionKinds: [
+                                            ...this.codeActionsManager.kinds,
+                                            CodeActionKind.SourceOrganizeImportsTs.value,
+                                            CodeActionKind.SourceRemoveUnusedImportsTs.value,
+                                            CodeActionKind.SourceSortImportsTs.value,
+                                            CodeActionKind.Refactor.value,
+                                        ],
+                                    }
+                                  : {}),
+                              ...(codeActionResolveSupport ? { resolveProvider: true } : {}),
+                          }
+                        : true,
                 codeLensProvider: {
                     resolveProvider: true,
                 },
@@ -327,14 +396,7 @@ export class LspServer {
                             'member',
                         ],
                         // token from: https://github.com/microsoft/TypeScript/blob/main/src/services/classifier2020.ts#L14
-                        tokenModifiers: [
-                            'declaration',
-                            'static',
-                            'async',
-                            'readonly',
-                            'defaultLibrary',
-                            'local',
-                        ],
+                        tokenModifiers: ['declaration', 'static', 'async', 'readonly', 'defaultLibrary', 'local'],
                     },
                     full: true,
                     range: true,
@@ -375,14 +437,22 @@ export class LspServer {
 
     private registerHandlers(): void {
         if (this.initializeParams?.capabilities.textDocument?.codeLens) {
-            this.implementationsCodeLensProvider = new TypeScriptImplementationsCodeLensProvider(this.tsClient, this.cachedNavTreeResponse, this.fileConfigurationManager);
-            this.referencesCodeLensProvider = new TypeScriptReferencesCodeLensProvider(this.tsClient, this.cachedNavTreeResponse, this.fileConfigurationManager);
+            this.implementationsCodeLensProvider = new TypeScriptImplementationsCodeLensProvider(
+                this.tsClient,
+                this.cachedNavTreeResponse,
+                this.fileConfigurationManager,
+            );
+            this.referencesCodeLensProvider = new TypeScriptReferencesCodeLensProvider(
+                this.tsClient,
+                this.cachedNavTreeResponse,
+                this.fileConfigurationManager,
+            );
         }
     }
 
     public initialized(_: lsp.InitializedParams): void {
         const { apiVersion, typescriptVersionSource } = this.tsClient;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.options.lspClient.sendNotification(TypescriptVersionNotification, {
             version: apiVersion.displayName,
             source: typescriptVersionSource,
@@ -390,7 +460,10 @@ export class LspServer {
         this.watchEventManager?.onInitialized();
     }
 
-    private findTypescriptVersion(userTsserverPath: string | undefined, fallbackTsserverPath: string | undefined): FindTypescriptVersionResult {
+    private findTypescriptVersion(
+        userTsserverPath: string | undefined,
+        fallbackTsserverPath: string | undefined,
+    ): FindTypescriptVersionResult {
         const typescriptVersionProvider = new TypeScriptVersionProvider(userTsserverPath, this.logger);
         // Workspace TypeScript installations that provide no tsserver.js.
         let unusableWorkspaceVersions: UnusableTypeScriptInstallation[] = [];
@@ -400,7 +473,10 @@ export class LspServer {
             if (userSettingVersion.isValid) {
                 return { version: userSettingVersion, unusableWorkspaceVersions };
             }
-            this.logger.logIgnoringVerbosity(LogLevel.Warning, `Typescript specified through user setting ignored due to invalid path "${userSettingVersion.path}"`);
+            this.logger.logIgnoringVerbosity(
+                LogLevel.Warning,
+                `Typescript specified through user setting ignored due to invalid path "${userSettingVersion.path}"`,
+            );
         }
         // Workspace version.
         if (this.workspaceRoot) {
@@ -417,7 +493,10 @@ export class LspServer {
             if (fallbackSettingVersion.isValid) {
                 return { version: fallbackSettingVersion, unusableWorkspaceVersions };
             }
-            this.logger.logIgnoringVerbosity(LogLevel.Warning, `Typescript specified through fallback setting ignored due to invalid path "${fallbackSettingVersion.path}"`);
+            this.logger.logIgnoringVerbosity(
+                LogLevel.Warning,
+                `Typescript specified through fallback setting ignored due to invalid path "${fallbackSettingVersion.path}"`,
+            );
         }
 
         // Bundled version
@@ -447,8 +526,11 @@ export class LspServer {
 
     didChangeConfiguration(params: lsp.DidChangeConfigurationParams): void {
         this.fileConfigurationManager.setWorkspaceConfiguration((params.settings || {}) as WorkspaceConfiguration);
-        const ignoredDiagnosticCodes = this.fileConfigurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
-        this.tsClient.interruptGetErr(() => this.diagnosticsManager.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes));
+        const ignoredDiagnosticCodes =
+            this.fileConfigurationManager.workspaceConfiguration.diagnostics?.ignoredCodes || [];
+        this.tsClient.interruptGetErr(() =>
+            this.diagnosticsManager.updateIgnoredDiagnosticCodes(ignoredDiagnosticCodes),
+        );
     }
 
     didOpenTextDocument(params: lsp.DidOpenTextDocumentParams): void {
@@ -501,31 +583,57 @@ export class LspServer {
         this.watchEventManager?.handleFileChanges(params);
     }
 
-    async definition(params: lsp.DefinitionParams, token?: lsp.CancellationToken): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
-        return this.getDefinition({
-            type: this.features.definitionLinkSupport ? CommandTypes.DefinitionAndBoundSpan : CommandTypes.Definition,
-            params,
-        }, token);
+    async definition(
+        params: lsp.DefinitionParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
+        return this.getDefinition(
+            {
+                type: this.features.definitionLinkSupport
+                    ? CommandTypes.DefinitionAndBoundSpan
+                    : CommandTypes.Definition,
+                params,
+            },
+            token,
+        );
     }
 
-    async implementation(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.Definition | undefined> {
-        return this.getSymbolLocations({
-            type: CommandTypes.Implementation,
-            params,
-        }, token);
+    async implementation(
+        params: lsp.TextDocumentPositionParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.Definition | undefined> {
+        return this.getSymbolLocations(
+            {
+                type: CommandTypes.Implementation,
+                params,
+            },
+            token,
+        );
     }
 
-    async typeDefinition(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.Definition | undefined> {
-        return this.getSymbolLocations({
-            type: CommandTypes.TypeDefinition,
-            params,
-        }, token);
+    async typeDefinition(
+        params: lsp.TextDocumentPositionParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.Definition | undefined> {
+        return this.getSymbolLocations(
+            {
+                type: CommandTypes.TypeDefinition,
+                params,
+            },
+            token,
+        );
     }
 
-    private async getDefinition({ type, params }: {
-        type: CommandTypes.Definition | CommandTypes.DefinitionAndBoundSpan;
-        params: lsp.TextDocumentPositionParams;
-    }, token?: lsp.CancellationToken): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
+    private async getDefinition(
+        {
+            type,
+            params,
+        }: {
+            type: CommandTypes.Definition | CommandTypes.DefinitionAndBoundSpan;
+            params: lsp.TextDocumentPositionParams;
+        },
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.Definition | lsp.DefinitionLink[] | undefined> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return;
@@ -539,28 +647,34 @@ export class LspServer {
             }
             // `textSpan` can be undefined in older TypeScript versions, despite type saying otherwise.
             const span = response.body.textSpan ? Range.fromTextSpan(response.body.textSpan) : undefined;
-            return response.body.definitions
-                .map((location): lsp.DefinitionLink => {
-                    const target = toLocation(location, this.tsClient);
-                    const targetRange = location.contextStart && location.contextEnd
+            return response.body.definitions.map((location): lsp.DefinitionLink => {
+                const target = toLocation(location, this.tsClient);
+                const targetRange =
+                    location.contextStart && location.contextEnd
                         ? Range.fromLocations(location.contextStart, location.contextEnd)
                         : target.range;
-                    return {
-                        originSelectionRange: span,
-                        targetRange,
-                        targetUri: target.uri,
-                        targetSelectionRange: target.range,
-                    };
-                });
+                return {
+                    originSelectionRange: span,
+                    targetRange,
+                    targetUri: target.uri,
+                    targetSelectionRange: target.range,
+                };
+            });
         }
 
         return this.getSymbolLocations({ type: CommandTypes.Definition, params });
     }
 
-    private async getSymbolLocations({ type, params }: {
-        type: CommandTypes.Definition | CommandTypes.Implementation | CommandTypes.TypeDefinition;
-        params: lsp.TextDocumentPositionParams;
-    }, token?: lsp.CancellationToken): Promise<lsp.Definition | undefined> {
+    private async getSymbolLocations(
+        {
+            type,
+            params,
+        }: {
+            type: CommandTypes.Definition | CommandTypes.Implementation | CommandTypes.TypeDefinition;
+            params: lsp.TextDocumentPositionParams;
+        },
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.Definition | undefined> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return [];
@@ -574,13 +688,18 @@ export class LspServer {
         return response.body.map(fileSpan => toLocation(fileSpan, this.tsClient));
     }
 
-    async documentSymbol(params: lsp.DocumentSymbolParams, token?: lsp.CancellationToken): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
+    async documentSymbol(
+        params: lsp.DocumentSymbolParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.DocumentSymbol[] | lsp.SymbolInformation[]> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return [];
         }
 
-        const response = await this.cachedNavTreeResponse.execute(document, () => this.tsClient.execute(CommandTypes.NavTree, { file: document.filepath }, token));
+        const response = await this.cachedNavTreeResponse.execute(document, () =>
+            this.tsClient.execute(CommandTypes.NavTree, { file: document.filepath }, token),
+        );
         if (response.type !== 'response' || !response.body?.childItems) {
             return [];
         }
@@ -626,7 +745,8 @@ export class LspServer {
                     triggerCharacter: getCompletionTriggerCharacter(params.context?.triggerCharacter),
                     triggerKind: params.context?.triggerKind,
                 },
-                token);
+                token,
+            );
 
             if (response.type !== 'response') {
                 return undefined;
@@ -646,7 +766,10 @@ export class LspServer {
         if (isMemberCompletion) {
             const dotMatch = line.slice(0, params.position.character).match(/\??\.\s*$/) || undefined;
             if (dotMatch) {
-                const startPosition = lsp.Position.create(params.position.line, params.position.character - dotMatch[0].length);
+                const startPosition = lsp.Position.create(
+                    params.position.line,
+                    params.position.character - dotMatch[0].length,
+                );
                 const range = lsp.Range.create(startPosition, params.position);
                 const text = document.getText(range);
                 dotAccessorContext = { range, text };
@@ -670,12 +793,13 @@ export class LspServer {
             completionOptions,
             this.features,
             completionContext,
-            defaultCommitCharacters);
+            defaultCommitCharacters,
+        );
         return lsp.CompletionList.create(completions, isIncomplete);
     }
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {
-        const data = item.data as { cacheId?: number; } | undefined;
+        const data = item.data as { cacheId?: number } | undefined;
         if (data?.cacheId !== undefined) {
             const cachedData = this.completionDataCache.get(data.cacheId);
             item.data = cachedData;
@@ -683,11 +807,20 @@ export class LspServer {
                 const uri = this.tsClient.toResourceUri(cachedData.file);
                 const document = this.tsClient.toOpenDocument(uri);
                 if (document) {
-                    const response = await this.tsClient.interruptGetErr(() => this.tsClient.execute(CommandTypes.CompletionDetails, cachedData, token));
+                    const response = await this.tsClient.interruptGetErr(() =>
+                        this.tsClient.execute(CommandTypes.CompletionDetails, cachedData, token),
+                    );
                     if (response.type !== 'response' || !response.body?.length) {
                         return item;
                     }
-                    return asResolvedCompletionItem(item, response.body[0], document, this.tsClient, this.fileConfigurationManager.workspaceConfiguration.completions || {}, this.features);
+                    return asResolvedCompletionItem(
+                        item,
+                        response.body[0],
+                        document,
+                        this.tsClient,
+                        this.fileConfigurationManager.workspaceConfiguration.completions || {},
+                        this.features,
+                    );
                 }
             }
         }
@@ -695,7 +828,10 @@ export class LspServer {
         return item;
     }
 
-    async hover(params: lsp.HoverParams & { verbosityLevel?: number; }, token?: lsp.CancellationToken): Promise<lsp.Hover & { canIncreaseVerbosityLevel?: boolean; } | null> {
+    async hover(
+        params: lsp.HoverParams & { verbosityLevel?: number },
+        token?: lsp.CancellationToken,
+    ): Promise<(lsp.Hover & { canIncreaseVerbosityLevel?: boolean }) | null> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return { contents: [] };
@@ -730,16 +866,23 @@ export class LspServer {
         return {
             contents: contents.toMarkupContent(),
             range: Range.fromTextSpan(result),
-            ...supportsVerbosity && { canIncreaseVerbosityLevel: result.canIncreaseVerbosityLevel },
+            ...(supportsVerbosity && { canIncreaseVerbosityLevel: result.canIncreaseVerbosityLevel }),
         };
     }
 
-    async prepareRename(params: lsp.PrepareRenameParams, token?: lsp.CancellationToken): Promise<lsp.Range | { range: lsp.Range; placeholder: string; } | undefined | null> {
+    async prepareRename(
+        params: lsp.PrepareRenameParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.Range | { range: lsp.Range; placeholder: string } | undefined | null> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return null;
         }
-        const response = await this.tsClient.execute(CommandTypes.Rename, Position.toFileLocationRequestArgs(document.filepath, params.position), token);
+        const response = await this.tsClient.execute(
+            CommandTypes.Rename,
+            Position.toFileLocationRequestArgs(document.filepath, params.position),
+            token,
+        );
         if (response.type !== 'response' || !response.body?.info) {
             return null;
         }
@@ -750,14 +893,21 @@ export class LspServer {
         return Range.fromTextSpan(renameInfo.triggerSpan);
     }
 
-    async rename(params: lsp.RenameParams, token?: lsp.CancellationToken): Promise<lsp.WorkspaceEdit | undefined | null> {
+    async rename(
+        params: lsp.RenameParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.WorkspaceEdit | undefined | null> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return null;
         }
         const result = await this.tsClient.interruptGetErr(async () => {
             await this.fileConfigurationManager.ensureConfigurationForDocument(document);
-            const response = await this.tsClient.execute(CommandTypes.Rename, Position.toFileLocationRequestArgs(document.filepath, params.position), token);
+            const response = await this.tsClient.execute(
+                CommandTypes.Rename,
+                Position.toFileLocationRequestArgs(document.filepath, params.position),
+                token,
+            );
             if (response.type !== 'response' || !response.body?.info.canRename || !response.body?.locs.length) {
                 return null;
             }
@@ -769,21 +919,20 @@ export class LspServer {
         }
 
         const changes: lsp.WorkspaceEdit['changes'] = {};
-        result.locs
-            .forEach((spanGroup) => {
-                const uri = this.tsClient.toResourceUri(spanGroup.file);
-                const textEdits = changes[uri] || (changes[uri] = []);
+        result.locs.forEach(spanGroup => {
+            const uri = this.tsClient.toResourceUri(spanGroup.file);
+            const textEdits = changes[uri] || (changes[uri] = []);
 
-                spanGroup.locs.forEach((textSpan) => {
-                    textEdits.push({
-                        newText: `${textSpan.prefixText || ''}${params.newName}${textSpan.suffixText || ''}`,
-                        range: {
-                            start: Position.fromLocation(textSpan.start),
-                            end: Position.fromLocation(textSpan.end),
-                        },
-                    });
+            spanGroup.locs.forEach(textSpan => {
+                textEdits.push({
+                    newText: `${textSpan.prefixText || ''}${params.newName}${textSpan.suffixText || ''}`,
+                    range: {
+                        start: Position.fromLocation(textSpan.start),
+                        end: Position.fromLocation(textSpan.end),
+                    },
                 });
             });
+        });
 
         return { changes };
     }
@@ -794,7 +943,11 @@ export class LspServer {
             return [];
         }
 
-        const response = await this.tsClient.execute(CommandTypes.References, Position.toFileLocationRequestArgs(document.filepath, params.position), token);
+        const response = await this.tsClient.execute(
+            CommandTypes.References,
+            Position.toFileLocationRequestArgs(document.filepath, params.position),
+            token,
+        );
         if (response.type !== 'response' || !response.body) {
             return [];
         }
@@ -803,7 +956,10 @@ export class LspServer {
             .map(fileSpan => toLocation(fileSpan, this.tsClient));
     }
 
-    async documentFormatting(params: lsp.DocumentFormattingParams, token?: lsp.CancellationToken): Promise<lsp.TextEdit[]> {
+    async documentFormatting(
+        params: lsp.DocumentFormattingParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.TextEdit[]> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             throw new Error(`The document should be opened for formatting', file: ${params.textDocument.uri}`);
@@ -826,7 +982,10 @@ export class LspServer {
         return response.body.map(e => toTextEdit(e));
     }
 
-    async documentRangeFormatting(params: lsp.DocumentRangeFormattingParams, token?: lsp.CancellationToken): Promise<lsp.TextEdit[]> {
+    async documentRangeFormatting(
+        params: lsp.DocumentRangeFormattingParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.TextEdit[]> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return [];
@@ -849,7 +1008,10 @@ export class LspServer {
         return response.body.map(e => toTextEdit(e));
     }
 
-    async selectionRanges(params: lsp.SelectionRangeParams, token?: lsp.CancellationToken): Promise<lsp.SelectionRange[] | null> {
+    async selectionRanges(
+        params: lsp.SelectionRangeParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.SelectionRange[] | null> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return null;
@@ -869,7 +1031,10 @@ export class LspServer {
         return response.body.map(toSelectionRange);
     }
 
-    async signatureHelp(params: lsp.SignatureHelpParams, token?: lsp.CancellationToken): Promise<lsp.SignatureHelp | undefined> {
+    async signatureHelp(
+        params: lsp.SignatureHelpParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.SignatureHelp | undefined> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return undefined;
@@ -882,7 +1047,9 @@ export class LspServer {
             offset: position.character + 1,
             triggerReason: context ? toTsTriggerReason(context) : undefined,
         };
-        const response = await this.tsClient.interruptGetErr(() => this.tsClient.execute(CommandTypes.SignatureHelp, args, token));
+        const response = await this.tsClient.interruptGetErr(() =>
+            this.tsClient.execute(CommandTypes.SignatureHelp, args, token),
+        );
         if (response.type !== 'response' || !response.body) {
             return undefined;
         }
@@ -890,7 +1057,10 @@ export class LspServer {
         return asSignatureHelp(response.body, params.context, this.tsClient);
     }
 
-    async codeAction(params: lsp.CodeActionParams, token?: lsp.CancellationToken): Promise<(lsp.CodeAction | lsp.Command)[]> {
+    async codeAction(
+        params: lsp.CodeActionParams,
+        token?: lsp.CancellationToken,
+    ): Promise<(lsp.CodeAction | lsp.Command)[]> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return [];
@@ -901,12 +1071,21 @@ export class LspServer {
         const fileRangeArgs = Range.toFileRangeRequestArgs(document.filepath, params.range);
         const kinds = params.context.only?.map(kind => new CodeActionKind(kind));
         if (!kinds || kinds.some(kind => CodeActionKind.Refactor.contains(kind))) {
-            actions.push(...provideRefactors(await this.getRefactors(fileRangeArgs, params.context, this.features, token), fileRangeArgs, this.features));
+            actions.push(
+                ...provideRefactors(
+                    await this.getRefactors(fileRangeArgs, params.context, this.features, token),
+                    fileRangeArgs,
+                    this.features,
+                ),
+            );
         }
 
         for (const kind of kinds || []) {
             for (const command of organizeImportsCommands) {
-                if (!kind.contains(command.kind) || command.minVersion && this.tsClient.apiVersion.lt(command.minVersion)) {
+                if (
+                    !kind.contains(command.kind) ||
+                    (command.minVersion && this.tsClient.apiVersion.lt(command.minVersion))
+                ) {
                     continue;
                 }
                 let skipDestructiveCodeActions = command.mode === OrganizeImportsMode.SortAndCombine;
@@ -914,7 +1093,7 @@ export class LspServer {
                 const isOrganizeImports = command.kind.equals(CodeActionKind.SourceOrganizeImportsTs);
                 if (isOrganizeImports) {
                     // see this issue for more context on why we override params when document has errors: https://github.com/microsoft/TypeScript/issues/43051
-                    const documentHasErrors = params.context.diagnostics.some(d => (d.severity ?? 0) <= 2);  // Assume no severity is an error.
+                    const documentHasErrors = params.context.diagnostics.some(d => (d.severity ?? 0) <= 2); // Assume no severity is an error.
                     skipDestructiveCodeActions = documentHasErrors;
                     mode = OrganizeImportsMode.SortAndCombine;
                 }
@@ -929,7 +1108,8 @@ export class LspServer {
                             skipDestructiveCodeActions,
                             mode,
                         },
-                        token);
+                        token,
+                    );
                 });
                 if (response.type === 'response' && response.body) {
                     actions.push(...provideOrganizeImports(command, response, this.tsClient));
@@ -940,20 +1120,29 @@ export class LspServer {
         return actions;
     }
 
-    protected async getRefactors(fileRangeArgs: ts.server.protocol.FileRangeRequestArgs, context: lsp.CodeActionContext, features: SupportedFeatures, token?: lsp.CancellationToken): Promise<ts.server.protocol.ApplicableRefactorInfo[]> {
+    protected async getRefactors(
+        fileRangeArgs: ts.server.protocol.FileRangeRequestArgs,
+        context: lsp.CodeActionContext,
+        features: SupportedFeatures,
+        token?: lsp.CancellationToken,
+    ): Promise<ts.server.protocol.ApplicableRefactorInfo[]> {
         // Make separate request for each refactor "kind" that was specified or a single request otherwise.
-        const kinds = (context.only || [undefined]).filter(kind => kind === undefined || CodeActionKind.Refactor.contains(new CodeActionKind(kind)));
+        const kinds = (context.only || [undefined]).filter(
+            kind => kind === undefined || CodeActionKind.Refactor.contains(new CodeActionKind(kind)),
+        );
 
-        const responses = await Promise.all(kinds.map(async (kind) => {
-            const args: ts.server.protocol.GetApplicableRefactorsRequestArgs = {
-                ...fileRangeArgs,
-                triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
-                kind,
-                includeInteractiveActions: features.moveToFileCodeActionSupport,
-            };
-            const response = await this.tsClient.execute(CommandTypes.GetApplicableRefactors, args, token);
-            return response.type === 'response' && response.body ? response.body : [];
-        }));
+        const responses = await Promise.all(
+            kinds.map(async kind => {
+                const args: ts.server.protocol.GetApplicableRefactorsRequestArgs = {
+                    ...fileRangeArgs,
+                    triggerReason: context.triggerKind === lsp.CodeActionTriggerKind.Invoked ? 'invoked' : undefined,
+                    kind,
+                    includeInteractiveActions: features.moveToFileCodeActionSupport,
+                };
+                const response = await this.tsClient.execute(CommandTypes.GetApplicableRefactors, args, token);
+                return response.type === 'response' && response.body ? response.body : [];
+            }),
+        );
 
         return responses.flat();
     }
@@ -962,10 +1151,14 @@ export class LspServer {
         return this.codeActionsManager.resolveCodeAction(params);
     }
 
-    async executeCommand(params: lsp.ExecuteCommandParams, token?: lsp.CancellationToken, workDoneProgress?: lsp.WorkDoneProgressReporter): Promise<unknown> {
+    async executeCommand(
+        params: lsp.ExecuteCommandParams,
+        token?: lsp.CancellationToken,
+        workDoneProgress?: lsp.WorkDoneProgressReporter,
+    ): Promise<unknown> {
         if (this.commandManager.handlesCommand(params.command)) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            return await this.commandManager.handle(params.command, ...params.arguments || []);
+            // oxlint-disable-next-line typescript/no-unsafe-argument
+            return await this.commandManager.handle(params.command, ...(params.arguments || []));
         } else if (params.command === Commands.APPLY_REFACTORING && params.arguments) {
             const args = params.arguments[0] as ts.server.protocol.GetEditsForRefactorRequestArgs;
             const response = await this.tsClient.execute(CommandTypes.GetEditsForRefactor, args, token);
@@ -982,7 +1175,7 @@ export class LspServer {
             for (const edit of body.edits) {
                 await fs.ensureFile(edit.fileName);
             }
-            if (!await this.applyFileCodeEdits(body.edits)) {
+            if (!(await this.applyFileCodeEdits(body.edits))) {
                 return;
             }
             const renameLocation = body.renameLocation;
@@ -1005,10 +1198,17 @@ export class LspServer {
                 return;
             }
 
-            const additionalArguments = (params.arguments[1] || {}) as { skipDestructiveCodeActions?: boolean; mode?: OrganizeImportsMode; };
+            const additionalArguments = (params.arguments[1] || {}) as {
+                skipDestructiveCodeActions?: boolean;
+                mode?: OrganizeImportsMode;
+            };
             const body = await this.tsClient.interruptGetErr(async () => {
                 await this.fileConfigurationManager.ensureConfigurationForDocument(document);
-                const mode = additionalArguments.mode ?? (additionalArguments.skipDestructiveCodeActions ? OrganizeImportsMode.SortAndCombine : OrganizeImportsMode.All);
+                const mode =
+                    additionalArguments.mode ??
+                    (additionalArguments.skipDestructiveCodeActions
+                        ? OrganizeImportsMode.SortAndCombine
+                        : OrganizeImportsMode.All);
                 const response = await this.tsClient.execute(
                     CommandTypes.OrganizeImports,
                     {
@@ -1038,7 +1238,7 @@ export class LspServer {
                 sourceUri: string;
                 targetUri: string;
             };
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            // oxlint-disable-next-line typescript/no-floating-promises
             this.applyRenameFile(sourceUri, targetUri, token);
         } else if (params.command === Commands.APPLY_COMPLETION_CODE_ACTION && params.arguments) {
             const [_, codeActions] = params.arguments as [string, ts.server.protocol.CodeAction[]];
@@ -1055,7 +1255,14 @@ export class LspServer {
         } else if (params.command === Commands.SOURCE_DEFINITION) {
             const [uri, position] = (params.arguments || []) as [lsp.DocumentUri?, lsp.Position?];
             const reporter = await this.options.lspClient.createProgressReporter(token, workDoneProgress);
-            return SourceDefinitionCommand.execute(uri, position, this.tsClient, this.options.lspClient, reporter, token);
+            return SourceDefinitionCommand.execute(
+                uri,
+                position,
+                this.tsClient,
+                this.options.lspClient,
+                reporter,
+                token,
+            );
         } else {
             this.logger.error(`Unknown command ${params.command}.`);
         }
@@ -1065,7 +1272,7 @@ export class LspServer {
         if (!edits.length) {
             return false;
         }
-        const changes: { [uri: string]: lsp.TextEdit[]; } = {};
+        const changes: { [uri: string]: lsp.TextEdit[] } = {};
         for (const edit of edits) {
             changes[this.tsClient.toResourceUri(edit.fileName)] = edit.textChanges.map(toTextEdit);
         }
@@ -1088,12 +1295,20 @@ export class LspServer {
         return { changes };
     }
 
-    protected async applyRenameFile(sourceUri: string, targetUri: string, token?: lsp.CancellationToken): Promise<void> {
+    protected async applyRenameFile(
+        sourceUri: string,
+        targetUri: string,
+        token?: lsp.CancellationToken,
+    ): Promise<void> {
         const edits = await this.getEditsForFileRename(sourceUri, targetUri, token);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.applyFileCodeEdits(edits);
     }
-    protected async getEditsForFileRename(sourceUri: string, targetUri: string, token?: lsp.CancellationToken): Promise<ReadonlyArray<ts.server.protocol.FileCodeEdits>> {
+    protected async getEditsForFileRename(
+        sourceUri: string,
+        targetUri: string,
+        token?: lsp.CancellationToken,
+    ): Promise<ReadonlyArray<ts.server.protocol.FileCodeEdits>> {
         const newFilePath = this.tsClient.toTsFilePath(targetUri);
         const oldFilePath = this.tsClient.toTsFilePath(sourceUri);
         if (!newFilePath || !oldFilePath) {
@@ -1128,8 +1343,8 @@ export class LspServer {
         }
 
         return [
-            ...await this.implementationsCodeLensProvider.provideCodeLenses(doc, token),
-            ...await this.referencesCodeLensProvider.provideCodeLenses(doc, token),
+            ...(await this.implementationsCodeLensProvider.provideCodeLenses(doc, token)),
+            ...(await this.referencesCodeLensProvider.provideCodeLenses(doc, token)),
         ];
     }
 
@@ -1149,7 +1364,10 @@ export class LspServer {
         throw new Error('Unexpected CodeLens!');
     }
 
-    async documentHighlight(params: lsp.TextDocumentPositionParams, token?: lsp.CancellationToken): Promise<lsp.DocumentHighlight[]> {
+    async documentHighlight(
+        params: lsp.TextDocumentPositionParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.DocumentHighlight[]> {
         const doc = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!doc) {
             throw new Error(`The document should be opened first: ${params.textDocument.uri}`);
@@ -1170,7 +1388,10 @@ export class LspServer {
         return response.body.flatMap(item => toDocumentHighlight(item));
     }
 
-    async workspaceSymbol(params: lsp.WorkspaceSymbolParams, token?: lsp.CancellationToken): Promise<lsp.SymbolInformation[]> {
+    async workspaceSymbol(
+        params: lsp.WorkspaceSymbolParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.SymbolInformation[]> {
         const response = await this.tsClient.execute(
             CommandTypes.Navto,
             {
@@ -1200,13 +1421,20 @@ export class LspServer {
     /**
      * implemented based on https://github.com/Microsoft/vscode/blob/master/extensions/typescript-language-features/src/features/folding.ts
      */
-    async foldingRanges(params: lsp.FoldingRangeParams, token?: lsp.CancellationToken): Promise<lsp.FoldingRange[] | undefined> {
+    async foldingRanges(
+        params: lsp.FoldingRangeParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.FoldingRange[] | undefined> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             throw new Error(`The document should be opened for foldingRanges', file: ${params.textDocument.uri}`);
         }
 
-        const response = await this.tsClient.execute(CommandTypes.GetOutliningSpans, { file: document.filepath }, token);
+        const response = await this.tsClient.execute(
+            CommandTypes.GetOutliningSpans,
+            { file: document.filepath },
+            token,
+        );
         if (response.type !== 'response' || !response.body) {
             return undefined;
         }
@@ -1219,12 +1447,15 @@ export class LspServer {
         }
         return foldingRanges;
     }
-    protected asFoldingRange(span: ts.server.protocol.OutliningSpan, document: LspDocument): lsp.FoldingRange | undefined {
+    protected asFoldingRange(
+        span: ts.server.protocol.OutliningSpan,
+        document: LspDocument,
+    ): lsp.FoldingRange | undefined {
         const range = Range.fromTextSpan(span.textSpan);
         const kind = this.asFoldingRangeKind(span);
 
         // workaround for https://github.com/Microsoft/vscode/issues/49904
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+        // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
         if (span.kind === 'comment') {
             const line = document.getLine(range.start.line);
             if (line.match(/\/\/\s*#endregion/gi)) {
@@ -1235,10 +1466,13 @@ export class LspServer {
         const startLine = range.start.line;
 
         // workaround for https://github.com/Microsoft/vscode/issues/47240
-        const endLine = range.end.character > 0 && document.getText(lsp.Range.create(
-            lsp.Position.create(range.end.line, range.end.character - 1),
-            range.end,
-        )) === '}' ? Math.max(range.end.line - 1, range.start.line) : range.end.line;
+        const endLine =
+            range.end.character > 0 &&
+            document.getText(
+                lsp.Range.create(lsp.Position.create(range.end.line, range.end.character - 1), range.end),
+            ) === '}'
+                ? Math.max(range.end.line - 1, range.start.line)
+                : range.end.line;
 
         return {
             startLine,
@@ -1248,15 +1482,19 @@ export class LspServer {
     }
     protected asFoldingRangeKind(span: ts.server.protocol.OutliningSpan): lsp.FoldingRangeKind | undefined {
         switch (span.kind) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-            case 'comment': return lsp.FoldingRangeKind.Comment;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-            case 'region': return lsp.FoldingRangeKind.Region;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-            case 'imports': return lsp.FoldingRangeKind.Imports;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+            // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+            case 'comment':
+                return lsp.FoldingRangeKind.Comment;
+            // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+            case 'region':
+                return lsp.FoldingRangeKind.Region;
+            // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+            case 'imports':
+                return lsp.FoldingRangeKind.Imports;
+            // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
             case 'code':
-            default: return undefined;
+            default:
+                return undefined;
         }
     }
 
@@ -1265,7 +1503,11 @@ export class LspServer {
             return;
         }
         const eventName = event.event as EventName;
-        if (eventName === EventName.semanticDiag || eventName === EventName.syntaxDiag || eventName === EventName.suggestionDiag) {
+        if (
+            eventName === EventName.semanticDiag ||
+            eventName === EventName.syntaxDiag ||
+            eventName === EventName.suggestionDiag
+        ) {
             const diagnosticEvent = event as ts.server.protocol.DiagnosticEvent;
             if (diagnosticEvent.body?.diagnostics) {
                 const { file, diagnostics } = diagnosticEvent.body;
@@ -1274,7 +1516,10 @@ export class LspServer {
         }
     }
 
-    async prepareCallHierarchy(params: lsp.CallHierarchyPrepareParams, token?: lsp.CancellationToken): Promise<lsp.CallHierarchyItem[] | null> {
+    async prepareCallHierarchy(
+        params: lsp.CallHierarchyPrepareParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.CallHierarchyItem[] | null> {
         const document = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!document) {
             return null;
@@ -1288,7 +1533,10 @@ export class LspServer {
         return items.map(item => fromProtocolCallHierarchyItem(item, this.tsClient, this.workspaceRoot));
     }
 
-    async callHierarchyIncomingCalls(params: lsp.CallHierarchyIncomingCallsParams, token?: lsp.CancellationToken): Promise<lsp.CallHierarchyIncomingCall[] | null> {
+    async callHierarchyIncomingCalls(
+        params: lsp.CallHierarchyIncomingCallsParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.CallHierarchyIncomingCall[] | null> {
         const file = this.tsClient.toTsFilePath(params.item.uri);
         if (!file) {
             return null;
@@ -1298,10 +1546,15 @@ export class LspServer {
         if (response.type !== 'response' || !response.body) {
             return null;
         }
-        return response.body.map(item => fromProtocolCallHierarchyIncomingCall(item, this.tsClient, this.workspaceRoot));
+        return response.body.map(item =>
+            fromProtocolCallHierarchyIncomingCall(item, this.tsClient, this.workspaceRoot),
+        );
     }
 
-    async callHierarchyOutgoingCalls(params: lsp.CallHierarchyOutgoingCallsParams, token?: lsp.CancellationToken): Promise<lsp.CallHierarchyOutgoingCall[] | null> {
+    async callHierarchyOutgoingCalls(
+        params: lsp.CallHierarchyOutgoingCallsParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.CallHierarchyOutgoingCall[] | null> {
         const file = this.tsClient.toTsFilePath(params.item.uri);
         if (!file) {
             return null;
@@ -1311,15 +1564,26 @@ export class LspServer {
         if (response.type !== 'response' || !response.body) {
             return null;
         }
-        return response.body.map(item => fromProtocolCallHierarchyOutgoingCall(item, this.tsClient, this.workspaceRoot));
+        return response.body.map(item =>
+            fromProtocolCallHierarchyOutgoingCall(item, this.tsClient, this.workspaceRoot),
+        );
     }
 
     async inlayHints(params: lsp.InlayHintParams, token?: lsp.CancellationToken): Promise<lsp.InlayHint[] | undefined> {
         return await TypeScriptInlayHintsProvider.provideInlayHints(
-            params.textDocument, params.range, this.tsClient, this.options.lspClient, this.fileConfigurationManager, token);
+            params.textDocument,
+            params.range,
+            this.tsClient,
+            this.options.lspClient,
+            this.fileConfigurationManager,
+            token,
+        );
     }
 
-    async linkedEditingRange(params: lsp.LinkedEditingRangeParams, token?: lsp.CancellationToken): Promise<lsp.LinkedEditingRanges | null> {
+    async linkedEditingRange(
+        params: lsp.LinkedEditingRangeParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.LinkedEditingRanges | null> {
         const doc = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!doc) {
             return null;
@@ -1335,7 +1599,10 @@ export class LspServer {
         };
     }
 
-    async semanticTokensFull(params: lsp.SemanticTokensParams, token?: lsp.CancellationToken): Promise<lsp.SemanticTokens> {
+    async semanticTokensFull(
+        params: lsp.SemanticTokensParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.SemanticTokens> {
         const doc = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!doc) {
             return { data: [] };
@@ -1353,7 +1620,10 @@ export class LspServer {
         return this.getSemanticTokens(doc, doc.filepath, start, end, token);
     }
 
-    async semanticTokensRange(params: lsp.SemanticTokensRangeParams, token?: lsp.CancellationToken): Promise<lsp.SemanticTokens> {
+    async semanticTokensRange(
+        params: lsp.SemanticTokensRangeParams,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.SemanticTokens> {
         const doc = this.tsClient.toOpenDocument(params.textDocument.uri);
         if (!doc) {
             return { data: [] };
@@ -1365,7 +1635,13 @@ export class LspServer {
         return this.getSemanticTokens(doc, doc.filepath, start, end, token);
     }
 
-    async getSemanticTokens(doc: LspDocument, file: string, startOffset: number, endOffset: number, token?: lsp.CancellationToken): Promise<lsp.SemanticTokens> {
+    async getSemanticTokens(
+        doc: LspDocument,
+        file: string,
+        startOffset: number,
+        endOffset: number,
+        token?: lsp.CancellationToken,
+    ): Promise<lsp.SemanticTokens> {
         const response = await this.tsClient.execute(
             CommandTypes.EncodedSemanticClassificationsFull,
             {

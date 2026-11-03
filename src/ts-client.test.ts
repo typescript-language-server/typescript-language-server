@@ -20,7 +20,7 @@ import { onCaseInsensitiveFileSystem } from './utils/fs.js';
 const logger = new ConsoleLogger();
 const lspClientOptions = {
     rootUri: uri(),
-    publishDiagnostics: () => { },
+    publishDiagnostics: () => {},
 };
 const lspClient = new TestLspClient(lspClientOptions, logger);
 const typescriptVersionProvider = new TypeScriptVersionProvider(undefined, logger);
@@ -31,18 +31,15 @@ describe('ts server client', () => {
 
     beforeAll(() => {
         server = new TsClient(onCaseInsensitiveFileSystem(), logger, lspClient);
-        server.start(
-            undefined,
-            {
-                logDirectoryProvider: noopLogDirectoryProvider,
-                logVerbosity: TsServerLogLevel.Off,
-                plugins: [],
-                trace: Trace.Off,
-                typescriptVersion: bundled!,
-                useClientFileWatcher: false,
-                useSyntaxServer: SyntaxServerConfiguration.Never,
-            },
-        );
+        server.start(undefined, {
+            logDirectoryProvider: noopLogDirectoryProvider,
+            logVerbosity: TsServerLogLevel.Off,
+            plugins: [],
+            trace: Trace.Off,
+            typescriptVersion: bundled!,
+            useClientFileWatcher: false,
+            useSyntaxServer: SyntaxServerConfiguration.Never,
+        });
     });
 
     afterAll(() => {
@@ -99,14 +96,11 @@ describe('ts server client', () => {
                 includeInlayFunctionLikeReturnTypeHints: true,
             },
         });
-        const response = await server.execute(
-            CommandTypes.ProvideInlayHints,
-            {
-                file: f,
-                start: 0,
-                length: 1000,
-            },
-        );
+        const response = await server.execute(CommandTypes.ProvideInlayHints, {
+            file: f,
+            start: 0,
+            length: 1000,
+        });
         expect(response.type).toBe('response');
         if (response.type !== 'response') {
             throw Error('Not a response');
@@ -142,31 +136,34 @@ describe('ts server client exit', () => {
 
     function startClient(onExit: OnExit, useSyntaxServer = SyntaxServerConfiguration.Never): TsClient {
         const client = new TsClient(onCaseInsensitiveFileSystem(), logger, lspClient);
-        client.start(
-            undefined,
-            {
-                logDirectoryProvider: noopLogDirectoryProvider,
-                logVerbosity: TsServerLogLevel.Off,
-                onExit,
-                plugins: [],
-                trace: Trace.Off,
-                typescriptVersion: bundled!,
-                useClientFileWatcher: false,
-                useSyntaxServer,
-            },
-        );
+        client.start(undefined, {
+            logDirectoryProvider: noopLogDirectoryProvider,
+            logVerbosity: TsServerLogLevel.Off,
+            onExit,
+            plugins: [],
+            trace: Trace.Off,
+            typescriptVersion: bundled!,
+            useClientFileWatcher: false,
+            useSyntaxServer,
+        });
         return client;
     }
 
     // The tsserver child process, reached through private state: the tests need to bring it
     // down from underneath the client, as a crash would. Checked at runtime so that a change to
     // the private layout fails here with a clear message rather than with a TypeError further on.
-    type ServerWithProcess = { _process?: { _process?: unknown; }; };
+    type ServerWithProcess = { _process?: { _process?: unknown } };
     function tsserverProcess(client: TsClient, kind?: 'syntaxServer' | 'semanticServer'): ChildProcess {
-        const server = (client as unknown as { serverState?: { server?: ServerWithProcess & Record<string, ServerWithProcess | undefined>; }; }).serverState?.server;
+        const server = (
+            client as unknown as {
+                serverState?: { server?: ServerWithProcess & Record<string, ServerWithProcess | undefined> };
+            }
+        ).serverState?.server;
         const tsserverProcess = (kind ? server?.[kind] : server)?._process?._process;
         if (!(tsserverProcess instanceof ChildProcess)) {
-            throw new Error(`Expected the tsserver ChildProcess at TsClient.serverState.server${kind ? `.${kind}` : ''}._process._process; the private layout has changed`);
+            throw new Error(
+                `Expected the tsserver ChildProcess at TsClient.serverState.server${kind ? `.${kind}` : ''}._process._process; the private layout has changed`,
+            );
         }
         return tsserverProcess;
     }
@@ -183,21 +180,24 @@ describe('ts server client exit', () => {
         expect(signal).toBe('SIGKILL');
     });
 
-    it.each(['syntaxServer', 'semanticServer'] as const)('reports a killed %s of a syntax routing server through onExit', async kind => {
-        let onExit: OnExit = () => {};
-        const exited = new Promise<[number | null, NodeJS.Signals | null]>(resolve => {
-            onExit = (exitCode, signal) => resolve([exitCode, signal]);
-        });
-        const client = startClient((exitCode, signal) => onExit(exitCode, signal), SyntaxServerConfiguration.Auto);
-        const other = tsserverProcess(client, kind === 'syntaxServer' ? 'semanticServer' : 'syntaxServer');
-        const otherGone = new Promise<void>(resolve => other.once('exit', () => resolve()));
-        tsserverProcess(client, kind).kill('SIGKILL');
-        const [exitCode, signal] = await exited;
-        expect(exitCode).toBeNull();
-        expect(signal).toBe('SIGKILL');
-        // The remaining server is stopped as well.
-        await otherGone;
-    });
+    it.each(['syntaxServer', 'semanticServer'] as const)(
+        'reports a killed %s of a syntax routing server through onExit',
+        async kind => {
+            let onExit: OnExit = () => {};
+            const exited = new Promise<[number | null, NodeJS.Signals | null]>(resolve => {
+                onExit = (exitCode, signal) => resolve([exitCode, signal]);
+            });
+            const client = startClient((exitCode, signal) => onExit(exitCode, signal), SyntaxServerConfiguration.Auto);
+            const other = tsserverProcess(client, kind === 'syntaxServer' ? 'semanticServer' : 'syntaxServer');
+            const otherGone = new Promise<void>(resolve => other.once('exit', () => resolve()));
+            tsserverProcess(client, kind).kill('SIGKILL');
+            const [exitCode, signal] = await exited;
+            expect(exitCode).toBeNull();
+            expect(signal).toBe('SIGKILL');
+            // The remaining server is stopped as well.
+            await otherGone;
+        },
+    );
 
     it('does not report its own shutdown through onExit', async () => {
         let exits = 0;

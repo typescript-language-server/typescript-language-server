@@ -28,20 +28,15 @@ export class CachedResponse<T extends ts.server.protocol.Response> {
      *
      * Caller must ensure that all input `resolve` functions return equivilent results (keyed only off of document).
      */
-    public execute(
-        document: LspDocument,
-        resolve: Resolve<T>,
-    ): Promise<ServerResponse.Response<T>> {
+    public execute(document: LspDocument, resolve: Resolve<T>): Promise<ServerResponse.Response<T>> {
         if (this.response && this.matches(document)) {
             // Chain so that on cancellation we fall back to the next resolve
-            return this.response = this.response.then(result => result.type === 'cancelled' ? resolve() : result);
+            return (this.response = this.response.then(result => (result.type === 'cancelled' ? resolve() : result)));
         }
         return this.reset(document, resolve);
     }
 
-    public onDocumentClose(
-        document: LspDocument,
-    ): void {
+    public onDocumentClose(document: LspDocument): void {
         if (this.document === document.uri.toString()) {
             this.response = undefined;
             this.version = -1;
@@ -53,12 +48,9 @@ export class CachedResponse<T extends ts.server.protocol.Response> {
         return this.version === document.version && this.document === document.uri.toString();
     }
 
-    private async reset(
-        document: LspDocument,
-        resolve: Resolve<T>,
-    ): Promise<ServerResponse.Response<T>> {
+    private async reset(document: LspDocument, resolve: Resolve<T>): Promise<ServerResponse.Response<T>> {
         this.version = document.version;
         this.document = document.uri.toString();
-        return this.response = resolve();
+        return (this.response = resolve());
     }
 }

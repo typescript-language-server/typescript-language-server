@@ -7,7 +7,14 @@
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import type * as lsp from 'vscode-languageserver';
-import { uri, createServer, type TestLspServer, positionAfter, documentFromFile, openDocumentAndWaitForDiagnostics } from '../test-utils.js';
+import {
+    uri,
+    createServer,
+    type TestLspServer,
+    positionAfter,
+    documentFromFile,
+    openDocumentAndWaitForDiagnostics,
+} from '../test-utils.js';
 
 const diagnostics: Map<string, lsp.PublishDiagnosticsParams> = new Map();
 let server: TestLspServer;
@@ -16,18 +23,28 @@ interface CallHierarchyItemWithChildren extends lsp.CallHierarchyItem {
     children: CallHierarchyItemWithChildren[];
 }
 
-async function getIncomingCalls(server: TestLspServer, item: lsp.CallHierarchyItem): Promise<CallHierarchyItemWithChildren> {
+async function getIncomingCalls(
+    server: TestLspServer,
+    item: lsp.CallHierarchyItem,
+): Promise<CallHierarchyItemWithChildren> {
     const incomingCalls = await server.callHierarchyIncomingCalls({ item });
-    const children = await Promise.all((incomingCalls || []).map(incomingCall => getIncomingCalls(server, incomingCall.from)));
+    const children = await Promise.all(
+        (incomingCalls || []).map(incomingCall => getIncomingCalls(server, incomingCall.from)),
+    );
     return {
         ...item,
         children,
     };
 }
 
-async function getOutgoingCalls(server: TestLspServer, item: lsp.CallHierarchyItem): Promise<CallHierarchyItemWithChildren> {
+async function getOutgoingCalls(
+    server: TestLspServer,
+    item: lsp.CallHierarchyItem,
+): Promise<CallHierarchyItemWithChildren> {
     const outgoingCalls = await server.callHierarchyOutgoingCalls({ item });
-    const children = await Promise.all((outgoingCalls || []).map(outgoingCall => getOutgoingCalls(server, outgoingCall.to)));
+    const children = await Promise.all(
+        (outgoingCalls || []).map(outgoingCall => getOutgoingCalls(server, outgoingCall.to)),
+    );
     return {
         ...item,
         children,
@@ -91,7 +108,8 @@ describe('call hierarchy', () => {
             const incomingCalls = await getIncomingCalls(server, item);
             callsToString(incomingCalls, 0, lines);
         }
-        expect(lines.join('\n')).toStrictEqual(`
+        expect(lines.join('\n')).toStrictEqual(
+            `
 -|> tada (symbol: three.ts#2)
   -|> callThreeTwice (symbol: two.ts#3)
     -|> main (symbol: one.ts#2)
@@ -113,7 +131,8 @@ describe('call hierarchy', () => {
             const outgoingCalls = await getOutgoingCalls(server, item);
             callsToString(outgoingCalls, 0, lines);
         }
-        expect(lines.join('\n')).toStrictEqual(`
+        expect(lines.join('\n')).toStrictEqual(
+            `
 -|> callThreeTwice (symbol: two.ts#3)
   -|> tada (symbol: three.ts#2)
     -|> print (symbol: three.ts#6)

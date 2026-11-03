@@ -20,7 +20,10 @@ function createWorkspace(typescriptVersion: string, files: string[]): string {
     createdFolders.push(workspace);
     const packageFolder = path.join(workspace, 'node_modules', 'typescript');
     fs.mkdirSync(path.join(packageFolder, 'lib'), { recursive: true });
-    fs.writeFileSync(path.join(packageFolder, 'package.json'), JSON.stringify({ name: 'typescript', version: typescriptVersion }));
+    fs.writeFileSync(
+        path.join(packageFolder, 'package.json'),
+        JSON.stringify({ name: 'typescript', version: typescriptVersion }),
+    );
     for (const file of files) {
         fs.writeFileSync(path.join(packageFolder, 'lib', file), '');
     }

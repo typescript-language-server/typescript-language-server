@@ -27,10 +27,15 @@ export function asSignatureHelp(
     };
 }
 
-function getActiveSignature(info: ts.server.protocol.SignatureHelpItems, signatures: readonly lsp.SignatureInformation[], context?: lsp.SignatureHelpContext): number {
+function getActiveSignature(
+    info: ts.server.protocol.SignatureHelpItems,
+    signatures: readonly lsp.SignatureInformation[],
+    context?: lsp.SignatureHelpContext,
+): number {
     // Try matching the previous active signature's label to keep it selected
     if (context?.activeSignatureHelp?.activeSignature !== undefined) {
-        const previouslyActiveSignature = context.activeSignatureHelp.signatures[context.activeSignatureHelp.activeSignature];
+        const previouslyActiveSignature =
+            context.activeSignatureHelp.signatures[context.activeSignatureHelp.activeSignature];
         if (previouslyActiveSignature && context.isRetrigger) {
             const existingIndex = signatures.findIndex(other => other.label === previouslyActiveSignature.label);
             if (existingIndex !== -1) {
@@ -50,19 +55,31 @@ function getActiveParameter(info: ts.server.protocol.SignatureHelpItems): number
     return info.argumentIndex;
 }
 
-function asSignatureInformation(item: ts.server.protocol.SignatureHelpItem, filePathConverter: IFilePathToResourceConverter): lsp.SignatureInformation {
+function asSignatureInformation(
+    item: ts.server.protocol.SignatureHelpItem,
+    filePathConverter: IFilePathToResourceConverter,
+): lsp.SignatureInformation {
     const parameters = item.parameters.map(parameter => asParameterInformation(parameter, filePathConverter));
     const signature: lsp.SignatureInformation = {
         label: Previewer.plainWithLinks(item.prefixDisplayParts, filePathConverter),
-        documentation: Previewer.markdownDocumentation(item.documentation, item.tags.filter(x => x.name !== 'param'), filePathConverter),
+        documentation: Previewer.markdownDocumentation(
+            item.documentation,
+            item.tags.filter(x => x.name !== 'param'),
+            filePathConverter,
+        ),
         parameters,
     };
-    signature.label += parameters.map(parameter => parameter.label).join(Previewer.plainWithLinks(item.separatorDisplayParts, filePathConverter));
+    signature.label += parameters
+        .map(parameter => parameter.label)
+        .join(Previewer.plainWithLinks(item.separatorDisplayParts, filePathConverter));
     signature.label += Previewer.plainWithLinks(item.suffixDisplayParts, filePathConverter);
     return signature;
 }
 
-function asParameterInformation(parameter: ts.server.protocol.SignatureHelpParameter, filePathConverter: IFilePathToResourceConverter): lsp.ParameterInformation {
+function asParameterInformation(
+    parameter: ts.server.protocol.SignatureHelpParameter,
+    filePathConverter: IFilePathToResourceConverter,
+): lsp.ParameterInformation {
     const { displayParts, documentation } = parameter;
     return {
         label: Previewer.plainWithLinks(displayParts, filePathConverter),
@@ -75,9 +92,15 @@ export function toTsTriggerReason(context: lsp.SignatureHelpContext): ts.server.
         case lsp.SignatureHelpTriggerKind.TriggerCharacter:
             if (context.triggerCharacter) {
                 if (context.isRetrigger) {
-                    return { kind: 'retrigger', triggerCharacter: context.triggerCharacter as ts.SignatureHelpRetriggerCharacter };
+                    return {
+                        kind: 'retrigger',
+                        triggerCharacter: context.triggerCharacter as ts.SignatureHelpRetriggerCharacter,
+                    };
                 } else {
-                    return { kind: 'characterTyped', triggerCharacter: context.triggerCharacter as ts.SignatureHelpTriggerCharacter };
+                    return {
+                        kind: 'characterTyped',
+                        triggerCharacter: context.triggerCharacter as ts.SignatureHelpTriggerCharacter,
+                    };
                 }
             } else {
                 return { kind: 'invoked' };

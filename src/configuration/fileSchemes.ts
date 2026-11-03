@@ -41,9 +41,4 @@ export function getSemanticSupportedSchemes(): string[] {
 /**
  * File scheme for which JS/TS language feature should be disabled
  */
-export const disabledSchemes = new Set([
-    git,
-    vsls,
-    github,
-    azurerepos,
-]);
+export const disabledSchemes = new Set([git, vsls, github, azurerepos]);

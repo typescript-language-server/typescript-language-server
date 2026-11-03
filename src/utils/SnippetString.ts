@@ -6,7 +6,7 @@ export default class SnippetString {
         if (!thing) {
             return false;
         }
-        return typeof (thing as { value?: string; }).value === 'string';
+        return typeof (thing as { value?: string }).value === 'string';
     }
 
     private static _escape(value: string): string {
@@ -32,7 +32,10 @@ export default class SnippetString {
         return this;
     }
 
-    public appendPlaceholder(value: string | ((snippet: SnippetString) => any), n: number = this._tabstop++): SnippetString {
+    public appendPlaceholder(
+        value: string | ((snippet: SnippetString) => any),
+        n: number = this._tabstop++,
+    ): SnippetString {
         if (typeof value === 'function') {
             const nested = new SnippetString();
             nested._tabstop = this._tabstop;

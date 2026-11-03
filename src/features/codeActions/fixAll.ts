@@ -50,7 +50,7 @@ async function buildIndividualFixes(
 
             const args: ts.server.protocol.CodeFixRequestArgs = {
                 ...typeConverters.Range.toFileRangeRequestArgs(file, diagnostic.range),
-                errorCodes: [+(diagnostic.code!)],
+                errorCodes: [+diagnostic.code!],
             };
 
             const response = await client.execute(CommandTypes.GetCodeFixes, args, token);
@@ -90,7 +90,7 @@ async function buildCombinedFix(
 
             const args: ts.server.protocol.CodeFixRequestArgs = {
                 ...typeConverters.Range.toFileRangeRequestArgs(file, diagnostic.range),
-                errorCodes: [+(diagnostic.code!)],
+                errorCodes: [+diagnostic.code!],
             };
 
             const response = await client.execute(CommandTypes.GetCodeFixes, args, token);
@@ -147,15 +147,33 @@ class SourceFixAll extends SourceAction {
         super('Fix all fixable JS/TS issues', SourceFixAll.kind.value);
     }
 
-    async build(client: ITypeScriptServiceClient, file: string, diagnostics: readonly lsp.Diagnostic[], token: lsp.CancellationToken): Promise<void> {
-        this.edit = await buildIndividualFixes([
-            { codes: errorCodes.incorrectlyImplementsInterface, fixName: fixNames.classIncorrectlyImplementsInterface },
-            { codes: errorCodes.asyncOnlyAllowedInAsyncFunctions, fixName: fixNames.awaitInSyncFunction },
-        ], client, file, diagnostics, token);
+    async build(
+        client: ITypeScriptServiceClient,
+        file: string,
+        diagnostics: readonly lsp.Diagnostic[],
+        token: lsp.CancellationToken,
+    ): Promise<void> {
+        this.edit = await buildIndividualFixes(
+            [
+                {
+                    codes: errorCodes.incorrectlyImplementsInterface,
+                    fixName: fixNames.classIncorrectlyImplementsInterface,
+                },
+                { codes: errorCodes.asyncOnlyAllowedInAsyncFunctions, fixName: fixNames.awaitInSyncFunction },
+            ],
+            client,
+            file,
+            diagnostics,
+            token,
+        );
 
-        const edits = await buildCombinedFix([
-            { codes: errorCodes.unreachableCode, fixName: fixNames.unreachableCode },
-        ], client, file, diagnostics, token);
+        const edits = await buildCombinedFix(
+            [{ codes: errorCodes.unreachableCode, fixName: fixNames.unreachableCode }],
+            client,
+            file,
+            diagnostics,
+            token,
+        );
         if (edits?.documentChanges) {
             this.edit?.documentChanges?.push(...edits.documentChanges);
         }
@@ -169,10 +187,19 @@ class SourceRemoveUnused extends SourceAction {
         super('Remove all unused code', SourceRemoveUnused.kind.value);
     }
 
-    async build(client: ITypeScriptServiceClient, file: string, diagnostics: readonly lsp.Diagnostic[], token: lsp.CancellationToken): Promise<void> {
-        this.edit = await buildCombinedFix([
-            { codes: errorCodes.variableDeclaredButNeverUsed, fixName: fixNames.unusedIdentifier },
-        ], client, file, diagnostics, token);
+    async build(
+        client: ITypeScriptServiceClient,
+        file: string,
+        diagnostics: readonly lsp.Diagnostic[],
+        token: lsp.CancellationToken,
+    ): Promise<void> {
+        this.edit = await buildCombinedFix(
+            [{ codes: errorCodes.variableDeclaredButNeverUsed, fixName: fixNames.unusedIdentifier }],
+            client,
+            file,
+            diagnostics,
+            token,
+        );
     }
 }
 
@@ -183,27 +210,32 @@ class SourceAddMissingImports extends SourceAction {
         super('Add all missing imports', SourceAddMissingImports.kind.value);
     }
 
-    async build(client: ITypeScriptServiceClient, file: string, diagnostics: readonly lsp.Diagnostic[], token: lsp.CancellationToken): Promise<void> {
-        this.edit = await buildCombinedFix([
-            { codes: errorCodes.cannotFindName, fixName: fixNames.fixImport },
-        ], client, file, diagnostics, token);
+    async build(
+        client: ITypeScriptServiceClient,
+        file: string,
+        diagnostics: readonly lsp.Diagnostic[],
+        token: lsp.CancellationToken,
+    ): Promise<void> {
+        this.edit = await buildCombinedFix(
+            [{ codes: errorCodes.cannotFindName, fixName: fixNames.fixImport }],
+            client,
+            file,
+            diagnostics,
+            token,
+        );
     }
 }
 
 //#endregion
 
 export class TypeScriptAutoFixProvider implements CodeActionProvider {
-    private static readonly kindProviders = [
-        SourceFixAll,
-        SourceRemoveUnused,
-        SourceAddMissingImports,
-    ];
+    private static readonly kindProviders = [SourceFixAll, SourceRemoveUnused, SourceAddMissingImports];
 
     constructor(
         private readonly client: ITypeScriptServiceClient,
         private readonly fileConfigurationManager: FileConfigurationManager,
         private readonly diagnosticsManager: DiagnosticsManager,
-    ) { }
+    ) {}
 
     public getMetadata(): CodeActionProviderMetadata {
         return {

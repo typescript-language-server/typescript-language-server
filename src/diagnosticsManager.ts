@@ -24,7 +24,7 @@ class FileDiagnostics {
         protected readonly onPublishDiagnostics: (params: lsp.PublishDiagnosticsParams) => void,
         protected readonly client: ITypeScriptServiceClient,
         protected readonly features: SupportedFeatures,
-    ) { }
+    ) {}
 
     public update(kind: DiagnosticKind, diagnostics: ts.server.protocol.Diagnostic[]): void {
         if (this.diagnosticsPerKind.get(kind)?.length === 0 && diagnostics.length === 0) {
@@ -32,7 +32,7 @@ class FileDiagnostics {
         }
 
         this.diagnosticsPerKind.set(kind, diagnostics);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // oxlint-disable-next-line typescript/no-floating-promises
         this.firePublishDiagnostics();
     }
 
@@ -63,7 +63,8 @@ class FileDiagnostics {
     public async waitForDiagnosticsForTesting(): Promise<void> {
         return new Promise(resolve => {
             const interval = setInterval(() => {
-                if (this.diagnosticsPerKind.size === 3) {  // Must include all types of `DiagnosticKind`.
+                if (this.diagnosticsPerKind.size === 3) {
+                    // Must include all types of `DiagnosticKind`.
                     clearInterval(interval);
                     this.publishDiagnostics();
                     resolve();
@@ -82,10 +83,13 @@ export class DiagnosticsManager {
         protected readonly client: ITypeScriptServiceClient,
         protected readonly features: SupportedFeatures,
         protected readonly logger: Logger,
-    ) { }
+    ) {}
 
     updateDiagnostics(kind: DiagnosticKind, file: string, diagnostics: ts.server.protocol.Diagnostic[]): void {
-        if (kind !== DiagnosticKind.Syntax && !this.client.hasCapabilityForResource(this.client.toResource(file), ClientCapability.Semantic)) {
+        if (
+            kind !== DiagnosticKind.Syntax &&
+            !this.client.hasCapabilityForResource(this.client.toResource(file), ClientCapability.Semantic)
+        ) {
             return;
         }
 
@@ -94,7 +98,8 @@ export class DiagnosticsManager {
         }
 
         const uri = this.client.toResourceUri(file);
-        const diagnosticsForFile = this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.client, this.features);
+        const diagnosticsForFile =
+            this.diagnostics.get(uri) || new FileDiagnostics(uri, this.publishDiagnostics, this.client, this.features);
         diagnosticsForFile.update(kind, diagnostics);
         this.diagnostics.set(uri, diagnosticsForFile);
     }
@@ -151,7 +156,7 @@ export class DiagnosticsManager {
         await diagnosticsForFile.waitForDiagnosticsForTesting();
     }
 
-    private isDiagnosticIgnored(diagnostic: ts.server.protocol.Diagnostic) : boolean {
+    private isDiagnosticIgnored(diagnostic: ts.server.protocol.Diagnostic): boolean {
         return diagnostic.code !== undefined && this.ignoredDiagnosticCodes.has(diagnostic.code);
     }
 }

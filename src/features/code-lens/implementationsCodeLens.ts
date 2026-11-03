@@ -14,7 +14,12 @@ import { Location, Position, Range } from 'vscode-languageserver-protocol';
 import type { LspDocument } from '../../document.js';
 import { CommandTypes, ScriptElementKind, type ts } from '../../ts-protocol.js';
 import * as typeConverters from '../../utils/typeConverters.js';
-import { CodeLensType, type ReferencesCodeLens, TypeScriptBaseCodeLensProvider, getSymbolRange } from './baseCodeLensProvider.js';
+import {
+    CodeLensType,
+    type ReferencesCodeLens,
+    TypeScriptBaseCodeLensProvider,
+    getSymbolRange,
+} from './baseCodeLensProvider.js';
 import { ExecutionTarget } from '../../tsServer/server.js';
 
 export default class TypeScriptImplementationsCodeLensProvider extends TypeScriptBaseCodeLensProvider {
@@ -42,9 +47,10 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
             cancelOnResourceChange: codeLens.data!.uri,
         });
         if (response.type !== 'response' || !response.body) {
-            codeLens.command = response.type === 'cancelled'
-                ? TypeScriptBaseCodeLensProvider.cancelledCommand
-                : TypeScriptBaseCodeLensProvider.errorCommand;
+            codeLens.command =
+                response.type === 'cancelled'
+                    ? TypeScriptBaseCodeLensProvider.cancelledCommand
+                    : TypeScriptBaseCodeLensProvider.errorCommand;
             return codeLens;
         }
 
@@ -56,14 +62,20 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
                     reference.start.line === reference.end.line
                         ? typeConverters.Range.fromTextSpan(reference)
                         : Range.create(
-                            typeConverters.Position.fromLocation(reference.start),
-                            Position.create(reference.start.line, 0))),
+                              typeConverters.Position.fromLocation(reference.start),
+                              Position.create(reference.start.line, 0),
+                          ),
+                ),
             )
             // Exclude original from implementations
-            .filter(location =>
-                !(location.uri.toString() === codeLens.data!.uri &&
-                    location.range.start.line === codeLens.range.start.line &&
-                    location.range.start.character === codeLens.range.start.character));
+            .filter(
+                location =>
+                    !(
+                        location.uri.toString() === codeLens.data!.uri &&
+                        location.range.start.line === codeLens.range.start.line &&
+                        location.range.start.character === codeLens.range.start.character
+                    ),
+            );
 
         codeLens.command = this.getCommand(locations, codeLens);
         return codeLens;
@@ -78,9 +90,7 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
     }
 
     private getTitle(locations: Location[]): string {
-        return locations.length === 1
-            ? '1 implementation'
-            : `${locations.length} implementations`;
+        return locations.length === 1 ? '1 implementation' : `${locations.length} implementations`;
     }
 
     protected extractSymbol(
@@ -88,7 +98,6 @@ export default class TypeScriptImplementationsCodeLensProvider extends TypeScrip
         item: ts.server.protocol.NavigationTree,
         _parent: ts.server.protocol.NavigationTree | undefined,
     ): lsp.Range | undefined {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         switch (item.kind as ScriptElementKind) {
             case ScriptElementKind.interfaceElement:
                 return getSymbolRange(document, item);

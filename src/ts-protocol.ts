@@ -104,7 +104,7 @@ export enum HighlightSpanKind {
     none = 'none',
     definition = 'definition',
     reference = 'reference',
-    writtenReference = 'writtenReference'
+    writtenReference = 'writtenReference',
 }
 
 export enum JsxEmit {
@@ -137,9 +137,9 @@ export enum ModuleKind {
 export enum ModuleResolutionKind {
     Classic = 'classic',
     /** @deprecated Renamed to `Node10` */
+    // oxlint-disable-next-line typescript/no-duplicate-enum-values
     Node = 'node',
     /** @deprecated Renamed to `Node10` */
-    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
     NodeJs = 'node',
     Node10 = 'node10',
     Node16 = 'node16',
@@ -150,7 +150,7 @@ export enum ModuleResolutionKind {
 export enum SemicolonPreference {
     Ignore = 'ignore',
     Insert = 'insert',
-    Remove = 'remove'
+    Remove = 'remove',
 }
 
 export enum ScriptElementKind {
@@ -193,7 +193,7 @@ export enum ScriptElementKind {
     string = 'string',
     link = 'link',
     linkName = 'link name',
-    linkText = 'link text'
+    linkText = 'link text',
 }
 
 export enum ScriptElementKindModifier {
@@ -218,7 +218,7 @@ export enum ScriptElementKindModifier {
     mjsModifier = '.mjs',
     dctsModifier = '.d.cts',
     ctsModifier = '.cts',
-    cjsModifier = '.cjs'
+    cjsModifier = '.cjs',
 }
 
 export enum ScriptTarget {
@@ -236,9 +236,9 @@ export enum ScriptTarget {
     ES2022 = 'es2022',
     ES2023 = 'es2023',
     ES2024 = 'es2024',
+    // oxlint-disable-next-line typescript/no-duplicate-enum-values
     ESNext = 'esnext',
     JSON = 'json',
-    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
     Latest = 'esnext',
 }
 
@@ -267,7 +267,7 @@ export enum SymbolDisplayPartKind {
     regularExpressionLiteral = 21,
     link = 22,
     linkName = 23,
-    linkText = 24
+    linkText = 24,
 }
 
 export enum OrganizeImportsMode {

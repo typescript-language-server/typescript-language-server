@@ -22,7 +22,7 @@ export function toLocation(fileSpan: ts.server.protocol.FileSpan, client: ITypeS
     };
 }
 
-const symbolKindsMapping: { [name: string]: lsp.SymbolKind; } = {
+const symbolKindsMapping: { [name: string]: lsp.SymbolKind } = {
     'enum member': lsp.SymbolKind.Constant,
     'JSX attribute': lsp.SymbolKind.Property,
     'local class': lsp.SymbolKind.Class,
@@ -54,14 +54,22 @@ export function toSymbolKind(tspKind: string): lsp.SymbolKind {
 
 function toDiagnosticSeverity(category: string): lsp.DiagnosticSeverity {
     switch (category) {
-        case 'error': return lsp.DiagnosticSeverity.Error;
-        case 'warning': return lsp.DiagnosticSeverity.Warning;
-        case 'suggestion': return lsp.DiagnosticSeverity.Hint;
-        default: return lsp.DiagnosticSeverity.Error;
+        case 'error':
+            return lsp.DiagnosticSeverity.Error;
+        case 'warning':
+            return lsp.DiagnosticSeverity.Warning;
+        case 'suggestion':
+            return lsp.DiagnosticSeverity.Hint;
+        default:
+            return lsp.DiagnosticSeverity.Error;
     }
 }
 
-export function toDiagnostic(diagnostic: ts.server.protocol.Diagnostic, client: ITypeScriptServiceClient, features: SupportedFeatures): lsp.Diagnostic {
+export function toDiagnostic(
+    diagnostic: ts.server.protocol.Diagnostic,
+    client: ITypeScriptServiceClient,
+    features: SupportedFeatures,
+): lsp.Diagnostic {
     const lspDiagnostic: lsp.Diagnostic = {
         range: {
             start: Position.fromLocation(diagnostic.start),
@@ -90,7 +98,10 @@ function getDiagnosticTags(diagnostic: ts.server.protocol.Diagnostic): lsp.Diagn
     return tags;
 }
 
-function asRelatedInformation(info: ts.server.protocol.DiagnosticRelatedInformation[] | undefined, client: ITypeScriptServiceClient): lsp.DiagnosticRelatedInformation[] | undefined {
+function asRelatedInformation(
+    info: ts.server.protocol.DiagnosticRelatedInformation[] | undefined,
+    client: ITypeScriptServiceClient,
+): lsp.DiagnosticRelatedInformation[] | undefined {
     if (!info) {
         return undefined;
     }
@@ -98,10 +109,7 @@ function asRelatedInformation(info: ts.server.protocol.DiagnosticRelatedInformat
     for (const item of info) {
         const span = item.span;
         if (span) {
-            result.push(lsp.DiagnosticRelatedInformation.create(
-                toLocation(span, client),
-                item.message,
-            ));
+            result.push(lsp.DiagnosticRelatedInformation.create(toLocation(span, client), item.message));
         }
     }
     return result;
@@ -124,7 +132,10 @@ export function toTextEdit(edit: ts.server.protocol.CodeEdit): lsp.TextEdit {
     };
 }
 
-export function toTextDocumentEdit(change: ts.server.protocol.FileCodeEdits, client: ITypeScriptServiceClient): lsp.TextDocumentEdit {
+export function toTextDocumentEdit(
+    change: ts.server.protocol.FileCodeEdits,
+    client: ITypeScriptServiceClient,
+): lsp.TextDocumentEdit {
     const uri = client.toResourceUri(change.fileName);
     const document = client.toOpenDocument(uri);
     return {
