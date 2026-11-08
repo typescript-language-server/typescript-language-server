@@ -39,6 +39,8 @@ export namespace TsServerLogLevel {
                 return 'normal';
             case TsServerLogLevel.Terse:
                 return 'terse';
+            case TsServerLogLevel.RequestTime:
+                return 'requestTime';
             case TsServerLogLevel.Verbose:
                 return 'verbose';
             case TsServerLogLevel.Off:
