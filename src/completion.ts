@@ -96,6 +96,94 @@ export function asCompletionItems(
     return completions;
 }
 
+export function asCompletionList(
+    items: lsp.CompletionItem[],
+    isIncomplete: boolean | undefined,
+    features: SupportedFeatures,
+): lsp.CompletionList {
+    const list = lsp.CompletionList.create(items, isIncomplete);
+    const supportedDefaults = features.completionListItemDefaults;
+    if (!supportedDefaults || items.length === 0) {
+        return list;
+    }
+
+    const itemDefaults: lsp.CompletionItemDefaults = {};
+
+    const firstEdit = items[0].textEdit;
+    if (supportedDefaults.includes('editRange') && firstEdit && items.every(item => item.textEdit)) {
+        const editRange =
+            'insert' in firstEdit ? { insert: firstEdit.insert, replace: firstEdit.replace } : firstEdit.range;
+        itemDefaults.editRange = editRange;
+        for (const item of items) {
+            const { textEdit } = item;
+            if (textEdit && isSameEditRange(textEdit, editRange)) {
+                if (textEdit.newText !== item.label) {
+                    item.textEditText = textEdit.newText;
+                }
+                item.textEdit = undefined;
+            }
+        }
+    }
+
+    const { commitCharacters } = items[0];
+    if (
+        supportedDefaults.includes('commitCharacters') &&
+        commitCharacters &&
+        items.every(item => item.commitCharacters)
+    ) {
+        itemDefaults.commitCharacters = commitCharacters;
+        for (const item of items) {
+            if (item.commitCharacters && isSameArray(item.commitCharacters, commitCharacters)) {
+                item.commitCharacters = undefined;
+            }
+        }
+    }
+
+    if (itemDefaults.editRange || itemDefaults.commitCharacters) {
+        list.itemDefaults = itemDefaults;
+    }
+    return list;
+}
+
+function isSameEditRange(
+    textEdit: lsp.TextEdit | lsp.InsertReplaceEdit,
+    editRange: NonNullable<lsp.CompletionItemDefaults['editRange']>,
+): boolean {
+    if ('insert' in textEdit) {
+        return (
+            'insert' in editRange &&
+            isSameRange(textEdit.insert, editRange.insert) &&
+            isSameRange(textEdit.replace, editRange.replace)
+        );
+    }
+    return !('insert' in editRange) && isSameRange(textEdit.range, editRange);
+}
+
+function isSameRange(a: lsp.Range, b: lsp.Range): boolean {
+    return (
+        a === b ||
+        (a.start.line === b.start.line &&
+            a.start.character === b.start.character &&
+            a.end.line === b.end.line &&
+            a.end.character === b.end.character)
+    );
+}
+
+function isSameArray(a: readonly string[], b: readonly string[]): boolean {
+    if (a === b) {
+        return true;
+    }
+    if (a.length !== b.length) {
+        return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function asCompletionItem(
     entry: ts.server.protocol.CompletionEntry,
     completionDataCache: CompletionDataCache,
@@ -458,7 +546,7 @@ function createSnippetOfFunctionCall(
     const { displayParts } = detail;
     const parameterListParts = getParameterListParts(displayParts);
     const snippet = new SnippetString();
-    snippet.appendText(`${item.insertText || item.textEdit?.newText || item.label}(`);
+    snippet.appendText(`${item.insertText || item.textEdit?.newText || item.textEditText || item.label}(`);
     appendJoinedPlaceholders(snippet, parameterListParts.parts, ', ');
     if (parameterListParts.hasOptionalParameters) {
         snippet.appendTabstop();
@@ -469,6 +557,8 @@ function createSnippetOfFunctionCall(
     item.insertTextFormat = lsp.InsertTextFormat.Snippet;
     if (item.textEdit) {
         item.textEdit.newText = snippet.value;
+    } else {
+        item.textEditText = snippet.value;
     }
 }
 
