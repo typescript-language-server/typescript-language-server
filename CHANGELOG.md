@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [6.1.0](https://github.com/typescript-language-server/typescript-language-server/compare/v6.0.3...v6.1.0) (2026-11-12)
+
+
+### Features
+
+* use completion list item defaults when supported ([#1166](https://github.com/typescript-language-server/typescript-language-server/issues/1166)) ([76a8a4d](https://github.com/typescript-language-server/typescript-language-server/commit/76a8a4d8b445bdb95cfe9505bb32d83709aaddf2))
+
+
+### Bug Fixes
+
+* avoid race when creating temp directories ([#1170](https://github.com/typescript-language-server/typescript-language-server/issues/1170)) ([bf15733](https://github.com/typescript-language-server/typescript-language-server/commit/bf1573328cc1618383a9a155673d4f240f1d33b4))
+* pass requestTime log verbosity to tsserver ([#1167](https://github.com/typescript-language-server/typescript-language-server/issues/1167)) ([52768db](https://github.com/typescript-language-server/typescript-language-server/commit/52768db2c8cba62e32fbb5b3c1a8b6aaf47f06dc))
+
 ## [6.0.3](https://github.com/typescript-language-server/typescript-language-server/compare/v6.0.2...v6.0.3) (2026-11-02)
 
 
