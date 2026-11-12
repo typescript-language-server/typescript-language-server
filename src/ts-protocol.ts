@@ -358,6 +358,7 @@ export interface SupportedFeatures {
     completionDisableFilterText?: boolean;
     completionInsertReplaceSupport?: boolean;
     completionLabelDetails?: boolean;
+    completionListItemDefaults?: string[];
     completionSnippets?: boolean;
     definitionLinkSupport?: boolean;
     diagnosticsSupport?: boolean;
