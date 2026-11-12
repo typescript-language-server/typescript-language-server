@@ -15,6 +15,7 @@ import { toDocumentHighlight, toSymbolKind, toLocation, toSelectionRange, toText
 import type { LspDocument } from './document.js';
 import {
     asCompletionItems,
+    asCompletionList,
     asResolvedCompletionItem,
     type CompletionContext,
     CompletionDataCache,
@@ -206,7 +207,8 @@ export class LspServer {
                 this.features.codeActionResolveSupport = codeAction.resolveSupport;
             }
             if (completion) {
-                const { completionItem } = completion;
+                const { completionItem, completionList } = completion;
+                this.features.completionListItemDefaults = completionList?.itemDefaults;
                 if (completionItem) {
                     const { commitCharactersSupport, insertReplaceSupport, labelDetailsSupport, snippetSupport } =
                         completionItem;
@@ -795,7 +797,7 @@ export class LspServer {
             completionContext,
             defaultCommitCharacters,
         );
-        return lsp.CompletionList.create(completions, isIncomplete);
+        return asCompletionList(completions, isIncomplete, this.features);
     }
 
     async completionResolve(item: lsp.CompletionItem, token?: lsp.CancellationToken): Promise<lsp.CompletionItem> {

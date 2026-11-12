@@ -692,6 +692,98 @@ describe('completion', () => {
     });
 });
 
+describe('completion (item defaults supported)', () => {
+    let localServer: TestLspServer;
+
+    beforeAll(async () => {
+        localServer = await createServer({
+            rootUri: uri(),
+            publishDiagnostics: args => diagnostics.set(args.uri, args),
+            clientCapabilitiesOverride: {
+                textDocument: {
+                    completion: {
+                        completionItem: {
+                            commitCharactersSupport: true,
+                        },
+                        completionList: {
+                            itemDefaults: ['commitCharacters', 'editRange'],
+                        },
+                    },
+                },
+            },
+        });
+    });
+
+    beforeEach(() => {
+        localServer.closeAllForTesting();
+        diagnostics.clear();
+    });
+
+    afterAll(() => {
+        localServer.closeAllForTesting();
+        localServer.shutdown();
+    });
+
+    it('moves the shared edit range and commit characters to item defaults', async () => {
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                import fs from 'fs'
+                fs.readFile
+            `,
+        };
+        await openDocumentAndWaitForDiagnostics(localServer, doc);
+        const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        expect(proposals).not.toBeNull();
+        const range = { start: { line: 2, character: 19 }, end: { line: 2, character: 27 } };
+        expect(proposals!.itemDefaults).toEqual({
+            editRange: { insert: range, replace: range },
+            commitCharacters: ['.', ',', ';', '('],
+        });
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        expect(completion).toBeDefined();
+        expect(completion!.textEdit).toBeUndefined();
+        expect(completion!.textEditText).toBeUndefined();
+        expect(completion!.commitCharacters).toBeUndefined();
+        expect(proposals!.items.every(item => !item.textEdit && !item.commitCharacters)).toBe(true);
+    });
+
+    it('resolves a snippet into textEditText for items using the default edit range', async () => {
+        localServer.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: true,
+            },
+        });
+        const doc = {
+            uri: uri('bar.ts'),
+            languageId: 'typescript',
+            version: 1,
+            text: `
+                import fs from 'fs'
+                fs.readFile
+            `,
+        };
+        await openDocumentAndWaitForDiagnostics(localServer, doc);
+        const proposals = await localServer.completion({ textDocument: doc, position: positionAfter(doc, 'readFile') });
+        const completion = proposals!.items.find(completion => completion.label === 'readFile');
+        const resolvedItem = await localServer.completionResolve(completion!);
+        expect(resolvedItem.textEdit).toBeUndefined();
+        expect(resolvedItem).toMatchObject({
+            label: 'readFile',
+            insertTextFormat: lsp.InsertTextFormat.Snippet,
+            // oxlint-disable-next-line no-template-curly-in-string
+            textEditText: 'readFile(${1:path}, ${2:options}, ${3:callback})$0',
+        });
+        localServer.updateWorkspaceSettings({
+            completions: {
+                completeFunctionCalls: false,
+            },
+        });
+    });
+});
+
 describe('definition', () => {
     it('goes to definition', async () => {
         // NOTE: This test needs to reference files that physically exist for the feature to work.

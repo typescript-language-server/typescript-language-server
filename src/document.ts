@@ -214,14 +214,7 @@ export class LspDocument {
     }
 
     applyEdit(version: number, change: lsp.TextDocumentContentChangeEvent): void {
-        const content = this.getText();
-        let newContent = change.text;
-        if (lsp.TextDocumentContentChangeEvent.isIncremental(change)) {
-            const start = this.offsetAt(change.range.start);
-            const end = this.offsetAt(change.range.end);
-            newContent = content.substr(0, start) + change.text + content.substr(end);
-        }
-        this._document = TextDocument.create(this._uri.toString(), this.languageId, version, newContent);
+        this._document = TextDocument.update(this._document, [change], version);
     }
 }
 
