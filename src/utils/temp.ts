@@ -30,9 +30,9 @@ const getRootTempDir = (() => {
             const filename = `typescript-language-server${process.platform !== 'win32' && process.getuid ? process.getuid() : ''}`;
             dir = path.join(os.tmpdir(), filename);
         }
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-        }
+        // `recursive` makes this a no-op when the directory already exists, so concurrent
+        // processes sharing the root temp directory don't race on creating it.
+        fs.mkdirSync(dir, { recursive: true });
         return dir;
     };
 })();
@@ -41,9 +41,7 @@ export const getInstanceTempDir = (() => {
     let dir: string | undefined;
     return () => {
         dir ??= path.join(getRootTempDir(), makeRandomHexString(20));
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-        }
+        fs.mkdirSync(dir, { recursive: true });
         return dir;
     };
 })();
