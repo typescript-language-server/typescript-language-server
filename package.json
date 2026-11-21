@@ -12,7 +12,7 @@
   "engines": {
     "node": ">=22.22.2"
   },
-  "packageManager": "pnpm@12.18.0",
+  "packageManager": "pnpm@12.21.0",
   "files": [
     "lib"
   ],
@@ -44,18 +44,18 @@
     "@types/semver": "^7.8.0",
     "@types/which": "^3.0.4",
     "@vitest/coverage-v8": "5.1.0",
-    "commander": "^15.0.0",
-    "concurrently": "^10.0.6",
+    "commander": "^15.1.0",
+    "concurrently": "^10.0.7",
     "cross-env": "^10.1.0",
     "fs-extra": "^11.4.1",
     "husky": "^9.1.7",
-    "oxfmt": "^0.76.0",
-    "oxlint": "^1.91.0",
-    "oxlint-tsgolint": "^7.0.2006",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "oxlint-tsgolint": "^7.0.2007",
     "p-debounce": "^6.0.0",
     "package-up": "^5.0.0",
     "rimraf": "^6.1.4",
-    "rollup": "^4.67.5",
+    "rollup": "^4.68.3",
     "semver": "^7.8.6",
     "size-limit": "^14.3.0",
     "source-map-support": "^0.5.21",
